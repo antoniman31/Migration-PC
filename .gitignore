@@ -1,0 +1,6 @@
+# Fichiers personnels — ne jamais publier
+profil-*.json
+inventaire-pc.json
+inventaire-*.json
+!tests/inventaire-exemple.json
+progression-*.json

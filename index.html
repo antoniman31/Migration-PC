@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Migration PC — Antoni 2027</title>
+<title>Migration PC — Checklist</title>
 <style>
 :root{
-  --am31:#5493FF;--am31l:rgba(84,147,255,0.12);--am31b:rgba(84,147,255,0.3);
+  --acc:#5493FF;--accl:rgba(84,147,255,0.12);--accb:rgba(84,147,255,0.3);
   --bg:#ffffff;--bg2:#f7f7f7;--bg3:#eeeeee;
   --brd:rgba(0,0,0,0.09);--brd2:rgba(0,0,0,0.18);
   --tx:#111111;--tx2:#666666;--tx3:#aaaaaa;
@@ -40,7 +40,7 @@
 html,body{min-height:100vh;background:var(--bg);color:var(--tx);font-family:"Segoe UI",system-ui,sans-serif;font-size:14px;line-height:1.5;transition:background .2s,color .2s}
 button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 button{cursor:pointer;background:none;border:none}
-a{color:var(--am31);text-decoration:none}
+a{color:var(--acc);text-decoration:none}
 a:hover{text-decoration:underline}
 code{font-family:"Cascadia Code","Consolas",monospace;font-size:.9em}
 .app{max-width:900px;margin:0 auto;padding:16px}
@@ -50,13 +50,13 @@ code{font-family:"Cascadia Code","Consolas",monospace;font-size:.9em}
 .hdr{padding:20px 20px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .hdr-left{flex:1;min-width:200px}
 .logo-row{display:flex;align-items:center;gap:10px;margin-bottom:4px}
-.logo{width:30px;height:30px;background:var(--am31);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-weight:700;font-size:14px}
+.logo{width:30px;height:30px;background:var(--acc);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-weight:700;font-size:14px}
 h1{font-size:18px;font-weight:600;color:var(--tx);letter-spacing:-.3px}
 .sub{font-size:12px;color:var(--tx2);margin-bottom:14px}
 .hdr-right{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
 .icon-btn{padding:5px 10px;font-size:12px;border:.5px solid var(--brd2);border-radius:8px;background:var(--bg2);color:var(--tx2);display:flex;align-items:center;gap:5px;transition:background .12s}
 .icon-btn:hover{background:var(--bg3)}
-.icon-btn.active{background:var(--am31l);border-color:var(--am31b);color:var(--am31)}
+.icon-btn.active{background:var(--accl);border-color:var(--accb);color:var(--acc)}
 
 /* DAY EST */
 .day-est{padding:10px 20px;background:var(--bg2);border-bottom:.5px solid var(--brd);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
@@ -65,17 +65,17 @@ h1{font-size:18px;font-weight:600;color:var(--tx);letter-spacing:-.3px}
 .day-card{background:var(--bg);border:.5px solid var(--brd);border-radius:8px;padding:5px 10px;font-size:11px;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--tx)}
 .day-card:hover{background:var(--bg3)}
 .day-card-bar{width:36px;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
-.day-card-fill{height:100%;background:var(--am31);transition:width .4s}
+.day-card-fill{height:100%;background:var(--acc);transition:width .4s}
 .day-total{font-size:12px;color:var(--tx2)}
-.day-total b{color:var(--am31);font-weight:600}
+.day-total b{color:var(--acc);font-weight:600}
 
 /* SESSION */
-.session-bar{padding:8px 20px;background:var(--am31l);border-bottom:.5px solid var(--am31b);display:none;align-items:center;gap:10px;flex-wrap:wrap}
+.session-bar{padding:8px 20px;background:var(--accl);border-bottom:.5px solid var(--accb);display:none;align-items:center;gap:10px;flex-wrap:wrap}
 .session-bar.active{display:flex}
-.session-dot{width:8px;height:8px;border-radius:50%;background:var(--am31);animation:pulse 1.5s infinite}
+.session-dot{width:8px;height:8px;border-radius:50%;background:var(--acc);animation:pulse 1.5s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.session-info{font-size:12px;color:var(--am31);flex:1}
-.session-stop{padding:4px 10px;font-size:11px;border:.5px solid var(--am31b);border-radius:6px;color:var(--am31);font-weight:500;background:transparent}
+.session-info{font-size:12px;color:var(--acc);flex:1}
+.session-stop{padding:4px 10px;font-size:11px;border:.5px solid var(--accb);border-radius:6px;color:var(--acc);font-weight:500;background:transparent}
 .session-stop:hover{background:rgba(84,147,255,.15)}
 
 /* SYNC — géré dans le header */
@@ -85,10 +85,10 @@ h1{font-size:18px;font-weight:600;color:var(--tx);letter-spacing:-.3px}
 .gp-info{min-width:140px}
 .gp-label{font-size:10px;color:var(--tx2);text-transform:uppercase;letter-spacing:.06em}
 .gp-val{font-size:13px;color:var(--tx)}
-.gp-pct{font-size:16px;font-weight:700;color:var(--am31)}
+.gp-pct{font-size:16px;font-weight:700;color:var(--acc)}
 .gp-bar-wrap{flex:1;display:flex;align-items:center;gap:10px;min-width:180px}
 .gp-bar-bg{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
-.gp-bar-fill{height:100%;background:var(--am31);border-radius:3px;transition:width .4s}
+.gp-bar-fill{height:100%;background:var(--acc);border-radius:3px;transition:width .4s}
 .gp-time{font-size:11px;color:var(--tx2);white-space:nowrap}
 
 /* GLOBAL SEARCH */
@@ -97,7 +97,7 @@ h1{font-size:18px;font-weight:600;color:var(--tx);letter-spacing:-.3px}
 #gsearch-input{width:100%;padding:6px 10px;border:.5px solid var(--brd2);border-radius:8px;background:var(--bg2);color:var(--tx);outline:none}
 #gsearch-input::placeholder{color:var(--tx3)}
 .gsearch-count{font-size:11px;color:var(--tx2)}
-.gsearch-count b{color:var(--am31);font-weight:600}
+.gsearch-count b{color:var(--acc);font-weight:600}
 #gsearch-results{display:none;padding:0 20px 12px;background:var(--bg);border-bottom:.5px solid var(--brd)}
 #gsearch-results.active{display:block}
 .gsr-tab{font-size:10px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.05em;padding:8px 0 4px;border-bottom:.5px solid var(--brd);margin-top:4px}
@@ -113,9 +113,9 @@ h1{font-size:18px;font-weight:600;color:var(--tx);letter-spacing:-.3px}
 /* TABS */
 .tabs{display:flex;border-bottom:.5px solid var(--brd);padding:0 20px;background:var(--bg);overflow-x:auto}
 .tab{padding:10px 14px;font-size:13px;font-weight:500;color:var(--tx2);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;flex-shrink:0;background:transparent;border-top:none;border-left:none;border-right:none}
-.tab.active{color:var(--am31);border-bottom-color:var(--am31)}
+.tab.active{color:var(--acc);border-bottom-color:var(--acc)}
 .tab:hover:not(.active){color:var(--tx)}
-.tab-badge{background:var(--am31l);color:var(--am31);font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600}
+.tab-badge{background:var(--accl);color:var(--acc);font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600}
 .panel{display:none}
 .panel.active{display:block}
 #panel-npc.active{background:var(--tint-npc)}
@@ -135,20 +135,20 @@ body.compact .item{padding:5px 0}
 .sort-sel{padding:6px 8px;border:.5px solid var(--brd2);border-radius:8px;background:var(--bg2);color:var(--tx);outline:none}
 .fbs{display:flex;gap:4px;flex-wrap:wrap}
 .fb{padding:4px 9px;font-size:12px;border:.5px solid var(--brd);border-radius:8px;background:var(--bg);color:var(--tx2);white-space:nowrap}
-.fb.active{background:var(--am31l);border-color:var(--am31b);color:var(--am31);font-weight:500}
+.fb.active{background:var(--accl);border-color:var(--accb);color:var(--acc);font-weight:500}
 .fb:hover:not(.active){background:var(--bg2)}
 .tbar-right{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
 .sm-btn{padding:4px 10px;font-size:11px;border:.5px solid var(--brd2);border-radius:6px;background:var(--bg);color:var(--tx2);font-weight:500}
 .sm-btn:hover{background:var(--bg3)}
-.sm-btn.active{background:var(--am31l);color:var(--am31);border-color:var(--am31b)}
+.sm-btn.active{background:var(--accl);color:var(--acc);border-color:var(--accb)}
 .tbar-info{font-size:12px;color:var(--tx2)}
 
 /* SECTION PROGRESS */
 .sec-prog{padding:7px 20px;border-bottom:.5px solid var(--brd);display:flex;align-items:center;gap:10px;background:transparent}
 .sec-bar-bg{flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
-.sec-bar-fill{height:100%;background:var(--am31);border-radius:2px;transition:width .4s}
+.sec-bar-fill{height:100%;background:var(--acc);border-radius:2px;transition:width .4s}
 .sec-prog-txt{font-size:11px;color:var(--tx2);white-space:nowrap}
-.sec-prog-txt b{font-weight:600;color:var(--am31)}
+.sec-prog-txt b{font-weight:600;color:var(--acc)}
 
 /* SECTION HEADERS */
 .sec-content{padding:0 20px}
@@ -156,10 +156,10 @@ body.compact .item{padding:5px 0}
 .sec-hdr.first{border-top:none;margin-top:0}
 .sec-hdr-r{display:flex;align-items:center;gap:6px}
 .sec-hdr-cnt{font-size:10px;color:var(--tx3)}
-.chk-all{font-size:10px;color:var(--am31);padding:2px 7px;border:.5px solid var(--am31b);border-radius:5px;background:transparent;text-transform:none;letter-spacing:normal;font-weight:500}
-.chk-all:hover{background:var(--am31l)}
+.chk-all{font-size:10px;color:var(--acc);padding:2px 7px;border:.5px solid var(--accb);border-radius:5px;background:transparent;text-transform:none;letter-spacing:normal;font-weight:500}
+.chk-all:hover{background:var(--accl)}
 .cat-winget{font-size:10px;color:var(--tx2);padding:2px 7px;border:.5px solid var(--brd);border-radius:5px;background:transparent;text-transform:none;letter-spacing:normal}
-.cat-winget:hover{color:var(--am31);border-color:var(--am31b);background:var(--am31l)}
+.cat-winget:hover{color:var(--acc);border-color:var(--accb);background:var(--accl)}
 
 /* ITEMS */
 .item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:.5px solid var(--brd);cursor:pointer;border-radius:4px}
@@ -168,7 +168,7 @@ body.compact .item{padding:5px 0}
 .item.done .item-name{text-decoration:line-through;color:var(--tx2)}
 .item.done .item-badges,.item.done .item-desc,.item.done .save-path,.item.done .save-note{opacity:.4}
 .chkbox{width:17px;height:17px;border:1.5px solid var(--brd2);border-radius:4px;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;background:var(--bg);color:#fff;font-size:11px;font-weight:700;line-height:1}
-.item.done .chkbox{background:var(--am31);border-color:var(--am31)}
+.item.done .chkbox{background:var(--acc);border-color:var(--acc)}
 .chkbox-mark{display:none}
 .item.done .chkbox-mark{display:inline}
 .item-body{flex:1;min-width:0}
@@ -176,31 +176,31 @@ body.compact .item{padding:5px 0}
 .item-name{font-size:13px;font-weight:500;color:var(--tx)}
 .item-date{font-size:10px;color:var(--tx3);font-style:italic}
 .note-btn{font-size:11px;color:var(--tx3);padding:1px 4px;border-radius:4px;border:none;background:transparent}
-.note-btn:hover{color:var(--am31);background:var(--am31l)}
-.note-btn.has-note{color:var(--am31)}
+.note-btn:hover{color:var(--acc);background:var(--accl)}
+.note-btn.has-note{color:var(--acc)}
 .item-badges{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;align-items:center}
 .item-desc{font-size:11px;color:var(--tx2);margin-top:3px;line-height:1.45}
 .warn-badge{font-size:11px;color:var(--warn-tx);background:var(--warn-bg);border:.5px solid var(--warn-bd);border-radius:5px;padding:2px 8px;margin-top:5px;display:inline-block;font-weight:500}
 .note-area{margin-top:6px;display:none}
 .note-area.open{display:block}
 .note-area textarea{width:100%;font-size:11px;padding:5px 7px;border:.5px solid var(--brd2);border-radius:6px;background:var(--bg2);color:var(--tx);resize:vertical;min-height:38px;outline:none;font-family:inherit}
-.note-area textarea:focus{border-color:var(--am31)}
+.note-area textarea:focus{border-color:var(--acc)}
 .item-link{flex-shrink:0;margin-top:1px}
-.lnk-btn{font-size:11px;color:var(--am31);padding:3px 8px;border:.5px solid var(--am31b);border-radius:8px;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;background:transparent}
-.lnk-btn:hover{background:var(--am31l);text-decoration:none}
+.lnk-btn{font-size:11px;color:var(--acc);padding:3px 8px;border:.5px solid var(--accb);border-radius:8px;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;background:transparent}
+.lnk-btn:hover{background:var(--accl);text-decoration:none}
 .save-path{font-size:10px;font-family:"Cascadia Code","Consolas",monospace;color:var(--tx2);margin-top:3px;word-break:break-all}
 .save-note{font-size:10px;color:var(--tx3);margin-top:2px;font-style:italic}
 
 /* BADGES */
 .badge{font-size:10px;padding:1px 6px;border-radius:8px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;border:.5px solid transparent}
 .b-src{background:var(--bg2);color:var(--tx2);border-color:var(--brd2)}
-.b-winget{background:var(--am31l);color:var(--am31);border-color:var(--am31b);font-family:"Cascadia Code","Consolas",monospace;cursor:pointer}
+.b-winget{background:var(--accl);color:var(--acc);border-color:var(--accb);font-family:"Cascadia Code","Consolas",monospace;cursor:pointer}
 .b-winget:hover{opacity:.8}
 .b-time{background:var(--bg2);color:var(--tx2);border-color:var(--brd)}
 .b-high{background:var(--bh-bg);color:var(--bh-tx);border-color:var(--bh-bd)}
 .b-pwa{background:var(--bpwa-bg);color:var(--bpwa-tx);border-color:var(--bpwa-bd)}
 .b-sync{background:var(--bord-bg);color:var(--bord-tx);border-color:var(--bord-bd);font-weight:600}
-.b-num{width:22px;height:22px;border-radius:50%;background:var(--am31l);color:var(--am31);border:.5px solid var(--am31b);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.b-num{width:22px;height:22px;border-radius:50%;background:var(--accl);color:var(--acc);border:.5px solid var(--accb);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
 .item.done .b-num{background:var(--bok-bg);color:var(--bok-tx);border-color:var(--bok-bd)}
 .b-crit{background:var(--bh-bg);color:var(--bh-tx);border-color:var(--bh-bd)}
 .b-imp{background:var(--bm-bg);color:var(--bm-tx);border-color:var(--bm-bd)}
@@ -208,7 +208,7 @@ body.compact .item{padding:5px 0}
 
 /* HDR ACTIONS */
 .hdr-sep{width:.5px;height:20px;background:var(--brd2);margin:0 2px}
-.primary-btn{background:var(--am31)!important;color:#fff!important;border-color:var(--am31)!important}
+.primary-btn{background:var(--acc)!important;color:#fff!important;border-color:var(--acc)!important}
 .primary-btn:hover{opacity:.9!important}
 .hdr-session{background:var(--bok-bg)!important;color:var(--bok-tx)!important;border-color:var(--bok-bd)!important}
 .hdr-session:hover{opacity:.85!important}
@@ -239,14 +239,14 @@ body.compact .item{padding:5px 0}
 .icon-btn.icon-only{padding:5px 8px;min-width:32px;justify-content:center}
 
 /* ── AMÉLIO 2 : tab badge contraste ── */
-.tab-badge{background:rgba(84,147,255,0.18);color:var(--am31);font-size:10px;padding:1px 7px;border-radius:10px;font-weight:700;border:.5px solid var(--am31b)}
-.tab.active .tab-badge{background:var(--am31);color:#fff;border-color:var(--am31)}
+.tab-badge{background:rgba(84,147,255,0.18);color:var(--acc);font-size:10px;padding:1px 7px;border-radius:10px;font-weight:700;border:.5px solid var(--accb)}
+.tab.active .tab-badge{background:var(--acc);color:#fff;border-color:var(--acc)}
 
 /* ── AMÉLIO 3 : hiérarchie barres du haut ── */
 .day-est{padding:8px 20px;background:var(--bg);border-bottom:.5px solid var(--brd);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 .gp{padding:14px 20px;border-bottom:.5px solid var(--brd);display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--bg2)}
 .gp-label{font-size:10px;color:var(--tx2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
-.gp-pct{font-size:18px;font-weight:800;color:var(--am31)}
+.gp-pct{font-size:18px;font-weight:800;color:var(--acc)}
 
 /* ── AMÉLIO 4 : items plus aérés ── */
 .item{padding:11px 0;gap:12px}
@@ -255,7 +255,7 @@ body.compact .item{padding:5px 0}
 
 /* ── AMÉLIO 5 : bouton Rechercher plus visible ── */
 .lnk-btn{font-size:11px;color:var(--tx2);padding:4px 10px;border:.5px solid var(--brd2);border-radius:8px;background:var(--bg2);font-weight:500;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
-.lnk-btn:hover{background:var(--am31l);color:var(--am31);border-color:var(--am31b);text-decoration:none}
+.lnk-btn:hover{background:var(--accl);color:var(--acc);border-color:var(--accb);text-decoration:none}
 
 /* ── AMÉLIO 6 : badges winget tronqués ── */
 .b-winget{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-flex}
@@ -279,7 +279,7 @@ body.compact .item{padding:5px 0}
 .lic-field{margin-top:6px;display:flex;align-items:center;gap:6px}
 .lic-field label{font-size:10px;color:var(--tx2);white-space:nowrap;flex-shrink:0}
 .lic-field input{flex:1;font-size:11px;padding:3px 7px;border:.5px solid var(--brd2);border-radius:6px;background:var(--bg2);color:var(--tx);outline:none;font-family:"Cascadia Code","Consolas",monospace}
-.lic-field input:focus{border-color:var(--am31)}
+.lic-field input:focus{border-color:var(--acc)}
 .lic-field input::placeholder{color:var(--tx3)}
 
 /* ── V6 : champ env ── */
@@ -287,19 +287,19 @@ body.compact .item{padding:5px 0}
 .env-row{display:flex;align-items:center;gap:6px}
 .env-row label{font-size:10px;color:var(--tx2);width:110px;flex-shrink:0;font-family:"Cascadia Code","Consolas",monospace}
 .env-row input{flex:1;font-size:11px;padding:3px 7px;border:.5px solid var(--brd2);border-radius:6px;background:var(--bg2);color:var(--tx);outline:none;font-family:"Cascadia Code","Consolas",monospace}
-.env-row input:focus{border-color:var(--am31)}
+.env-row input:focus{border-color:var(--acc)}
 .env-row input::placeholder{color:var(--tx3)}
 
 /* ── V6 : bouton suivant ── */
 .next-tab-btn{display:flex;align-items:center;justify-content:flex-end;padding:10px 20px;border-top:.5px solid var(--brd);background:transparent}
-.next-btn{padding:7px 16px;font-size:12px;border:.5px solid var(--am31b);border-radius:8px;background:var(--am31l);color:var(--am31);font-weight:500;display:flex;align-items:center;gap:6px;cursor:pointer}
-.next-btn:hover{background:var(--am31);color:#fff}
+.next-btn{padding:7px 16px;font-size:12px;border:.5px solid var(--accb);border-radius:8px;background:var(--accl);color:var(--acc);font-weight:500;display:flex;align-items:center;gap:6px;cursor:pointer}
+.next-btn:hover{background:var(--acc);color:#fff}
 .next-btn.incomplete{border-color:var(--brd2);background:var(--bg2);color:var(--tx2)}
 .next-btn.incomplete:hover{background:var(--bg3)}
 
 /* ── V6 : script winget restant ── */
-.sm-btn.warn-btn{border-color:var(--am31b);color:var(--am31);background:var(--am31l)}
-.sm-btn.warn-btn:hover{background:var(--am31);color:#fff}
+.sm-btn.warn-btn{border-color:var(--accb);color:var(--acc);background:var(--accl)}
+.sm-btn.warn-btn:hover{background:var(--acc);color:#fff}
 
 /* ── V6 : compact masque dep ── */
 body.compact .b-dep{display:none}
@@ -313,18 +313,19 @@ body.compact .b-dep{display:none}
   <div class="hdr-left">
     <div class="logo-row">
       <div class="logo">📦</div>
-      <h1>Migration PC — Checklist Ultime</h1>
+      <h1 id="profil-titre">Migration PC</h1>
     </div>
-    <p class="sub">Antoni · PC Full White · 9800X3D · RTX 5070 Ti · B850-A · Achat mai–juin 2027</p>
+    <p class="sub" id="profil-sous"></p>
   </div>
   <div class="hdr-right">
     <button class="icon-btn active" id="btn-normal" onclick="setMode('normal')">📋 Normal</button>
     <button class="icon-btn" id="btn-compact" onclick="setMode('compact')">≡ Compact</button>
     <div class="hdr-sep"></div>
-    <button class="icon-btn icon-only" onclick="importJSON()" title="Importer une progression">📥</button>
+    <button class="icon-btn" onclick="importerFichier()" title="Importer un inventaire, un profil ou une progression">📥 Importer</button>
     <button class="icon-btn primary-btn" onclick="exportJSON()">💾 Sauvegarder</button>
     <div class="hdr-sep"></div>
     <button class="icon-btn icon-only hdr-session" id="session-start-btn" onclick="startSession()" title="Commencer une session">▶</button>
+    <button class="icon-btn icon-only" onclick="exportProfil()" title="Exporter le profil (les listes, sans la progression)">🧩</button>
     <button class="icon-btn icon-only" onclick="window.print()" title="Imprimer">🖨️</button>
     <button class="icon-btn" id="theme-btn" onclick="toggleTheme()"><span id="theme-ico">🌙</span> <span id="theme-lbl">Sombre</span></button>
   </div>
@@ -409,17 +410,7 @@ body.compact .b-dep{display:none}
     </div>
   </div>
   <div class="tbar" style="padding-top:0;border-top:none">
-    <div class="fbs" id="cat-filters">
-      <button class="fb active" data-cat="all" onclick="setCat('all')">Tout</button>
-      <button class="fb" data-cat="dev" onclick="setCat('dev')">🛠️ Dev</button>
-      <button class="fb" data-cat="jeux" onclick="setCat('jeux')">🎮 Jeux</button>
-      <button class="fb" data-cat="reseau" onclick="setCat('reseau')">🌐 Réseau</button>
-      <button class="fb" data-cat="ia" onclick="setCat('ia')">🤖 IA</button>
-      <button class="fb" data-cat="media" onclick="setCat('media')">🎵 Médias</button>
-      <button class="fb" data-cat="system" onclick="setCat('system')">🔧 Système</button>
-      <button class="fb" data-cat="drivers" onclick="setCat('drivers')">🎮 Drivers périph.</button>
-      <button class="fb" data-cat="comms" onclick="setCat('comms')">💬 Comms</button>
-    </div>
+    <div class="fbs" id="cat-filters"></div>
   </div>
   <div class="sec-prog">
     <div class="sec-bar-bg"><div class="sec-bar-fill" id="bar-apps" style="width:0%"></div></div>
@@ -465,202 +456,250 @@ body.compact .b-dep{display:none}
 </div></div>
 <script>
 // ═══ DATA ═══
-const NPC_DATA = [
-  {id:'n1',o:1,n:'AMD Chipset Driver (B850)',src:'amd.com',p:'high',t:10,d:"PREMIÈRE CHOSE après Windows. Gère USB, SATA, NVMe, énergie Ryzen. v8.02.18.557 (mars 2026)."},
-  {id:'n2',o:2,n:'ASUS BIOS Update (B850-A)',src:'rog.asus.com',p:'med',t:15,d:"Idéalement avant install OS via USB Flashback. v1670 (avril 2026) — active EXPO DDR5-6000."},
-  {id:'n3',o:3,n:'ASUS DriverHub (B850-A)',src:'rog.asus.com',p:'high',t:20,d:"Installe automatiquement tous les drivers B850-A : LAN, audio, WiFi 7, USB.",warn:"Lancer en administrateur pour éviter les erreurs d'installation."},
-  {id:'n4',o:4,n:'Realtek LAN (via DriverHub)',src:'Inclus DriverHub',p:'high',t:5,d:"Driver Ethernet — connecter avant le WiFi pour plus de stabilité."},
-  {id:'n5',o:5,n:'WiFi 7 Driver (via DriverHub)',src:'Inclus DriverHub',p:'med',t:5,d:"Connexion sans fil si pas d'Ethernet disponible."},
-  {id:'n6',o:6,n:'Realtek Audio SupremeFX (via DriverHub)',src:'Inclus DriverHub',p:'high',t:5,d:"SupremeFX + Dolby Atmos — pour les Edifier MR4 et le casque Arctis Nova 7P Gen 2."},
-  {id:'n7',o:7,n:'NVIDIA App + drivers RTX 5070 Ti',src:'nvidia.com',p:'high',t:15,dep:'Installer avant MSI Afterburner',d:"Game Ready Driver Blackwell — DLSS 4 Multi Frame Generation, NVIDIA Reflex.",warn:"Télécharger uniquement sur nvidia.com — nombreux sites pirates de drivers."},
-  {id:'n8',o:8,n:'MSI Afterburner',src:'msi.com',p:'med',t:5,d:"OC et monitoring RTX 5070 Ti — courbes ventilateurs, fréquences, overlay en jeu.",warn:"⚠️ Télécharger EXCLUSIVEMENT sur msi.com ou guru3d.com — nombreux sites pirates dangereux."},
-  {id:'n9',o:9,n:'Corsair iCUE (bridge RAM RGB)',src:'corsair.com',p:'high',t:10,dep:'Requis par SignalRGB',d:"Requis par SignalRGB pour contrôler la RAM Vengeance RGB DDR5. Laisser tourner en arrière-plan."},
-  {id:'n10',o:10,n:'SignalRGB (RGB unifié)',src:'signalrgb.com',p:'high',t:15,d:"Gère B850-A, RTX 5070 Ti, RAM Corsair, 10 ventilos ARCTIC. Configurer EN DERNIER après tous les autres.",warn:"Configurer absolument après NVIDIA App et iCUE — sinon les bridges ne fonctionnent pas."},
-  {id:'n11',o:11,n:'Xiaomi Display Manager',src:'Xiaomi',p:'med',t:10,d:"G Pro 27Qi 2026 + A24i 2026 — calibration couleur, profils HDR, configuration 180Hz."},
-  {id:'n12',o:12,n:'Windows 11 Pro — activation',src:'destock-informatique.com',p:'high',t:5,d:"Clé OEM 2nde main légale UE ~10€. Garder la facture. Activer via Paramètres → Activation. Liée à la B850-A."},
-  {id:'n13',o:13,n:'Activer EXPO DDR5-6000 dans le BIOS',src:'BIOS ASUS → Ai Tweaker',p:'high',t:5,post:true,d:"Redémarrer → DEL → Ai Tweaker → EXPO Profile 1 → Save. Vérifier 6000 MHz dans Task Manager → Performance → Mémoire."},
-  {id:'n14',o:14,n:'Vérifier températures idle (HWiNFO)',src:'HWiNFO64',p:'high',t:10,post:true,d:"CPU idle < 45°C, GPU idle < 40°C, SSD < 50°C. Si anormal, vérifier pâte thermique et orientation ventilos."},
-  {id:'n15',o:15,n:'Vérifier flux ventilos ARCTIC (direction)',src:'Physique / SignalRGB',p:'high',t:10,post:true,d:"⚠️ Ventilos ARCTIC P12/P14 Reverse : flux inversé par rapport au standard. Vérifier que l'air entre par le bas/avant et sort par le haut/arrière. Confirmer avec SignalRGB ou à la main."},
-  {id:'n16',o:16,n:'Benchmark SSD CrystalDiskMark',src:'CrystalDiskMark',p:'med',t:10,post:true,d:"Samsung 9100 PRO sur PCIe 5.0 : seq read attendu ~14,800 MB/s. Si < 10,000 MB/s, vérifier que le slot M.2 est bien PCIe 5.0 et que le mode est activé dans le BIOS."},
-  {id:'n17',o:17,n:'Tester RGB SignalRGB complet',src:'SignalRGB',p:'med',t:10,post:true,d:"Vérifier que B850-A (Aura), RTX 5070 Ti, RAM Corsair et les 10 ventilos ARCTIC répondent tous. Si un élément manque, relancer iCUE en arrière-plan puis SignalRGB."},
-  {id:'n18',o:18,n:'Configurer écrans Xiaomi (résolution + Hz)',src:'Xiaomi Display Manager',p:'med',t:10,post:true,d:"G Pro 27Qi : 2560×1440 @ 180Hz HDR. A24i : 1920×1080 @ 165Hz. Vérifier dans Paramètres → Affichage → Résolution et fréquence de rafraîchissement."}
-];
+// Rien n'est écrit en dur ici : toutes les listes viennent d'un profil.
+// PROFIL_DEFAUT est embarqué pour que la page fonctionne hors ligne, sans serveur ni fetch.
+const PROFIL_DEFAUT = {
+  "meta": {
+    "version": 1,
+    "nom": "Migration Windows — profil type",
+    "soustitre": "Profil d'exemple · remplace-le par ton inventaire ou ton propre profil",
+    "cles": { "state": "mpc_state_v1" }
+  },
+  "cats": {
+    "dev": "🛠️ Développement",
+    "jeux": "🎮 Jeux & Launchers",
+    "reseau": "🌐 Réseau & Sécurité",
+    "bureautique": "📄 Bureautique & Web",
+    "media": "🎵 Médias",
+    "system": "🔧 Utilitaires Système",
+    "comms": "💬 Communication"
+  },
+  "npc": [
+    { "id": "n1", "o": 1, "n": "Windows Update — tous les correctifs", "src": "Paramètres → Windows Update", "p": "high", "t": 30, "d": "Première chose après l'installation. Relancer jusqu'à ce qu'il n'y ait plus rien, redémarrages compris." },
+    { "id": "n2", "o": 2, "n": "Driver chipset carte mère", "src": "Site du fabricant de la carte mère", "p": "high", "t": 10, "d": "Gère USB, SATA, NVMe et la gestion d'énergie. À installer avant tout le reste.", "warn": "Télécharger uniquement sur le site officiel du fabricant (AMD, Intel, ASUS, MSI, Gigabyte, ASRock)." },
+    { "id": "n3", "o": 3, "n": "Driver réseau (Ethernet / Wi-Fi)", "src": "Site du fabricant de la carte mère", "p": "high", "t": 5, "d": "À récupérer sur une clé USB AVANT la migration si le nouveau PC n'a pas de réseau au premier démarrage." },
+    { "id": "n4", "o": 4, "n": "Driver audio", "src": "Site du fabricant de la carte mère", "p": "med", "t": 5, "d": "Windows installe un driver générique ; celui du fabricant débloque les sorties et effets spécifiques." },
+    { "id": "n5", "o": 5, "n": "Driver carte graphique", "src": "nvidia.com / amd.com / intel.com", "p": "high", "t": 15, "dep": "Installer avant tout utilitaire d'overclocking", "d": "Pilote officiel du GPU. Choisir la branche Game Ready ou Studio selon l'usage.", "warn": "Télécharger uniquement sur le site du fabricant — beaucoup de faux sites de drivers." },
+    { "id": "n6", "o": 6, "n": "Activation de Windows", "src": "Paramètres → Système → Activation", "p": "high", "t": 5, "d": "Vérifier que la licence est bien reconnue. Une licence liée au compte Microsoft se réactive en se connectant." },
+    { "id": "n7", "o": 7, "n": "Profil XMP / EXPO de la RAM", "src": "BIOS/UEFI", "p": "med", "t": 5, "post": true, "d": "Sans ce profil la RAM tourne à sa fréquence de base. Activer dans le BIOS puis vérifier la fréquence dans le Gestionnaire des tâches → Performance → Mémoire." },
+    { "id": "n8", "o": 8, "n": "Vérifier les températures au repos", "src": "HWiNFO64", "p": "med", "t": 10, "post": true, "d": "Repères courants : CPU sous 50 °C, GPU sous 45 °C, SSD sous 50 °C au repos. Au-dessus, vérifier le montage du refroidissement." },
+    { "id": "n9", "o": 9, "n": "Vérifier le sens des ventilateurs", "src": "Vérification physique", "p": "med", "t": 10, "post": true, "d": "L'air doit entrer par l'avant et le bas, sortir par l'arrière et le haut. Les modèles à flux inversé se montent dans l'autre sens que d'habitude." },
+    { "id": "n10", "o": 10, "n": "Benchmark du SSD", "src": "CrystalDiskMark", "p": "ok", "t": 10, "post": true, "d": "Comparer les débits mesurés à ceux annoncés par le fabricant. Un écart important signale souvent un mauvais port M.2." },
+    { "id": "n11", "o": 11, "n": "Configurer les écrans (résolution + Hz)", "src": "Paramètres → Système → Affichage", "p": "med", "t": 10, "post": true, "d": "Windows ne choisit pas toujours la fréquence maximale. Régler chaque écran sur sa résolution native et son taux de rafraîchissement maximal." },
+    { "id": "n12", "o": 12, "n": "Créer un point de restauration", "src": "Créer un point de restauration", "p": "med", "t": 5, "post": true, "d": "Une fois le système propre et à jour, avant d'installer les applications. Filet de sécurité en cas d'installation qui tourne mal." }
+  ],
+  "ordre": ["a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9", "a10", "a11", "a12", "a13", "a14", "a15", "a16", "a17", "a18"],
+  "apps": [
+    { "id": "a1", "n": "7-Zip", "c": "system", "src": "Site officiel", "w": "7zip.7zip", "p": "high", "t": 3, "d": "Gestionnaire d'archives. À installer en premier pour ouvrir tout le reste." },
+    { "id": "a2", "n": "Navigateur web", "c": "bureautique", "src": "Site officiel", "w": "Google.Chrome", "p": "high", "t": 5, "dep": "Requis avant les raccourcis web", "d": "Se connecter au compte pour récupérer favoris, mots de passe et extensions." },
+    { "id": "a3", "n": "VLC", "c": "media", "src": "Site officiel", "w": "VideoLAN.VLC", "p": "med", "t": 3, "d": "Lecteur multimédia qui lit à peu près tous les formats sans codec supplémentaire." },
+    { "id": "a4", "n": "PowerToys", "c": "system", "src": "GitHub", "w": "Microsoft.PowerToys", "p": "med", "t": 5, "d": "Boîte à outils Microsoft : gestion de fenêtres, renommage par lot, sélecteur de couleur." },
+    { "id": "a5", "n": "HWiNFO64", "c": "system", "src": "Site officiel", "w": "REALiX.HWiNFO", "p": "med", "t": 3, "d": "Surveillance des températures, tensions et fréquences. Utile pour valider le montage." },
+    { "id": "a6", "n": "CrystalDiskInfo", "c": "system", "src": "Site officiel", "w": "CrystalDewWorld.CrystalDiskInfo", "p": "ok", "t": 3, "d": "État de santé S.M.A.R.T. des disques." },
+    { "id": "a7", "n": "Git", "c": "dev", "src": "Site officiel", "w": "Git.Git", "p": "med", "t": 3, "d": "Gestion de versions. Penser à recopier la configuration et les clés SSH." },
+    { "id": "a8", "n": "Node.js", "c": "dev", "src": "Site officiel", "w": "OpenJS.NodeJS", "p": "med", "t": 5, "d": "Runtime JavaScript et npm." },
+    { "id": "a9", "n": "Python", "c": "dev", "src": "Site officiel", "w": "Python.Python.3.13", "p": "med", "t": 5, "d": "Cocher « Add to PATH » pendant l'installation." },
+    { "id": "a10", "n": "Visual Studio Code", "c": "dev", "src": "Site officiel", "w": "Microsoft.VisualStudioCode", "p": "med", "t": 5, "d": "Éditeur de code. La synchronisation des paramètres restaure extensions et réglages." },
+    { "id": "a11", "n": "Windows Terminal", "c": "dev", "src": "Microsoft Store", "w": "Microsoft.WindowsTerminal", "p": "ok", "t": 3, "d": "Terminal moderne, déjà présent sur Windows 11 récent." },
+    { "id": "a12", "n": "PowerShell 7", "c": "dev", "src": "GitHub", "w": "Microsoft.PowerShell", "p": "med", "t": 3, "d": "Version actuelle de PowerShell, installée à côté de celle de Windows." },
+    { "id": "a13", "n": "Steam", "c": "jeux", "src": "Site officiel", "w": "Valve.Steam", "p": "med", "t": 5, "d": "Bibliothèque de jeux. Penser à pointer le dossier d'installation vers le bon disque." },
+    { "id": "a14", "n": "Discord", "c": "comms", "src": "Site officiel", "w": "Discord.Discord", "p": "med", "t": 5, "d": "Messagerie vocale et texte." },
+    { "id": "a15", "n": "Suite bureautique", "c": "bureautique", "src": "Site officiel", "w": "Microsoft.Office", "p": "med", "t": 15, "d": "Se connecter au compte pour activer la licence." },
+    { "id": "a16", "n": "Client de stockage en ligne", "c": "bureautique", "src": "Site officiel", "w": "Google.GoogleDrive", "p": "med", "t": 10, "d": "Attendre la fin de la synchronisation initiale avant de débrancher l'ancien PC." },
+    { "id": "a17", "n": "Lecteur PDF", "c": "bureautique", "src": "Site officiel", "w": "Adobe.Acrobat.Reader.64-bit", "p": "ok", "t": 5, "d": "Le navigateur suffit souvent ; utile pour les formulaires et les signatures." },
+    { "id": "a18", "n": "Client VPN", "c": "reseau", "src": "Site officiel", "p": "ok", "t": 5, "d": "Si tu en utilises un : réinstaller et se reconnecter avant de remettre le pare-feu en place." }
+  ],
+  "data": [
+    { "id": "s1", "n": "Documents, images, vidéos", "p": "%USERPROFILE%\\Documents, Pictures, Videos", "note": "Les dossiers personnels de base. Vérifier aussi les sous-dossiers de OneDrive.", "pr": "high" },
+    { "id": "s2", "n": "Bureau", "p": "%USERPROFILE%\\Desktop", "note": "Souvent plein de fichiers de travail jamais rangés ailleurs.", "pr": "high" },
+    { "id": "s3", "n": "Téléchargements", "p": "%USERPROFILE%\\Downloads", "note": "À trier avant la migration plutôt qu'après.", "pr": "med" },
+    { "id": "s4", "n": "Projets et code local", "p": "Selon ton organisation", "note": "Tout ce qui n'est pas poussé sur un dépôt distant n'a aucun filet de sécurité.", "pr": "high" },
+    { "id": "s5", "n": "Clés SSH et GPG", "p": "%USERPROFILE%\\.ssh", "note": "Copier sur un support chiffré, jamais dans un espace de stockage partagé.", "pr": "high" },
+    { "id": "s6", "n": "Licences logicielles", "p": "Courriels et espaces clients", "note": "Rassembler les clés des logiciels payants avant de désinstaller quoi que ce soit.", "pr": "high", "lic": true },
+    { "id": "s7", "n": "Variables d'environnement", "p": "Panneau de configuration → Système → Variables d'environnement", "note": "Relever les variables personnalisées et les ajouts au PATH.", "pr": "med", "env": true },
+    { "id": "s8", "n": "Mots de passe du navigateur", "p": "Compte du navigateur ou gestionnaire dédié", "note": "Vérifier que la synchronisation est à jour, ou exporter vers un gestionnaire.", "pr": "high" },
+    { "id": "s9", "n": "Sauvegardes de jeux hors ligne", "p": "%USERPROFILE%\\Documents\\My Games et %APPDATA%", "note": "Les jeux sans sauvegarde en ligne perdent tout. Vérifier avant de formater.", "pr": "med" },
+    { "id": "s10", "n": "Configurations d'applications", "p": "%APPDATA% et %LOCALAPPDATA%", "note": "Réglages, profils et raccourcis personnalisés des logiciels que tu utilises beaucoup.", "pr": "med" },
+    { "id": "s11", "n": "Polices installées", "p": "C:\\Windows\\Fonts", "note": "Seulement celles que tu as ajoutées toi-même.", "pr": "ok" },
+    { "id": "s12", "n": "Imprimantes et périphériques", "p": "Paramètres → Bluetooth et appareils", "note": "Noter les modèles et les adresses réseau pour les reconfigurer plus vite.", "pr": "ok" }
+  ],
+  "pwa": [
+    { "id": "p1", "n": "Messagerie web", "u": "https://mail.google.com", "d": "Raccourci navigateur — revient avec la synchronisation du compte." },
+    { "id": "p2", "n": "Agenda", "u": "https://calendar.google.com", "d": "Raccourci navigateur — revient avec la synchronisation du compte." },
+    { "id": "p3", "n": "Prise de notes", "u": "https://keep.google.com", "d": "Raccourci navigateur — revient avec la synchronisation du compte." }
+  ],
+  "requetes": {
+    "7-Zip": "site:7-zip.org download",
+    "Navigateur web": "site:google.com chrome download",
+    "VLC": "site:videolan.org download VLC",
+    "PowerToys": "site:github.com microsoft PowerToys releases",
+    "HWiNFO64": "site:hwinfo.com download",
+    "CrystalDiskInfo": "site:crystalmark.info CrystalDiskInfo download",
+    "Git": "site:git-scm.com download",
+    "Node.js": "site:nodejs.org download",
+    "Python": "site:python.org download python 3",
+    "Visual Studio Code": "site:code.visualstudio.com download",
+    "Windows Terminal": "site:github.com microsoft terminal releases",
+    "PowerShell 7": "site:github.com PowerShell releases download",
+    "Steam": "site:store.steampowered.com about download",
+    "Discord": "site:discord.com download",
+    "Suite bureautique": "site:microsoft.com download microsoft 365",
+    "Client de stockage en ligne": "site:google.com drive download",
+    "Lecteur PDF": "site:adobe.com download acrobat reader",
+    "Client VPN": "client VPN Windows telechargement officiel"
+  }
+};
 
-const CATS = {
+const CLE_PROFIL='mpc_profil_v1', CLE_ETAT='mpc_state_v1', CLE_THEME='mpc_theme';
+
+let CATS={}, NPC_DATA=[], APPS_DATA=[], DATA_SAVES=[], PWA_DATA=[], INSTALL_ORDER=[], SEARCH_QUERIES={};
+let PROFIL_NOM='', PROFIL_SOUS='';
+
+// ═══ PROFILS ═══
+function profilValide(p){
+  return !!(p && typeof p==='object' && (Array.isArray(p.apps)||Array.isArray(p.npc)));
+}
+
+function appliquerProfil(p,memoriser){
+  if(!profilValide(p))throw new Error('profil invalide');
+  const m=p.meta||{};
+  PROFIL_NOM=m.nom||'Migration PC';
+  PROFIL_SOUS=m.soustitre||'';
+  CATS=p.cats||{};
+  NPC_DATA=Array.isArray(p.npc)?p.npc:[];
+  APPS_DATA=Array.isArray(p.apps)?p.apps:[];
+  DATA_SAVES=Array.isArray(p.data)?p.data:[];
+  PWA_DATA=Array.isArray(p.pwa)?p.pwa:[];
+  INSTALL_ORDER=Array.isArray(p.ordre)?p.ordre:[];
+  SEARCH_QUERIES=p.requetes||{};
+  // Une catégorie utilisée par une app mais absente de cats reste affichable.
+  APPS_DATA.forEach(function(a){if(a.c&&!CATS[a.c])CATS[a.c]=a.c;});
+  if(memoriser){try{localStorage.setItem(CLE_PROFIL,JSON.stringify(p));}catch(e){console.error(e);}}
+  majEnteteProfil();
+  construireFiltresCats();
+  curCat='all';
+  renderAll();updateGlobal();
+}
+
+function majEnteteProfil(){
+  const h=document.getElementById('profil-titre');if(h)h.textContent=PROFIL_NOM;
+  const s=document.getElementById('profil-sous');if(s){s.textContent=PROFIL_SOUS;s.style.display=PROFIL_SOUS?'':'none';}
+}
+
+function construireFiltresCats(){
+  const c=document.getElementById('cat-filters');if(!c)return;
+  let html='<button class="fb active" data-cat="all" onclick="setCat(\'all\')">Tout</button>';
+  Object.keys(CATS).forEach(function(k){
+    html+='<button class="fb" data-cat="'+esc(k)+'" onclick="setCat(\''+esc(k)+'\')">'+esc(CATS[k])+'</button>';
+  });
+  c.innerHTML=html;
+}
+
+function chargerProfilMemorise(){
+  try{
+    const r=localStorage.getItem(CLE_PROFIL);
+    if(r){const p=JSON.parse(r);if(profilValide(p))return p;}
+  }catch(e){console.error(e);}
+  return null;
+}
+
+function reinitProfil(){
+  if(!confirm('Revenir au profil d\'exemple ? La progression en cours est conservée, mais les cases des éléments absents du profil d\'exemple ne seront plus affichées.'))return;
+  try{localStorage.removeItem(CLE_PROFIL);}catch(e){}
+  appliquerProfil(PROFIL_DEFAUT,false);
+}
+
+function exportProfil(){
+  const p={meta:{version:1,nom:PROFIL_NOM,soustitre:PROFIL_SOUS},cats:CATS,npc:NPC_DATA,apps:APPS_DATA,data:DATA_SAVES,pwa:PWA_DATA,ordre:INSTALL_ORDER,requetes:SEARCH_QUERIES};
+  dl(new Blob([JSON.stringify(p,null,2)],{type:'application/json'}),'profil-migration-pc.json');
+}
+
+// ═══ INVENTAIRE → PROFIL ═══
+// Transforme la sortie de scan-pc.ps1 en profil utilisable.
+const CAT_PAR_DEFAUT='system';
+
+function inventaireVersProfil(inv){
+  const apps=Array.isArray(inv.apps)?inv.apps:[];
+  if(!apps.length)throw new Error('inventaire vide');
+  const cats={};
+  const out=[];
+  apps.forEach(function(a,i){
+    const cat=a.cat||CAT_PAR_DEFAUT;
+    if(!cats[cat])cats[cat]=LIBELLES_CATS[cat]||cat;
+    const bouts=[];
+    if(a.editeur)bouts.push(a.editeur);
+    if(a.version)bouts.push('version '+a.version);
+    if(a.source)bouts.push('détecté via '+a.source);
+    out.push({
+      id:'inv'+(i+1),
+      n:a.nom||('Application '+(i+1)),
+      c:cat,
+      src:a.winget?'winget':(a.source||'Inconnu'),
+      w:a.winget||undefined,
+      p:a.priorite||'med',
+      t:a.duree||5,
+      d:bouts.join(' · ')||'Détecté sur l\'ancien PC.'
+    });
+  });
+  const machine=inv.machine||{};
+  const desc=[];
+  if(machine.os)desc.push(machine.os);
+  if(machine.nom)desc.push(machine.nom);
+  desc.push(out.length+' applications détectées');
+  if(inv.genere)desc.push('scan du '+String(inv.genere).slice(0,10));
+  return {
+    meta:{version:1,nom:'Migration PC — inventaire importé',soustitre:desc.join(' · ')},
+    cats:cats,
+    npc:PROFIL_DEFAUT.npc,
+    apps:out,
+    data:PROFIL_DEFAUT.data,
+    pwa:PROFIL_DEFAUT.pwa,
+    ordre:[],
+    requetes:{}
+  };
+}
+
+const LIBELLES_CATS={
   dev:'🛠️ Développement',jeux:'🎮 Jeux & Launchers',reseau:'🌐 Réseau & Sécurité',
-  ia:'🤖 IA & Productivité',media:'🎵 Médias',system:'🔧 Utilitaires Système',
-  drivers:'🎮 Drivers périphériques',comms:'💬 Communication & Perso'
+  bureautique:'📄 Bureautique & Web',media:'🎵 Médias',system:'🔧 Utilitaires Système',
+  comms:'💬 Communication',securite:'🛡️ Sécurité',pilotes:'🎛️ Pilotes & Périphériques'
 };
 
-const INSTALL_ORDER = ['a32','a28','a31','a35','a34','a49','a57','a58','a25','a26','a27','a11','a12','a13','a7','a4','a5','a2','a3','a1','a10','a6','a8','a9','a30','a29','a33','a48','a50','a53','a54','a36','a37','a38','a39','a40','a41','a42','a43','a44','a45','a46','a47','a60','a59','a14','a15','a16','a17','a18','a19','a20','a21','a22','a23','a24'];
+// ═══ IMPORT UNIFIÉ ═══
+// Un seul bouton avale les trois formats : inventaire, profil, progression.
+function importerFichier(){document.getElementById('json-file').click();}
 
-const APPS_DATA = [
-  {id:'a1',n:'Android Studio',c:'dev',src:'Site officiel',w:'Google.AndroidStudio',p:'high',t:45,d:"IDE Android complet — SDK, émulateur, Kotlin/Java. Indispensable pour WCA et YouTube Notif."},
-  {id:'a2',n:'Python 3.14',c:'dev',src:'Site officiel',w:'Python.Python.3.14',p:'high',t:5,d:"Langage de script — automatisations et futur script Pi ntfy.sh."},
-  {id:'a3',n:'Node.js',c:'dev',src:'Site officiel',w:'OpenJS.NodeJS',p:'high',t:5,dep:'Requis par WCUM',d:"Runtime JS — requis pour WCUM et npm."},
-  {id:'a4',n:'Git',c:'dev',src:'Site officiel',w:'Git.Git',p:'high',t:3,d:"Versionning — cloner tes repos (WCA, yn) dès le premier boot dev."},
-  {id:'a5',n:'PowerShell 7',c:'dev',src:'Site officiel',w:'Microsoft.PowerShell',p:'high',t:3,d:"Shell moderne — requis pour scripts et winget avancé."},
-  {id:'a6',n:'PowerToys',c:'dev',src:'winget',w:'Microsoft.PowerToys',p:'med',t:5,d:"FancyZones multi-écrans, PowerRename. Config à sauvegarder avant migration."},
-  {id:'a7',n:'AutoHotkey',c:'dev',src:'Site officiel / GitHub',w:'AutoHotkey.AutoHotkey',p:'high',t:3,d:"Scripts automation — tes exes custom (IA-Menu, presse-papier, shutdown) en dépendent. Open source."},
-  {id:'a8',n:'Visual Studio Build Tools 2022',c:'dev',src:'Site officiel',w:'Microsoft.VisualStudio.2022.BuildTools',p:'med',t:30,d:"Compilateurs C++ — requis par certains packages npm."},
-  {id:'a9',n:'Unity 2022.3 LTS',c:'dev',src:'Unity Hub',p:'med',t:30,d:"Moteur de jeu — installer via Unity Hub."},
-  {id:'a10',n:'Java 8 (JDK)',c:'dev',src:'Site officiel',w:'Oracle.JDK.8',p:'med',t:5,d:"Runtime Java — requis par Android Studio pour outils Gradle."},
-  {id:'a11',n:'Steam',c:'jeux',src:'Site officiel',w:'Valve.Steam',p:'high',t:5,d:"Launcher principal — jeux récupérés automatiquement à la connexion."},
-  {id:'a12',n:'Epic Games Launcher',c:'jeux',src:'Site officiel',w:'EpicGames.EpicGamesLauncher',p:'high',t:5,d:"Bibliothèque récupérée à la connexion du compte."},
-  {id:'a13',n:'EA App',c:'jeux',src:'Site officiel',w:'ElectronicArts.EADesktop',p:'high',t:10,d:"Remplace Origin. Connexion compte suffit."},
-  {id:'a14',n:'Vortex (mod manager)',c:'jeux',src:'Site officiel',w:'NexusMods.Vortex',p:'med',t:5,d:"Sauvegarder %AppData%\\Vortex avant migration — profils mods critiques."},
-  {id:'a15',n:'Wallpaper Engine',c:'jeux',src:'Via Steam',p:'med',t:5,d:"Workshop se retélécharge automatiquement via Steam."},
-  {id:'a16',n:'Minecraft Java Edition',c:'jeux',src:'Launcher officiel',w:'Mojang.MinecraftLauncher',p:'med',t:10,d:"Compte Microsoft suffit. Sauvegarder mondes locaux."},
-  {id:'a17',n:'Minecraft Bedrock (UWP)',c:'jeux',src:'Microsoft Store',p:'med',t:10,d:"Lié au compte Microsoft — via Store."},
-  {id:'a18',n:'Age of Mythology: Retold',c:'jeux',src:'Xbox / Steam',p:'ok',t:60,d:"Via Xbox Game Pass ou Steam."},
-  {id:'a19',n:'Cities: Skylines II',c:'jeux',src:'Steam',p:'ok',t:60,d:"Sauvegarder config Skyve avant migration."},
-  {id:'a20',n:'Cyberpunk 2077',c:'jeux',src:'GOG / Steam',p:'ok',t:120,d:"Sauvegardes dans Documents\\CD Projekt Red."},
-  {id:'a21',n:"Marvel's Spider-Man Remastered",c:'jeux',src:'Steam',p:'ok',t:120,d:"Sauvegardes cloud Steam. ~75 Go."},
-  {id:'a22',n:'The Last of Us Part I',c:'jeux',src:'Steam',p:'ok',t:150,d:"Sauvegardes cloud. ~90 Go."},
-  {id:'a23',n:'MOUSE: P.I. For Hire',c:'jeux',src:'Steam',p:'ok',t:30,d:"Jeu indépendant — via Steam."},
-  {id:'a24',n:'Hercule (rétro)',c:'jeux',src:'Abandonware',p:'ok',t:5,d:"abandonware-france.org ou myabandonware.com."},
-  {id:'a25',n:'NordVPN',c:'reseau',src:'Site officiel',w:'NordVPN.NordVPN',p:'high',t:5,d:"Connexion compte récupère serveurs favoris."},
-  {id:'a26',n:'NextDNS',c:'reseau',src:'Site officiel',w:'NextDNS.NextDNS',p:'med',t:3,d:"DNS chiffré — noter ton profile ID avant migration."},
-  {id:'a27',n:'qBittorrent',c:'reseau',src:'Site officiel',w:'qBittorrent.qBittorrent',p:'med',t:3,d:"Reconfigurer dossier de téléchargement après install."},
-  {id:'a28',n:'Claude',c:'ia',src:'Microsoft Store',p:'high',t:3,d:"Connexion compte Anthropic Pro."},
-  {id:'a29',n:'ChatGPT Desktop',c:'ia',src:'Microsoft Store',p:'med',t:3,d:"Connexion compte OpenAI."},
-  {id:'a31',n:'Microsoft 365',c:'ia',src:'Site officiel',w:'Microsoft.Office',p:'high',t:15,d:"Connexion compte Microsoft récupère la licence."},
-  {id:'a32',n:'Google Chrome',c:'ia',src:'Site officiel',w:'Google.Chrome',p:'high',t:5,dep:'Requis avant les PWA',d:"Sync Google = extensions, mots de passe, raccourcis PWA."},
-  {id:'a33',n:'Google Drive',c:'ia',src:'Site officiel',w:'Google.GoogleDrive',p:'med',t:10,d:"Choisir le dossier de sync local après installation."},
-  {id:'a61',n:'WCUM (Widget Claude Usage Mini)',c:'ia',src:'Local — C:\\dev\\WCW',p:'high',t:15,dep:'Requiert Node.js + Python',d:"Widget Python/tkinter flottant — utilisation Claude session + hebdo. Barres de progression, thème auto, tray icon, notifications 80/90%, mode compact, snap bord. Dépendances : requests, pystray, Pillow. Récupérer depuis sauvegarde C:\\dev\\ puis pip install."},
-  {id:'a34',n:'UniGetUI',c:'system',src:'Site officiel',w:'MartiCliment.UniGetUI',p:'high',t:5,d:"Interface graphique pour winget/scoop/pip — meilleur outil de gestion."},
-  {id:'a35',n:'7-Zip',c:'system',src:'Site officiel',w:'7zip.7zip',p:'high',t:3,d:"Archiveur universel — .7z .zip .rar."},
-  {id:'a36',n:'CrystalDiskInfo',c:'system',src:'Site officiel',w:'CrystalDewWorld.CrystalDiskInfo',p:'med',t:3,d:"Santé disques SMART — surveiller Samsung 9100 PRO et Seagate shuck."},
-  {id:'a37',n:'CrystalDiskMark',c:'system',src:'Site officiel',w:'CrystalDewWorld.CrystalDiskMark',p:'med',t:3,d:"Benchmark disques — vérifier vitesses PCIe 5.0."},
-  {id:'a38',n:'HWiNFO64',c:'system',src:'Site officiel',w:'REALiX.HWiNFO',p:'med',t:3,d:"Monitoring hardware temps réel."},
-  {id:'a39',n:'AIDA64 Extreme',c:'system',src:'Site officiel',p:'med',t:5,d:"Benchmark système. Inclus 60j avec la B850-A ASUS. Vérifier ta licence."},
-  {id:'a40',n:'WinDirStat',c:'system',src:'Site officiel',w:'WinDirStat.WinDirStat',p:'ok',t:3,d:"Visualiseur espace disque."},
-  {id:'a41',n:'Winaero Tweaker',c:'system',src:'Site officiel',p:'med',t:3,d:"Tweaks Windows — exporter réglages avant migration (File → Export Tweaks)."},
-  {id:'a42',n:'Windhawk',c:'system',src:'Site officiel / GitHub',w:'RamenSoftware.Windhawk',p:'med',t:5,d:"Mods Windows — noter la liste des mods actifs avant migration. Mods hébergés sur GitHub."},
-  {id:'a43',n:'Adobe Acrobat',c:'system',src:'Site officiel',p:'med',t:10,d:"PDF complet — vérifier ta licence Adobe avant migration."},
-  {id:'a44',n:'Window Centering Helper',c:'system',src:'Site officiel',p:'ok',t:3,d:"Centre les fenêtres — utile avec dual monitor."},
-  {id:'a45',n:'Task Separator 11',c:'system',src:'Site officiel',p:'ok',t:3,d:"Séparateur dans la barre des tâches Windows 11."},
-  {id:'a46',n:'Wintoys',c:'system',src:'Microsoft Store',p:'ok',t:3,d:"Interface graphique pour optimiser Windows 11."},
-  {id:'a47',n:'Wiggler',c:'system',src:'Microsoft Store',p:'ok',t:3,d:"Simule activité souris — évite la mise en veille."},
-  {id:'a60',n:'FluentFlyout',c:'system',src:'Microsoft Store / GitHub',p:'med',t:3,d:"Remplace les flyouts volume/média de Windows 11 par un design Fluent 2 moderne. Open source, animations fluides, s'adapte aux couleurs système, widget barre des tâches."},
-  {id:'a48',n:'K-Lite Codec Pack',c:'media',src:'Site officiel',w:'CodecGuide.K-LiteCodecPack.Basic',p:'med',t:5,d:"Codecs vidéo — lire tous formats dans l'explorateur Windows."},
-  {id:'a49',n:'VLC',c:'media',src:'Site officiel',w:'VideoLAN.VLC',p:'high',t:3,d:"Lecteur universel — lit tout sans configuration. Incontournable."},
-  {id:'a50',n:'Deezer',c:'media',src:'Microsoft Store',p:'med',t:3,d:"Connexion compte récupère playlists et favoris."},
-  {id:'a53',n:'SteelSeries GG',c:'drivers',src:'Site officiel',p:'med',t:10,d:"Aerox 3 Ghost + Arctis Nova 7P Gen 2 — profils, DPI, RGB, EQ audio."},
-  {id:'a54',n:'AULA F108Pro (driver)',c:'drivers',src:'Site AULA',p:'med',t:5,d:"Driver clavier — macros, rétroéclairage RGB, mode 2.4 GHz."},
-  {id:'a57',n:'Discord',c:'comms',src:'Site officiel',w:'Discord.Discord',p:'high',t:5,d:"Connexion compte récupère serveurs, DMs et paramètres."},
-  {id:'a58',n:'WhatsApp Desktop',c:'comms',src:'Microsoft Store',p:'high',t:5,d:"Lier avec QR code depuis le Galaxy S26 Ultra."},
-  {id:'a59',n:'Lock Screen Wallpaper Synchroniser',c:'comms',src:'Microsoft Store',p:'ok',t:5,d:"Reconfigurer après connexion compte Microsoft."}
-];
+function handleImport(evt){
+  const file=evt.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    let d;
+    try{d=JSON.parse(e.target.result);}
+    catch(err){alert('❌ Fichier illisible : ce n\'est pas du JSON valide.');return;}
+    try{
+      if(d && d.type==='inventaire-migration-pc'){
+        const p=inventaireVersProfil(d);
+        appliquerProfil(p,true);
+        alert('✓ Inventaire importé : '+p.apps.length+' applications.\n\nLes étapes « Nouveau PC », « Données » et « PWA » restent celles du profil d\'exemple — à adapter à ta machine.');
+        return;
+      }
+      if(profilValide(d)){
+        appliquerProfil(d,true);
+        alert('✓ Profil importé : '+(NPC_DATA.length+APPS_DATA.length+DATA_SAVES.length+PWA_DATA.length)+' éléments.');
+        return;
+      }
+      if(d && d.state){
+        S={checked:d.state.checked||{},notes:d.state.notes||{},dates:d.state.dates||{},lic:d.state.lic||{},env:d.state.env||{},lastSave:null};
+        saveState();renderAll();updateGlobal();
+        alert('✓ Progression importée : '+Object.keys(S.checked).length+' tâches cochées.');
+        return;
+      }
+      alert('❌ Format non reconnu.\n\nAttendu : un inventaire produit par scan-pc.ps1, un profil, ou une progression exportée depuis cette page.');
+    }catch(err){alert('❌ Import impossible : '+err.message);}
+  };
+  reader.readAsText(file);evt.target.value='';
+}
 
-const DATA_SAVES = [
-  {id:'s1',n:'Projets dev locaux',p:'C:\\dev\\',note:"WCA, YouTube Notif — PRIORITÉ ABSOLUE, aucun filet de sécurité",pr:'high'},
-  {id:'s2',n:'Scripts custom Spcrit',p:'C:\\Users\\anton\\Downloads\\Spcrit\\',note:"IA-Menu.exe, presse_papier.exe, shutdown.exe — sources .ahk si disponibles",pr:'high'},
-  {id:'s3',n:"Clés SSH & GPG",p:'C:\\Users\\anton\\.ssh\\',note:"id_rsa, id_ed25519, known_hosts, config",pr:'high'},
-  {id:'s4',n:"Variables d'environnement",p:"Panneau config → Système → Variables d'env",note:"PATH, ANDROID_HOME, JAVA_HOME — toutes les variables custom",pr:'high',env:true},
-  {id:'s5',n:'Dossier Téléchargements',p:'C:\\Users\\anton\\Downloads\\',note:"Trier avant migration — garder uniquement l'essentiel",pr:'high'},
-  {id:'s6',n:'Licences logicielles',p:'Email / comptes en ligne',note:"AIDA64, Adobe Acrobat — noter les clés",pr:'high',lic:true},
-  {id:'s7',n:'Profils Vortex (mods)',p:'%AppData%\\Vortex\\',note:"Exporter via Vortex → Settings → Export avant désinstall",pr:'high'},
-  {id:'s8',n:'Config Android Studio',p:'%AppData%\\Google\\AndroidStudio2025.3\\',note:"SDK path, AVDs, keymaps, settings",pr:'med'},
-  {id:'s9',n:'Config PowerToys',p:'%LocalAppData%\\Microsoft\\PowerToys\\',note:"FancyZones layouts dual monitor, raccourcis",pr:'med'},
-  {id:'s10',n:'Config Windhawk',p:'%ProgramData%\\Windhawk\\',note:"Mods actifs et leurs configurations",pr:'med'},
-  {id:'s11',n:'Export Winaero Tweaker',p:"File → Export Tweaks (dans l'appli)",note:"Sauvegarder le .reg pour réimport",pr:'med'},
-  {id:'s12',n:'Wallpapers Wallpaper Engine',p:'Steam\\steamapps\\workshop\\content\\431960\\',note:"Workshop se retélécharge via Steam. Playlists custom à sauvegarder.",pr:'med'},
-  {id:'s13',n:'Sauvegardes jeux (hors cloud)',p:'Documents\\My Games\\ + %AppData%',note:"GTA V, RDR2, Cyberpunk — vérifier cloud Steam d'abord",pr:'med'},
-  {id:'s14',n:'Config Skyve (Cities Skylines II)',p:'%LocalAppData%\\Colossal Order\\Cities Skylines II\\',note:"Exporter le profil Skyve",pr:'med'},
-  {id:'s15',n:'Projets Unity',p:'Selon localisation tes projets Unity',note:"ProjectSettings — versionner sur GitHub si possible",pr:'ok'},
-  {id:'s16',n:'MacroDroid (Android)',p:'Sur téléphone — cloud sync automatique',note:"Auto sur Galaxy S26 Ultra.",pr:'ok'}
-];
-
-const PWA_DATA = [
-  {id:'p1',n:'Gmail',u:'https://mail.google.com',d:"Raccourci Chrome existant — se restaure automatiquement avec la sync Google."},
-  {id:'p2',n:'Google Calendar (Agenda)',u:'https://calendar.google.com',d:"Raccourci Chrome existant — se restaure avec la sync Google."},
-  {id:'p3',n:'Google Keep',u:'https://keep.google.com',d:"Raccourci Chrome existant — se restaure avec la sync Google."},
-  {id:'p4',n:'Google Gemini',u:'https://gemini.google.com',d:"Raccourci Chrome existant — se restaure avec la sync Google."},
-  {id:'p5',n:'YouTube',u:'https://youtube.com',d:"Raccourci Chrome existant — se restaure avec la sync Google."},
-  {id:'p6',n:'PC Part Picker',u:'https://pcpartpicker.com',d:"Raccourci Chrome existant — utile pour suivre ta config 2027."},
-  {id:'p7',n:'Carrefour.fr',u:'https://www.carrefour.fr',d:"Raccourci Chrome existant — se restaure avec la sync Google."},
-  {id:'p8',n:'E.Leclerc Drive',u:'https://www.leclercdrive.fr',d:"Raccourci Chrome existant — se restaure avec la sync Google."}
-];
-
-const SEARCH_QUERIES = {
-  'Android Studio':'site:developer.android.com android studio download',
-  'Python 3.14':'site:python.org download python 3',
-  'Node.js':'site:nodejs.org download',
-  'Git':'site:git-scm.com download',
-  'PowerShell 7':'site:github.com PowerShell releases download',
-  'PowerToys':'site:github.com microsoft PowerToys releases',
-  'AutoHotkey':'site:github.com AutoHotkey AutoHotkey releases',
-  'Visual Studio Build Tools 2022':'site:visualstudio.microsoft.com build tools download',
-  'Unity 2022.3 LTS':'site:unity.com download unity hub',
-  'Java 8 (JDK)':'site:java.com download JDK 8',
-  'Steam':'site:store.steampowered.com about download',
-  'Epic Games Launcher':'site:store.epicgames.com download launcher',
-  'EA App':'site:ea.com ea-app download',
-  'Vortex (mod manager)':'site:nexusmods.com vortex mod manager download',
-  'Wallpaper Engine':'site:store.steampowered.com wallpaper engine 431960',
-  'Minecraft Java Edition':'site:minecraft.net download java edition',
-  'Minecraft Bedrock (UWP)':'Minecraft Bedrock Microsoft Store Windows',
-  'Age of Mythology: Retold':'Age of Mythology Retold download Steam Xbox',
-  'Cities: Skylines II':'Cities Skylines 2 download Steam',
-  'Cyberpunk 2077':'Cyberpunk 2077 download Steam GOG',
-  "Marvel's Spider-Man Remastered":"Marvel Spider-Man Remastered download Steam",
-  'The Last of Us Part I':'The Last of Us Part I download Steam',
-  'MOUSE: P.I. For Hire':'MOUSE PI For Hire download Steam',
-  'Hercule (rétro)':'Hercule retro game abandonware download',
-  'NordVPN':'site:nordvpn.com download',
-  'NextDNS':'site:nextdns.io download',
-  'qBittorrent':'site:qbittorrent.org download',
-  'Claude':'Claude desktop app Microsoft Store Windows',
-  'ChatGPT Desktop':'ChatGPT desktop app Microsoft Store Windows',
-  'WCUM (Widget Claude Usage Mini)':'WCUM Widget Claude Usage Mini Python tkinter',
-  'Microsoft 365':'site:microsoft.com download microsoft 365',
-  'Google Chrome':'site:google.com chrome download',
-  'Google Drive':'site:google.com drive download',
-  'UniGetUI':'site:github.com marticliment UniGetUI releases',
-  '7-Zip':'site:7-zip.org download',
-  'CrystalDiskInfo':'site:crystalmark.info CrystalDiskInfo download',
-  'CrystalDiskMark':'site:crystalmark.info CrystalDiskMark download',
-  'HWiNFO64':'site:hwinfo.com download',
-  'AIDA64 Extreme':'site:aida64.com download extreme',
-  'WinDirStat':'site:windirstat.net download',
-  'Winaero Tweaker':'site:winaero.com download winaero tweaker',
-  'Windhawk':'site:github.com ramensoftware windhawk releases',
-  'Adobe Acrobat':'site:adobe.com download acrobat reader',
-  'Window Centering Helper':'site:kamilszymborski.github.io download window centering helper',
-  'Task Separator 11':'site:github.com DrummerSi TaskSeparator11 releases',
-  'Wintoys':'Wintoys Microsoft Store Windows app',
-  'Wiggler':'Wiggler mouse Microsoft Store Windows',
-  'FluentFlyout':'site:github.com unchihugo FluentFlyout releases',
-  'K-Lite Codec Pack':'site:codecguide.com k-lite codec pack basic download',
-  'VLC':'site:videolan.org download VLC',
-  'Deezer':'Deezer Microsoft Store Windows',
-  'SteelSeries GG':'site:steelseries.com gg download',
-  'AULA F108Pro (driver)':'AULA F108Pro driver download official',
-  'Discord':'site:discord.com download',
-  'WhatsApp Desktop':'WhatsApp desktop Microsoft Store Windows',
-  'Lock Screen Wallpaper Synchroniser':'Lock Screen Wallpaper Synchroniser Microsoft Store',
-  'AMD Chipset Driver (B850)':'site:amd.com chipset drivers AM5 B850 download',
-  'ASUS BIOS Update (B850-A)':'site:asus.com ROG STRIX B850-A GAMING WIFI BIOS download',
-  'ASUS DriverHub (B850-A)':'site:asus.com DriverHub B850-A download',
-  'Realtek LAN (via DriverHub)':'site:asus.com ROG STRIX B850-A LAN driver',
-  'WiFi 7 Driver (via DriverHub)':'site:asus.com ROG STRIX B850-A WiFi 7 driver',
-  'Realtek Audio SupremeFX (via DriverHub)':'site:asus.com ROG STRIX B850-A audio driver',
-  'NVIDIA App + drivers RTX 5070 Ti':'site:nvidia.com GeForce RTX 5070 Ti driver download',
-  'MSI Afterburner':'site:msi.com afterburner download',
-  'Corsair iCUE (bridge RAM RGB)':'site:corsair.com iCUE software download',
-  'SignalRGB (RGB unifié)':'site:signalrgb.com download',
-  'Xiaomi Display Manager':'Xiaomi G Pro 27Qi display manager download',
-  'Windows 11 Pro — activation':'Windows 11 Pro OEM key legitimate UE',
-  'Gmail':'Gmail PWA install Chrome',
-  'Google Calendar (Agenda)':'Google Calendar PWA install Chrome',
-  'Google Keep':'Google Keep PWA install Chrome',
-  'Google Gemini':'Google Gemini PWA install Chrome',
-  'YouTube':'YouTube PWA install Chrome',
-  'PC Part Picker':'PCPartPicker PWA install Chrome',
-  'Carrefour.fr':'Carrefour.fr site web',
-  'E.Leclerc Drive':'E.Leclerc Drive site web'
-};
 
 // ═══ STATE ═══
 const PRIO = {high:0,med:1,ok:2};
@@ -677,15 +716,15 @@ function searchUrl(name){const q=SEARCH_QUERIES[name]||('download '+name+' offic
 
 // ═══ STORAGE ═══
 function loadState(){
-  try{const r=localStorage.getItem('am31_state_v3');if(r){const d=JSON.parse(r);if(d&&typeof d==='object'){S.checked=d.checked||{};S.notes=d.notes||{};S.dates=d.dates||{};S.lastSave=d.lastSave||null;S.lic=d.lic||{};S.env=d.env||{};}}}catch(e){console.error(e);}
+  try{const r=localStorage.getItem(CLE_ETAT);if(r){const d=JSON.parse(r);if(d&&typeof d==='object'){S.checked=d.checked||{};S.notes=d.notes||{};S.dates=d.dates||{};S.lastSave=d.lastSave||null;S.lic=d.lic||{};S.env=d.env||{};}}}catch(e){console.error(e);}
   updateSaveLabel();
 }
-function saveState(){S.lastSave=Date.now();try{localStorage.setItem('am31_state_v3',JSON.stringify(S));}catch(e){console.error(e);}updateSaveLabel();}
+function saveState(){S.lastSave=Date.now();try{localStorage.setItem(CLE_ETAT,JSON.stringify(S));}catch(e){console.error(e);}updateSaveLabel();}
 function updateSaveLabel(){}
 
 // ═══ THEME ═══
 function applyTheme(){document.documentElement.setAttribute('data-theme',isDark?'dark':'light');document.getElementById('theme-ico').textContent=isDark?'☀️':'🌙';document.getElementById('theme-lbl').textContent=isDark?'Clair':'Sombre';}
-function toggleTheme(){isDark=!isDark;try{localStorage.setItem('am31_theme',isDark?'dark':'light');}catch(e){}applyTheme();}
+function toggleTheme(){isDark=!isDark;try{localStorage.setItem(CLE_THEME,isDark?'dark':'light');}catch(e){}applyTheme();}
 
 // ═══ MODE ═══
 function setMode(m){viewMode=m;document.body.className=m==='compact'?'compact':'';document.getElementById('btn-normal').classList.toggle('active',m==='normal');document.getElementById('btn-compact').classList.toggle('active',m==='compact');}
@@ -785,7 +824,8 @@ function mkNoteArea(id){const open=openNotes[id]?'open':'';const val=S.notes[id]
 // ═══ RENDER NPC ═══
 function renderNPC(){
   const cont=document.getElementById('list-npc');
-  let html='<div class="sec-hdr first">🖥️ Drivers & config — AMD 9800X3D · ASUS B850-A · RTX 5070 Ti</div>';
+  // L'intitulé suit le profil : un profil de scan n'a pas le même matériel qu'un autre.
+  let html='<div class="sec-hdr first">🖥️ Drivers &amp; configuration — dans cet ordre après Windows</div>';
   const sorted=NPC_DATA.slice().sort(function(a,b){return a.o-b.o;});
   var postStarted=false;
   sorted.forEach(function(item){
@@ -873,6 +913,7 @@ function mkAppItem(a){
   const pBadge=a.p==='high'?'<span class="badge b-high">⚡ Haute</span>':'';
   const tBadge=a.t?'<span class="badge b-time">⏱ '+fmtTime(a.t)+'</span>':'';
   const warn=a.warn?'<div class="warn-badge">⚠️ '+esc(a.warn)+'</div>':'';
+  const depBadge=a.dep?mkDepBadge(a.dep):'';
   return '<div class="item'+(ck?' done':'')+'" onclick="toggle(\''+a.id+'\',\''+esc(a.n).replace(/'/g,"\\'")+'\')">'
     +mkChkbox()
     +'<div class="item-body">'
@@ -1041,7 +1082,7 @@ function updateDayEst(){
 function updateTitle(){
   const all=NPC_DATA.concat(APPS_DATA,DATA_SAVES,PWA_DATA);
   const done=all.filter(function(x){return S.checked[x.id];}).length;
-  document.title='('+done+'/'+all.length+') Migration PC — Antoni 2027';
+  document.title='('+done+'/'+all.length+') '+(PROFIL_NOM||'Migration PC');
 }
 
 function renderAll(){renderNPC();renderApps();renderData();renderPWA();updateNextBtns();}
@@ -1062,25 +1103,8 @@ function exportJSON(){
   dl(blob,'progression-migration-pc.json');
   S.lastSave=Date.now();saveState();
 }
-function importJSON(){document.getElementById('json-file').click();}
-function handleImport(evt){
-  const file=evt.target.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      const data=JSON.parse(e.target.result);
-      if(data.state){
-        S={checked:data.state.checked||{},notes:data.state.notes||{},dates:data.state.dates||{},lastSave:null};
-        saveState();renderAll();updateGlobal();
-        alert('✓ Progression importée ! ('+Object.keys(S.checked).length+' tâches cochées)');
-      }
-    }catch(err){alert('❌ Erreur : fichier JSON invalide.');}
-  };
-  reader.readAsText(file);evt.target.value='';
-}
-
 function exportWinget(){
-  const lines=['# Script winget — Migration PC Antoni',"# Exécuter en tant qu'administrateur",''];
+  const lines=['# Script winget — '+(PROFIL_NOM||'Migration PC'),"# Exécuter dans PowerShell en tant qu'administrateur",''];
   Object.keys(CATS).forEach(function(cat){
     const apps=APPS_DATA.filter(function(a){return a.c===cat&&a.w;});
     if(!apps.length)return;
@@ -1088,11 +1112,11 @@ function exportWinget(){
     apps.forEach(function(a){lines.push('winget install --id '+a.w+' -e --accept-source-agreements --accept-package-agreements');});
     lines.push('');
   });
-  dl(new Blob([lines.join('\n')],{type:'text/plain'}),'winget-migration-pc-Antoni.ps1');
+  dl(new Blob([lines.join('\n')],{type:'text/plain'}),'winget-migration-pc.ps1');
 }
 
 function exportTxt(){
-  const lines=['MIGRATION PC FULL WHITE','Antoni · 9800X3D · RTX 5070 Ti · B850-A · 2027',''];
+  const lines=[(PROFIL_NOM||'MIGRATION PC').toUpperCase(),PROFIL_SOUS||'',''];
   lines.push('=== NOUVEAU PC ===');
   NPC_DATA.slice().sort(function(a,b){return a.o-b.o;}).forEach(function(n){lines.push((S.checked[n.id]?'[x]':'[ ]')+' '+n.o+'. '+n.n);});
   lines.push('','=== APPS ===');
@@ -1106,13 +1130,13 @@ function exportTxt(){
   DATA_SAVES.forEach(function(s){lines.push((S.checked[s.id]?'[x]':'[ ]')+' '+s.n+'\n    '+s.p);});
   lines.push('','=== PWA ===');
   PWA_DATA.forEach(function(p){lines.push((S.checked[p.id]?'[x]':'[ ]')+' '+p.n);});
-  dl(new Blob([lines.join('\n')],{type:'text/plain'}),'migration-pc-Antoni.txt');
+  dl(new Blob([lines.join('\n')],{type:'text/plain'}),'migration-pc.txt');
 }
 
 // ═══ INIT ═══
 window.addEventListener('DOMContentLoaded',function(){
   try{
-    const savedTheme=localStorage.getItem('am31_theme');
+    const savedTheme=localStorage.getItem(CLE_THEME);
     if(savedTheme)isDark=savedTheme==='dark';
     else if(window.matchMedia)isDark=window.matchMedia('(prefers-color-scheme:dark)').matches;
   }catch(e){}
@@ -1122,8 +1146,10 @@ window.addEventListener('DOMContentLoaded',function(){
     if(e.target.classList.contains('lic-input')){saveLic(e.target.dataset.id,e.target.value);}
     if(e.target.classList.contains('env-input')){saveEnv(e.target.dataset.var,e.target.value);}
   });
-  renderAll();
-  updateGlobal();
+  // Le profil mémorisé prime sur celui d'exemple. appliquerProfil déclenche le rendu.
+  const memorise=chargerProfilMemorise();
+  try{appliquerProfil(memorise||PROFIL_DEFAUT,false);}
+  catch(e){console.error(e);appliquerProfil(PROFIL_DEFAUT,false);}
   renderHistory();
 });
 
