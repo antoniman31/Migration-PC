@@ -6,6 +6,8 @@ les logiciels de l'ancienne machine, la page les affiche en liste à cocher.
 Fichier unique, aucune dépendance, aucun serveur. Fonctionne depuis une clé USB sur un
 PC fraîchement installé, sans réseau.
 
+![La checklist, onglet Apps](captures/checklist.png)
+
 ---
 
 ## Sommaire
@@ -94,7 +96,15 @@ exportée en JSON pour passer d'une machine à l'autre.
 
 **Navigation** — mode normal ou compact, thème clair/sombre suivant les préférences
 système, recherche sur les quatre onglets à la fois, tri des apps par catégorie,
-priorité, durée ou ordre conseillé, filtre sur les apps sans winget.
+priorité, durée ou ordre conseillé, filtre sur les apps sans winget. La mise en page
+s'adapte aux écrans étroits : cibles tactiles agrandies, textes relevés, champs à 16 px
+pour éviter le zoom automatique d'iOS.
+
+**Installation sur l'appareil** — depuis la version en ligne, la page s'installe comme
+une application et s'ouvre ensuite sans réseau. Le service worker ne met en cache que le
+squelette ; la progression vit dans le stockage local et n'est jamais affectée. Ouverte
+en `file://` depuis une clé USB, la page ignore simplement cette partie : elle est déjà
+autonome.
 
 **Installation** — le badge winget copie la commande d'installation en un clic, un
 bouton par catégorie copie le script de toute la section. Deux exports pour réinstaller :
@@ -198,12 +208,14 @@ JSON est le seul transfert fiable.
 
 ```bash
 npm install                       # une seule fois
-npm test                          # profil + checklist, sans navigateur ni Windows
+npm test                          # profil, checklist et formats winget
 npm run test:scan                 # scanner (nécessite PowerShell)
 npm run test:navigateur           # rendu réel dans Chromium
+npm run test:pwa                  # installabilité et fonctionnement hors ligne
+npm run test:mobile               # ergonomie tactile
 ```
 
-Quatre suites, dans l'ordre où la CI les lance.
+Sept suites, dans l'ordre où la CI les lance.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
@@ -225,9 +237,18 @@ Deux variables d'environnement facultatives : `CHROME` pour pointer un binaire C
 existant, `PROFIL` pour tester votre propre profil à la place de l'exemple (par défaut
 il cherche `profil-local.json` à la racine).
 
+`tests/test-pwa.js` sert le dépôt en HTTP local — un service worker ne s'enregistre pas
+en `file://` — et vérifie que la page s'installe, se met en cache et s'ouvre réseau
+coupé, tout en restant fonctionnelle en `file://`.
+
+`tests/test-mobile.js` ouvre la page à la largeur de deux téléphones, dans les deux
+thèmes, et mesure les cibles tactiles, les écarts entre elles, les tailles de texte et
+les débordements horizontaux. Par défaut il rapporte ; `STRICT=1` le fait échouer, ce
+que la CI utilise.
+
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les quatre suites à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les sept suites à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 
@@ -241,6 +262,7 @@ et court-circuiterait les tests.
 Migration-PC/
 ├── index.html                    # la checklist (tout est dedans)
 ├── scan-pc.ps1                   # le scanner Windows
+├── manifest.json, sw.js, icons/  # installation et fonctionnement hors ligne
 ├── presets/exemple.json          # profil d'exemple, aussi embarqué dans index.html
 ├── tests/                        # suites Node, PowerShell et navigateur
 └── .github/workflows/ci.yml      # tests, puis publication si tout est vert
@@ -290,3 +312,7 @@ scan ne peut pas deviner qu'il faut activer le profil XMP dans le BIOS.
 
 **Epic Games, GOG et les autres lanceurs ne sont pas parcourus** — seul Steam l'est. Les
 jeux des autres plateformes apparaissent uniquement si leur lanceur est détecté.
+
+**L'installation sur l'appareil demande HTTPS.** Un service worker ne s'enregistre pas
+depuis un fichier ouvert directement : depuis une clé USB, la page fonctionne mais ne
+s'installe pas et n'a pas de cache. Elle n'en a pas besoin, tout est dans le fichier.

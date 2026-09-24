@@ -2,7 +2,14 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="Checklist de réinstallation Windows pilotée par un profil, avec inventaire des logiciels installés.">
+<meta name="theme-color" content="#5493FF">
+<!-- Le manifeste n'a d'effet qu'en HTTPS. Ouverte en file:// depuis une clé
+     USB, la page l'ignore et fonctionne à l'identique. -->
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>Migration PC — Checklist</title>
 <style>
 :root{
@@ -316,6 +323,64 @@ body.compact .b-dep{display:none}
 .panne-fermer{flex-shrink:0;background:transparent;border:none;color:var(--tx2);font-size:13px;cursor:pointer;padding:0 2px}
 .panne-fermer:hover{color:var(--tx)}
 @media print{.panne{display:none!important}}
+
+/* ═══ Écrans tactiles étroits ═══
+   La page se consulte souvent téléphone en main pendant qu'on monte la
+   machine. Les tailles de l'affichage large (texte à 10-11 px, boutons de
+   22 px) y sont sous les seuils d'ergonomie tactile : cible d'au moins
+   44 × 24 px (Apple HIG, WCAG 2.5.5), 8 px entre deux cibles, texte à 12 px,
+   et 16 px dans un champ — en dessous, Safari iOS zoome de lui-même à la
+   mise au point. Ces règles ne s'appliquent qu'en dessous de 560 px : le
+   rendu large ne bouge pas. Mesuré par tests/test-mobile.js. */
+@media (max-width:560px){
+  /* Cibles : une largeur minimale suffit pour les boutons d'icône, dont le
+     contenu ne fait que deux caractères. */
+  .icon-btn,.sm-btn,.fb,.chk-all,.lnk-btn,.next-btn,.session-stop,.panne-fermer{
+    min-height:34px;min-width:44px;font-size:12px}
+  .note-btn{min-height:34px;min-width:44px;font-size:14px}
+  .tab{min-height:44px;font-size:13px}
+  .chkbox{min-width:24px;min-height:24px}
+
+  /* Séparation : deux cibles à 6 px l'une de l'autre ne se visent pas au doigt. */
+  .hdr-right,.tbar-right,.fbs,.day-cards,.sec-hdr-r{gap:8px}
+  .hdr-right{flex-wrap:wrap}
+  .item-badges{gap:6px}
+
+  /* Lisibilité : plus rien sous 12 px. */
+  .day-est-label,.day-card,.day-total,.gp-time,.h-label,.history-bar,
+  .sec-prog-txt,.b-num,.item-date,.item-desc,.save-note,.save-path,
+  .tbar-info,.gsearch-count,.sec-hdr-cnt{font-size:12px}
+  .gp-label,.tab-badge,.badge,.sec-hdr{font-size:12px}
+  .lic-field label,.env-row label{font-size:12px}
+
+  /* Champs : 16 px, sinon iOS zoome à la mise au point et casse la mise en page. */
+  input,select,textarea,.lic-field input,.env-row input,
+  #gsearch-input,#apps-search,.sort-sel{font-size:16px}
+
+  /* Les libellés de variables passent au-dessus du champ : côte à côte,
+     110 px de libellé ne laissent plus rien au champ sur 360 px de large. */
+  .env-row{flex-direction:column;align-items:stretch;gap:3px}
+  .env-row label{width:auto}
+  /* Les trois lignes de variables se suivaient à 4 px : sur un écran tactile
+     on vise le mauvais champ. */
+  .env-fields{gap:10px}
+
+  /* .icon-only fixe une largeur de 32 px pour l'affichage large : la règle
+     générique plus haut ne suffit pas à la remplacer. */
+  .icon-btn.icon-only{min-width:44px;padding:5px 10px}
+
+  /* Badges cliquables : le badge winget copie la commande, le bouton de
+     catégorie copie le script — ce sont des cibles, pas des décorations. */
+  .b-winget,.cat-winget{min-height:28px;font-size:12px;padding:4px 9px}
+  .b-winget{max-width:none}
+  .cat-winget{min-width:44px}
+
+  .warn-badge{font-size:12px}
+
+  /* Un bouton de section collé au premier élément de la liste se vise mal. */
+  .sec-hdr{padding-bottom:10px}
+  .sec-content .item{margin-top:4px}
+}
 </style>
 </head>
 <body>
@@ -1327,7 +1392,21 @@ window.addEventListener('DOMContentLoaded',function(){
   try{appliquerProfil(memorise||PROFIL_DEFAUT,false);}
   catch(e){console.error(e);appliquerProfil(PROFIL_DEFAUT,false);}
   renderHistory();
+  enregistrerServiceWorker();
 });
+
+// ═══ INSTALLATION (PWA) ═══
+// Uniquement dans un contexte sécurisé — HTTPS, ou une adresse locale que le
+// navigateur traite comme telle. Depuis une clé USB en file://, l'API refuse :
+// c'est le cas normal, et l'échec ne doit rien casser. isSecureContext est le
+// test qui fait autorité ; énumérer les noms d'hôtes laisse passer 127.0.0.1.
+function enregistrerServiceWorker(){
+  if(!('serviceWorker' in navigator))return;
+  if(!window.isSecureContext)return;
+  navigator.serviceWorker.register('sw.js').catch(function(e){
+    console.info("Service worker non enregistré :",e&&e.message);
+  });
+}
 
 // ═══ V6 : BADGE DÉPENDANCE ═══
 function mkDepBadge(dep){

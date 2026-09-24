@@ -67,6 +67,14 @@ jobs:
       - name: Checklist — rendu navigateur
         run: node tests/test-navigateur.js
 
+      - name: Installabilité et fonctionnement hors ligne
+        run: node tests/test-pwa.js
+
+      # STRICT fait echouer sur le moindre ecart : le projet part de zero
+      # defaut, une regression doit bloquer plutot que d'etre signalee.
+      - name: Ergonomie tactile
+        run: STRICT=1 node tests/test-mobile.js
+
   publier:
     name: Publier sur Pages
     needs: verifier

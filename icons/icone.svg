@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Checklist de migration">
+  <rect width="512" height="512" rx="112" fill="#5493FF"/>
+  <g fill="none" stroke="#ffffff" stroke-width="30" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M150 176 l34 34 l62 -68"/>
+    <path d="M150 288 l34 34 l62 -68"/>
+    <path d="M150 400 l34 34 l62 -68"/>
+    <path d="M300 186 h74"/>
+    <path d="M300 298 h74"/>
+    <path d="M300 410 h74"/>
+  </g>
+</svg>

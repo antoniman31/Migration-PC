@@ -7,7 +7,9 @@
   "scripts": {
     "test": "node tests/test-profil-sync.js && node tests/test-checklist.js && node tests/test-winget.js",
     "test:navigateur": "node tests/test-navigateur.js",
-    "test:scan": "pwsh -File tests/test-scan.ps1"
+    "test:scan": "pwsh -File tests/test-scan.ps1",
+    "test:pwa": "node tests/test-pwa.js",
+    "test:mobile": "node tests/test-mobile.js"
   },
   "devDependencies": {
     "playwright": "^1.63.0"
