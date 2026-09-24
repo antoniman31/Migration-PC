@@ -457,7 +457,7 @@ function Read-Variables {
         Write-Host " illisibles, ignore" -ForegroundColor Yellow
         return [ordered]@{}
     }
-    Write-Host " $(@($vars).Count) relevee(s)"
+    Write-Host " $(Get-Nombre $vars) relevee(s)"
     return $vars
 }
 
@@ -553,6 +553,20 @@ function Join-CheminSur {
 # avoir ecrit le fichier, donc en affichant une erreur rouge sur un scan reussi.
 # Le cas n'a rien d'exotique : aucune source ne donne la taille de toutes les
 # applications, et certaines n'en donnent aucune.
+# Compter ce qu'on a trouve, sans se tromper de forme.
+#
+# @($x).Count est la parade habituelle : PowerShell aplatit un tableau d'un
+# seul element, et .Count echoue alors sous Set-StrictMode. Mais applique a un
+# DICTIONNAIRE, @() l'enveloppe entier dans un tableau et rend 1, toujours. Le
+# scan annoncait ainsi « 1 variable d'environnement relevee » quel que soit le
+# nombre reel. Trouve en executant le script, pas en le relisant.
+function Get-Nombre {
+    param($Valeur)
+    if ($null -eq $Valeur) { return 0 }
+    if ($Valeur -is [System.Collections.IDictionary]) { return $Valeur.Count }
+    return @($Valeur).Count
+}
+
 function Get-Somme {
     param($Elements, [string]$Propriete)
     if (-not $Elements) { return 0 }

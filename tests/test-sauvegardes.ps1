@@ -109,6 +109,30 @@ try {
     foreach ($e in $r2.elements) { $etat2[$e.id] = $e.etat }
     ok 'tolerance large accepte l ecart' $etat2['s2'] 'ok'
 
+    "--- un profil incomplet ne fait pas tout tomber ---"
+    # Un profil ecrit a la main peut omettre un champ. Sous Set-StrictMode,
+    # lire une propriete absente est fatal : un seul element incomplet
+    # arretait la verification de tous les autres.
+    $fTrou = Join-Path $base 'profil-troue.json'
+    $troue = @{
+        meta = @{ nom = 'T' }; cats = @{}; npc = @(); apps = @(); pwa = @(); ordre = @()
+        data = @(
+            @{ id = 't1'; n = 'Sans chemin'; pr = 'high' },
+            @{ id = 't2'; pr = 'high'; p = (Join-Path $src 'Documents') },
+            @{ n = 'Sans identifiant'; p = 'C:\\nexistepas'; pr = 'ok' }
+        )
+    }
+    Set-Content -Path $fTrou -Value ($troue | ConvertTo-Json -Depth 6) -Encoding UTF8
+    $fr = Join-Path $base 'rapport-troue.json'
+    & (Join-Path $racine 'verifier-sauvegardes.ps1') -Destination $dst -Profil $fTrou -Sortie $fr | Out-Null
+    $rt = Get-Content $fr -Raw | ConvertFrom-Json
+    ok 'les trois elements sont rapportes' @($rt.elements).Count 3
+    $sansChemin = $rt.elements | Where-Object { $_.id -eq 't1' }
+    ok 'celui sans chemin est dit non verifiable' $sansChemin.etat 'non-verifiable'
+    ok 'et on explique pourquoi'   $sansChemin.detail 'aucun chemin declare'
+    $sansNom = $rt.elements | Where-Object { $_.id -eq 't2' }
+    ok 'celui sans nom garde un libelle' $sansNom.nom 'Element sans nom'
+
     "--- destination introuvable ---"
     $code = 0
     try {

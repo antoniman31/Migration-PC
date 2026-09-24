@@ -282,13 +282,31 @@ ok 'version Epic'            $e.version '1.4.2'
 ok 'jeu Epic classe jeux'    $e.cat 'jeux'
 Remove-Item $dossierEpic -Recurse -Force
 
+"--- compter sans se tromper de forme ---"
+# @($x).Count applique a un dictionnaire rend 1, toujours : le scan annoncait
+# « 1 variable d environnement relevee » quel que soit le nombre reel. Le bug
+# ne se voyait qu'en executant le script.
+$dico = [ordered]@{ 'JAVA_HOME'='C:/java'; 'GOPATH'='C:/go'; 'PATH (utilisateur)'='C:/bin' }
+ok 'le piege existe toujours'    (@($dico).Count) 1
+ok 'un dictionnaire est compte'  (Get-Nombre $dico) 3
+ok 'un dictionnaire vide vaut 0' (Get-Nombre ([ordered]@{})) 0
+ok 'un tableau reste compte'     (Get-Nombre @('a','b')) 2
+ok 'un seul element aussi'       (Get-Nombre @('a')) 1
+ok 'un element nu aussi'         (Get-Nombre 'a') 1
+ok 'rien vaut 0'                 (Get-Nombre $null) 0
+
 "--- variables d'environnement ---"
-# Read-Variables lit l'environnement reel ; on verifie surtout que les
-# variables standard sont bien ecartees et qu'une variable custom passe.
-[Environment]::SetEnvironmentVariable('MPC_TEST_VAR', 'D:/test', 'Process')
-$standard = @('PATH','TEMP','USERPROFILE','APPDATA','WINDIR')
-ok 'PATH est dans la liste standard'     ($standard -contains 'PATH') $true
-ok 'une variable custom ne l est pas'    ($standard -contains 'MPC_TEST_VAR') $false
+# Read-Variables lit l'environnement reel : hors Windows la portee « User »
+# n'existe pas, donc on ne peut pas verifier ce qu'elle retient. Ce qu'on peut
+# verifier, c'est qu'elle rend bien un dictionnaire comptable et qu'elle ne
+# tombe pas.
+$lues = Read-Variables
+ok 'un dictionnaire est rendu'   ($lues -is [System.Collections.IDictionary]) $true
+ok 'comptable sans erreur'       ((Get-Nombre $lues) -ge 0) $true
+# Les variables standard de Windows ne doivent jamais partir dans l inventaire :
+# elles ne disent rien de la machine et polluent l onglet Donnees.
+$fuite = @($lues.Keys | Where-Object { $_ -in @('PATH','TEMP','WINDIR','USERPROFILE','APPDATA') })
+ok 'aucune variable standard ne fuit' $fuite.Count 0
 
 "--- inventaire avec les nouveaux champs ---"
 $script:resultats = @{}

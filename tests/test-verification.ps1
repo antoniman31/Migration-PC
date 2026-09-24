@@ -79,6 +79,37 @@ ok '  Blender reste absent'              ($large.absents -contains 'a3') $true
 $approx = @($large.trouves | Where-Object { $_.confiance -eq 'approximative' })
 ok '  2 correspondances approximatives'  $approx.Count 2
 
+"--- le vrai script, de bout en bout ---"
+# Les blocs ci-dessus rejouent la logique de rapprochement : ils verifient le
+# raisonnement, pas le fichier. Un profil incomplet ne les atteint donc jamais,
+# alors que c'est la que le script tombait — lire une propriete absente est
+# fatal sous Set-StrictMode. On lance ici le script lui-meme.
+$racineP = Split-Path $PSScriptRoot -Parent
+$bac = Join-Path ([System.IO.Path]::GetTempPath()) ("mpc-vpc-" + (Get-Random))
+New-Item -ItemType Directory -Path $bac -Force | Out-Null
+try {
+    $fp = Join-Path $bac 'profil-troue.json'
+    $troue = @{
+        meta = @{ nom = 'T' }; cats = @{}; npc = @(); pwa = @(); data = @(); ordre = @()
+        apps = @(
+            @{ id = 'a1'; n = '7-Zip'; c = 'x'; src = 's'; w = '7zip.7zip'; p = 'high'; t = 5; d = 'd' },
+            @{ id = 'a2'; c = 'x'; src = 's'; p = 'high'; t = 5; d = 'd' },
+            @{ n = 'Sans identifiant'; c = 'x'; src = 's'; p = 'ok'; t = 1; d = 'd' }
+        )
+    }
+    Set-Content -Path $fp -Value ($troue | ConvertTo-Json -Depth 6) -Encoding UTF8
+    $fs = Join-Path $bac 'verif.json'
+    & (Join-Path $racineP 'verifier-pc.ps1') -Profil $fp -Sortie $fs -PasDOuverture | Out-Null
+    ok 'le script va au bout'        (Test-Path $fs) $true
+    $rv = Get-Content $fs -Raw | ConvertFrom-Json
+    ok 'les trois elements sont vus' (@($rv.trouves).Count + @($rv.absents).Count) 3
+    $sansNom = @($rv.absents | Where-Object { $_.id -eq 'a2' })
+    ok 'celui sans nom garde un libelle' $sansNom[0].nom 'Element sans nom'
+} finally {
+    Remove-Item $bac -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item (Join-Path $racineP 'resultat-scan.js') -Force -ErrorAction SilentlyContinue
+}
+
 "--- serialisation ---"
 $v = [ordered]@{
     type = 'verification-migration-pc'; version = 1; genere = (Get-Date).ToString('o')

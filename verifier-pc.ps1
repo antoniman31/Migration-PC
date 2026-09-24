@@ -127,6 +127,19 @@ Write-Host ""
 
 # ---------------------------------------------------------------- rapprochement
 
+# Un profil ecrit a la main peut omettre un champ. Sous Set-StrictMode, lire
+# une propriete absente est une erreur fatale : tout le script s'arretait sur
+# un seul element incomplet. Trouve en executant le script sur un profil sans
+# champ « p ».
+function Get-Champ {
+    param($Objet, [string]$Nom, $Defaut = '')
+    if ($null -eq $Objet) { return $Defaut }
+    if (-not $Objet.PSObject.Properties[$Nom]) { return $Defaut }
+    $v = $Objet.$Nom
+    if ($null -eq $v) { return $Defaut }
+    return $v
+}
+
 # Deux index, du plus fiable au moins fiable.
 $parWinget = @{}
 $parCle    = @{}
@@ -143,16 +156,15 @@ $trouves   = @()
 $absents   = @()
 
 foreach ($e in $aVerifier) {
-    $id  = $e.id
-    $nom = $e.n
+    $id  = [string](Get-Champ $e 'id')
+    $nom = [string](Get-Champ $e 'n' 'Element sans nom')
 
     $correspondance = $null
     $raison = ''
     $confiance = ''
 
     # 1. identifiant winget : deux paquets de meme identifiant sont le meme paquet.
-    $w = $null
-    if ($e.PSObject.Properties['w']) { $w = $e.w }
+    $w = Get-Champ $e 'w' $null
     if ($w) {
         $k = ([string]$w).ToLowerInvariant()
         if ($parWinget.ContainsKey($k)) {

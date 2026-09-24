@@ -61,6 +61,19 @@ Set-StrictMode -Version Latest
 
 # ---------------------------------------------------------------- chemins
 
+# Un profil ecrit a la main peut omettre un champ. Sous Set-StrictMode, lire
+# une propriete absente est une erreur fatale : tout le script s'arretait sur
+# un seul element incomplet. Trouve en executant le script sur un profil sans
+# champ « p ».
+function Get-Champ {
+    param($Objet, [string]$Nom, $Defaut = '')
+    if ($null -eq $Objet) { return $Defaut }
+    if (-not $Objet.PSObject.Properties[$Nom]) { return $Defaut }
+    $v = $Objet.$Nom
+    if ($null -eq $v) { return $Defaut }
+    return $v
+}
+
 # Un champ « chemin » du profil peut en contenir plusieurs, ou n'etre qu'une
 # indication en francais. On ne garde que ce qui ressemble vraiment a un chemin.
 function Split-Chemins {
@@ -150,8 +163,10 @@ Write-Host ""
 $resultatsVerif = @()
 
 foreach ($e in $donnees.data) {
-    $nom = $e.n
-    $chemins = Split-Chemins -Texte $e.p
+    $nom = [string](Get-Champ $e 'n' 'Element sans nom')
+    $brut = [string](Get-Champ $e 'p')
+    $ident = [string](Get-Champ $e 'id')
+    $chemins = Split-Chemins -Texte $brut
 
     # @() : PowerShell aplatit un tableau d'un seul element, et .Count
     # echoue alors sous Set-StrictMode. Trouve en executant le script.
@@ -159,8 +174,8 @@ foreach ($e in $donnees.data) {
         Write-Host "  ~ $nom" -ForegroundColor DarkGray
         Write-Host "      ne designe pas un dossier : a verifier a la main" -ForegroundColor DarkGray
         $resultatsVerif += [ordered]@{
-            id = $e.id; nom = $nom; etat = 'non-verifiable'
-            detail = "« $($e.p) » ne designe pas un chemin"
+            id = $ident; nom = $nom; etat = 'non-verifiable'
+            detail = if ($brut) { "« $brut » ne designe pas un chemin" } else { 'aucun chemin declare' }
             chemins = @()
         }
         continue
@@ -187,7 +202,7 @@ foreach ($e in $donnees.data) {
 
         # On cherche la copie par identifiant, puis par nom de dossier source.
         $candidats = @(
-            (Join-Path $Destination $e.id),
+            (Join-Path $Destination $ident),
             (Join-Path $Destination (Split-Path $source -Leaf))
         )
         $copie = $null
@@ -241,7 +256,7 @@ foreach ($e in $donnees.data) {
     }
 
     $resultatsVerif += [ordered]@{
-        id = $e.id; nom = $nom; etat = $etatGlobal; detail = ''; chemins = @($details)
+        id = $ident; nom = $nom; etat = $etatGlobal; detail = ''; chemins = @($details)
     }
 }
 
