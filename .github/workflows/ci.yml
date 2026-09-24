@@ -60,6 +60,9 @@ jobs:
       - name: Formats winget
         run: node tests/test-winget.js
 
+      - name: Inventaire étendu (tailles, variables)
+        run: node tests/test-inventaire-etendu.js
+
       # pwsh est preinstalle sur les runners ubuntu-latest.
       - name: Scanner — classement, fusion, parsing
         run: pwsh -File tests/test-scan.ps1

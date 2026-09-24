@@ -8,7 +8,8 @@
       - winget list        (identifiants d'installation officiels)
       - registre Uninstall (32 et 64 bits, machine et utilisateur)
       - applications du Microsoft Store (paquets APPX)
-      - bibliotheques Steam (manifestes locaux)
+      - bibliotheques de jeux : Steam, Epic Games, GOG, Xbox
+      - variables d'environnement personnalisees de l'utilisateur
 
     Aucune donnee ne quitte la machine : le script n'envoie rien sur le reseau,
     il ecrit uniquement un fichier JSON local que vous importez vous-meme.
@@ -20,7 +21,10 @@
     Ignore les applications du Microsoft Store.
 
 .PARAMETER SansJeux
-    Ignore les bibliotheques Steam.
+    Ignore les bibliotheques de jeux : Steam, Epic Games, GOG et Xbox.
+
+.PARAMETER SansVariables
+    Ne releve pas les variables d'environnement personnalisees.
 
 .PARAMETER ToutInclure
     Conserve aussi les entrees habituellement filtrees (redistribuables Visual C++,
@@ -46,6 +50,7 @@ param(
     [string]$Sortie = "inventaire-pc.json",
     [switch]$SansStore,
     [switch]$SansJeux,
+    [switch]$SansVariables,
     [switch]$ToutInclure
 )
 
@@ -158,7 +163,10 @@ $resultats = @{}   # cle normalisee -> objet application
 function Add-App {
     param(
         [string]$Nom, [string]$Editeur, [string]$Version,
-        [string]$Source, [string]$Winget
+        [string]$Source, [string]$Winget,
+        # Taille sur disque en Go, quand la source la connait. Sert a dimensionner
+        # le disque du nouveau PC, pas a decider quoi reinstaller.
+        $TailleGo = $null
     )
     if (Test-Exclu -Nom $Nom) { return }
     $cle = Get-Cle -Nom $Nom
@@ -170,6 +178,7 @@ function Add-App {
         if ([string]::IsNullOrWhiteSpace($exist.winget) -and $Winget) { $exist.winget = $Winget }
         if ([string]::IsNullOrWhiteSpace($exist.editeur) -and $Editeur) { $exist.editeur = $Editeur }
         if ([string]::IsNullOrWhiteSpace($exist.version) -and $Version) { $exist.version = $Version }
+        if ($null -eq $exist.tailleGo -and $null -ne $TailleGo) { $exist.tailleGo = $TailleGo }
         if ($exist.source -notlike "*$Source*") { $exist.source = "$($exist.source), $Source" }
         return
     }
@@ -184,6 +193,7 @@ function Add-App {
         cat      = $cat
         priorite = Get-Priorite -Categorie $cat
         duree    = Get-Duree -Nom $Nom -Categorie $cat
+        tailleGo = $TailleGo
     }
 }
 
@@ -263,10 +273,18 @@ function Read-Registre {
 
             $ed  = $e.PSObject.Properties['Publisher']
             $ver = $e.PSObject.Properties['DisplayVersion']
+            # EstimatedSize est en kilo-octets, souvent absent ou fantaisiste :
+            # on ne le reporte que s'il donne un resultat plausible.
+            $taille = $null
+            $es = $e.PSObject.Properties['EstimatedSize']
+            if ($es -and $es.Value -is [int] -and $es.Value -gt 0) {
+                $go = [math]::Round($es.Value / 1MB, 2)
+                if ($go -gt 0) { $taille = $go }
+            }
             Add-App -Nom $nom.Value `
                     -Editeur $(if ($ed) { [string]$ed.Value } else { '' }) `
                     -Version $(if ($ver) { [string]$ver.Value } else { '' }) `
-                    -Source 'registre' -Winget ''
+                    -Source 'registre' -Winget '' -TailleGo $taille
             $n++
         }
     }
@@ -330,13 +348,129 @@ function Read-Steam {
         Get-ChildItem -Path $d -Filter 'appmanifest_*.acf' -ErrorAction SilentlyContinue | ForEach-Object {
             $contenu = Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue
             if ($contenu -match '"name"\s+"([^"]+)"') {
-                Add-App -Nom $matches[1] -Editeur 'Steam' -Version '' -Source 'Steam' -Winget ''
+                $nomJeu = $matches[1]
+                $taille = $null
+                if ($contenu -match '"SizeOnDisk"\s+"(\d+)"') {
+                    $taille = [math]::Round([double]$matches[1] / 1GB, 2)
+                }
+                Add-App -Nom $nomJeu -Editeur 'Steam' -Version '' -Source 'Steam' `
+                        -Winget '' -TailleGo $taille
                 $n++
             }
         }
     }
     Write-Host " $n jeux"
     return $n
+}
+
+# --- source 5 : Epic Games ---------------------------------------------
+function Read-Epic {
+    Write-Host "  Epic Games..." -NoNewline
+    # Epic depose un manifeste JSON par jeu installe. Le dossier est fixe et
+    # partage par toutes les installations, quel que soit le disque des jeux.
+    $dossier = Join-Path $env:ProgramData 'Epic\EpicGamesLauncher\Data\Manifests'
+    if (-not (Test-Path $dossier)) {
+        Write-Host " non installe, ignore" -ForegroundColor Yellow
+        return 0
+    }
+    $n = 0
+    Get-ChildItem -Path $dossier -Filter '*.item' -ErrorAction SilentlyContinue | ForEach-Object {
+        try {
+            $m = Get-Content $_.FullName -Raw -ErrorAction Stop | ConvertFrom-Json
+            $nom = $m.DisplayName
+            if ([string]::IsNullOrWhiteSpace($nom)) { return }
+            # Les greffons et redistribuables partagent le dossier avec les jeux.
+            if ($m.PSObject.Properties['AppCategories'] -and
+                $m.AppCategories -and ($m.AppCategories -notcontains 'games') -and -not $ToutInclure) { return }
+            $taille = $null
+            if ($m.PSObject.Properties['InstallSize'] -and $m.InstallSize) {
+                $taille = [math]::Round($m.InstallSize / 1GB, 2)
+            }
+            Add-App -Nom $nom -Editeur 'Epic Games' -Version $m.AppVersionString `
+                    -Source 'Epic Games' -Winget '' -TailleGo $taille
+            $n++
+        } catch { }
+    }
+    Write-Host " $n jeux"
+    return $n
+}
+
+# --- source 6 : GOG Galaxy ---------------------------------------------
+function Read-GOG {
+    Write-Host "  GOG..." -NoNewline
+    $n = 0
+    foreach ($k in @('HKLM:\SOFTWARE\WOW6432Node\GOG.com\Games\*', 'HKLM:\SOFTWARE\GOG.com\Games\*')) {
+        Get-ItemProperty -Path $k -ErrorAction SilentlyContinue | ForEach-Object {
+            $nom = $_.PSObject.Properties['gameName']
+            if (-not $nom -or [string]::IsNullOrWhiteSpace($nom.Value)) { return }
+            $ver = $_.PSObject.Properties['ver']
+            Add-App -Nom $nom.Value -Editeur 'GOG' `
+                    -Version $(if ($ver) { [string]$ver.Value } else { '' }) `
+                    -Source 'GOG' -Winget ''
+            $n++
+        }
+    }
+    if ($n -eq 0) { Write-Host " non installe, ignore" -ForegroundColor Yellow; return 0 }
+    Write-Host " $n jeux"
+    return $n
+}
+
+# --- source 7 : Xbox / Game Pass ---------------------------------------
+function Read-Xbox {
+    Write-Host "  Xbox / Game Pass..." -NoNewline
+    # Les jeux Xbox sont des paquets APPX installes hors du dossier habituel :
+    # c'est leur emplacement qui les distingue des applications du Store.
+    $n = 0
+    try {
+        Get-AppxPackage -ErrorAction Stop |
+            Where-Object { -not $_.IsFramework -and $_.InstallLocation -and
+                           $_.InstallLocation -notlike "$env:ProgramFiles\WindowsApps*" } |
+            ForEach-Object {
+                $nom = $_.Name -replace '^[A-Za-z0-9]+\.', ''
+                Add-App -Nom $nom -Editeur 'Xbox' -Version $_.Version -Source 'Xbox' -Winget ''
+                $n++
+            }
+    } catch {
+        Write-Host " indisponible, ignore" -ForegroundColor Yellow
+        return 0
+    }
+    if ($n -eq 0) { Write-Host " aucun jeu, ignore" -ForegroundColor Yellow; return 0 }
+    Write-Host " $n jeux"
+    return $n
+}
+
+# --- variables d'environnement -----------------------------------------
+# Les variables personnalisees ne se retrouvent pas apres une reinstallation :
+# la checklist a des champs pour les noter, autant les remplir directement.
+# Seules celles de l'utilisateur sont lues : celles du systeme sont recreees
+# par Windows et par les installateurs.
+function Read-Variables {
+    Write-Host "  variables d'environnement..." -NoNewline
+    $vars = [ordered]@{}
+    $standard = @('PATH','TEMP','TMP','OS','COMSPEC','PATHEXT','PROCESSOR_ARCHITECTURE',
+                  'PROCESSOR_IDENTIFIER','PROCESSOR_LEVEL','PROCESSOR_REVISION',
+                  'NUMBER_OF_PROCESSORS','WINDIR','SYSTEMROOT','SYSTEMDRIVE',
+                  'USERPROFILE','USERNAME','USERDOMAIN','HOMEDRIVE','HOMEPATH',
+                  'APPDATA','LOCALAPPDATA','PROGRAMDATA','PUBLIC','ALLUSERSPROFILE',
+                  'PROGRAMFILES','PROGRAMFILES(X86)','PROGRAMW6432','COMMONPROGRAMFILES',
+                  'COMMONPROGRAMFILES(X86)','COMMONPROGRAMW6432','PSMODULEPATH',
+                  'LOGONSERVER','USERDOMAIN_ROAMINGPROFILE','SESSIONNAME','DRIVERDATA',
+                  'ONEDRIVE','ONEDRIVECONSUMER','ONEDRIVECOMMERCIAL')
+    try {
+        $utilisateur = [Environment]::GetEnvironmentVariables('User')
+        foreach ($cle in $utilisateur.Keys) {
+            if ($standard -contains $cle.ToString().ToUpperInvariant()) { continue }
+            $vars[[string]$cle] = [string]$utilisateur[$cle]
+        }
+        # Le PATH utilisateur n'existe que si on y a ajoute quelque chose.
+        $pathUtil = [Environment]::GetEnvironmentVariable('PATH', 'User')
+        if ($pathUtil) { $vars['PATH (utilisateur)'] = $pathUtil }
+    } catch {
+        Write-Host " illisibles, ignore" -ForegroundColor Yellow
+        return [ordered]@{}
+    }
+    Write-Host " $($vars.Count) relevee(s)"
+    return $vars
 }
 
 # ---------------------------------------------------------------- execution
@@ -348,7 +482,13 @@ Write-Host "----------------------------------"
 $null = Read-Winget
 $null = Read-Registre
 if (-not $SansStore) { $null = Read-Store }
-if (-not $SansJeux)  { $null = Read-Steam }
+if (-not $SansJeux) {
+    $null = Read-Steam
+    $null = Read-Epic
+    $null = Read-GOG
+    $null = Read-Xbox
+}
+$variables = if ($SansVariables) { [ordered]@{} } else { Read-Variables }
 
 $apps = $resultats.Values | Sort-Object { $_.nom }
 
@@ -363,16 +503,25 @@ $inventaire = [ordered]@{
         nom = $env:COMPUTERNAME
     }
     apps    = @($apps)
+    # Reprises telles quelles dans les champs prevus par la checklist.
+    variables = $variables
 }
 
 $json = $inventaire | ConvertTo-Json -Depth 6
 Set-Content -Path $Sortie -Value $json -Encoding UTF8
 
 $avecWinget = @($apps | Where-Object { $_.winget }).Count
+$totalGo = ($apps | Where-Object { $_.tailleGo } | Measure-Object -Property tailleGo -Sum).Sum
 $chemin = (Resolve-Path $Sortie).Path
 
 Write-Host ""
 Write-Host "$($apps.Count) applications retenues, dont $avecWinget avec un identifiant winget." -ForegroundColor Green
+if ($totalGo) {
+    Write-Host "Taille connue : $([math]::Round($totalGo, 1)) Go — partielle, toutes les sources ne la donnent pas."
+}
+if ($variables.Count) {
+    Write-Host "$($variables.Count) variable(s) d'environnement relevee(s)."
+}
 Write-Host "Fichier ecrit : $chemin"
 Write-Host ""
 Write-Host "Etape suivante : ouvrir index.html, cliquer sur Importer, choisir ce fichier."

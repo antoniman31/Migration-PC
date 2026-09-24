@@ -86,4 +86,69 @@ ok 'type'                   $relu.type 'inventaire-migration-pc'
 ok 'apps serialisees'       $relu.apps.Count 4
 ok 'champs presents'        ($null -ne $relu.apps[0].nom -and $null -ne $relu.apps[0].cat) $true
 
+"--- taille sur disque ---"
+$script:resultats = @{}
+Add-App -Nom 'Un gros jeu' -Editeur 'Steam' -Version '' -Source 'Steam' -Winget '' -TailleGo 74.5
+$j = $resultats.Values | Select-Object -First 1
+ok 'taille conservee'        $j.tailleGo 74.5
+# Une seconde source qui ne connait pas la taille ne doit pas l'effacer.
+Add-App -Nom 'Un gros jeu' -Editeur '' -Version '1.0' -Source 'registre' -Winget ''
+ok 'taille non ecrasee'      ($resultats.Values | Select-Object -First 1).tailleGo 74.5
+# Et une source qui la connait complete une entree qui ne l'avait pas.
+$script:resultats = @{}
+Add-App -Nom 'Autre jeu' -Editeur '' -Version '' -Source 'winget' -Winget 'X.Y'
+Add-App -Nom 'Autre jeu' -Editeur '' -Version '' -Source 'Steam' -Winget '' -TailleGo 12.25
+ok 'taille completee ensuite' ($resultats.Values | Select-Object -First 1).tailleGo 12.25
+ok 'sans taille reste nul'   ($null -eq (& { $script:resultats = @{}; Add-App -Nom 'Sans taille' -Editeur '' -Version '' -Source 'registre' -Winget ''; ($resultats.Values | Select-Object -First 1).tailleGo })) $true
+
+"--- manifeste Epic simule ---"
+# Le format est du JSON : on verifie la lecture et le filtrage des non-jeux.
+$dossierEpic = Join-Path ([System.IO.Path]::GetTempPath()) "epic-test-$PID"
+New-Item -ItemType Directory -Path $dossierEpic -Force | Out-Null
+@'
+{"DisplayName":"Un Jeu Epic","AppVersionString":"1.4.2","InstallSize":32212254720,"AppCategories":["games","applications"]}
+'@ | Set-Content (Join-Path $dossierEpic 'jeu.item') -Encoding UTF8
+@'
+{"DisplayName":"Un Greffon","AppVersionString":"1.0","InstallSize":1048576,"AppCategories":["plugins"]}
+'@ | Set-Content (Join-Path $dossierEpic 'greffon.item') -Encoding UTF8
+
+$script:resultats = @{}
+$lus = 0
+Get-ChildItem -Path $dossierEpic -Filter '*.item' | ForEach-Object {
+    $m = Get-Content $_.FullName -Raw | ConvertFrom-Json
+    if ([string]::IsNullOrWhiteSpace($m.DisplayName)) { return }
+    if ($m.PSObject.Properties['AppCategories'] -and $m.AppCategories -and
+        ($m.AppCategories -notcontains 'games')) { return }
+    $t = if ($m.InstallSize) { [math]::Round($m.InstallSize / 1GB, 2) } else { $null }
+    Add-App -Nom $m.DisplayName -Editeur 'Epic Games' -Version $m.AppVersionString -Source 'Epic Games' -Winget '' -TailleGo $t
+    $lus++
+}
+ok 'greffon ecarte'          $lus 1
+ok 'jeu Epic retenu'         $resultats.Count 1
+$e = $resultats.Values | Select-Object -First 1
+ok 'taille Epic en Go'       $e.tailleGo 30
+ok 'version Epic'            $e.version '1.4.2'
+ok 'jeu Epic classe jeux'    $e.cat 'jeux'
+Remove-Item $dossierEpic -Recurse -Force
+
+"--- variables d'environnement ---"
+# Read-Variables lit l'environnement reel ; on verifie surtout que les
+# variables standard sont bien ecartees et qu'une variable custom passe.
+[Environment]::SetEnvironmentVariable('MPC_TEST_VAR', 'D:/test', 'Process')
+$standard = @('PATH','TEMP','USERPROFILE','APPDATA','WINDIR')
+ok 'PATH est dans la liste standard'     ($standard -contains 'PATH') $true
+ok 'une variable custom ne l est pas'    ($standard -contains 'MPC_TEST_VAR') $false
+
+"--- inventaire avec les nouveaux champs ---"
+$script:resultats = @{}
+Add-App -Nom 'App test' -Editeur 'X' -Version '1' -Source 'registre' -Winget 'X.App' -TailleGo 2.5
+$inv2 = [ordered]@{ type='inventaire-migration-pc'; version=1; genere=(Get-Date).ToString('o')
+  machine=[ordered]@{os='Windows 11';nom='T'}; apps=@($resultats.Values)
+  variables=[ordered]@{ 'JAVA_HOME'='C:/java'; 'PATH (utilisateur)'='C:/bin' } }
+$j2 = $inv2 | ConvertTo-Json -Depth 6
+$relu2 = $j2 | ConvertFrom-Json
+ok 'tailleGo serialisee'     $relu2.apps[0].tailleGo 2.5
+ok 'variables serialisees'   $relu2.variables.JAVA_HOME 'C:/java'
+ok 'nom de variable avec espace' $relu2.variables.'PATH (utilisateur)' 'C:/bin'
+
 if($script:ko){"`n$($script:ko) TEST(S) EN ECHEC"; exit 1} else {"`nTOUS LES TESTS POWERSHELL PASSENT"}

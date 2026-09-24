@@ -65,12 +65,19 @@ communes à toute réinstallation Windows.
 | `winget list` | Les identifiants d'installation officiels |
 | Registre `Uninstall` | Les logiciels installés classiquement (32 et 64 bits, machine et utilisateur) |
 | Paquets APPX | Les applications du Microsoft Store |
-| Manifestes Steam | Les jeux installés, sur tous les disques |
+| Steam, Epic, GOG, Xbox | Les jeux installés, sur tous les disques |
+| Variables d'environnement | Les variables personnalisées de l'utilisateur |
 
 Une entrée vue par plusieurs sources est fusionnée : le nom vient du registre,
-l'identifiant winget de winget, et rien n'apparaît deux fois. Chaque application est
-classée par catégorie selon des mots-clés, avec une priorité et une durée estimée —
-tout cela reste modifiable à la main dans le JSON.
+l'identifiant winget de winget, la taille sur disque de celle qui la connaît, et rien
+n'apparaît deux fois. Chaque application est classée par catégorie selon des mots-clés,
+avec une priorité et une durée estimée — tout cela reste modifiable à la main dans le
+JSON.
+
+Les variables d'environnement personnalisées sont relevées et remplissent directement
+les champs prévus par la checklist, sans recopie manuelle. Une valeur déjà saisie n'est
+jamais écrasée. Seules les variables de l'utilisateur sont lues : celles du système sont
+recréées par Windows et les installateurs.
 
 Les redistribuables Visual C++, les mises à jour et les composants système sont écartés
 par défaut, sinon la liste dépasse largement ce qu'on réinstalle vraiment.
@@ -80,7 +87,8 @@ par défaut, sinon la liste dépasse largement ce qu'on réinstalle vraiment.
 | `-Sortie <chemin>` | Change le fichier produit (défaut : `inventaire-pc.json`) |
 | `-ToutInclure` | Désactive le filtrage, garde tout |
 | `-SansStore` | Ignore les applications du Microsoft Store |
-| `-SansJeux` | Ignore les bibliothèques Steam |
+| `-SansJeux` | Ignore les bibliothèques de jeux (Steam, Epic, GOG, Xbox) |
+| `-SansVariables` | Ne relève pas les variables d'environnement |
 
 Le script n'a pas besoin des droits administrateur, mais sans eux les logiciels
 installés par d'autres comptes utilisateurs peuvent manquer. Il n'écrit qu'un fichier
@@ -150,8 +158,9 @@ du dépôt winget.
   "apps": [
     { "nom": "7-Zip", "editeur": "Igor Pavlov", "version": "24.08",
       "source": "registre, winget", "winget": "7zip.7zip",
-      "cat": "system", "priorite": "med", "duree": 5 }
-  ]
+      "cat": "system", "priorite": "med", "duree": 5, "tailleGo": 0.02 }
+  ],
+  "variables": { "JAVA_HOME": "C:\\Program Files\\Java\\jdk-21" }
 }
 ```
 
@@ -308,10 +317,13 @@ connu atterrit dans « Utilitaires Système ». Les catégories se corrigent dan
 
 **Les étapes « Nouveau PC », « Données » et « PWA » ne sont pas scannées** : un
 inventaire importé reprend celles du profil d'exemple, à adapter à votre matériel. Un
-scan ne peut pas deviner qu'il faut activer le profil XMP dans le BIOS.
+scan ne peut pas deviner qu'il faut activer le profil XMP dans le BIOS. Les variables
+d'environnement font exception : elles sont relevées et reportées automatiquement.
 
-**Epic Games, GOG et les autres lanceurs ne sont pas parcourus** — seul Steam l'est. Les
-jeux des autres plateformes apparaissent uniquement si leur lanceur est détecté.
+**Les tailles sur disque sont partielles.** Steam et Epic les donnent exactement, le
+registre les estime — et se trompe parfois largement —, le Microsoft Store, GOG et Xbox
+ne les donnent pas du tout. Le total affiché est donc un minimum, utile pour dimensionner
+un disque, pas un inventaire comptable.
 
 **L'installation sur l'appareil demande HTTPS.** Un service worker ne s'enregistre pas
 depuis un fichier ouvert directement : depuis une clé USB, la page fonctionne mais ne

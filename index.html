@@ -713,6 +713,13 @@ const CAT_PAR_DEFAUT='system';
 function inventaireVersProfil(inv){
   const apps=Array.isArray(inv.apps)?inv.apps:[];
   if(!apps.length)throw new Error('inventaire vide');
+  // Le scanner relève les variables personnalisées : autant remplir les champs
+  // prévus pour elles plutôt que de les faire recopier à la main.
+  const vars=inv.variables&&typeof inv.variables==='object'?Object.keys(inv.variables):[];
+  vars.forEach(function(v){
+    if(!S.env[v])S.env[v]=String(inv.variables[v]);
+  });
+  if(vars.length)saveState();
   const cats={};
   const out=[];
   apps.forEach(function(a,i){
@@ -721,6 +728,7 @@ function inventaireVersProfil(inv){
     const bouts=[];
     if(a.editeur)bouts.push(a.editeur);
     if(a.version)bouts.push('version '+a.version);
+    if(a.tailleGo)bouts.push(fmtTaille(a.tailleGo));
     if(a.source)bouts.push('détecté via '+a.source);
     out.push({
       id:'inv'+(i+1),
@@ -738,13 +746,21 @@ function inventaireVersProfil(inv){
   if(machine.os)desc.push(machine.os);
   if(machine.nom)desc.push(machine.nom);
   desc.push(out.length+' applications détectées');
+  const total=apps.reduce(function(s,a){return s+(Number(a.tailleGo)||0);},0);
+  if(total>0)desc.push(fmtTaille(total)+' connus');
   if(inv.genere)desc.push('scan du '+String(inv.genere).slice(0,10));
+  // L'élément « variables d'environnement » du profil par défaut affiche
+  // exactement celles que le scan a relevées, plutôt qu'une liste figée.
+  const donnees=PROFIL_DEFAUT.data.map(function(d){
+    if(d.env&&vars.length)return Object.assign({},d,{env:vars});
+    return d;
+  });
   return {
     meta:{version:1,nom:'Migration PC — inventaire importé',soustitre:desc.join(' · ')},
     cats:cats,
     npc:PROFIL_DEFAUT.npc,
     apps:out,
-    data:PROFIL_DEFAUT.data,
+    data:donnees,
     pwa:PROFIL_DEFAUT.pwa,
     ordre:[],
     requetes:{}
@@ -809,6 +825,12 @@ let session={active:false,start:null,count:0,timer:null};
 // ═══ HELPERS ═══
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function fmtTime(min){if(!min)return '';if(min<60)return '~'+min+'min';const h=Math.floor(min/60),m=min%60;return m===0?'~'+h+'h':'~'+h+'h'+(m<10?'0':'')+m;}
+function fmtTaille(go){
+  const n=Number(go);
+  if(!n||n<=0)return '';
+  if(n<1)return Math.round(n*1024)+' Mo';
+  return (n<10?n.toFixed(1):Math.round(n))+' Go';
+}
 function fmtDate(ts){if(!ts)return '';const d=new Date(ts),now=new Date(),diff=Math.floor((now-d)/86400000);if(diff===0)return "aujourd'hui";if(diff===1)return 'hier';if(diff<7)return 'il y a '+diff+'j';return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});}
 function searchUrl(name){const q=SEARCH_QUERIES[name]||('download '+name+' official');return 'https://www.google.com/search?q='+encodeURIComponent(q);}
 
