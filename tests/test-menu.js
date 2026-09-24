@@ -35,8 +35,8 @@ console.log('\n--- ce que le menu contient ---');
 await pg.click('#menu-btn');await pg.waitForTimeout(200);
 const items=await pg.evaluate(()=>
   [...document.querySelectorAll('#hdr-menu-liste button')].map(x=>x.textContent.trim()));
-ok('cinq actions',items.length,5);
-['Commencer une session','Exporter le profil','Réinitialiser','Exporter en texte','Imprimer'].forEach(t=>
+ok('six actions',items.length,6);
+['Commencer une session','Exporter le profil','Adapter à mon cas','Réinitialiser','Exporter en texte','Imprimer'].forEach(t=>
   ok('« '+t+' » y est',items.some(x=>x.indexOf(t)>=0),true));
 ok('chaque action a un libelle, pas qu\'un emoji',
   items.every(t=>t.replace(/[^\p{L}]/gu,'').length>3),true);
@@ -89,7 +89,7 @@ await pg.evaluate(()=>stopSession());
 // Le telechargement du profil : l'action la plus facile a casser en la deplacant.
 await pg.click('#menu-btn');await pg.waitForTimeout(150);
 const dl=pg.waitForEvent('download',{timeout:5000}).catch(()=>null);
-await pg.click('#hdr-menu-liste button:nth-child(2)');
+await pg.getByRole('menuitem',{name:/Exporter le profil/}).click();
 const fichier=await dl;
 ok('« Exporter le profil » produit bien un fichier',!!fichier,true);
 if(fichier)console.log('   nom :',fichier.suggestedFilename());
@@ -105,7 +105,7 @@ await pg.evaluate(()=>{
 });
 await pg.click('#menu-btn');await pg.waitForTimeout(150);
 const dlTxt=pg.waitForEvent('download',{timeout:5000}).catch(()=>null);
-await pg.click('#hdr-menu-liste button:nth-child(4)');
+await pg.getByRole('menuitem',{name:/Exporter en texte/}).click();
 const f2=await dlTxt;
 ok('« Exporter en texte » produit un fichier',!!f2,true);
 if(f2){

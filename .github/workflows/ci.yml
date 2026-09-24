@@ -117,6 +117,9 @@ jobs:
       - name: Sauvegarde — aucun échec silencieux
         run: node tests/test-sauvegarde.js
 
+      - name: Deux questions et second PC
+        run: node tests/test-debut.js
+
   publier:
     name: Publier sur Pages
     needs: verifier

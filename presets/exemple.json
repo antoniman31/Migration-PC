@@ -23,14 +23,26 @@
       "p": "Application → Aide → Se déconnecter",
       "note": "Désinstaller ou formater ne désactive rien : l'activation reste attachée à une machine qui n'existe plus, et une licence n'en autorise qu'un nombre limité.",
       "pr": "high",
-      "warn": "À faire pendant que l'ancien PC fonctionne encore. Après le formatage, il faut passer par le support."
+      "warn": "À faire pendant que l'ancien PC fonctionne encore. Après le formatage, il faut passer par le support.",
+      "alt": {
+        "second": {
+          "n": "Vérifier combien de postes vos licences Adobe autorisent",
+          "d": "Un abonnement Creative Cloud permet deux installations actives. Au-delà, la troisième déconnecte la première sans prévenir. Si vous comptez travailler sur les deux machines, vérifiez-le maintenant plutôt qu'en pleine séance."
+        }
+      }
     },
     {
       "id": "q2",
       "n": "Délier les autres licences liées à la machine",
       "p": "Chaque éditeur concerné",
       "note": "Antivirus, utilitaires système, logiciels de montage, suites de création. Tout ce qui s'active par clé plutôt que par compte est concerné. La page « mes appareils » de chaque compte en ligne les liste.",
-      "pr": "high"
+      "pr": "high",
+      "alt": {
+        "second": {
+          "n": "Compter les postes autorisés par vos autres licences",
+          "d": "Beaucoup de logiciels payants n'en autorisent qu'un ou deux. Faites le tour de ceux que vous voulez sur les deux machines : c'est le moment de le savoir, pas quand l'un des deux refusera de démarrer."
+        }
+      }
     },
     {
       "id": "q3",
@@ -38,7 +50,13 @@
       "p": "Téléphone — fonction de transfert",
       "note": "Les jetons ne se copient pas. Utiliser la fonction de transfert prévue, et le faire avant de changer de téléphone si les deux migrations tombent ensemble.",
       "pr": "high",
-      "warn": "Sans transfert ni codes de secours, les comptes concernés deviennent inaccessibles."
+      "warn": "Sans transfert ni codes de secours, les comptes concernés deviennent inaccessibles.",
+      "alt": {
+        "second": {
+          "n": "Ajouter la seconde machine à l'application d'authentification",
+          "d": "Rien à transférer puisque l'ancienne reste en service : il s'agit d'autoriser la nouvelle. Gardez les codes de récupération sous la main, certains comptes les redemandent à la première connexion depuis un appareil inconnu."
+        }
+      }
     },
     {
       "id": "q4",
@@ -52,7 +70,13 @@
       "n": "Noter la clé de récupération BitLocker",
       "p": "Paramètres → Chiffrement de l'appareil",
       "note": "Si le disque est chiffré et que vous comptez y revenir chercher un fichier oublié, sans cette clé il est illisible. Cela vaut aussi pour un disque secondaire.",
-      "pr": "high"
+      "pr": "high",
+      "alt": {
+        "second": {
+          "n": "Noter les clés BitLocker des DEUX machines",
+          "d": "Deux machines, deux clés, et aucune des deux ne doit vivre seulement sur le disque qu'elle déverrouille."
+        }
+      }
     },
     {
       "id": "q6",
@@ -67,21 +91,33 @@
       "n": "Désautoriser Steam Guard",
       "p": "Steam → Paramètres → Sécurité",
       "note": "Retirer l'ancien PC des appareils autorisés évite qu'il compte dans la limite, et coupe l'accès si la machine change de mains.",
-      "pr": "med"
+      "pr": "med",
+      "cas": [
+        "migration",
+        "reinstall"
+      ]
     },
     {
       "id": "q8",
       "n": "Désautoriser iTunes et les lecteurs liés",
       "p": "Compte → Autorisations",
       "note": "Le nombre d'ordinateurs autorisés est limité et ne se libère pas tout seul. Une machine formatée reste comptée.",
-      "pr": "med"
+      "pr": "med",
+      "cas": [
+        "migration",
+        "reinstall"
+      ]
     },
     {
       "id": "q9",
       "n": "Se déconnecter des sessions ouvertes",
       "p": "Comptes en ligne → Appareils connectés",
       "note": "Messageries, réseaux sociaux, services de stockage. Une session laissée ouverte sur une machine cédée le reste.",
-      "pr": "med"
+      "pr": "med",
+      "cas": [
+        "migration",
+        "reinstall"
+      ]
     },
     {
       "id": "q10",
@@ -526,6 +562,19 @@
         "n1"
       ],
       "d": "Une fois le système propre et à jour, avant d'installer les applications. Filet de sécurité en cas d'installation qui tourne mal."
+    },
+    {
+      "id": "sy5",
+      "o": 31,
+      "n": "Harmoniser les réglages entre les deux machines",
+      "src": "Comptes de synchronisation",
+      "p": "ok",
+      "t": 20,
+      "post": true,
+      "cas": [
+        "second"
+      ],
+      "d": "Navigateur, éditeur de code, raccourcis clavier, thème : la plupart savent synchroniser leurs réglages via un compte. Une demi-heure passée là évite de se sentir chez les autres à chaque fois qu'on change de machine."
     }
   ],
   "ordre": [
@@ -885,6 +934,57 @@
       "p": "Selon l'hyperviseur utilisé",
       "note": "Des dizaines de gigaoctets faciles à oublier, et impossibles à recréer à l'identique. Les arrêter proprement avant de copier.",
       "pr": "ok"
+    },
+    {
+      "id": "sy1",
+      "n": "Décider quels dossiers vivent sur les deux machines",
+      "pr": "high",
+      "p": "À trancher avant de synchroniser quoi que ce soit",
+      "cas": [
+        "second"
+      ],
+      "d": "Tout synchroniser est le réflexe, et c'est l'erreur : une bibliothèque de jeux ou une réserve de machines virtuelles n'ont rien à faire sur un portable, et la synchronisation passera des heures à les recopier. Faites trois piles — ce qui suit partout, ce qui reste sur le fixe, ce qui ne vit que sur le portable — avant d'installer le moindre outil."
+    },
+    {
+      "id": "sy2",
+      "n": "Mettre en place la synchronisation des dossiers de travail",
+      "pr": "high",
+      "p": "OneDrive, Google Drive, Dropbox ou Syncthing",
+      "cas": [
+        "second"
+      ],
+      "dep": [
+        "sy1"
+      ],
+      "d": "Les services grand public suffisent pour des documents. Pour du code ou de gros projets, Syncthing synchronise en direct entre vos deux machines sans passer par un serveur, et sans limite de taille.",
+      "note": "Le code se gère mieux avec git qu'avec une synchronisation de fichiers : deux copies d'un dépôt synchronisées en même temps finissent par se marcher dessus."
+    },
+    {
+      "id": "sy3",
+      "n": "Vérifier que la synchronisation marche dans les deux sens",
+      "pr": "high",
+      "p": "Un fichier test créé de chaque côté",
+      "cas": [
+        "second"
+      ],
+      "dep": [
+        "sy2"
+      ],
+      "d": "Créez un fichier sur le fixe, voyez-le arriver sur le portable, modifiez-le là-bas, voyez la modification revenir. Tant que ce va-et-vient n'est pas constaté, vous n'avez pas une synchronisation, vous avez une sauvegarde à sens unique dont vous ignorez le sens.",
+      "warn": "Une synchronisation qu'on n'a jamais testée dans les deux sens se découvre le jour où elle a écrasé la bonne version."
+    },
+    {
+      "id": "sy4",
+      "n": "Se donner une règle contre les versions divergentes",
+      "pr": "med",
+      "p": "La règle, pas l'outil",
+      "cas": [
+        "second"
+      ],
+      "dep": [
+        "sy3"
+      ],
+      "d": "Deux machines qui modifient le même fichier hors ligne produisent deux versions, et la plupart des outils tranchent en silence. Une règle simple suffit : fermer ses fichiers avant de changer de machine, et attendre que la synchronisation affiche « à jour » avant de refermer le capot."
     }
   ],
   "pwa": [

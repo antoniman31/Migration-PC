@@ -181,9 +181,15 @@ conformes. `-ToleranceParCent` règle l'écart de taille toléré, 2 % par défa
 | `-Profil <chemin>` | Le profil à vérifier (par défaut `profil-local.json`, puis l'exemple) |
 | `-ToleranceParCent <n>` | Écart de taille toléré avant signalement |
 
-## Migration, réinstallation, ou juste ses affaires
+## Quatre cas, deux questions
 
-Trois cas, un sélecteur en haut de page. Les deux premiers partagent l'essentiel —
+À la première ouverture, la page pose deux questions : ce que vous installez, et ce que
+devient l'ancienne machine. Elle règle le cas toute seule et se referme. C'est un
+bandeau, pas une porte : la checklist reste lisible derrière, « Passer » l'écarte, et
+**⋯ Plus → Adapter à mon cas** le rappelle plus tard. Une page déjà entamée n'est jamais
+interrogée.
+
+Quatre cas, un sélecteur en haut de page pour en changer à tout moment. Les deux premiers partagent l'essentiel —
 pilotes, applications, sauvegardes — et un élément sans mention vaut pour les deux, ce
 qui est la majorité.
 
@@ -204,6 +210,17 @@ Le filtre vaut partout, pas seulement dans les listes : les compteurs, les bouto
 l'export texte s'y tiennent. Cocher en masse n'atteint jamais un élément qu'on n'a pas
 sous les yeux, et un intitulé alternatif s'affiche sur les cinq onglets, pas seulement
 dans « Nouveau PC ».
+
+**Deux PC** est le cas qu'on oublie : le nouveau PC arrive, mais l'ancien reste en
+service — un fixe et un portable. La checklist ne savait que transférer, donc elle
+faisait désautoriser Steam, délier les licences et fermer les sessions d'une machine
+qu'on rallume le lendemain. Dans ce cas ces quatre étapes disparaissent, trois se
+retournent — on ne délie plus ses licences Adobe, on compte combien de postes elles
+autorisent — et cinq apparaissent, qui n'existaient nulle part : répartir les dossiers
+entre les deux machines avant de synchroniser quoi que ce soit, mettre la
+synchronisation en place, vérifier qu'elle marche **dans les deux sens**, se donner une
+règle contre les versions divergentes, et harmoniser les réglages. L'onglet lui-même
+change de nom : « Sur l'ancien PC » plutôt que « Avant de quitter ».
 
 **Juste mes affaires** fonctionne à l'envers des deux autres. Eux partent de tout et
 retirent le peu qui ne les concerne pas ; celui-ci part de rien et ne garde que ce qu'on
@@ -509,13 +526,14 @@ npm run test:reinit               # remises à zéro et leur annulation
 npm run test:menu                 # menu « Plus » de la barre du haut
 npm run test:hostile              # profil piégé : aucune injection
 npm run test:sauvegarde           # aucun échec d'enregistrement silencieux
+npm run test:debut                # deux questions d'ouverture et second PC
 ```
 
 `npm test` ne lance que ce qui tourne partout sans rien installer. Les suites
 navigateur demandent Chromium (`npm install` le fournit via Playwright), les suites
 PowerShell demandent `pwsh`.
 
-Vingt suites, dans l'ordre où la CI les lance.
+Vingt et une suites, dans l'ordre où la CI les lance.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
@@ -587,9 +605,15 @@ page le dit : l'indicateur passe à « non enregistré », un panneau explique q
 l'alarme ne se répète pas à chaque case, et tout revient à la normale quand
 l'enregistrement remarche.
 
+`tests/test-debut.js` couvre les deux questions et le cas qu'elles servent surtout à
+faire connaître : que le bandeau se propose sans barrer la page, ne revient pas une fois
+répondu, se rappelle depuis le menu, et qu'en mode « deux PC » on ne désautorise plus
+rien sur une machine encore en service — tout en revérifiant qu'en migration les étapes
+d'origine reviennent intactes.
+
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les vingt suites à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les vingt et une suites à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 

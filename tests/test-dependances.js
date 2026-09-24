@@ -107,7 +107,12 @@ ok('tous les paquets présents',paquets.length,profil.apps.filter(a=>a.w).length
 
 console.log('\n--- un profil sans dépendance garde son ordre manuel ---');
 const sansDep=JSON.parse(JSON.stringify(profil));
-[].concat(sansDep.npc,sansDep.apps).forEach(e=>{delete e.dep;});
+// Les cinq onglets, pas deux : des dependances vivent aussi dans « Donnees »
+// (la synchronisation entre deux machines s'enchaine), et n'en nettoyer qu'une
+// partie laissait le test croire a un profil sans dependance.
+['quitter','npc','apps','data','pwa'].forEach(c=>{
+  (sansDep[c]||[]).forEach(e=>{delete e.dep;});
+});
 sansDep.ordre=['a3','a1','a2'];
 G('appliquerProfil')(sansDep,false);
 ok('aDesDependances est faux',G('aDesDependances')(),false);

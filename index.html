@@ -335,6 +335,27 @@ body.compact .item{padding:5px 0}
 /* ── V6 : compact masque dep ── */
 body.compact .b-dep{display:none}
 
+/* ═══ Deux questions au premier lancement ═══
+   Un questionnaire qui barre l'entrée se subit ; celui-ci se propose et se
+   referme. La page reste utilisable en « tout afficher » si on l'ignore. */
+.debut{display:none;margin:0 0 12px;padding:16px 18px;border-radius:10px;
+  background:var(--accl);border:.5px solid var(--accb)}
+.debut.visible{display:block}
+.debut-titre{font-size:14px;font-weight:600;color:var(--tx);margin-bottom:4px}
+.debut-sous{font-size:12px;color:var(--tx2);margin-bottom:14px;line-height:1.55}
+.debut-q{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:8px}
+.debut-choix{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.debut-choix button{flex:1;min-width:190px;text-align:left;padding:11px 14px;
+  min-height:44px;border-radius:9px;border:.5px solid var(--brd2);background:var(--bg);
+  color:var(--tx);cursor:pointer;font-size:13px;line-height:1.45}
+.debut-choix button:hover{background:var(--bg3);border-color:var(--accb)}
+.debut-choix b{display:block;font-size:13px;margin-bottom:2px}
+.debut-choix span{font-size:12px;color:var(--tx2)}
+.debut-passer{margin-top:10px;font-size:12px;color:var(--tx2);background:transparent;
+  border:none;cursor:pointer;padding:6px 2px;min-height:34px}
+.debut-passer:hover{color:var(--tx)}
+@media print{.debut{display:none!important}}
+
 /* Un profil peut décrire un raccourci sans adresse, ou avec une adresse qu'on
    refuse d'ouvrir : le bouton reste, visiblement inerte, plutôt que de
    disparaître sans explication. */
@@ -611,6 +632,15 @@ body.guide-actif .day-est{display:none}
 <canvas id="confetti-canvas"></canvas>
 <div class="app"><div class="card">
 
+<div class="debut" id="debut" role="region" aria-label="Adapter la liste à votre cas">
+  <div class="debut-titre">Deux questions pour adapter la liste</div>
+  <div class="debut-sous">La checklist couvre plusieurs situations qui ne demandent pas
+    les mêmes étapes. Répondre prend dix secondes, et vous pourrez changer d'avis à tout
+    moment avec le sélecteur en haut de page.</div>
+  <div id="debut-etape"></div>
+  <button class="debut-passer" type="button" onclick="passerDebut()">Passer — tout afficher</button>
+</div>
+
 <div class="reglages" id="reglages" role="region" aria-label="Réinitialiser">
   <div class="reglages-titre">Réinitialiser</div>
   <div class="reglages-choix">
@@ -673,6 +703,7 @@ body.guide-actif .day-est{display:none}
         <button type="button" role="menuitem" id="session-start-btn" onclick="depuisMenu(startSession)"><span class="hdr-menu-ico" aria-hidden="true">▶</span>Commencer une session</button>
         <button type="button" role="menuitem" onclick="depuisMenu(exportProfil)"><span class="hdr-menu-ico" aria-hidden="true">🧩</span>Exporter le profil</button>
         <button type="button" role="menuitem" id="reglages-btn" onclick="depuisMenu(basculerReglages)"><span class="hdr-menu-ico" aria-hidden="true">♻️</span>Réinitialiser…</button>
+        <button type="button" role="menuitem" onclick="depuisMenu(relancerDebut)"><span class="hdr-menu-ico" aria-hidden="true">🧭</span>Adapter à mon cas…</button>
         <button type="button" role="menuitem" onclick="depuisMenu(exportTxt)"><span class="hdr-menu-ico" aria-hidden="true">📄</span>Exporter en texte</button>
         <button type="button" role="menuitem" onclick="depuisMenu(function(){window.print();})"><span class="hdr-menu-ico" aria-hidden="true">🖨️</span>Imprimer</button>
       </div>
@@ -726,6 +757,7 @@ body.guide-actif .day-est{display:none}
   <div class="scen-btns">
     <button class="scen-btn active" type="button" id="sc-tout" aria-pressed="true" onclick="changerScenario('tout')">Tout afficher</button>
     <button class="scen-btn" type="button" id="sc-migration" aria-pressed="false" onclick="changerScenario('migration')" title="Passer sur une autre machine">↗ Migration</button>
+    <button class="scen-btn" type="button" id="sc-second" aria-pressed="false" onclick="changerScenario('second')" title="Nouveau PC, mais l'ancien reste en service — avec synchronisation entre les deux">⇄ Deux PC</button>
     <button class="scen-btn" type="button" id="sc-reinstall" aria-pressed="false" onclick="changerScenario('reinstall')" title="Repartir propre sur la machine actuelle">↻ Réinstallation</button>
     <button class="scen-btn" type="button" id="sc-affaires" aria-pressed="false" onclick="changerScenario('affaires')" title="Pilotes, logiciels et documents seulement — ni BIOS ni installation de Windows">📦 Mes affaires</button>
   </div>
@@ -867,14 +899,26 @@ const PROFIL_DEFAUT = {
       "p": "Application → Aide → Se déconnecter",
       "note": "Désinstaller ou formater ne désactive rien : l'activation reste attachée à une machine qui n'existe plus, et une licence n'en autorise qu'un nombre limité.",
       "pr": "high",
-      "warn": "À faire pendant que l'ancien PC fonctionne encore. Après le formatage, il faut passer par le support."
+      "warn": "À faire pendant que l'ancien PC fonctionne encore. Après le formatage, il faut passer par le support.",
+      "alt": {
+        "second": {
+          "n": "Vérifier combien de postes vos licences Adobe autorisent",
+          "d": "Un abonnement Creative Cloud permet deux installations actives. Au-delà, la troisième déconnecte la première sans prévenir. Si vous comptez travailler sur les deux machines, vérifiez-le maintenant plutôt qu'en pleine séance."
+        }
+      }
     },
     {
       "id": "q2",
       "n": "Délier les autres licences liées à la machine",
       "p": "Chaque éditeur concerné",
       "note": "Antivirus, utilitaires système, logiciels de montage, suites de création. Tout ce qui s'active par clé plutôt que par compte est concerné. La page « mes appareils » de chaque compte en ligne les liste.",
-      "pr": "high"
+      "pr": "high",
+      "alt": {
+        "second": {
+          "n": "Compter les postes autorisés par vos autres licences",
+          "d": "Beaucoup de logiciels payants n'en autorisent qu'un ou deux. Faites le tour de ceux que vous voulez sur les deux machines : c'est le moment de le savoir, pas quand l'un des deux refusera de démarrer."
+        }
+      }
     },
     {
       "id": "q3",
@@ -882,7 +926,13 @@ const PROFIL_DEFAUT = {
       "p": "Téléphone — fonction de transfert",
       "note": "Les jetons ne se copient pas. Utiliser la fonction de transfert prévue, et le faire avant de changer de téléphone si les deux migrations tombent ensemble.",
       "pr": "high",
-      "warn": "Sans transfert ni codes de secours, les comptes concernés deviennent inaccessibles."
+      "warn": "Sans transfert ni codes de secours, les comptes concernés deviennent inaccessibles.",
+      "alt": {
+        "second": {
+          "n": "Ajouter la seconde machine à l'application d'authentification",
+          "d": "Rien à transférer puisque l'ancienne reste en service : il s'agit d'autoriser la nouvelle. Gardez les codes de récupération sous la main, certains comptes les redemandent à la première connexion depuis un appareil inconnu."
+        }
+      }
     },
     {
       "id": "q4",
@@ -896,7 +946,13 @@ const PROFIL_DEFAUT = {
       "n": "Noter la clé de récupération BitLocker",
       "p": "Paramètres → Chiffrement de l'appareil",
       "note": "Si le disque est chiffré et que vous comptez y revenir chercher un fichier oublié, sans cette clé il est illisible. Cela vaut aussi pour un disque secondaire.",
-      "pr": "high"
+      "pr": "high",
+      "alt": {
+        "second": {
+          "n": "Noter les clés BitLocker des DEUX machines",
+          "d": "Deux machines, deux clés, et aucune des deux ne doit vivre seulement sur le disque qu'elle déverrouille."
+        }
+      }
     },
     {
       "id": "q6",
@@ -911,21 +967,33 @@ const PROFIL_DEFAUT = {
       "n": "Désautoriser Steam Guard",
       "p": "Steam → Paramètres → Sécurité",
       "note": "Retirer l'ancien PC des appareils autorisés évite qu'il compte dans la limite, et coupe l'accès si la machine change de mains.",
-      "pr": "med"
+      "pr": "med",
+      "cas": [
+        "migration",
+        "reinstall"
+      ]
     },
     {
       "id": "q8",
       "n": "Désautoriser iTunes et les lecteurs liés",
       "p": "Compte → Autorisations",
       "note": "Le nombre d'ordinateurs autorisés est limité et ne se libère pas tout seul. Une machine formatée reste comptée.",
-      "pr": "med"
+      "pr": "med",
+      "cas": [
+        "migration",
+        "reinstall"
+      ]
     },
     {
       "id": "q9",
       "n": "Se déconnecter des sessions ouvertes",
       "p": "Comptes en ligne → Appareils connectés",
       "note": "Messageries, réseaux sociaux, services de stockage. Une session laissée ouverte sur une machine cédée le reste.",
-      "pr": "med"
+      "pr": "med",
+      "cas": [
+        "migration",
+        "reinstall"
+      ]
     },
     {
       "id": "q10",
@@ -1370,6 +1438,19 @@ const PROFIL_DEFAUT = {
         "n1"
       ],
       "d": "Une fois le système propre et à jour, avant d'installer les applications. Filet de sécurité en cas d'installation qui tourne mal."
+    },
+    {
+      "id": "sy5",
+      "o": 31,
+      "n": "Harmoniser les réglages entre les deux machines",
+      "src": "Comptes de synchronisation",
+      "p": "ok",
+      "t": 20,
+      "post": true,
+      "cas": [
+        "second"
+      ],
+      "d": "Navigateur, éditeur de code, raccourcis clavier, thème : la plupart savent synchroniser leurs réglages via un compte. Une demi-heure passée là évite de se sentir chez les autres à chaque fois qu'on change de machine."
     }
   ],
   "ordre": [
@@ -1729,6 +1810,57 @@ const PROFIL_DEFAUT = {
       "p": "Selon l'hyperviseur utilisé",
       "note": "Des dizaines de gigaoctets faciles à oublier, et impossibles à recréer à l'identique. Les arrêter proprement avant de copier.",
       "pr": "ok"
+    },
+    {
+      "id": "sy1",
+      "n": "Décider quels dossiers vivent sur les deux machines",
+      "pr": "high",
+      "p": "À trancher avant de synchroniser quoi que ce soit",
+      "cas": [
+        "second"
+      ],
+      "d": "Tout synchroniser est le réflexe, et c'est l'erreur : une bibliothèque de jeux ou une réserve de machines virtuelles n'ont rien à faire sur un portable, et la synchronisation passera des heures à les recopier. Faites trois piles — ce qui suit partout, ce qui reste sur le fixe, ce qui ne vit que sur le portable — avant d'installer le moindre outil."
+    },
+    {
+      "id": "sy2",
+      "n": "Mettre en place la synchronisation des dossiers de travail",
+      "pr": "high",
+      "p": "OneDrive, Google Drive, Dropbox ou Syncthing",
+      "cas": [
+        "second"
+      ],
+      "dep": [
+        "sy1"
+      ],
+      "d": "Les services grand public suffisent pour des documents. Pour du code ou de gros projets, Syncthing synchronise en direct entre vos deux machines sans passer par un serveur, et sans limite de taille.",
+      "note": "Le code se gère mieux avec git qu'avec une synchronisation de fichiers : deux copies d'un dépôt synchronisées en même temps finissent par se marcher dessus."
+    },
+    {
+      "id": "sy3",
+      "n": "Vérifier que la synchronisation marche dans les deux sens",
+      "pr": "high",
+      "p": "Un fichier test créé de chaque côté",
+      "cas": [
+        "second"
+      ],
+      "dep": [
+        "sy2"
+      ],
+      "d": "Créez un fichier sur le fixe, voyez-le arriver sur le portable, modifiez-le là-bas, voyez la modification revenir. Tant que ce va-et-vient n'est pas constaté, vous n'avez pas une synchronisation, vous avez une sauvegarde à sens unique dont vous ignorez le sens.",
+      "warn": "Une synchronisation qu'on n'a jamais testée dans les deux sens se découvre le jour où elle a écrasé la bonne version."
+    },
+    {
+      "id": "sy4",
+      "n": "Se donner une règle contre les versions divergentes",
+      "pr": "med",
+      "p": "La règle, pas l'outil",
+      "cas": [
+        "second"
+      ],
+      "dep": [
+        "sy3"
+      ],
+      "d": "Deux machines qui modifient le même fichier hors ligne produisent deux versions, et la plupart des outils tranchent en silence. Une règle simple suffit : fermer ses fichiers avant de changer de machine, et attendre que la synchronisation affiche « à jour » avant de refermer le capot."
     }
   ],
   "pwa": [
@@ -1798,6 +1930,12 @@ const SCENARIOS={
   tout:{libelle:'Tout afficher',court:'Tout'},
   migration:{libelle:'Migration vers un autre PC',court:'Migration'},
   reinstall:{libelle:'Réinstallation sur cette machine',court:'Réinstallation'},
+  second:{libelle:'Second PC, je garde l\'ancien',court:'Deux PC',
+          // L'ancienne machine reste allumée demain : désautoriser Steam et
+          // délier ses licences reviendrait à saboter un PC qu'on utilise
+          // encore. En échange, la répartition des dossiers et leur
+          // synchronisation deviennent le vrai travail.
+          onglet:{quitter:'Sur l\'ancien PC'}},
   affaires:{libelle:'Juste mes logiciels et mes documents',court:'Mes affaires',
             exclusif:true,onglets:['apps','data','pwa']}
 };
@@ -1828,7 +1966,7 @@ function messageOngletVide(cle){
   const total=donneesDe(cle).length;
   if(!total){
     return '<div class="onglet-vide">Le profil chargé ne décrit rien dans « '
-      +esc(NOM_ONGLET[cle])+' ».</div>';
+      +esc(nomOnglet(cle))+' ».</div>';
   }
   return '<div class="onglet-vide">Rien à faire ici dans le cas « '
     +esc(sc.court||sc.libelle||scenario)+' ».<br>'
@@ -1844,16 +1982,34 @@ function ongletDe(id){
   return '';
 }
 
-// Un élément peut porter un libellé différent selon le scénario : « Activer
-// Secure Boot » en migration, « Vérifier que Secure Boot est toujours actif »
-// en réinstallation. Sans cela il faudrait dupliquer l'étape et ses liens.
+// Un élément peut porter un libellé différent selon le cas : « Activer Secure
+// Boot » en migration, « Vérifier que Secure Boot est toujours actif » en
+// réinstallation. Sans cela il faudrait dupliquer l'étape et ses liens.
+//
+// `alt` accepte deux formes. Un objet {n,d} vaut pour la réinstallation, ce
+// qui était la seule alternative au départ et reste valable. Un objet dont les
+// clés sont des noms de cas — {reinstall:{…}, second:{…}} — en couvre
+// plusieurs. La première forme était déjà écrite dans les profils : on la
+// garde plutôt que d'imposer une réécriture.
+function variante(e){
+  if(!e||!e.alt)return null;
+  if(e.alt.n||e.alt.d)return scenario==='reinstall'?e.alt:null;
+  return e.alt[scenario]||null;
+}
 function libelleDe(e){
-  if(scenario==='reinstall'&&e&&e.alt&&e.alt.n)return e.alt.n;
-  return e?e.n:'';
+  const v=variante(e);
+  return (v&&v.n)?v.n:(e?e.n:'');
 }
 function descDe(e){
-  if(scenario==='reinstall'&&e&&e.alt&&e.alt.d)return e.alt.d;
-  return e?(e.d||''):'';
+  const v=variante(e);
+  return (v&&v.d)?v.d:(e?(e.d||''):'');
+}
+
+// Un onglet peut aussi changer de nom : « Avant de quitter » n'a pas de sens
+// quand on garde la machine.
+function nomOnglet(cle){
+  const sc=SCENARIOS[scenario]||{};
+  return (sc.onglet&&sc.onglet[cle])||NOM_ONGLET[cle];
 }
 
 function changerScenario(cle){
@@ -1865,7 +2021,25 @@ function changerScenario(cle){
   renderAll();updateGlobal();
 }
 
+// Le nom de l'onglet « Avant de quitter » et son bandeau mentent quand on
+// garde la machine : ils suivent le cas choisi.
+function majIntitulesOnglets(){
+  const t=document.getElementById('tab-quitter');
+  if(t){
+    const badge=t.querySelector('.tab-badge');
+    t.textContent='🚪 '+nomOnglet('quitter')+' ';
+    if(badge)t.appendChild(badge);
+  }
+  const info=document.querySelector('#panel-quitter .tbar-info');
+  if(info){
+    info.textContent=scenario==='second'
+      ? "🚪 À faire sur l'ANCIEN PC, qui reste en service"
+      : "🚪 À faire sur l'ANCIEN PC, avant de formater ou de le céder";
+  }
+}
+
 function majSelecteurScenario(){
+  majIntitulesOnglets();
   Object.keys(SCENARIOS).forEach(function(k){
     const b=document.getElementById('sc-'+k);
     if(!b)return;
@@ -3143,6 +3317,7 @@ function remiseAZero(){
     localStorage.removeItem(CLE_ETAT);
     localStorage.removeItem(CLE_PROFIL);
     localStorage.removeItem(CLE_SCENARIO);
+    localStorage.removeItem(CLE_DEBUT);
   }catch(e){console.error(e);}
   S.checked={};S.notes={};S.dates={};S.lic={};S.env={};S.lastSave=null;
   journal=[];openNotes={};sautees={};
@@ -3156,6 +3331,77 @@ function remiseAZero(){
   fermerReglages();
   if(!avaitProfil)document.getElementById('annul-txt').textContent=
     'Site remis à zéro : progression, notes et clés effacées.';
+}
+
+// ── Deux questions au premier lancement ────────────────────────────────
+// Les quatre cas se devinent mal depuis leurs seuls intitulés, et celui qui
+// compte le plus — garder ou non l'ancienne machine — ne saute pas aux yeux.
+// Deux questions le règlent. Le bandeau ne s'affiche qu'à une page vierge :
+// quelqu'un qui a déjà coché sait ce qu'il fait.
+const CLE_DEBUT='mpc_debut_v1';
+
+function debutDejaVu(){
+  try{return localStorage.getItem(CLE_DEBUT)==='1';}catch(e){return true;}
+}
+function marquerDebutVu(){
+  try{localStorage.setItem(CLE_DEBUT,'1');}catch(e){}
+}
+
+const QUESTIONS={
+  depart:{q:'Qu\'est-ce que vous installez ?',choix:[
+    {t:'Un PC neuf',d:'Une machine qui vient d\'arriver, ou que vous venez de monter.',
+     suite:'ancien'},
+    {t:'Le PC que j\'ai déjà',d:'Repartir propre sur la même machine, sans en changer.',
+     cas:'reinstall'}]},
+  ancien:{q:'Et l\'ancien PC, il devient quoi ?',choix:[
+    {t:'Je m\'en sépare',d:'Vendu, donné, ou mis au rebut. Il faudra délier ses licences et effacer son disque.',
+     cas:'migration'},
+    {t:'Je le garde',d:'Les deux machines resteront en service. Rien à délier, mais des dossiers à répartir et à synchroniser.',
+     cas:'second'}]}
+};
+
+function ouvrirDebut(){
+  const b=document.getElementById('debut');
+  if(!b)return;
+  b.classList.add('visible');
+  afficherQuestion('depart');
+}
+function afficherQuestion(cle){
+  const zone=document.getElementById('debut-etape');
+  const q=QUESTIONS[cle];
+  if(!zone||!q)return;
+  let html='<div class="debut-q">'+esc(q.q)+'</div><div class="debut-choix">';
+  q.choix.forEach(function(c,i){
+    html+='<button type="button" onclick="repondreDebut(\''+escJS(cle)+'\','+i+')">'
+      +'<b>'+esc(c.t)+'</b><span>'+esc(c.d)+'</span></button>';
+  });
+  zone.innerHTML=html+'</div>';
+  const p=zone.querySelector('button');
+  if(p)p.focus();
+}
+function repondreDebut(cle,i){
+  const c=(QUESTIONS[cle]||{choix:[]}).choix[i];
+  if(!c)return;
+  if(c.suite){afficherQuestion(c.suite);return;}
+  marquerDebutVu();
+  fermerDebut();
+  changerScenario(c.cas);
+  const sc=SCENARIOS[c.cas]||{};
+  informer('Liste adaptée : « '+(sc.libelle||c.cas)+' ». Le sélecteur en haut de page permet d\'en changer.');
+}
+function passerDebut(){
+  marquerDebutVu();
+  fermerDebut();
+}
+function fermerDebut(){
+  const b=document.getElementById('debut');
+  if(b)b.classList.remove('visible');
+}
+// Relançable depuis le menu : on peut vouloir y revenir après coup.
+function relancerDebut(){
+  ouvrirDebut();
+  document.getElementById('debut').scrollIntoView(
+    {block:'nearest',behavior:mouvementReduit()?'auto':'smooth'});
 }
 
 // ── Panneau des remises à zéro ─────────────────────────────────────────
@@ -3239,11 +3485,11 @@ function resetSection(sec){
   const map={};ONGLETS.forEach(function(c){map[c]=visiblesDe(c);});
   const cochees=map[sec].filter(function(x){return S.checked[x.id];}).length;
   if(!cochees){
-    informer('Rien à réinitialiser dans « '+NOM_ONGLET[sec]+' » : aucune case cochée.');
+    informer('Rien à réinitialiser dans « '+nomOnglet(sec)+' » : aucune case cochée.');
     return;
   }
   memoriserAnnulation(cochees+' case'+(cochees>1?'s':'')+' décochée'+(cochees>1?'s':'')
-    +' dans « '+NOM_ONGLET[sec]+' ».',false);
+    +' dans « '+nomOnglet(sec)+' ».',false);
   map[sec].forEach(function(x){delete S.checked[x.id];delete S.dates[x.id];});
   saveState();renderAll();updateGlobal();
 }
@@ -3444,6 +3690,8 @@ window.addEventListener('DOMContentLoaded',function(){
   catch(e){console.error(e);appliquerProfil(PROFIL_DEFAUT,false);}
   renderHistory();
   enregistrerServiceWorker();
+  // Page vierge seulement : quelqu'un qui a déjà coché sait ce qu'il fait.
+  if(!debutDejaVu()&&!Object.keys(S.checked).length&&scenario==='tout')ouvrirDebut();
 });
 
 // ═══ INSTALLATION (PWA) ═══
