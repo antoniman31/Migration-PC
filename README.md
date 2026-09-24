@@ -18,20 +18,23 @@ Les scripts sont facultatifs.
 - [À quoi ça sert](#à-quoi-ça-sert)
 - [Le parcours en deux double-clics](#le-parcours-en-deux-double-clics)
 - [Démarrage rapide](#démarrage-rapide)
-- **Les trois scripts**
+- **Les scripts Windows**
   - [Inventorier l'ancien PC](#inventorier-lancien-pc)
   - [Vérifier le nouveau PC](#vérifier-le-nouveau-pc)
   - [Vérifier les sauvegardes](#vérifier-les-sauvegardes)
-- [Migration, réinstallation, ou juste ses affaires](#migration-réinstallation-ou-juste-ses-affaires)
+  - [Emporter ses réglages, et les remettre](#emporter-ses-réglages-et-les-remettre)
+- [Quatre cas, deux questions](#quatre-cas-deux-questions)
   - [Installer Windows sans rester devant](#installer-windows-sans-rester-devant)
 - [La checklist](#la-checklist)
   - [La barre du haut](#la-barre-du-haut)
+  - [Ma configuration](#ma-configuration)
   - [Repartir de zéro](#repartir-de-zéro)
   - [Mode guidé](#mode-guidé)
   - [Accessibilité](#accessibilité)
 - [Formats de fichiers](#formats-de-fichiers)
 - [Écrire son propre profil](#écrire-son-propre-profil)
 - [Vie privée](#vie-privée)
+  - [Un profil reçu est une entrée non fiable](#un-profil-reçu-est-une-entrée-non-fiable)
 - [Tests](#tests)
   - [Intégration continue](#intégration-continue)
 - [Déploiement](#déploiement)
@@ -324,7 +327,7 @@ La progression est enregistrée dans le navigateur au fur et à mesure et peut �
 exportée en JSON pour passer d'une machine à l'autre.
 
 **Navigation** — mode normal ou compact, thème clair/sombre suivant les préférences
-système, recherche sur les quatre onglets à la fois, tri des apps par catégorie,
+système, recherche sur les cinq onglets à la fois, tri des apps par catégorie,
 priorité, durée ou ordre conseillé, filtre sur les apps sans winget. La mise en page
 s'adapte aux écrans étroits : cibles tactiles agrandies, textes relevés, champs à 16 px
 pour éviter le zoom automatique d'iOS.
@@ -486,7 +489,7 @@ du dépôt winget.
 }
 ```
 
-**Profil** — les listes des quatre onglets. C'est le format de `presets/exemple.json`,
+**Profil** — les listes des cinq onglets. C'est le format de `presets/exemple.json`,
 et celui que produit le bouton 🧩.
 
 **Progression** — les cases cochées, les notes et les dates, sans les listes. C'est ce
@@ -610,7 +613,7 @@ Vingt-six suites, dans l'ordre où la CI les lance.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
-identifiants uniques sur les quatre onglets, priorités valides, catégories déclarées,
+identifiants uniques sur les cinq onglets, priorités valides, catégories déclarées,
 ordre conseillé ne citant que des éléments existants. Il contrôle aussi que les fichiers
 dont les tests dépendent sont bien versionnés, et qu'aucune fonction n'est définie deux
 fois dans `index.html` — une redéfinition écrase silencieusement la première et ce piège
@@ -731,20 +734,33 @@ Ce garde-fou suppose que Pages publie par le workflow et non par la branche — 
 ```
 Migration-PC/
 ├── index.html                    # la checklist (tout est dedans)
-├── lib-detection.ps1             # détection partagée par les trois scripts
+│
+│   # Par où commencer, en double-cliquant
+├── Migration PC.bat              # ouvre la fenêtre qui demande quoi faire
+├── 1-scanner-ce-pc.bat           # raccourci : inventorier, sans passer par le menu
+├── 2-verifier-ce-pc.bat          # raccourci : vérifier le nouveau PC
+│
+│   # Ce que ces raccourcis appellent
+├── migration-pc.ps1              # le lanceur : fenêtre, ou menu texte en repli
+├── lanceur-actions.ps1           # ce qu'il propose et ce qu'il vérifie avant
+├── lib-detection.ps1             # détection partagée par tous les scripts
+├── ecrire-resultat.ps1           # pose le résultat à côté de la page et l'ouvre
 ├── scan-pc.ps1                   # inventorie l'ancien PC
 ├── verifier-pc.ps1               # constate ce qui est déjà sur le nouveau
+├── sauvegarder-configs.ps1       # emporte les dossiers de réglages
+├── restaurer-configs.ps1         # les repose — le seul script qui écrit chez vous
 ├── verifier-sauvegardes.ps1      # compare les dossiers copiés
+│
 ├── manifest.json, sw.js, icons/  # installation et fonctionnement hors ligne
 ├── presets/exemple.json          # profil d'exemple, aussi embarqué dans index.html
-├── scripts-sync.js               # recopie le profil d'exemple dans index.html
+├── scripts-sync.js               # recopie le profil et le nom de cache du sw
 ├── captures/                     # images du README
 ├── tests/                        # suites Node, PowerShell et navigateur
 ├── package.json                  # scripts de test uniquement
 └── .github/workflows/ci.yml      # tests, puis publication si tout est vert
 ```
 
-Les trois scripts PowerShell ont besoin de `lib-detection.ps1` à côté d'eux : copiez le
+Les scripts PowerShell ont besoin de `lib-detection.ps1` à côté d'eux : copiez le
 dossier, pas un fichier isolé.
 
 `package.json` ne sert qu'aux tests : `index.html` n'a aucune dépendance et n'a jamais
@@ -770,7 +786,7 @@ URL publiée : `https://antoniman31.github.io/Migration-PC`
 
 ## Limites connues
 
-Les trois scripts sont **Windows uniquement** et demandent PowerShell 5.1 ou supérieur.
+Les scripts sont **Windows uniquement** et demandent PowerShell 5.1 ou supérieur.
 S'ils refusent de démarrer, lancez-les avec `-ExecutionPolicy Bypass`. Ils ont besoin de
 `lib-detection.ps1` à côté d'eux.
 
