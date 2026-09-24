@@ -82,6 +82,9 @@ jobs:
       - name: Lanceur — actions et fichiers
         run: pwsh -File tests/test-lanceur.ps1
 
+      - name: Configurations — aller-retour réel
+        run: pwsh -File tests/test-configs-aller-retour.ps1
+
       - name: Compatibilité Windows PowerShell 5.1
         run: pwsh -File tests/test-powershell-compatibility.ps1
 

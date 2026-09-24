@@ -584,7 +584,7 @@ Données. `tests/test-profil-hostile.js` rejoue un profil piégé à chaque publ
 ```bash
 npm install                       # une seule fois
 npm test                          # les cinq suites sans navigateur, en 2 s
-npm run test:scan                 # les cinq suites PowerShell
+npm run test:scan                 # les six suites PowerShell
 npm run test:navigateur           # rendu réel dans Chromium
 npm run test:verification         # import d'une vérification de PC
 npm run test:pwa                  # installabilité et fonctionnement hors ligne
@@ -606,7 +606,7 @@ npm run test:outils               # scripts proposés et chargement automatique
 navigateur demandent Chromium (`npm install` le fournit via Playwright), les suites
 PowerShell demandent `pwsh`.
 
-Vingt-cinq suites, dans l'ordre où la CI les lance.
+Vingt-six suites, dans l'ordre où la CI les lance.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
@@ -711,9 +711,15 @@ marqueur d'encodage comme de l'ANSI et non de l'UTF-8. « Clés SSH » y devient
 vérifie que chaque script porte le marqueur, que tous parsent, et que les noms accentués
 de la table des configurations arrivent intacts.
 
+`tests/test-configs-aller-retour.ps1` exécute les deux scripts pour de vrai — ils ne font
+que lire et écrire des fichiers, donc ils tournent entièrement ici. Il vérifie que la
+copie est fidèle, que la restauration ne crée pas de dossier imbriqué, que le refus
+d'écraser protège réellement le fichier en place, que `-Remplacer` laisse l'ancien
+lisible, et qu'un dossier sans index est rejeté plutôt que deviné.
+
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les vingt-cinq suites à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les vingt-six suites à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 
@@ -803,6 +809,23 @@ ponctuation qui porte le nom est transcrite plutôt qu'effacée, sinon `Notepad+
 
 **Le classement par catégorie est indicatif**, fondé sur des mots-clés. Un logiciel peu
 connu atterrit dans « Utilitaires Système ». Les catégories se corrigent dans le JSON.
+
+### Emporter ses réglages, et les remettre
+
+Repérer les dossiers de configuration ne suffisait pas : il fallait encore les copier à
+la main. **`sauvegarder-configs.ps1`** les copie vers la clé et écrit un index de ce qui
+vient d'où ; **`restaurer-configs.ps1`** les repose à partir de cet index, jamais d'un
+chemin deviné.
+
+Le second est le seul script du projet qui écrit sur votre disque, alors il est prudent
+par défaut. Il **refuse** d'écraser un dossier existant — un profil Firefox déjà créé sur
+la machine neuve vaut mieux que celui d'il y a deux semaines. Avec `-Remplacer`, il met
+l'ancien de côté dans un dossier daté avant d'écrire, pour que l'opération reste
+annulable. Et `-Simuler` montre tout ce qui se passerait sans rien toucher : à faire au
+moins une fois.
+
+À lancer **après** avoir installé les logiciels, et fenêtres fermées : la plupart lisent
+leurs réglages au démarrage et réécriraient par-dessus en se fermant.
 
 **Les dossiers de configuration sont repérés, pas devinés.** Le scanner connaît une
 table d'emplacements — celui de VS Code, de Notepad++, de Firefox, d'OBS, d'une trentaine

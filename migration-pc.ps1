@@ -60,9 +60,14 @@ function Invoke-Action {
     $parametres = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $script)
 
     if ($Action.PSObject.Properties['dossier'] -and $Action.dossier) {
-        $dossier = Read-DossierSauvegarde
+        $dossier = Read-DossierSauvegarde -Invite $Action.titre
         if (-not $dossier) { return @{ ok = $false; message = "Annule." } }
-        $parametres += @('-Destination', $dossier)
+        # Le nom du parametre varie : on copie VERS un dossier, on restaure
+        # DEPUIS un dossier. Se tromper de sens serait le pire defaut possible.
+        $nomParam = if ($Action.PSObject.Properties['argument'] -and $Action.argument) {
+            $Action.argument
+        } else { 'Destination' }
+        $parametres += @("-$nomParam", $dossier)
     }
 
     # Une nouvelle fenetre : le script ecrit beaucoup, et on veut pouvoir lire
@@ -72,16 +77,17 @@ function Invoke-Action {
 }
 
 function Read-DossierSauvegarde {
+    param([string]$Invite = "Quel dossier ?")
     # Le selecteur de dossier n'existe qu'avec l'interface graphique.
     if (Test-InterfaceGraphique) {
         $boite = New-Object System.Windows.Forms.FolderBrowserDialog
-        $boite.Description = "Ou se trouve la copie a verifier ?"
+        $boite.Description = $Invite
         if ($boite.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
             return $boite.SelectedPath
         }
         return $null
     }
-    $saisi = Read-Host "Chemin de la copie a verifier (vide pour annuler)"
+    $saisi = Read-Host ("{0} — chemin du dossier (vide pour annuler)" -f $Invite)
     if ([string]::IsNullOrWhiteSpace($saisi)) { return $null }
     return $saisi
 }

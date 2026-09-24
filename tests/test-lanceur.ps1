@@ -22,12 +22,12 @@ function ok($libelle, $obtenu, $attendu) {
 
 "--- dans un dossier complet ---"
 $a = @(Get-ActionsMigration -Racine $racine)
-ok 'quatre actions proposees'      $a.Count 4
+ok 'six actions proposees'         $a.Count 6
 ok 'toutes realisables'            (@($a | Where-Object { -not $_.possible })).Count 0
 ok 'chacune a un intitule'         (@($a | Where-Object { [string]::IsNullOrWhiteSpace($_.titre) })).Count 0
 ok 'et une explication'            (@($a | Where-Object { [string]::IsNullOrWhiteSpace($_.detail) })).Count 0
 ok 'et une duree annoncee'         (@($a | Where-Object { [string]::IsNullOrWhiteSpace($_.duree) })).Count 0
-ok 'identifiants uniques'          (@($a.id | Sort-Object -Unique)).Count 4
+ok 'identifiants uniques'          (@($a.id | Sort-Object -Unique)).Count 6
 
 # Les deux premieres actions disent SUR QUELLE MACHINE on est : c'est la seule
 # question a laquelle on ne peut pas repondre a la place de l'utilisateur.
@@ -48,7 +48,7 @@ $t = Join-Path ([System.IO.Path]::GetTempPath()) ("lanceur-" + [guid]::NewGuid()
 $null = New-Item -ItemType Directory -Path $t -Force
 Copy-Item (Join-Path $racine 'scan-pc.ps1') $t
 $b = @(Get-ActionsMigration -Racine $t)
-ok 'les actions restent montrees'  $b.Count 4
+ok 'les actions restent montrees'  $b.Count 6
 ok 'mais aucune n est realisable'  (@($b | Where-Object { $_.possible })).Count 0
 # scan-pc.ps1 est la, mais il ne tourne pas sans lib-detection.ps1 : l'action
 # doit le dire au lieu de laisser lancer un script qui echouera.
@@ -82,6 +82,15 @@ ok 'la reinstallation sur place'   ($texte -match 'reinstallez Windows') $true
 ok 'et le cas des deux PC'         ($texte -match 'gardez les deux') $true
 # Le piege le plus couteux du parcours : formater avant d'avoir verifie la copie.
 ok 'il previent avant le formatage' ($texte -match 'AVANT de formater') $true
+# On copie VERS un dossier, on restaure DEPUIS un dossier : se tromper de sens
+# ecraserait la sauvegarde avec le contenu de la machine neuve.
+$emporter = $a | Where-Object { $_.id -eq 'emporter' }
+$remettre = $a | Where-Object { $_.id -eq 'remettre' }
+ok 'emporter ecrit vers Destination' $emporter.argument 'Destination'
+ok 'remettre lit depuis Source'      $remettre.argument 'Source'
+ok 'les deux demandent un dossier'   (@($emporter.dossier, $remettre.dossier) -contains $false) $false
+# L'ordre compte : installer les logiciels d'abord, reposer les reglages apres.
+ok 'remettre previent sur l ordre'   ((@($remettre.suite) -join ' ') -match 'APRES avoir installe') $true
 
 "`n--- les fichiers du lanceur ---"
 foreach ($f in @('migration-pc.ps1', 'lanceur-actions.ps1', 'Migration PC.bat')) {

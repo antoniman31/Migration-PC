@@ -37,6 +37,36 @@ function Get-ActionsMigration {
             )
         },
         [ordered]@{
+            id      = 'emporter'
+            titre   = "Emporter mes reglages"
+            detail  = "Copie les dossiers de configuration de vos logiciels vers la cle. Installer un logiciel prend une commande ; retrouver ses reglages prend une soiree."
+            script  = 'sauvegarder-configs.ps1'
+            requis  = @('sauvegarder-configs.ps1', 'lib-detection.ps1')
+            dossier = $true
+            argument = 'Destination'
+            duree   = "selon la taille"
+            suite   = @(
+                "Un index est ecrit a cote de la copie : c'est lui qui permettra",
+                "de tout remettre en place, sans deviner un seul chemin.",
+                "Sur le nouveau PC, choisissez « Remettre mes reglages »."
+            )
+        },
+        [ordered]@{
+            id      = 'remettre'
+            titre   = "Remettre mes reglages"
+            detail  = "Repose les dossiers copies a leur place. Refuse d'ecraser quoi que ce soit par defaut, et met l'existant de cote sinon."
+            script  = 'restaurer-configs.ps1'
+            requis  = @('restaurer-configs.ps1')
+            dossier = $true
+            argument = 'Source'
+            duree   = "quelques secondes"
+            suite   = @(
+                "A faire APRES avoir installe les logiciels : la plupart creent",
+                "leur dossier de reglages au premier demarrage.",
+                "Fermez-les avant, sinon ils reecriront par-dessus en se fermant."
+            )
+        },
+        [ordered]@{
             id      = 'sauvegardes'
             titre   = "Verifier une sauvegarde"
             detail  = "Compare une copie a son original, fichier par fichier. Une sauvegarde qu'on n'a jamais relue n'est pas une sauvegarde."
@@ -78,13 +108,16 @@ function Get-Parcours {
         "  Vous partez d'un PC vers un autre",
         "    1. Sur l'ANCIEN : inventorier. La page s'ouvre remplie, vous ajustez,",
         "       vous exportez votre profil sur la cle.",
-        "    2. Sauvegardez vos dossiers, puis verifiez la copie (option 3).",
+        "    2. Emportez vos reglages sur la cle, et sauvegardez vos dossiers.",
+        "       Verifiez la copie avant d'aller plus loin.",
         "    3. Sur le NOUVEAU : verifier. La page coche ce qui est deja la et",
         "       signale les peripheriques sans pilote.",
+        "    4. Installez vos logiciels, PUIS remettez vos reglages.",
         "",
         "  Vous reinstallez Windows sur CETTE machine",
         "    1. Inventorier d'abord : apres le formatage, il n'y a plus de source.",
-        "    2. Sauvegardez et verifiez la copie AVANT de formater.",
+        "    2. Emportez vos reglages, sauvegardez, et verifiez la copie",
+        "       AVANT de formater. Apres, il est trop tard.",
         "    3. Apres reinstallation : verifier, sur la meme machine.",
         "",
         "  Vous gardez les deux PC",
