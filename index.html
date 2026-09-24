@@ -232,8 +232,10 @@ body.compact .item{padding:5px 0}
 .hdr-sep{width:.5px;height:20px;background:var(--brd2);margin:0 2px}
 .primary-btn{background:var(--acc-fond)!important;color:#fff!important;border-color:var(--acc-fond)!important}
 .primary-btn:hover{opacity:.9!important}
-.hdr-session{background:var(--bok-bg)!important;color:var(--bok-tx)!important;border-color:var(--bok-bd)!important}
-.hdr-session:hover{opacity:.85!important}
+/* Le démarrage de session portait un fond vert plein quand il était un bouton
+   de la barre. Dans une liste de menu, un pavé de couleur sur une ligne parmi
+   quatre crie plus qu'il n'informe : la couleur reste, sur la seule icône. */
+#session-start-btn .hdr-menu-ico{color:var(--bok-tx)}
 
 /* CONFETTI */
 #confetti-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;display:none}
@@ -661,6 +663,7 @@ body.guide-actif .day-est{display:none}
         <button type="button" role="menuitem" id="session-start-btn" onclick="depuisMenu(startSession)"><span class="hdr-menu-ico" aria-hidden="true">▶</span>Commencer une session</button>
         <button type="button" role="menuitem" onclick="depuisMenu(exportProfil)"><span class="hdr-menu-ico" aria-hidden="true">🧩</span>Exporter le profil</button>
         <button type="button" role="menuitem" id="reglages-btn" onclick="depuisMenu(basculerReglages)"><span class="hdr-menu-ico" aria-hidden="true">♻️</span>Réinitialiser…</button>
+        <button type="button" role="menuitem" onclick="depuisMenu(exportTxt)"><span class="hdr-menu-ico" aria-hidden="true">📄</span>Exporter en texte</button>
         <button type="button" role="menuitem" onclick="depuisMenu(function(){window.print();})"><span class="hdr-menu-ico" aria-hidden="true">🖨️</span>Imprimer</button>
       </div>
     </div>
@@ -1889,11 +1892,6 @@ function chargerProfilMemorise(){
   return null;
 }
 
-function reinitProfil(){
-  memoriserAnnulation('Retour au profil d\'exemple. La progression est conservée.',true);
-  try{localStorage.removeItem(CLE_PROFIL);}catch(e){}
-  appliquerProfil(PROFIL_DEFAUT,false);
-}
 
 // Le profil chargé, reconstruit depuis les listes en mémoire.
 function profilCourant(){
@@ -2027,10 +2025,18 @@ function handleImport(evt){
 const PRIO = {high:0,med:1,ok:2};
 let S = {checked:{},notes:{},dates:{},lastSave:null,lic:{},env:{}};
 let curTab='quitter',curCat='all',noWinget=false,viewMode='normal',isDark=false;
-let openNotes={},history=[],donePerTab={};
+// « journal » et non « history » : une globale nommée history masque
+// window.history, ce qui piégerait le jour où l'on voudra gérer le bouton
+// Retour du navigateur.
+let openNotes={},journal=[],donePerTab={};
 let session={active:false,start:null,count:0,timer:null};
 
 // ═══ HELPERS ═══
+// Le libellé passé à toggle() finit dans l'historique et dans les bandeaux :
+// il doit être celui qu'on a sous les yeux, donc celui du scénario courant.
+function attrToggle(e){
+  return 'toggle(\''+e.id+'\',\''+esc(libelleDe(e)).replace(/'/g,"\\'")+'\')';
+}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function fmtTime(min){if(!min)return '';if(min<60)return '~'+min+'min';const h=Math.floor(min/60),m=min%60;return m===0?'~'+h+'h':'~'+h+'h'+(m<10?'0':'')+m;}
 function fmtTaille(go){
@@ -2110,15 +2116,15 @@ function toggle(id,name){
 }
 
 function addHistory(name,checked){
-  history.unshift({name:name,checked:checked,ts:Date.now()});
-  if(history.length>5)history.length=5;
+  journal.unshift({name:name,checked:checked,ts:Date.now()});
+  if(journal.length>5)journal.length=5;
   renderHistory();
 }
 function renderHistory(){
   const el=document.getElementById('history-items');
   if(!el)return;
-  if(!history.length){el.innerHTML='<span style="color:var(--tx3);font-style:italic">aucune action</span>';return;}
-  el.innerHTML=history.map((h,i)=>(i>0?'<span class="h-sep">·</span>':'')+'<span class="h-item"><span class="h-ck">'+(h.checked?'✓':'✗')+'</span> '+esc(h.name)+'</span>').join('');
+  if(!journal.length){el.innerHTML='<span style="color:var(--tx3);font-style:italic">aucune action</span>';return;}
+  el.innerHTML=journal.map((h,i)=>(i>0?'<span class="h-sep">·</span>':'')+'<span class="h-item"><span class="h-ck">'+(h.checked?'✓':'✗')+'</span> '+esc(h.name)+'</span>').join('');
 }
 
 // ═══ NOTES ═══
@@ -2204,7 +2210,7 @@ function renderNPC(){
     const tBadge=item.t?'<span class="badge b-time">⏱ '+fmtTime(item.t)+'</span>':'';
     const depBadge=item.dep?mkDepBadge(item.dep):'';
     const warn=item.warn?'<div class="warn-badge">⚠️ '+esc(item.warn)+'</div>':'';
-    html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="toggle(\''+item.id+'\',\''+esc(item.n).replace(/'/g,"\\'")+'\')">'
+    html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(item)+'">'
       +mkChkbox()
       +'<div class="item-body">'
         +'<div class="item-name-row"><span class="b-num">'+item.o+'</span><span class="item-name">'+esc(libelleDe(item))+'</span>'+dt+mkNoteBtn(item.id)+'</div>'
@@ -2213,7 +2219,7 @@ function renderNPC(){
         +warn
         +mkNoteArea(item.id)
       +'</div>'
-      +mkLink(item.n)
+      +mkLink(libelleDe(item))
     +'</div>';
   });
   cont.innerHTML=html;
@@ -2287,22 +2293,22 @@ function mkAppItem(a){
   const tBadge=a.t?'<span class="badge b-time">⏱ '+fmtTime(a.t)+'</span>':'';
   const warn=a.warn?'<div class="warn-badge">⚠️ '+esc(a.warn)+'</div>':'';
   const depBadge=a.dep?mkDepBadge(a.dep):'';
-  return '<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="toggle(\''+a.id+'\',\''+esc(a.n).replace(/'/g,"\\'")+'\')">'
+  return '<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(a)+'">'
     +mkChkbox()
     +'<div class="item-body">'
-      +'<div class="item-name-row"><span class="item-name">'+esc(a.n)+'</span>'+dt+mkNoteBtn(a.id)+'</div>'
+      +'<div class="item-name-row"><span class="item-name">'+esc(libelleDe(a))+'</span>'+dt+mkNoteBtn(a.id)+'</div>'
       +'<div class="item-badges"><span class="badge b-src">'+esc(a.src)+'</span>'+wBadge+tBadge+pBadge+depBadge+'</div>'
-      +'<div class="item-desc">'+esc(a.d)+'</div>'
+      +'<div class="item-desc">'+esc(descDe(a))+'</div>'
       +warn
       +mkNoteArea(a.id)
     +'</div>'
-    +mkLink(a.n)
+    +mkLink(libelleDe(a))
   +'</div>';
 }
 
 function checkAllCat(cat,evt){
   evt.stopPropagation();
-  const items=APPS_DATA.filter(function(a){return a.c===cat;});
+  const items=visiblesDe('apps').filter(function(a){return a.c===cat;});
   const all=items.every(function(a){return S.checked[a.id];});
   const now=Date.now();
   items.forEach(function(a){if(all){delete S.checked[a.id];delete S.dates[a.id];}else{S.checked[a.id]=true;S.dates[a.id]=now;}});
@@ -2340,10 +2346,10 @@ function renderParPriorite(onglet,donnees,labels){
       const ck=!!S.checked[s.id];
       const dt=ck&&S.dates[s.id]?'<span class="item-date">✓ '+fmtDate(S.dates[s.id])+'</span>':'';
       const pBadge=pr==='high'?'<span class="badge b-crit">Critique</span>':pr==='med'?'<span class="badge b-imp">Important</span>':'<span class="badge b-opt">Optionnel</span>';
-      html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="toggle(\''+s.id+'\',\''+esc(s.n).replace(/'/g,"\\'")+'\')">'
+      html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(s)+'">'
         +mkChkbox()
         +'<div class="item-body">'
-          +'<div class="item-name-row"><span class="item-name">'+esc(s.n)+'</span>'+dt+mkNoteBtn(s.id)+'</div>'
+          +'<div class="item-name-row"><span class="item-name">'+esc(libelleDe(s))+'</span>'+dt+mkNoteBtn(s.id)+'</div>'
           +'<div class="item-badges">'+pBadge+'</div>'
           +'<div class="save-path">'+esc(s.p)+'</div>'
           +(s.note?'<div class="save-note">'+esc(s.note)+'</div>':'')
@@ -2358,9 +2364,11 @@ function renderParPriorite(onglet,donnees,labels){
   document.getElementById('list-'+onglet).innerHTML=html;
   updateSecProg(onglet,donnees.filter(visibleDansScenario));
 }
+// Cocher ce qu'on ne voit pas, c'est marquer faite une tâche qu'on n'a pas
+// lue : ces boutons ne portent que sur ce que le scénario affiche.
 function checkAllPriorite(onglet,pr,evt){
   evt.stopPropagation();
-  const items=donneesDe(onglet).filter(function(s){return s.pr===pr;});
+  const items=visiblesDe(onglet).filter(function(s){return s.pr===pr;});
   if(!items.length)return;
   const all=items.every(function(s){return S.checked[s.id];});
   const now=Date.now();
@@ -2373,16 +2381,16 @@ function renderPWA(){
   const pwaVues=visiblesDe('pwa');
   const dn=pwaVues.filter(function(p){return S.checked[p.id];}).length;
   const allDone=dn===pwaVues.length;
-  let html='<div class="sec-hdr first">🌍 Raccourcis Chrome existants — sync Google automatique<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+PWA_DATA.length+'</span><button class="chk-all" onclick="checkAllPWA(event)">'+(allDone?'Décocher tout':'Tout cocher')+'</button></div></div>';
+  let html='<div class="sec-hdr first">🌍 Raccourcis Chrome existants — sync Google automatique<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+pwaVues.length+'</span><button class="chk-all" onclick="checkAllPWA(event)">'+(allDone?'Décocher tout':'Tout cocher')+'</button></div></div>';
   pwaVues.forEach(function(p){
     const ck=!!S.checked[p.id];
     const dt=ck&&S.dates[p.id]?'<span class="item-date">✓ '+fmtDate(S.dates[p.id])+'</span>':'';
-    html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="toggle(\''+p.id+'\',\''+esc(p.n).replace(/'/g,"\\'")+'\')">'
+    html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(p)+'">'
       +mkChkbox()
       +'<div class="item-body">'
-        +'<div class="item-name-row"><span class="item-name">'+esc(p.n)+'</span>'+dt+mkNoteBtn(p.id)+'</div>'
+        +'<div class="item-name-row"><span class="item-name">'+esc(libelleDe(p))+'</span>'+dt+mkNoteBtn(p.id)+'</div>'
         +'<div class="item-badges"><span class="badge b-sync">✓ Raccourci OK</span><span class="badge b-pwa">PWA Chrome</span></div>'
-        +'<div class="item-desc">'+esc(p.d)+'</div>'
+        +'<div class="item-desc">'+esc(descDe(p))+'</div>'
         +mkNoteArea(p.id)
       +'</div>'
       +mkDirectLink(p.u)
@@ -2393,9 +2401,10 @@ function renderPWA(){
 }
 function checkAllPWA(evt){
   evt.stopPropagation();
-  const all=PWA_DATA.every(function(p){return S.checked[p.id];});
+  const vues=visiblesDe('pwa');
+  const all=vues.every(function(p){return S.checked[p.id];});
   const now=Date.now();
-  PWA_DATA.forEach(function(p){if(all){delete S.checked[p.id];delete S.dates[p.id];}else{S.checked[p.id]=true;S.dates[p.id]=now;}});
+  vues.forEach(function(p){if(all){delete S.checked[p.id];delete S.dates[p.id];}else{S.checked[p.id]=true;S.dates[p.id]=now;}});
   saveState();renderPWA();updateGlobal();checkTabComplete();
 }
 
@@ -2422,7 +2431,7 @@ function globalSearch(){
     sec.items.forEach(function(item){
       const ck=!!S.checked[item.id];
       const name=libelleDe(item);
-      html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="toggle(\''+item.id+'\',\''+esc(name).replace(/'/g,"\\'")+'\');globalSearch()">'
+      html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(item)+';globalSearch()">'
         +mkChkbox()
         +'<div class="item-body"><div class="item-name-row"><span class="item-name">'+esc(name)+'</span></div>'
         +'<div class="item-desc" style="margin-top:2px">'+esc(item.d||item.p||'')+'</div></div>'
@@ -2688,7 +2697,7 @@ function renderGuide(){
   const t=tacheCourante();
   const onglet=ONGLET_DE[t.id]||'';
   // Les sauvegardes portent un chemin plutôt qu'une description.
-  const desc=t.d||t.note||t.p||'';
+  const desc=descDe(t)||t.note||t.p||'';
   const cmd=t.w?cmdWinget(t.w):'';
   const manque=depsManquantes(t);
 
@@ -2698,7 +2707,7 @@ function renderGuide(){
     +'</div>'
     +'<div class="guide-corps">'
       +'<div class="guide-onglet">'+esc(onglet)+'</div>'
-      +'<h2 class="guide-titre">'+esc(t.n)+'</h2>';
+      +'<h2 class="guide-titre">'+esc(libelleDe(t))+'</h2>';
 
   if(desc)html+='<p class="guide-desc">'+esc(desc)+'</p>';
 
@@ -2722,7 +2731,7 @@ function renderGuide(){
     +'<button type="button" class="guide-fait" onclick="guideFait(\''+t.id+'\')">✓ C\'est fait</button>'
     +'<button type="button" onclick="sauterTache(\''+t.id+'\')">Passer</button>'
     +(t.u?'<button type="button" onclick="window.open(\''+esc(t.u)+'\',\'_blank\')">🔗 Ouvrir</button>'
-        :'<button type="button" onclick="window.open(\''+searchUrl(t.n)+'\',\'_blank\')">🔍 Rechercher</button>')
+        :'<button type="button" onclick="window.open(\''+searchUrl(libelleDe(t))+'\',\'_blank\')">🔍 Rechercher</button>')
     +'</div>'
   +'</div>';
   bloc.innerHTML=html;
@@ -2951,7 +2960,7 @@ function remiseAZero(){
     localStorage.removeItem(CLE_SCENARIO);
   }catch(e){console.error(e);}
   S.checked={};S.notes={};S.dates={};S.lic={};S.env={};S.lastSave=null;
-  history=[];openNotes={};sautees={};
+  journal=[];openNotes={};sautees={};
   scenario='tout';
   // Le thème suit les préférences du système, ce n'est pas une donnée de
   // travail : on le laisse tel quel.
@@ -3028,7 +3037,9 @@ document.addEventListener('click',function(e){
 });
 
 function resetSection(sec){
-  const map={};ONGLETS.forEach(function(c){map[c]=donneesDe(c);});
+  // Même raison que les « Tout cocher » : on ne décoche que ce qui est affiché,
+  // sinon on efface en silence une progression que l'autre mode montrait.
+  const map={};ONGLETS.forEach(function(c){map[c]=visiblesDe(c);});
   const cochees=map[sec].filter(function(x){return S.checked[x.id];}).length;
   if(!cochees){
     informer('Rien à réinitialiser dans « '+NOM_ONGLET[sec]+' » : aucune case cochée.');
@@ -3048,18 +3059,6 @@ function exportJSON(){
   dl(blob,'progression-migration-pc.json');
   S.lastSave=Date.now();saveState();
 }
-function exportWinget(){
-  const lines=['# Script winget — '+(PROFIL_NOM||'Migration PC'),"# Exécuter dans PowerShell en tant qu'administrateur",''];
-  Object.keys(CATS).forEach(function(cat){
-    const apps=APPS_DATA.filter(function(a){return a.c===cat&&a.w;});
-    if(!apps.length)return;
-    lines.push('# '+CATS[cat]);
-    apps.forEach(function(a){lines.push('winget install --id '+a.w+' -e --accept-source-agreements --accept-package-agreements');});
-    lines.push('');
-  });
-  dl(new Blob([lines.join('\n')],{type:'text/plain'}),'winget-migration-pc.ps1');
-}
-
 // Format officiel de `winget export`, relisible par `winget import`.
 // Avantage sur le script .ps1 : l'import est idempotent — il saute ce qui est
 // déjà installé — et reprend proprement après une interruption.
@@ -3182,26 +3181,45 @@ function categoriePourNom(texte){
   return 'system';
 }
 
+// La checklist à emporter sur papier ou à ouvrir dans un éditeur, quand on
+// n'a pas la page sous la main. Elle suit le scénario et ses intitulés, comme
+// tout le reste : un export qui dirait autre chose que l'écran serait pire
+// que pas d'export.
 function exportTxt(){
-  const lines=[(PROFIL_NOM||'MIGRATION PC').toUpperCase(),PROFIL_SOUS||'',''];
-  if(QUITTER_DATA.length){
+  const lines=[(PROFIL_NOM||'MIGRATION PC').toUpperCase(),PROFIL_SOUS||''];
+  if(scenario!=='tout')lines.push('Cas : '+SCENARIOS[scenario].nom);
+  lines.push('');
+  const marque=function(e){return S.checked[e.id]?'[x]':'[ ]';};
+  const note=function(id){return S.notes[id]?' [Note : '+S.notes[id]+']':'';};
+
+  const quitter=visiblesDe('quitter');
+  if(quitter.length){
     lines.push('=== AVANT DE QUITTER L\'ANCIEN PC ===');
-    QUITTER_DATA.forEach(function(s){lines.push((S.checked[s.id]?'[x]':'[ ]')+' '+s.n+(s.p?'\n    '+s.p:''));});
+    quitter.forEach(function(e){
+      lines.push(marque(e)+' '+libelleDe(e)+(e.p?'\n    '+e.p:'')+note(e.id));
+    });
     lines.push('');
   }
   lines.push('=== NOUVEAU PC ===');
-  NPC_DATA.slice().sort(function(a,b){return a.o-b.o;}).forEach(function(n){lines.push((S.checked[n.id]?'[x]':'[ ]')+' '+n.o+'. '+n.n);});
+  visiblesDe('npc').slice().sort(function(a,b){return a.o-b.o;}).forEach(function(e){
+    lines.push(marque(e)+' '+e.o+'. '+libelleDe(e)+note(e.id));
+  });
   lines.push('','=== APPS ===');
+  const apps=visiblesDe('apps');
   Object.keys(CATS).forEach(function(cat){
-    const apps=APPS_DATA.filter(function(a){return a.c===cat;});
-    if(!apps.length)return;
+    const liste=apps.filter(function(a){return a.c===cat;});
+    if(!liste.length)return;
     lines.push('','# '+CATS[cat]);
-    apps.forEach(function(a){const note=S.notes[a.id]?' [Note: '+S.notes[a.id]+']':'';lines.push('  '+(S.checked[a.id]?'[x]':'[ ]')+' '+a.n+(a.w?' (winget: '+a.w+')':'')+note);});
+    liste.forEach(function(a){
+      lines.push('  '+marque(a)+' '+libelleDe(a)+(a.w?' (winget : '+a.w+')':'')+note(a.id));
+    });
   });
   lines.push('','=== DONNÉES ===');
-  DATA_SAVES.forEach(function(s){lines.push((S.checked[s.id]?'[x]':'[ ]')+' '+s.n+'\n    '+s.p);});
+  visiblesDe('data').forEach(function(e){
+    lines.push(marque(e)+' '+libelleDe(e)+(e.p?'\n    '+e.p:'')+note(e.id));
+  });
   lines.push('','=== PWA ===');
-  PWA_DATA.forEach(function(p){lines.push((S.checked[p.id]?'[x]':'[ ]')+' '+p.n);});
+  visiblesDe('pwa').forEach(function(e){lines.push(marque(e)+' '+libelleDe(e)+note(e.id));});
   dl(new Blob([lines.join('\n')],{type:'text/plain'}),'migration-pc.txt');
 }
 

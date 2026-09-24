@@ -199,6 +199,12 @@ aller les chercher. Ensuite un **point de non-retour**, juste avant de lancer
 l'installation, qui récapitule ce qui doit être fait *et vérifié* — parce qu'une fois le
 disque effacé, cette machine n'est plus une source.
 
+Le filtre vaut partout, pas seulement dans les listes : les compteurs, les boutons
+« Tout cocher », la recherche, le mode guidé, la réinitialisation d'une section et
+l'export texte s'y tiennent. Cocher en masse n'atteint jamais un élément qu'on n'a pas
+sous les yeux, et un intitulé alternatif s'affiche sur les cinq onglets, pas seulement
+dans « Nouveau PC ».
+
 Le choix est mémorisé, et une case cochée dans un mode reste cochée dans l'autre : le
 filtre change ce que vous regardez, pas ce que vous avez fait. Le total affiché suit le
 mode, donc il bouge quand vous basculez.
@@ -272,8 +278,10 @@ calculée depuis les durées, chronomètre de session, historique des dernières
 notes libres sur chaque élément, champs dédiés aux clés de licence et aux variables
 d'environnement.
 
-**Sortie** — export de la progression, du profil, du script winget complet ou partiel,
-de la checklist en texte, et impression globale ou par onglet.
+**Sortie** — export de la progression, du profil, de la checklist en texte, du script
+winget restant ou du fichier `winget import`, et impression globale ou par onglet. Tout
+ce qui sort suit le scénario choisi et ses intitulés : un fichier qui dirait autre chose
+que l'écran serait pire que pas de fichier.
 
 **En cas de problème** — chaque onglet est rendu séparément. Si l'un échoue, les autres
 s'affichent quand même et un bandeau nomme l'onglet fautif et l'erreur, au lieu de
@@ -287,8 +295,9 @@ profil remplacé et le scénario choisi.
 ### La barre du haut
 
 Sept boutons, pas dix. Les actions fréquentes restent visibles — vue normale ou compacte,
-importer, sauvegarder, mode guidé, thème — et les quatre rares (commencer une session,
-exporter le profil, réinitialiser, imprimer) vivent dans un menu **⋯ Plus**. Elles y
+importer, sauvegarder, mode guidé, thème — et les cinq rares (commencer une session,
+exporter le profil, réinitialiser, exporter en texte, imprimer) vivent dans un menu
+**⋯ Plus**. Elles y
 portent un vrai libellé au lieu d'un emoji qu'il fallait survoler pour comprendre. Le
 menu se referme après une action, au clic ailleurs, et à Échap.
 
@@ -389,6 +398,10 @@ dans tout le fichier : ce sont eux qui portent les cases cochées.
 Le profil d'exemple existe en double : dans ce fichier, et embarqué dans `index.html`
 pour que la page fonctionne sans serveur. Après avoir modifié le fichier, lancez
 `npm run sync` pour recopier l'un dans l'autre — `npm test` échoue s'ils divergent.
+
+`npm run sync` met aussi à jour le nom de cache du service worker, qu'il dérive d'une
+empreinte d'`index.html`. Sans cela un appareil qui a installé la checklist garderait
+l'ancienne version hors ligne ; `npm run test:pwa` échoue si on a oublié de le lancer.
 
 ```javascript
 meta   // { nom, soustitre } — affichés dans l'en-tête
@@ -525,9 +538,10 @@ les deux cas ce qui avait été effacé — profil importé et scénario compris
 aussi le panneau à 360 px de large, dans les deux thèmes.
 
 `tests/test-menu.js` compte les boutons restés dans la barre, vérifie qu'aucun n'y est
-réduit à une icône muette, que les quatre actions du menu agissent réellement (la session
-démarre, le profil se télécharge), que le menu se referme par les trois chemins attendus
-et qu'il reste utilisable au clavier comme au doigt.
+réduit à une icône muette, que les cinq actions du menu agissent réellement (la session
+démarre, le profil se télécharge, l'export texte porte les intitulés du scénario courant
+et rien de l'autre), que le menu se referme par les trois chemins attendus et qu'il reste
+utilisable au clavier comme au doigt.
 
 ### Intégration continue
 

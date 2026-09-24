@@ -115,6 +115,103 @@ ok('et le badge ne la cite plus',
 ok('mais garde le prérequis encore visible',
   !!sonde.enReinstall,true);
 
+console.log('\n--- les libelles alternatifs, sur les cinq onglets ---');
+// Le profil d'exemple ne pose des « alt » que sur « Nouveau PC ». Le rendu des
+// quatre autres onglets a donc pu ignorer libelleDe() sans qu'aucun test ne le
+// voie. On en pose un par onglet et on verifie qu'il s'affiche vraiment.
+const parOnglet=await pg.evaluate(()=>{
+  const cibles={quitter:QUITTER_DATA,npc:NPC_DATA,apps:APPS_DATA,
+    data:DATA_SAVES,pwa:PWA_DATA};
+  const avant={},resultat={};
+  Object.keys(cibles).forEach(k=>{
+    const e=cibles[k][0];
+    avant[k]={id:e.id,alt:e.alt};
+    e.alt={n:'LIBELLE-'+k.toUpperCase(),d:'DESCRIPTION-'+k.toUpperCase()};
+  });
+  viderIndex();
+  changerScenario('reinstall');
+  Object.keys(cibles).forEach(k=>{
+    const l=document.getElementById('list-'+k);
+    const t=l?l.textContent:'';
+    resultat[k]={nom:t.indexOf('LIBELLE-'+k.toUpperCase())>=0,
+      // Seuls npc, apps et pwa affichent une description dans la liste.
+      desc:t.indexOf('DESCRIPTION-'+k.toUpperCase())>=0};
+  });
+  // Le libelle memorise dans l'historique doit suivre lui aussi. On clique la
+  // ligne pour de vrai : c'est l'attribut onclick qu'on veut verifier, pas un
+  // appel a toggle() qu'on aurait ecrit correctement nous-memes.
+  const q=cibles.quitter[0];
+  const ligneQ=[...document.querySelectorAll('#list-quitter .item')]
+    .find(x=>x.textContent.indexOf('LIBELLE-QUITTER')>=0);
+  if(ligneQ)ligneQ.click();
+  resultat.historique=journal.length>0&&journal[0].name==='LIBELLE-QUITTER';
+  if(ligneQ){
+    const encore=[...document.querySelectorAll('#list-quitter .item')]
+      .find(x=>x.textContent.indexOf('LIBELLE-QUITTER')>=0);
+    if(encore)encore.click();
+  }
+  journal.length=0;
+  // Et le mode guide.
+  basculerGuide();
+  const g=document.getElementById('guide').textContent;
+  resultat.guide=/LIBELLE-(QUITTER|NPC|APPS|DATA|PWA)/.test(g);
+  basculerGuide();
+  Object.keys(cibles).forEach(k=>{
+    const e=cibles[k][0];
+    if(avant[k].alt)e.alt=avant[k].alt;else delete e.alt;
+  });
+  viderIndex();changerScenario('tout');renderAll();updateGlobal();
+  return resultat;
+});
+['quitter','npc','apps','data','pwa'].forEach(k=>
+  ok('l\'intitulé alternatif s\'affiche dans « '+k+' »',parOnglet[k].nom,true));
+['npc','apps','pwa'].forEach(k=>
+  ok('la description alternative aussi dans « '+k+' »',parOnglet[k].desc,true));
+ok('l\'historique retient l\'intitulé affiché',parOnglet.historique,true);
+ok('le mode guidé aussi',parOnglet.guide,true);
+
+console.log('\n--- « Tout cocher » ne deborde pas du filtre ---');
+const groupe=await pg.evaluate(()=>{
+  const cache={id:'zz-hors',pr:'high',n:'Hors scénario',p:'C:\\zz',
+    d:'Test.',cas:['migration']};
+  QUITTER_DATA.push(cache);viderIndex();
+  changerScenario('reinstall');
+  const btn=[...document.querySelectorAll('#list-quitter .chk-all')][0];
+  if(btn)btn.click();
+  const coche=!!S.checked['zz-hors'];
+  // Le compteur affiche doit coller a ce qui est reellement dans le groupe.
+  const ent=document.querySelector('#list-quitter .sec-hdr-cnt');
+  const paire=ent?ent.textContent.split('/'):['0','0'];
+  const lignes=[...document.querySelectorAll('#list-quitter .item')].length;
+  const visibles=visiblesDe('quitter').length;
+  // On repart propre.
+  S.checked={};S.dates={};
+  QUITTER_DATA.splice(QUITTER_DATA.indexOf(cache),1);viderIndex();
+  changerScenario('tout');saveState();renderAll();updateGlobal();
+  return {coche:coche,denominateurCredible:Number(paire[1])<=visibles,
+    lignes:lignes,visibles:visibles};
+});
+ok('l\'élément masqué n\'est pas coché',groupe.coche,false);
+ok('le compteur du groupe ne compte pas les masqués',groupe.denominateurCredible,true);
+ok('autant de lignes que d\'éléments visibles',groupe.lignes,groupe.visibles);
+
+console.log('\n--- les compteurs PWA ---');
+const pwa=await pg.evaluate(()=>{
+  const cache={id:'zz-pwa',n:'PWA hors scénario',u:'https://exemple.test',
+    d:'Test.',cas:['migration']};
+  PWA_DATA.push(cache);viderIndex();changerScenario('reinstall');
+  const ent=document.querySelector('#list-pwa .sec-hdr-cnt').textContent;
+  const btn=document.querySelector('#list-pwa .chk-all');
+  btn.click();
+  const coche=!!S.checked['zz-pwa'];
+  S.checked={};S.dates={};
+  PWA_DATA.splice(PWA_DATA.indexOf(cache),1);viderIndex();
+  changerScenario('tout');saveState();renderAll();updateGlobal();
+  return {entete:ent,coche:coche,attendu:String(visiblesDe('pwa').length)};
+});
+ok('le dénominateur suit le filtre',pwa.entete.split('/')[1],pwa.attendu);
+ok('« Tout cocher » ne touche pas la PWA masquée',pwa.coche,false);
+
 await b.close();
 console.log(ko?'\n'+ko+' EN ECHEC':'\nSCENARIOS OPERATIONNELS');
 process.exit(ko?1:0);

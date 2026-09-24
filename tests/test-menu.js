@@ -35,8 +35,8 @@ console.log('\n--- ce que le menu contient ---');
 await pg.click('#menu-btn');await pg.waitForTimeout(200);
 const items=await pg.evaluate(()=>
   [...document.querySelectorAll('#hdr-menu-liste button')].map(x=>x.textContent.trim()));
-ok('quatre actions',items.length,4);
-['Commencer une session','Exporter le profil','Réinitialiser','Imprimer'].forEach(t=>
+ok('cinq actions',items.length,5);
+['Commencer une session','Exporter le profil','Réinitialiser','Exporter en texte','Imprimer'].forEach(t=>
   ok('« '+t+' » y est',items.some(x=>x.indexOf(t)>=0),true));
 ok('chaque action a un libelle, pas qu\'un emoji',
   items.every(t=>t.replace(/[^\p{L}]/gu,'').length>3),true);
@@ -78,6 +78,36 @@ await pg.click('#hdr-menu-liste button:nth-child(2)');
 const fichier=await dl;
 ok('« Exporter le profil » produit bien un fichier',!!fichier,true);
 if(fichier)console.log('   nom :',fichier.suggestedFilename());
+
+console.log('\n--- l\'export texte suit le scenario et ses intitules ---');
+await pg.evaluate(()=>{
+  // Un intitule alternatif et un element hors scenario, pour voir si le
+  // fichier dit la meme chose que l'ecran.
+  QUITTER_DATA[0].alt={n:'INTITULE-REINSTALL',d:'Test.'};
+  QUITTER_DATA.push({id:'zz-txt',pr:'high',n:'RESERVE-MIGRATION',
+    p:'C:\\zz',d:'Test.',cas:['migration']});
+  viderIndex();changerScenario('reinstall');
+});
+await pg.click('#menu-btn');await pg.waitForTimeout(150);
+const dlTxt=pg.waitForEvent('download',{timeout:5000}).catch(()=>null);
+await pg.click('#hdr-menu-liste button:nth-child(4)');
+const f2=await dlTxt;
+ok('« Exporter en texte » produit un fichier',!!f2,true);
+if(f2){
+  const chemin=await f2.path();
+  const txt=require('fs').readFileSync(chemin,'utf8');
+  ok('le fichier porte l\'intitulé du scénario',txt.indexOf('INTITULE-REINSTALL')>=0,true);
+  ok('et pas celui de l\'autre mode',txt.indexOf('RESERVE-MIGRATION')<0,true);
+  ok('il nomme le cas en tête',txt.indexOf('Cas :')>=0,true);
+  ok('les cinq sections y sont',
+    ['AVANT DE QUITTER','NOUVEAU PC','APPS','DONNÉES','PWA']
+      .every(t=>txt.indexOf(t)>=0),true);
+}
+await pg.evaluate(()=>{
+  delete QUITTER_DATA[0].alt;
+  QUITTER_DATA.splice(QUITTER_DATA.findIndex(x=>x.id==='zz-txt'),1);
+  viderIndex();changerScenario('tout');renderAll();updateGlobal();
+});
 
 console.log('\n--- au clavier ---');
 await pg.evaluate(()=>document.getElementById('menu-btn').focus());

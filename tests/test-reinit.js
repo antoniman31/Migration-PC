@@ -107,7 +107,7 @@ ok('plus aucune cle',await pg.evaluate(()=>Object.keys(S.lic).length),0);
 ok('retour au profil d\'exemple',await pg.textContent('#profil-titre'),defaut);
 ok('retour au scenario complet',await pg.evaluate(()=>scenario),'tout');
 ok('« Tout » redevient actif',await pg.getAttribute('#sc-tout','aria-pressed'),'true');
-ok('l\'historique est vide',await pg.evaluate(()=>history.length),0);
+ok('l\'historique est vide',await pg.evaluate(()=>journal.length),0);
 ok('la page ne s\'est pas cassee',await pg.isVisible('#panne'),false);
 
 console.log('\n--- annuler la remise a zero ---');

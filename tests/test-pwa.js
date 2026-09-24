@@ -86,6 +86,21 @@ await pg2.goto('file://'+path.join(racine,'index.html'),{waitUntil:'networkidle'
 ok('aucune erreur JS en file://',erreurs.length===0?'oui':erreurs.join(' | '),'oui');
 ok('checklist rendue en file://',(await pg2.$$('#list-npc .item')).length>0,true);
 
+console.log('\n--- le nom du cache suit la page ---');
+// Le commentaire de sw.js demandait d'incrementer CACHE a chaque publication
+// qui change index.html. Personne ne l'a fait pendant dix publications, donc
+// `npm run sync` le derive maintenant de la page. Ce test constate que c'est
+// fait : sans lui, on reviendrait au meme oubli silencieux.
+const crypto=require('crypto');
+const empreinte=crypto.createHash('sha256')
+  .update(fs.readFileSync(path.join(racine,'index.html'),'utf8'))
+  .digest('hex').slice(0,12);
+const sw=fs.readFileSync(path.join(racine,'sw.js'),'utf8');
+const nomCache=(sw.match(/const CACHE = "([^"]+)";/)||[])[1];
+ok('le cache porte l\'empreinte d\'index.html',nomCache,'migration-pc-'+empreinte);
+if(nomCache!=='migration-pc-'+empreinte)
+  console.log('   → lancer `npm run sync` pour le remettre à jour');
+
 await b.close();
 serveur.close();
 console.log(ko?'\n'+ko+' TEST(S) EN ECHEC':'\nPWA OPERATIONNELLE');

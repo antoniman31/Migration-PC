@@ -85,9 +85,9 @@ eq('catégories déduites',Object.keys(G('CATS')).length,3);
 eq('progression conservée',G('S').checked[DEF.apps[0].id],true);
 
 console.log('\n--- exports ---');
-G('exportWinget')();
 G('exportTxt')();
 G('exportProfil')();
+G('exportWingetJSON')(true);
 eq('export sans plantage',true,true);
 
 console.log('\n--- rechargement avec le profil mémorisé ---');
@@ -95,7 +95,7 @@ const memorise=G('chargerProfilMemorise')();
 eq('profil relu',memorise.apps.length,3);
 
 console.log('\n--- retour au profil d\'exemple ---');
-G('reinitProfil')();
+G('remiseAZero')();
 eq('exemple rechargé',G('APPS_DATA').length,DEF.apps.length);
 eq('mémoire effacée',store['mpc_profil_v1'],undefined);
 
