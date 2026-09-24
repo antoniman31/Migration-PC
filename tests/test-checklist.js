@@ -85,10 +85,29 @@ eq('catégories déduites',Object.keys(G('CATS')).length,3);
 eq('progression conservée',G('S').checked[DEF.apps[0].id],true);
 
 console.log('\n--- exports ---');
+// eq(true,true) ne verifiait rien : on regarde ce qui sort.
+// La case cochee plus haut appartenait au profil d'exemple, remplace depuis :
+// on en coche une du profil actif, sinon l'export n'a rien a marquer.
+G('toggle')(G('APPS_DATA')[0].id,G('APPS_DATA')[0].n);
+const sorties=[];
+ctx.URL={createObjectURL:b=>{sorties.push(b);return 'blob:x';},revokeObjectURL:()=>{}};
 G('exportTxt')();
 G('exportProfil')();
 G('exportWingetJSON')(true);
-eq('export sans plantage',true,true);
+// Le Blob simule ici garde ses morceaux dans .p plutot que d'avoir une taille.
+const contenu=b=>String((b&&b.p&&b.p[0])||'');
+eq('trois fichiers produits',sorties.length,3);
+eq('aucun fichier vide',sorties.every(b=>contenu(b).length>0),true);
+// Le profil actif ici est l'inventaire importe juste avant : trois apps, pas
+// d'onglet quitter. L'export complet sur cinq sections est couvert par
+// tests/test-menu.js, avec un profil qui les a toutes.
+eq('l\'export texte liste les apps du profil actif',
+  G('APPS_DATA').every(a=>contenu(sorties[0]).indexOf(a.n)>=0),true);
+eq('et coche ce qui est coché',contenu(sorties[0]).indexOf('[x]')>=0,true);
+eq('le profil exporté est du JSON relisible',
+  Array.isArray(JSON.parse(contenu(sorties[1])).apps),true);
+eq('le fichier winget porte son schéma',
+  JSON.parse(contenu(sorties[2])).$schema.indexOf('winget')>=0,true);
 
 console.log('\n--- rechargement avec le profil mémorisé ---');
 const memorise=G('chargerProfilMemorise')();

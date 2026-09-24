@@ -331,6 +331,11 @@ body.compact .item{padding:5px 0}
 /* ── V6 : compact masque dep ── */
 body.compact .b-dep{display:none}
 
+/* Un profil peut décrire un raccourci sans adresse, ou avec une adresse qu'on
+   refuse d'ouvrir : le bouton reste, visiblement inerte, plutôt que de
+   disparaître sans explication. */
+.lnk-btn.lnk-mort{opacity:.5;cursor:default;color:var(--tx3)}
+
 /* ═══ Menu « Plus » ═══
    La barre du haut avait fini à neuf boutons, dont quatre emojis muets qu'il
    fallait survoler pour savoir ce qu'ils font. Les quatre actions rares
@@ -1879,7 +1884,7 @@ function construireFiltresCats(){
   const c=document.getElementById('cat-filters');if(!c)return;
   let html='<button class="fb active" data-cat="all" onclick="setCat(\'all\')">Tout</button>';
   Object.keys(CATS).forEach(function(k){
-    html+='<button class="fb" data-cat="'+esc(k)+'" onclick="setCat(\''+esc(k)+'\')">'+esc(CATS[k])+'</button>';
+    html+='<button class="fb" data-cat="'+esc(k)+'" onclick="setCat(\''+escJS(k)+'\')">'+esc(CATS[k])+'</button>';
   });
   c.innerHTML=html;
 }
@@ -1981,7 +1986,7 @@ function handleImport(evt){
   reader.onload=function(e){
     let d;
     try{d=JSON.parse(e.target.result);}
-    catch(err){alert('❌ Fichier illisible : ce n\'est pas du JSON valide.');return;}
+    catch(err){informer('Fichier illisible : ce n\'est pas du JSON valide.');return;}
     try{
       if(estVerification(d)){
         afficherVerification(d);
@@ -2014,8 +2019,8 @@ function handleImport(evt){
           'Progression importée : '+Object.keys(S.checked).length+' tâches cochées.';
         return;
       }
-      alert('❌ Format non reconnu.\n\nAttendu : un fichier winget export, un inventaire produit par scan-pc.ps1, une vérification produite par verifier-pc.ps1, un profil, ou une progression exportée depuis cette page.');
-    }catch(err){alert('❌ Import impossible : '+err.message);}
+      informer('Format non reconnu. Attendu : un export winget, un inventaire de scan-pc.ps1, une vérification de verifier-pc.ps1, un profil, ou une progression exportée depuis cette page.');
+    }catch(err){signalerPanne('Import',err);}
   };
   reader.readAsText(file);evt.target.value='';
 }
@@ -2035,8 +2040,44 @@ let session={active:false,start:null,count:0,timer:null};
 // Le libellé passé à toggle() finit dans l'historique et dans les bandeaux :
 // il doit être celui qu'on a sous les yeux, donc celui du scénario courant.
 function attrToggle(e){
-  return 'toggle(\''+e.id+'\',\''+esc(libelleDe(e)).replace(/'/g,"\\'")+'\')';
+  return 'toggle(\''+escJS(e.id)+'\',\''+escJS(libelleDe(e))+'\')';
 }
+// Un profil vient d'un fichier qu'on n'a pas ecrit : le projet est bati sur
+// l'echange de profils, donc son contenu est une entree non fiable, au meme
+// titre qu'une saisie. Trois endroits le laissaient passer tel quel.
+
+// Pour une valeur qui finit entre apostrophes dans un attribut onclick.
+// esc() protege le HTML mais pas la chaine JavaScript qui vit dedans.
+// L'ordre compte : on echappe d'abord pour JavaScript, puis pour le HTML.
+// L'inverse ne protege rien — esc() aurait deja transforme l'apostrophe en
+// &#39;, qu'il n'y aurait plus rien a echapper, et que le parseur HTML rendrait
+// telle quelle au script juste avant qu'il s'evalue.
+function escJS(v){
+  return esc(String(v==null?'':v).replace(/\\/g,'\\\\').replace(/'/g,"\\'"));
+}
+
+// Pour un href venant d'un profil : « javascript: » y execute du code au clic,
+// et « data: » sert une page qu'on croirait sienne. On ne garde que ce qui
+// ouvre vraiment quelque chose, et le reste devient inerte.
+// Seul point d'ouverture d'une adresse : elle repasse par le filtre même
+// quand l'appelant croit l'avoir déjà fait.
+function ouvrirAdresse(u){
+  const a=urlSure(u);
+  if(a)window.open(a,'_blank','noopener,noreferrer');
+}
+
+function urlSure(u){
+  const t=String(u==null?'':u).trim();
+  try{
+    const a=new URL(t,document.baseURI);
+    if(a.protocol==='http:'||a.protocol==='https:'||a.protocol==='mailto:')return a.href;
+  }catch(e){}
+  return '';
+}
+
+// esc(undefined) rendrait le mot « undefined » dans la page. Un profil écrit à
+// la main peut omettre n'importe quel champ facultatif : on rend le vide.
+function texte(v){return (v==null)?'':String(v);}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function fmtTime(min){if(!min)return '';if(min<60)return '~'+min+'min';const h=Math.floor(min/60),m=min%60;return m===0?'~'+h+'h':'~'+h+'h'+(m<10?'0':'')+m;}
 function fmtTaille(go){
@@ -2138,7 +2179,7 @@ function copyWinget(w,evt){
   navigator.clipboard.writeText(cmd).then(function(){
     const el=evt.target.closest('.b-winget');if(!el)return;
     const o=el.innerHTML;el.innerHTML='✓ Copié !';setTimeout(function(){el.innerHTML=o;},1500);
-  }).catch(function(){alert('Commande : '+cmd);});
+  }).catch(function(){informer('Copie impossible dans ce navigateur. Commande : '+cmd);});
 }
 function copyCatWinget(cat,evt){
   evt.stopPropagation();
@@ -2184,13 +2225,19 @@ function launchConfetti(){
 // ═══ RENDER ITEM HELPERS ═══
 // Purement visuelle : l'état accessible est porté par l'item, qui est la case.
 function mkChkbox(){return '<div class="chkbox" aria-hidden="true"><span class="chkbox-mark">✓</span></div>';}
-function mkLink(name){return '<div class="item-link"><a class="lnk-btn" href="'+searchUrl(name)+'" target="_blank" onclick="event.stopPropagation()">🔍 Rechercher</a></div>';}
-function mkDirectLink(url){return '<div class="item-link"><a class="lnk-btn" href="'+url+'" target="_blank" onclick="event.stopPropagation()">🔗 Ouvrir</a></div>';}
+function mkLink(name){return '<div class="item-link"><a class="lnk-btn" href="'+esc(searchUrl(name))+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔍 Rechercher</a></div>';}
+function mkDirectLink(url){
+  const u=urlSure(url);
+  // Pas d'adresse utilisable : plutot que d'offrir un bouton qui ne mene nulle
+  // part ou pire, on dit ce qui se passe.
+  if(!u)return '<div class="item-link"><span class="lnk-btn lnk-mort" title="Adresse absente ou non prise en charge">🔗 Pas de lien</span></div>';
+  return '<div class="item-link"><a class="lnk-btn" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 Ouvrir</a></div>';
+}
 function mkNoteBtn(id){
   const has=S.notes[id]?'has-note':'';
   const libelle=S.notes[id]?'Modifier la note':'Ajouter une note';
-  return '<button class="note-btn '+has+'" id="nb-'+id+'" type="button" title="'+libelle+'" aria-label="'+libelle+'" onclick="toggleNote(\''+id+'\',event)">📝</button>';}
-function mkNoteArea(id){const open=openNotes[id]?'open':'';const val=S.notes[id]||'';return '<div class="note-area '+open+'" id="na-'+id+'"><textarea placeholder="Note personnelle..." onclick="event.stopPropagation()" oninput="saveNote(\''+id+'\',this.value)">'+esc(val)+'</textarea></div>';}
+  return '<button class="note-btn '+has+'" id="nb-'+esc(id)+'" type="button" title="'+libelle+'" aria-label="'+libelle+'" onclick="toggleNote(\''+escJS(id)+'\',event)">📝</button>';}
+function mkNoteArea(id){const open=openNotes[id]?'open':'';const val=S.notes[id]||'';return '<div class="note-area '+open+'" id="na-'+esc(id)+'"><textarea placeholder="Note personnelle..." onclick="event.stopPropagation()" oninput="saveNote(\''+escJS(id)+'\',this.value)">'+esc(val)+'</textarea></div>';}
 
 // ═══ RENDER NPC ═══
 function renderNPC(){
@@ -2206,6 +2253,7 @@ function renderNPC(){
     }
     const ck=!!S.checked[item.id];
     const dt=ck&&S.dates[item.id]?'<span class="item-date">✓ '+fmtDate(S.dates[item.id])+'</span>':'';
+    const srcBadge=item.src?'<span class="badge b-src">'+esc(item.src)+'</span>':'';
     const pBadge=item.p==='high'?'<span class="badge b-high">⚡ Priorité haute</span>':'';
     const tBadge=item.t?'<span class="badge b-time">⏱ '+fmtTime(item.t)+'</span>':'';
     const depBadge=item.dep?mkDepBadge(item.dep):'';
@@ -2214,8 +2262,8 @@ function renderNPC(){
       +mkChkbox()
       +'<div class="item-body">'
         +'<div class="item-name-row"><span class="b-num">'+item.o+'</span><span class="item-name">'+esc(libelleDe(item))+'</span>'+dt+mkNoteBtn(item.id)+'</div>'
-        +'<div class="item-badges"><span class="badge b-src">'+esc(item.src)+'</span>'+tBadge+pBadge+depBadge+'</div>'
-        +'<div class="item-desc">'+esc(descDe(item))+'</div>'
+        +'<div class="item-badges">'+srcBadge+tBadge+pBadge+depBadge+'</div>'
+        +'<div class="item-desc">'+esc(texte(descDe(item)))+'</div>'
         +warn
         +mkNoteArea(item.id)
       +'</div>'
@@ -2252,7 +2300,7 @@ function renderApps(){
       const dn=grp.filter(function(a){return S.checked[a.id];}).length;
       const hasW=grp.filter(function(a){return a.w;}).length>0;
       const allDone=dn===grp.length;
-      html+='<div class="sec-hdr'+(first?' first':'')+'">'+(CATS[cat]||cat)+'<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+grp.length+'</span>'+(hasW?'<button class="cat-winget" onclick="copyCatWinget(\''+cat+'\',event)">📋 winget</button>':'')+'<button class="chk-all" onclick="checkAllCat(\''+cat+'\',event)">'+(allDone?'Décocher tout':'Tout cocher')+'</button></div></div>';
+      html+='<div class="sec-hdr'+(first?' first':'')+'">'+esc(CATS[cat]||cat)+'<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+grp.length+'</span>'+(hasW?'<button class="cat-winget" onclick="copyCatWinget(\''+escJS(cat)+'\',event)">📋 winget</button>':'')+'<button class="chk-all" onclick="checkAllCat(\''+escJS(cat)+'\',event)">'+(allDone?'Décocher tout':'Tout cocher')+'</button></div></div>';
       grp.forEach(function(a){html+=mkAppItem(a);});
       first=false;
     });
@@ -2288,17 +2336,18 @@ function mkAppItem(a){
   const ck=!!S.checked[a.id];
   const dt=ck&&S.dates[a.id]?'<span class="item-date">✓ '+fmtDate(S.dates[a.id])+'</span>':'';
   // Un span cliquable n'est ni focusable ni annonce : c'est un bouton.
-  const wBadge=a.w?'<button type="button" class="badge b-winget" onclick="copyWinget(\''+a.w+'\',event)" title="Copier la commande d\'installation" aria-label="Copier la commande winget '+esc(a.w)+'">📋 '+esc(a.w)+'</button>':'';
+  const wBadge=a.w?'<button type="button" class="badge b-winget" onclick="copyWinget(\''+escJS(a.w)+'\',event)" title="Copier la commande d\'installation" aria-label="Copier la commande winget '+esc(a.w)+'">📋 '+esc(a.w)+'</button>':'';
   const pBadge=a.p==='high'?'<span class="badge b-high">⚡ Haute</span>':'';
   const tBadge=a.t?'<span class="badge b-time">⏱ '+fmtTime(a.t)+'</span>':'';
   const warn=a.warn?'<div class="warn-badge">⚠️ '+esc(a.warn)+'</div>':'';
   const depBadge=a.dep?mkDepBadge(a.dep):'';
+  const srcBadge=a.src?'<span class="badge b-src">'+esc(a.src)+'</span>':'';
   return '<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(a)+'">'
     +mkChkbox()
     +'<div class="item-body">'
       +'<div class="item-name-row"><span class="item-name">'+esc(libelleDe(a))+'</span>'+dt+mkNoteBtn(a.id)+'</div>'
-      +'<div class="item-badges"><span class="badge b-src">'+esc(a.src)+'</span>'+wBadge+tBadge+pBadge+depBadge+'</div>'
-      +'<div class="item-desc">'+esc(descDe(a))+'</div>'
+      +'<div class="item-badges">'+srcBadge+wBadge+tBadge+pBadge+depBadge+'</div>'
+      +'<div class="item-desc">'+esc(texte(descDe(a)))+'</div>'
       +warn
       +mkNoteArea(a.id)
     +'</div>'
@@ -2351,7 +2400,7 @@ function renderParPriorite(onglet,donnees,labels){
         +'<div class="item-body">'
           +'<div class="item-name-row"><span class="item-name">'+esc(libelleDe(s))+'</span>'+dt+mkNoteBtn(s.id)+'</div>'
           +'<div class="item-badges">'+pBadge+'</div>'
-          +'<div class="save-path">'+esc(s.p)+'</div>'
+          +(s.p?'<div class="save-path">'+esc(s.p)+'</div>':'')
           +(s.note?'<div class="save-note">'+esc(s.note)+'</div>':'')
           +mkLicField(s)
           +mkEnvFields(s)
@@ -2390,7 +2439,7 @@ function renderPWA(){
       +'<div class="item-body">'
         +'<div class="item-name-row"><span class="item-name">'+esc(libelleDe(p))+'</span>'+dt+mkNoteBtn(p.id)+'</div>'
         +'<div class="item-badges"><span class="badge b-sync">✓ Raccourci OK</span><span class="badge b-pwa">PWA Chrome</span></div>'
-        +'<div class="item-desc">'+esc(descDe(p))+'</div>'
+        +'<div class="item-desc">'+esc(texte(descDe(p)))+'</div>'
         +mkNoteArea(p.id)
       +'</div>'
       +mkDirectLink(p.u)
@@ -2687,10 +2736,17 @@ function renderGuide(){
   const faites=total-restantes.length;
 
   if(!restantes.length){
-    bloc.innerHTML='<div class="guide-fin">'
-      +'<div class="guide-fin-titre">🎉 Tout est coché</div>'
-      +'<div class="guide-fin-txt">'+total+' tâches terminées. Repasse en vue liste pour revoir le détail.</div>'
-      +'</div>';
+    // Zéro restante parce que tout est fait, ou parce que le filtre ne laisse
+    // rien : féliciter dans le second cas serait un mensonge.
+    bloc.innerHTML=total
+      ? '<div class="guide-fin">'
+        +'<div class="guide-fin-titre">🎉 Tout est coché</div>'
+        +'<div class="guide-fin-txt">'+total+' tâche'+(total>1?'s':'')+' terminée'+(total>1?'s':'')+'. Repasse en vue liste pour revoir le détail.</div>'
+        +'</div>'
+      : '<div class="guide-fin">'
+        +'<div class="guide-fin-titre">Aucune tâche dans ce mode</div>'
+        +'<div class="guide-fin-txt">Le cas choisi ne laisse rien à faire, ou le profil chargé est vide. Change de cas en haut de page, ou importe un profil.</div>'
+        +'</div>';
     return;
   }
 
@@ -2728,10 +2784,11 @@ function renderGuide(){
   }
 
   html+='<div class="guide-actions">'
-    +'<button type="button" class="guide-fait" onclick="guideFait(\''+t.id+'\')">✓ C\'est fait</button>'
-    +'<button type="button" onclick="sauterTache(\''+t.id+'\')">Passer</button>'
-    +(t.u?'<button type="button" onclick="window.open(\''+esc(t.u)+'\',\'_blank\')">🔗 Ouvrir</button>'
-        :'<button type="button" onclick="window.open(\''+searchUrl(libelleDe(t))+'\',\'_blank\')">🔍 Rechercher</button>')
+    +'<button type="button" class="guide-fait" onclick="guideFait(\''+escJS(t.id)+'\')">✓ C\'est fait</button>'
+    +'<button type="button" onclick="sauterTache(\''+escJS(t.id)+'\')">Passer</button>'
+    +(urlSure(t.u)
+        ?'<button type="button" onclick="ouvrirAdresse(\''+escJS(urlSure(t.u))+'\')">🔗 Ouvrir</button>'
+        :'<button type="button" onclick="ouvrirAdresse(\''+escJS(searchUrl(libelleDe(t)))+'\')">🔍 Rechercher</button>')
     +'</div>'
   +'</div>';
   bloc.innerHTML=html;
@@ -2753,9 +2810,22 @@ function copierCmdGuide(){
     const o=btn.textContent;btn.textContent='✓ Copié';
     setTimeout(function(){btn.textContent=o;},1500);
   };
+  // Le presse-papier n'existe pas partout — il demande HTTPS, et une clé USB
+  // ouvre la page en file://. La commande est déjà affichée juste au-dessus :
+  // on la sélectionne pour que Ctrl+C prenne le relais, au lieu d'ouvrir une
+  // boîte modale par-dessus le texte qu'elle voulait montrer.
+  const repli=function(){
+    try{
+      const sel=window.getSelection();
+      const plage=document.createRange();
+      plage.selectNodeContents(code);
+      sel.removeAllRanges();sel.addRange(plage);
+    }catch(e){}
+    informer('Copie automatique impossible ici : la commande est sélectionnée, faites Ctrl+C.');
+  };
   if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(txt).then(fini).catch(function(){alert(txt);});
-  }else{alert(txt);}
+    navigator.clipboard.writeText(txt).then(fini).catch(repli);
+  }else{repli();}
 }
 
 // ═══ DÉPENDANCES ═══
@@ -3085,11 +3155,11 @@ function construireWingetJSON(apps){
 }
 
 function exportWingetJSON(restantesSeulement){
-  var apps=APPS_DATA.filter(function(a){
+  var apps=visiblesDe('apps').filter(function(a){
     return a.w && (!restantesSeulement || !S.checked[a.id]);
   });
   if(!apps.length){
-    alert(restantesSeulement
+    informer(restantesSeulement
       ? 'Toutes les apps installables par winget sont déjà cochées.'
       : 'Aucune app de ce profil n\'a d\'identifiant winget.');
     return;
@@ -3320,8 +3390,8 @@ function updateNextBtns(){
 
 // ═══ V6 : SCRIPT WINGET RESTANT ═══
 function exportWingetRemaining(){
-  var remaining=APPS_DATA.filter(function(a){return !S.checked[a.id]&&a.w;});
-  if(!remaining.length){alert('Toutes les apps avec winget sont déjà cochées !');return;}
+  var remaining=visiblesDe('apps').filter(function(a){return !S.checked[a.id]&&a.w;});
+  if(!remaining.length){informer('Toutes les apps avec winget sont déjà cochées.');return;}
   // Un script généré dans le désordre installe un greffon avant son hôte :
   // quand le profil déclare des dépendances, on les respecte.
   if(aDesDependances())remaining=ordreParDependances(remaining);

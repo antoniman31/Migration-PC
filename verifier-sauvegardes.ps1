@@ -24,8 +24,9 @@
     le nom du dossier source.
 
 .PARAMETER Profil
-    Le profil JSON. Par defaut, cherche profil-local.json puis
-    presets/exemple.json a cote du script.
+    Le profil JSON. Par defaut, cherche a cote du script, dans cet ordre :
+    profil-local.json, profil-migration-pc.json (le nom sous lequel la page
+    exporte un profil), puis presets/exemple.json.
 
 .PARAMETER Sortie
     Rapport produit. Par defaut verification-sauvegardes.json.
@@ -38,7 +39,7 @@
     .\verifier-sauvegardes.ps1 -Destination D:\sauvegarde-migration
 
 .EXAMPLE
-    .\verifier-sauvegardes.ps1 -Destination E:\backup -Profil profil-antoni.json
+    .\verifier-sauvegardes.ps1 -Destination E:\backup -Profil mon-profil.json
 
 .NOTES
     Windows uniquement. PowerShell 5.1 ou superieur.
@@ -116,7 +117,9 @@ function Find-Profil {
         if (-not (Test-Path $Profil)) { throw "Profil introuvable : $Profil" }
         return $Profil
     }
-    foreach ($c in @('profil-local.json', 'profil-antoni.json', 'presets\exemple.json')) {
+    # profil-migration-pc.json est le nom que la page donne a son export : sans
+    # lui, exporter son profil puis le poser a cote du script ne suffisait pas.
+    foreach ($c in @('profil-local.json', 'profil-migration-pc.json', 'presets\exemple.json')) {
         $p = Join-Path $PSScriptRoot $c
         if (Test-Path $p) { return $p }
     }

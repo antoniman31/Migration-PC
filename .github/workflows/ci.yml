@@ -111,6 +111,9 @@ jobs:
       - name: Menu de la barre du haut
         run: node tests/test-menu.js
 
+      - name: Profil hostile — aucune injection
+        run: node tests/test-profil-hostile.js
+
   publier:
     name: Publier sur Pages
     needs: verifier

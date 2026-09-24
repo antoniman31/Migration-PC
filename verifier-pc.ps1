@@ -19,8 +19,10 @@
     Aucune donnee ne quitte la machine : le script n'ecrit qu'un fichier local.
 
 .PARAMETER Profil
-    Le profil JSON dont il faut verifier les elements. Par defaut, cherche
-    profil-local.json puis presets/exemple.json a cote du script.
+    Le profil JSON dont il faut verifier les elements. Par defaut, cherche a
+    cote du script, dans cet ordre : profil-local.json,
+    profil-migration-pc.json (le nom sous lequel la page exporte un profil),
+    puis presets/exemple.json.
 
 .PARAMETER Sortie
     Fichier produit. Par defaut verification-pc.json.
@@ -37,7 +39,7 @@
     Scan standard, ecrit .\verification-pc.json
 
 .EXAMPLE
-    .\verifier-pc.ps1 -Profil D:\migration\profil-antoni.json -NomsApproximatifs
+    .\verifier-pc.ps1 -Profil D:\migration\mon-profil.json -NomsApproximatifs
 
 .NOTES
     Windows uniquement. PowerShell 5.1 ou superieur.
@@ -73,7 +75,9 @@ function Find-Profil {
         return $Profil
     }
     # Le profil personnel prime sur l'exemple : c'est celui qu'on veut verifier.
-    foreach ($c in @('profil-local.json', 'profil-antoni.json', 'presets\exemple.json')) {
+    # profil-migration-pc.json est le nom que la page donne a son export : sans
+    # lui, exporter son profil puis le poser a cote du script ne suffisait pas.
+    foreach ($c in @('profil-local.json', 'profil-migration-pc.json', 'presets\exemple.json')) {
         $p = Join-Path $PSScriptRoot $c
         if (Test-Path $p) { return $p }
     }

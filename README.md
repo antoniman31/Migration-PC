@@ -459,6 +459,16 @@ Le stockage local est lié au navigateur **et** au chemin du fichier. Si la lett
 lecteur de la clé USB change d'un PC à l'autre, la progression ne suit pas : l'export
 JSON est le seul transfert fiable.
 
+### Un profil reçu est une entrée non fiable
+
+Le projet est fait pour qu'on s'échange des profils, donc un profil vient souvent d'un
+fichier qu'on n'a pas écrit. La page le traite comme une saisie quelconque : tout ce
+qu'il contient est échappé avant d'atteindre la page, et l'adresse d'un raccourci n'est
+ouverte que si c'est du `http`, `https` ou `mailto` — un `javascript:` devient un bouton
+visiblement inerte plutôt qu'un lien qui exécute du code. Ce qui est en jeu n'est pas
+théorique : le stockage local contient les clés de licence saisies dans l'onglet
+Données. `tests/test-profil-hostile.js` rejoue un profil piégé à chaque publication.
+
 ## Tests
 
 ```bash
@@ -475,13 +485,14 @@ npm run test:quitter              # onglet « Avant de quitter »
 npm run test:scenarios            # migration ou réinstallation
 npm run test:reinit               # remises à zéro et leur annulation
 npm run test:menu                 # menu « Plus » de la barre du haut
+npm run test:hostile              # profil piégé : aucune injection
 ```
 
 `npm test` ne lance que ce qui tourne partout sans rien installer. Les suites
 navigateur demandent Chromium (`npm install` le fournit via Playwright), les suites
 PowerShell demandent `pwsh`.
 
-Dix-huit suites, dans l'ordre où la CI les lance.
+Dix-neuf suites, dans l'ordre où la CI les lance.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
@@ -543,9 +554,14 @@ démarre, le profil se télécharge, l'export texte porte les intitulés du scé
 et rien de l'autre), que le menu se referme par les trois chemins attendus et qu'il reste
 utilisable au clavier comme au doigt.
 
+`tests/test-profil-hostile.js` charge un profil piégé sur quinze champs — nom de
+catégorie, identifiant winget, adresse de raccourci, intitulés, descriptions, chemins —
+puis clique tout ce qui est cliquable dans les deux cas et en mode guidé. Il échoue si
+une seule charge s'exécute.
+
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les dix-huit suites à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les dix-neuf suites à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 
