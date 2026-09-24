@@ -65,6 +65,29 @@ foreach ($f in $fichiers) {
 }
 ok 'aucune apostrophe typographique' ($suspects -join ', ') ''
 
+# -Include combine a -LiteralPath est ignore par Windows PowerShell 5.1, qui
+# rend alors TOUS les fichiers au lieu des seuls fichiers demandes. PowerShell 7
+# le respecte, donc le defaut est invisible partout sauf la ou ca compte : sur
+# la machine de quelqu'un. C'est le job Windows qui l'a trouve, dans la
+# recherche des cles de signature, ou il rapportait le disque entier.
+# On analyse l'arbre plutot que le texte : un commentaire qui en parle, comme
+# celui-ci, ne doit pas se signaler lui-meme.
+$melanges = @()
+foreach ($f in $fichiers) {
+    $arbre = [System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$null)
+    $appels = $arbre.FindAll({
+        param($n) $n -is [System.Management.Automation.Language.CommandAst] }, $true)
+    foreach ($a in $appels) {
+        $params = @($a.CommandElements |
+            Where-Object { $_ -is [System.Management.Automation.Language.CommandParameterAst] } |
+            ForEach-Object { $_.ParameterName.ToLowerInvariant() })
+        $litteral = @($params | Where-Object { 'literalpath'.StartsWith($_) -and $_.Length -ge 2 }).Count -gt 0
+        $inclut   = @($params | Where-Object { 'include'.StartsWith($_) -and $_.Length -ge 3 }).Count -gt 0
+        if ($litteral -and $inclut) { $melanges += "$($f.Name):$($a.Extent.StartLineNumber)" }
+    }
+}
+ok 'aucun -Include avec -LiteralPath' ($melanges -join ', ') ''
+
 Write-Host ""
 if ($script:ko -gt 0) { Write-Host "$script:ko EN ECHEC" -ForegroundColor Red; exit 1 }
 Write-Host "COMPATIBILITE POWERSHELL 5.1 OK" -ForegroundColor Green

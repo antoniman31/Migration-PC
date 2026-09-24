@@ -712,6 +712,13 @@ ce fichier s'arrête en le disant plutôt que de prétendre avoir vérifié quoi
 Ce que même ça ne teste pas : votre carte mère, vos pilotes, Steam, Epic, GOG, et
 l'interface graphique du lanceur. Un runner est un Windows Server nu.
 
+Ça a payé au premier passage utile. `Get-ChildItem -Include` combiné à `-LiteralPath`
+est **ignoré par Windows PowerShell 5.1**, qui rend alors tous les fichiers au lieu des
+seuls demandés : la recherche de clés de signature rapportait le disque entier. PowerShell 7
+le respecte, donc le défaut était invisible partout sauf là où il compte — sur la machine
+de quelqu'un, par double-clic. Le filtre se fait maintenant à la main, et un contrôle
+statique interdit ce mélange dans tout le dépôt.
+
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
 identifiants uniques sur les cinq onglets, priorités valides, catégories déclarées,

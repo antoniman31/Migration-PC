@@ -163,7 +163,11 @@ try {
     ok 'les deux cles du projet sont vues' $k.Count 2
     ok 'un .jks'                      ($noms -contains 'release.jks') $true
     ok 'un .keystore'                 ($noms -contains 'upload.keystore') $true
+    # -Include combine a -LiteralPath est ignore par Windows PowerShell 5.1,
+    # qui rend alors TOUS les fichiers : la recherche de cles aurait rapporte
+    # le disque entier. Le filtre se fait donc a la main.
     ok 'pas les autres fichiers'      ($noms -contains 'lisez-moi.txt') $false
+    ok 'ni un fichier sans extension' ($noms -contains 'sans-extension') $false
     # Signaler ceux-la noierait les vrais.
     ok 'node_modules est ecarte'      ($noms -contains 'test.jks') $false
     ok 'AppData aussi'                ($noms -contains 'cache.keystore') $false

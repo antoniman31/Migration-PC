@@ -830,7 +830,7 @@ function Read-GrosDossiers {
 #
 # On ne copie rien : on nomme, et la checklist s'occupe du reste.
 
-$script:ExtensionsPrecieuses = @('*.jks', '*.keystore', '*.pfx', '*.p12')
+$script:ExtensionsPrecieuses = @('.jks', '.keystore', '.pfx', '.p12')
 
 # Ce qui produit du bruit : des keystores de test, des certificats
 # d'echafaudage, des copies de cache. Les signaler noierait le vrai.
@@ -861,9 +861,14 @@ function Find-FichiersPrecieux {
     $base = (Get-Item -LiteralPath $Racine -Force -ErrorAction SilentlyContinue)
     if (-not $base) { return $out }
     $prefixe = $base.FullName.TrimEnd('\', '/')
-    foreach ($f in (Get-ChildItem -LiteralPath $Racine -Recurse -File -Force `
-                        -Include $script:ExtensionsPrecieuses -ErrorAction SilentlyContinue)) {
+    # Pas de -Include : combine a -LiteralPath, Windows PowerShell 5.1 l'ignore
+    # purement et simplement et rend TOUS les fichiers. Sur une vraie machine,
+    # la recherche de cles aurait donc rapporte le disque entier. PowerShell 7
+    # le respecte, ce qui rendait le defaut invisible ici — c'est le job Windows
+    # qui l'a trouve, a son premier passage utile.
+    foreach ($f in (Get-ChildItem -LiteralPath $Racine -Recurse -File -Force -ErrorAction SilentlyContinue)) {
         if ($chrono.Elapsed.TotalSeconds -gt $BudgetSecondes) { break }
+        if ($script:ExtensionsPrecieuses -notcontains $f.Extension.ToLowerInvariant()) { continue }
         $dossier = Split-Path $f.FullName -Parent
         if (Test-DossierBruyant -Chemin $dossier.Substring([math]::Min($prefixe.Length, $dossier.Length))) { continue }
         # Le modele decrit un chemin Windows : on ne laisse pas se melanger les
