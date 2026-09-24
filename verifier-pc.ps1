@@ -120,6 +120,8 @@ if (-not $SansJeux) {
     $null = Invoke-Detecteur -Nom 'Steam' -Bloc { Read-Steam }
     $null = Invoke-Detecteur -Nom 'Epic' -Bloc { Read-Epic }
     $null = Invoke-Detecteur -Nom 'GOG' -Bloc { Read-GOG }
+    $null = Invoke-Detecteur -Nom 'Ubisoft Connect' -Bloc { Read-Ubisoft }
+    $null = Invoke-Detecteur -Nom 'EA App' -Bloc { Read-Ea }
     $null = Invoke-Detecteur -Nom 'Xbox' -Bloc { Read-Xbox }
 }
 $installes = @($resultats.Values)

@@ -148,7 +148,8 @@ communes à toute réinstallation Windows, aucun script n'est nécessaire.
 | `winget list` | Les identifiants d'installation officiels |
 | Registre `Uninstall` | Les logiciels installés classiquement (32 et 64 bits, machine et utilisateur) |
 | Paquets APPX | Les applications du Microsoft Store |
-| Steam, Epic, GOG, Xbox | Les jeux installés, sur tous les disques |
+| Steam, Epic, GOG, Xbox, Ubisoft, EA | Les jeux installés, sur tous les disques |
+| VS Code, Chrome, Edge, Brave, Firefox | Les extensions installées |
 | Variables d'environnement | Les variables personnalisées de l'utilisateur |
 | SDK Android, WSL, scoop, Chocolatey, npm, pip | Les chaînes d'outils qu'aucun installateur n'enregistre |
 | Profil et disques fixes | Les gros dossiers que la checklist ne réclame pas |
@@ -191,6 +192,22 @@ rapide, cela ne demande pas de Java, et les identifiants obtenus — `platforms;
 reprend. La commande affichée n'est jamais devinée : le scanner la fournit, la page la
 recopie. Deviner celle d'un paquet scoop reviendrait à servir un ordre faux qui a l'air
 vrai, ce que ce projet évite partout ailleurs.
+
+**Les extensions sont relevées, pas conseillées.** La checklist disait « la
+synchronisation des paramètres restaure extensions et réglages » : un conseil, pas un
+relevé. Celles de VS Code se lisent dans le nom de leur dossier — pas besoin de lancer
+`code` — et donnent l'identifiant exact que `code --install-extension` reprend. Celles des
+navigateurs Chromium donnent leur identifiant et le lien de leur fiche ; quand leur nom
+lisible n'est qu'une référence de traduction (`__MSG_appName__`), l'identifiant est
+affiché plutôt qu'un jeton qui n'aide personne. Firefox tient un `extensions.json` par
+profil, où les noms sont déjà lisibles, et les greffons livrés avec le navigateur sont
+écartés — les proposer à la réinstallation serait faux.
+
+**Deux lanceurs de jeux de plus.** Ubisoft Connect tient ses installations dans une clé
+de registre qui porte le dossier mais pas le nom, donc le nom en est déduit. L'EA App ne
+tient aucun registre : chaque jeu dépose un `__Installer\installerdata.xml` dans son
+dossier, et c'est ce fichier qui distingue un jeu d'un dossier quelconque posé au même
+endroit.
 
 Deux filtres valent d'être connus : `npm` et `corepack` sont livrés avec Node, et `pip`
 est interrogé avec `--not-required`, sans quoi la liste se remplit des dépendances

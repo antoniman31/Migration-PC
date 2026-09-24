@@ -495,6 +495,214 @@ function Read-Variables {
     return $vars
 }
 
+# --- source 8 : Ubisoft Connect ----------------------------------------
+#
+# Ubisoft tient ses installations dans HKLM\SOFTWARE\Ubisoft\Launcher\Installs :
+# une sous-cle par jeu, portant le dossier d'installation mais pas le nom. Le
+# nom se deduit donc du dossier — c'est ce que font les autres outils qui lisent
+# cette cle, faute de mieux.
+function Format-JeuxUbisoft {
+    param($Entrees)
+    $out = @()
+    foreach ($e in @($Entrees)) {
+        if ($null -eq $e) { continue }
+        $dossier = ''
+        if ($e -is [System.Collections.IDictionary]) {
+            if ($e.Contains('dossier')) { $dossier = [string]$e['dossier'] }
+        } elseif ($e.PSObject.Properties['dossier']) { $dossier = [string]$e.dossier }
+        if ([string]::IsNullOrWhiteSpace($dossier)) { continue }
+        $nom = Split-Path $dossier.TrimEnd('\', '/') -Leaf
+        if ([string]::IsNullOrWhiteSpace($nom)) { continue }
+        $out += [ordered]@{ nom = $nom; dossier = $dossier }
+    }
+    return $out
+}
+
+function Read-Ubisoft {
+    Write-Host "  Ubisoft Connect..." -NoNewline
+    $entrees = @()
+    foreach ($k in @('HKLM:\SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs\*',
+                     'HKLM:\SOFTWARE\Ubisoft\Launcher\Installs\*')) {
+        foreach ($e in @(Get-ItemProperty -Path $k -ErrorAction SilentlyContinue)) {
+            if (-not $e.PSObject.Properties['InstallDir']) { continue }
+            $entrees += [ordered]@{ dossier = [string]$e.InstallDir }
+        }
+    }
+    $jeux = @(Format-JeuxUbisoft -Entrees $entrees)
+    if (-not $jeux.Count) { Write-Host " non installe, ignore" -ForegroundColor Yellow; return 0 }
+    $n = 0
+    foreach ($j in $jeux) {
+        Add-App -Nom $j.nom -Editeur 'Ubisoft' -Version '' -Source 'Ubisoft Connect' -Winget ''
+        $n++
+    }
+    Write-Host " $n jeux"
+    return $n
+}
+
+# --- source 9 : EA App / Origin ----------------------------------------
+#
+# L'EA App ne tient pas de registre de ses jeux : chacun depose un
+# « __Installer\installerdata.xml » dans son propre dossier. La presence de ce
+# fichier distingue un jeu d'un dossier quelconque pose au meme endroit.
+function Format-JeuxEa {
+    param([string[]]$Racines)
+    $out = @()
+    foreach ($r in @($Racines)) {
+        if ([string]::IsNullOrWhiteSpace($r)) { continue }
+        if (-not (Test-Path -LiteralPath $r)) { continue }
+        foreach ($d in @(Get-ChildItem -LiteralPath $r -Directory -Force -ErrorAction SilentlyContinue)) {
+            $marqueur = Join-Path $d.FullName '__Installer\installerdata.xml'
+            if (-not (Test-Path -LiteralPath $marqueur)) { continue }
+            $out += [ordered]@{ nom = $d.Name; dossier = $d.FullName }
+        }
+    }
+    return $out
+}
+
+function Get-RacinesEa {
+    $r = @()
+    foreach ($base in @($env:ProgramFiles, ${env:ProgramFiles(x86)})) {
+        foreach ($nom in @('EA Games', 'Origin Games')) {
+            $c = Join-CheminSur $base $nom
+            if ($c) { $r += $c }
+        }
+    }
+    return $r
+}
+
+function Read-Ea {
+    Write-Host "  EA App..." -NoNewline
+    $jeux = @(Format-JeuxEa -Racines (Get-RacinesEa))
+    if (-not $jeux.Count) { Write-Host " non installe, ignore" -ForegroundColor Yellow; return 0 }
+    $n = 0
+    foreach ($j in $jeux) {
+        Add-App -Nom $j.nom -Editeur 'Electronic Arts' -Version '' -Source 'EA App' -Winget ''
+        $n++
+    }
+    Write-Host " $n jeux"
+    return $n
+}
+
+# ---------------------------------------------------------------- extensions
+#
+# La checklist conseillait « la synchronisation des paramètres restaure
+# extensions et reglages » : un conseil, pas un releve. Reinstaller trente
+# extensions a la main est exactement la soiree que ce projet evite.
+#
+# On ne copie pas les extensions : on les nomme, avec de quoi les remettre.
+
+# VS Code pose un dossier par extension, nomme « editeur.nom-version ».
+# Pas besoin de lancer `code` : le nom du dossier dit tout.
+function Format-ExtensionsVsCode {
+    param([string]$Racine)
+    $out = @()
+    if ([string]::IsNullOrWhiteSpace($Racine) -or -not (Test-Path -LiteralPath $Racine)) { return $out }
+    foreach ($d in @(Get-ChildItem -LiteralPath $Racine -Directory -Force -ErrorAction SilentlyContinue)) {
+        $n = $d.Name
+        # La version est en fin de nom, precedee d'un tiret. Ce qui reste est
+        # l'identifiant que `code --install-extension` reprend tel quel.
+        $id = $n
+        $version = ''
+        if ($n -match '^(.+)-(\d+\.\d+[\.\d]*)$') { $id = $matches[1]; $version = $matches[2] }
+        if ($id -notmatch '^[^.]+\.[^.]+') { continue }
+        $out += New-Outil -Famille 'Extensions VS Code' -Id $id -Version $version `
+            -Commande "code --install-extension $id"
+    }
+    return $out
+}
+
+# Les navigateurs Chromium posent un dossier par extension, nomme de son
+# identifiant, avec un sous-dossier par version contenant le manifeste. Le nom
+# lisible y est souvent une reference de traduction (« __MSG_appName__ ») :
+# quand c'est le cas, on garde l'identifiant plutot que d'afficher un jeton.
+function Format-ExtensionsChromium {
+    param([string]$Racine, [string]$Navigateur = 'Chrome')
+    $out = @()
+    if ([string]::IsNullOrWhiteSpace($Racine) -or -not (Test-Path -LiteralPath $Racine)) { return $out }
+    foreach ($d in @(Get-ChildItem -LiteralPath $Racine -Directory -Force -ErrorAction SilentlyContinue)) {
+        $id = $d.Name
+        # Un identifiant d'extension Chromium fait 32 lettres a..p.
+        if ($id -notmatch '^[a-p]{32}$') { continue }
+        $nom = ''
+        $version = ''
+        $derniere = @(Get-ChildItem -LiteralPath $d.FullName -Directory -Force -ErrorAction SilentlyContinue |
+                      Sort-Object Name) | Select-Object -Last 1
+        if ($derniere) {
+            $version = $derniere.Name
+            $manifeste = Join-Path $derniere.FullName 'manifest.json'
+            if (Test-Path -LiteralPath $manifeste) {
+                try {
+                    $m = Get-Content -LiteralPath $manifeste -Raw -Encoding UTF8 | ConvertFrom-Json
+                    if ($m -and $m.PSObject.Properties['name']) {
+                        $brut = [string]$m.name
+                        if ($brut -and $brut -notlike '__MSG_*') { $nom = $brut }
+                    }
+                } catch { }
+            }
+        }
+        $out += New-Outil -Famille "Extensions $Navigateur" -Id $id `
+            -Nom $(if ($nom) { $nom } else { $id }) -Version $version `
+            -Commande "https://chromewebstore.google.com/detail/$id"
+    }
+    return $out
+}
+
+# Firefox tient un extensions.json par profil : les noms y sont deja lisibles.
+function Format-ExtensionsFirefox {
+    param([string]$Json)
+    $out = @()
+    if ([string]::IsNullOrWhiteSpace($Json)) { return $out }
+    try { $d = $Json | ConvertFrom-Json } catch { return $out }
+    if (-not $d -or -not $d.PSObject.Properties['addons']) { return $out }
+    foreach ($a in @($d.addons)) {
+        if ($null -eq $a) { continue }
+        # Les greffons livres avec Firefox ne se reinstallent pas.
+        if ($a.PSObject.Properties['location'] -and $a.location -ne 'app-profile') { continue }
+        $id = ''
+        if ($a.PSObject.Properties['id']) { $id = [string]$a.id }
+        if ([string]::IsNullOrWhiteSpace($id)) { continue }
+        $nom = $id
+        if ($a.PSObject.Properties['defaultLocale'] -and $a.defaultLocale -and
+            $a.defaultLocale.PSObject.Properties['name'] -and $a.defaultLocale.name) {
+            $nom = [string]$a.defaultLocale.name
+        }
+        $version = ''
+        if ($a.PSObject.Properties['version']) { $version = [string]$a.version }
+        $out += New-Outil -Famille 'Extensions Firefox' -Id $id -Nom $nom -Version $version `
+            -Commande "https://addons.mozilla.org/firefox/search/?q=$([uri]::EscapeDataString($nom))"
+    }
+    return $out
+}
+
+function Read-Extensions {
+    Write-Host "  extensions..." -NoNewline
+    $out = @()
+    $vsc = Join-CheminSur $env:USERPROFILE '.vscode\extensions'
+    $out += @(Format-ExtensionsVsCode -Racine $vsc)
+
+    $chromiums = @(
+        @{ nom = 'Chrome'; chemin = 'Google\Chrome\User Data\Default\Extensions' }
+        @{ nom = 'Edge';   chemin = 'Microsoft\Edge\User Data\Default\Extensions' }
+        @{ nom = 'Brave';  chemin = 'BraveSoftware\Brave-Browser\User Data\Default\Extensions' }
+    )
+    foreach ($c in $chromiums) {
+        $r = Join-CheminSur $env:LOCALAPPDATA $c.chemin
+        $out += @(Format-ExtensionsChromium -Racine $r -Navigateur $c.nom)
+    }
+
+    $profils = Join-CheminSur $env:APPDATA 'Mozilla\Firefox\Profiles'
+    if ($profils -and (Test-Path -LiteralPath $profils)) {
+        foreach ($p in @(Get-ChildItem -LiteralPath $profils -Directory -Force -ErrorAction SilentlyContinue)) {
+            $f = Join-Path $p.FullName 'extensions.json'
+            if (-not (Test-Path -LiteralPath $f)) { continue }
+            try { $out += @(Format-ExtensionsFirefox -Json (Get-Content -LiteralPath $f -Raw -Encoding UTF8)) } catch { }
+        }
+    }
+    if (-not $out.Count) { Write-Host " aucune, ignore" -ForegroundColor Yellow; return @() }
+    Write-Host " $($out.Count) extension(s)"
+    return $out
+}
+
 # ---------------------------------------------------------------- gros dossiers
 #
 # Le projet ne detectait aucun fichier personnel : l'onglet « Donnees » est une

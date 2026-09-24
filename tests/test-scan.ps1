@@ -141,6 +141,81 @@ ok 'sans code, rien'                 (@($pil | Where-Object { $_.nom -eq 'Sans c
 ok 'le probleme est nomme'           (@($pil | Where-Object { $_.nom -match 'Ethernet' })[0].probleme) 'aucun pilote installe'
 ok 'liste vide, rien'                (@(Format-Pilotes -Peripheriques @())).Count 0
 
+"--- les extensions, qu on ne reinstalle pas a la main ---"
+$bacX = Join-Path ([System.IO.Path]::GetTempPath()) ("mpc-ext-" + (Get-Random))
+try {
+    foreach ($d in @('vsc\dbaeumer.vscode-eslint-3.0.10', 'vsc\ms-python.python-2024.14.0',
+                     'vsc\pas-un-identifiant',
+                     'chrome\cjpalhdlnbpafiamejdnhcphjbkeiagm\1.60.0',
+                     'chrome\abcdefghijklmnopabcdefghijklmnop\2.0',
+                     'chrome\PASUNIDENTIFIANT\1.0')) {
+        New-Item -ItemType Directory -Path (Join-Path $bacX $d) -Force | Out-Null
+    }
+    # VS Code : le nom du dossier dit tout, pas besoin de lancer `code`.
+    $vs = @(Format-ExtensionsVsCode -Racine (Join-Path $bacX 'vsc'))
+    ok 'deux extensions VS Code'      $vs.Count 2
+    ok 'la version est separee'       (@($vs | Where-Object { $_.id -eq 'ms-python.python' })[0].version) '2024.14.0'
+    # L identifiant doit etre celui que `code --install-extension` reprend.
+    ok 'la commande est utilisable'   (@($vs | Where-Object { $_.id -eq 'ms-python.python' })[0].commande) 'code --install-extension ms-python.python'
+
+    Set-Content -LiteralPath (Join-Path $bacX 'chrome\cjpalhdlnbpafiamejdnhcphjbkeiagm\1.60.0\manifest.json') `
+        -Value '{"name":"uBlock Origin","version":"1.60.0"}'
+    # Le nom lisible est souvent une reference de traduction : afficher
+    # « __MSG_appName__ » a quelqu un ne l aide pas.
+    Set-Content -LiteralPath (Join-Path $bacX 'chrome\abcdefghijklmnopabcdefghijklmnop\2.0\manifest.json') `
+        -Value '{"name":"__MSG_appName__"}'
+    $ch = @(Format-ExtensionsChromium -Racine (Join-Path $bacX 'chrome') -Navigateur 'Chrome')
+    ok 'deux extensions Chromium'     $ch.Count 2
+    ok 'un dossier qui n est pas un identifiant est ignore' `
+        (@($ch | Where-Object { $_.id -eq 'PASUNIDENTIFIANT' }).Count) 0
+    ok 'le nom lisible est repris'    (@($ch | Where-Object { $_.id -like 'cjpal*' })[0].nom) 'uBlock Origin'
+    ok 'une reference de traduction ne s affiche pas' `
+        (@($ch | Where-Object { $_.id -like 'abcdef*' })[0].nom) 'abcdefghijklmnopabcdefghijklmnop'
+
+    # Firefox tient un extensions.json par profil, ou les noms sont lisibles.
+    $j = '{"addons":[' +
+         '{"id":"ublock@raymondhill.net","location":"app-profile","version":"1.60","defaultLocale":{"name":"uBlock Origin"}},' +
+         '{"id":"livre@mozilla.org","location":"app-builtin"},' +
+         '{"location":"app-profile"}]}'
+    $ff = @(Format-ExtensionsFirefox -Json $j)
+    ok 'une extension Firefox'        $ff.Count 1
+    ok 'avec son nom lisible'         $ff[0].nom 'uBlock Origin'
+    # Un greffon livre avec Firefox ne se reinstalle pas : le proposer serait faux.
+    ok 'les greffons livres sont ecartes' (@($ff | Where-Object { $_.id -like '*mozilla.org' }).Count) 0
+    ok 'du JSON casse ne casse rien'  (@(Format-ExtensionsFirefox -Json 'pas du json').Count) 0
+    ok 'un dossier absent non plus'   (@(Format-ExtensionsVsCode -Racine (Join-Path $bacX 'nexistepas')).Count) 0
+} finally {
+    Remove-Item $bacX -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+"--- les lanceurs de jeux qui manquaient ---"
+# Ubisoft tient ses installations dans une cle qui porte le dossier mais pas le
+# nom : le nom se deduit donc du dossier, faute de mieux.
+$ub = @(Format-JeuxUbisoft -Entrees @(
+    [ordered]@{ dossier = 'D:\Ubisoft\Assassins Creed Mirage' },
+    [ordered]@{ dossier = 'C:\Program Files\Ubisoft\Far Cry 6\' },
+    [ordered]@{ dossier = '' },
+    [ordered]@{ autre = 'sans dossier' },
+    $null))
+ok 'deux jeux Ubisoft'            $ub.Count 2
+ok 'le nom vient du dossier'      $ub[0].nom 'Assassins Creed Mirage'
+ok 'une barre finale ne gene pas' $ub[1].nom 'Far Cry 6'
+
+# L EA App ne tient pas de registre : chaque jeu depose un
+# __Installer\installerdata.xml dans son dossier. C est ce fichier qui
+# distingue un jeu d un dossier quelconque pose au meme endroit.
+$bacE = Join-Path ([System.IO.Path]::GetTempPath()) ("mpc-ea-" + (Get-Random))
+try {
+    New-Item -ItemType Directory -Path (Join-Path $bacE 'EA Games\Le Jeu\__Installer') -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $bacE 'EA Games\Le Jeu\__Installer\installerdata.xml') -Value '<DiPManifest/>'
+    New-Item -ItemType Directory -Path (Join-Path $bacE 'EA Games\Pas un jeu') -Force | Out-Null
+    $ea = @(Format-JeuxEa -Racines @((Join-Path $bacE 'EA Games'), (Join-Path $bacE 'nexistepas'), ''))
+    ok 'un jeu EA est vu'             $ea.Count 1
+    ok 'et il porte le nom du dossier' $ea[0].nom 'Le Jeu'
+} finally {
+    Remove-Item $bacE -Recurse -Force -ErrorAction SilentlyContinue
+}
+
 "--- additionner des dictionnaires ---"
 # Les elements du projet sont des dictionnaires ordonnes, pas des objets :
 # PSObject.Properties n y voit rien et Measure-Object non plus. La somme rendait
