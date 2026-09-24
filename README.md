@@ -745,6 +745,14 @@ connus de winget.
 identifiants ; `7zip.7zip` donne « 7zip » et non « 7-Zip ». Passer par `scan-pc.ps1`
 donne des noms corrects, puisqu'il lit le registre.
 
+**Ce que le projet ne fera pas : déménager vos applications.** Les outils commerciaux
+comme PCmover copient les fichiers de programme *et* les clés de registre *et* les
+composants partagés, en réécrivant au passage des milliers de références qui changent
+d'une machine à l'autre. Windows n'a jamais été conçu pour ça, les applications du Store
+ne se copient pas, les licences liées au matériel se désactivent, et on déménagerait
+aussi les restes accumulés depuis cinq ans. Une réinstallation propre par winget, plus
+les réglages repérés par le scan, couvre l'essentiel sans rien greffer qu'on ne comprenne.
+
 **La déduplication est approximative.** Elle compare les noms en ignorant la version,
 les numéros de mise à jour et les mentions entre parenthèses, ce qui rapproche
 correctement `Mozilla Firefox (x64 fr)` du registre et `Mozilla Firefox` de winget, ou
@@ -755,6 +763,13 @@ ponctuation qui porte le nom est transcrite plutôt qu'effacée, sinon `Notepad+
 
 **Le classement par catégorie est indicatif**, fondé sur des mots-clés. Un logiciel peu
 connu atterrit dans « Utilitaires Système ». Les catégories se corrigent dans le JSON.
+
+**Les dossiers de configuration sont repérés, pas devinés.** Le scanner connaît une
+table d'emplacements — celui de VS Code, de Notepad++, de Firefox, d'OBS, d'une trentaine
+de logiciels courants — et ne retient que ceux qui existent réellement, pour un logiciel
+réellement installé. Le dossier d'un logiciel désinstallé n'est pas proposé : ce sont des
+restes, pas une configuration à emporter. La table est forcément incomplète et s'allonge
+d'une ligne ; ce qu'elle ignore reste à lister à la main, comme avant.
 
 **Les étapes « Nouveau PC », « Données » et « PWA » ne sont pas scannées** : un
 inventaire importé reprend celles du profil d'exemple, à adapter à votre matériel. Un

@@ -49,6 +49,43 @@ Add-App -Nom 'Notepad' -Editeur 'Microsoft' -Version '11.0' -Source 'store' -Win
 ok 'deux entrees distinctes' $resultats.Count 2
 ok 'chacune garde son winget' (@($resultats.Values | Where-Object { $_.winget -eq 'Notepad++.Notepad++' })).Count 1
 
+"--- dossiers de configuration ---"
+# Un dossier de config ne se devine pas : il est cherche la ou la table le dit,
+# et seulement si le logiciel correspondant est installe.
+$racine = Join-Path ([System.IO.Path]::GetTempPath()) ("cfg-" + [guid]::NewGuid().ToString('N'))
+$null = New-Item -ItemType Directory -Path (Join-Path $racine 'profil\.ssh') -Force
+$null = New-Item -ItemType Directory -Path (Join-Path $racine 'appdata\Code\User') -Force
+$null = New-Item -ItemType Directory -Path (Join-Path $racine 'appdata\obsidian') -Force
+Set-Content -Path (Join-Path $racine 'profil\.ssh\id_ed25519') -Value 'secret'
+# -Encoding Byte n'existe plus en PowerShell 7 : on passe par .NET, qui se
+# comporte pareil des deux cotes.
+$bloc = New-Object byte[] 524288
+[System.IO.File]::WriteAllBytes((Join-Path $racine 'appdata\Code\User\settings.json'), $bloc)
+
+[Environment]::SetEnvironmentVariable('USERPROFILE', (Join-Path $racine 'profil'))
+[Environment]::SetEnvironmentVariable('APPDATA', (Join-Path $racine 'appdata'))
+[Environment]::SetEnvironmentVariable('LOCALAPPDATA', (Join-Path $racine 'local'))
+
+$avec = @(Read-Configs -ClesInstallees @('visualstudiocode'))
+ok 'les cles SSH sortent sans logiciel declare' (@($avec | Where-Object { $_.nom -eq 'Clés SSH' })).Count 1
+ok 'VS Code sort car installe'                 (@($avec | Where-Object { $_.nom -eq 'Visual Studio Code' })).Count 1
+# Le dossier d'Obsidian existe, mais Obsidian n'est pas installe : ce sont des
+# restes, pas une configuration a emporter.
+ok 'Obsidian non installe est ignore'          (@($avec | Where-Object { $_.nom -eq 'Obsidian' })).Count 0
+ok 'la taille est mesuree'                     ((@($avec | Where-Object { $_.nom -eq 'Visual Studio Code' })[0].tailleMo) -gt 0) $true
+
+$sans = @(Read-Configs -ClesInstallees @())
+ok 'sans logiciel, seules les regles libres sortent' (@($sans | Where-Object { $_.cle })).Count 0
+ok 'les cles SSH restent proposees'            (@($sans | Where-Object { $_.nom -eq 'Clés SSH' })).Count 1
+
+# Un chemin absent n'est jamais retenu, meme si la table le connait.
+ok 'un dossier absent n est pas invente'       (@($avec | Where-Object { -not (Test-Path -LiteralPath $_.chemin) })).Count 0
+ok 'chaque entree porte un chemin'             (@($avec | Where-Object { [string]::IsNullOrWhiteSpace($_.chemin) })).Count 0
+ok 'et une explication'                        (@($avec | Where-Object { [string]::IsNullOrWhiteSpace($_.quoi) })).Count 0
+
+ok 'taille d un dossier absent = null'         (Get-TailleDossier -Chemin (Join-Path $racine 'nexiste-pas')) $null
+Remove-Item -LiteralPath $racine -Recurse -Force -ErrorAction SilentlyContinue
+
 "--- fusion des sources ---"
 $script:resultats = @{}
 Add-App -Nom 'Mozilla Firefox (x64 fr)' -Editeur 'Mozilla' -Version '140.0' -Source 'registre' -Winget ''

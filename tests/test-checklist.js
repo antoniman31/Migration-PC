@@ -3,7 +3,16 @@
 const fs=require('fs'),vm=require('vm'),path=require('path');
 const racine=path.join(__dirname,'..');
 const html=fs.readFileSync(path.join(racine,'index.html'),'utf8');
-const m=html.match(/<script>([\s\S]*)<\/script>/);
+// index.html porte plusieurs blocs <script> : un tres court en tete, qui ne
+// charge le resultat d'un scan qu'en file://, et le gros bloc de la page. Une
+// regex gloutonne les avalait tous les deux avec le HTML entre eux. On prend
+// le plus long.
+function blocJS(html){
+  const blocs=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
+  if(!blocs.length)throw new Error('aucun bloc <script> inline dans index.html');
+  return blocs.reduce((a,b)=>b.length>a.length?b:a);
+}
+const m=[null,blocJS(html)];
 if(!m){console.error('script introuvable dans index.html');process.exit(1);}
 const js=m[1];
 

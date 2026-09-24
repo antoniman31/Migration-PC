@@ -2324,10 +2324,18 @@ function inventaireVersProfil(inv){
   if(inv.genere)desc.push('scan du '+String(inv.genere).slice(0,10));
   // L'élément « variables d'environnement » du profil par défaut affiche
   // exactement celles que le scan a relevées, plutôt qu'une liste figée.
-  const donnees=PROFIL_DEFAUT.data.map(function(d){
+  let donnees=PROFIL_DEFAUT.data.map(function(d){
     if(d.env&&vars.length)return Object.assign({},d,{env:vars});
     return d;
   });
+  // Les dossiers de configuration repérés viennent s'ajouter aux chemins
+  // écrits à la main. Ceux-là sont constatés sur la machine, avec leur chemin
+  // réel et leur taille : quand les deux désignent le même dossier, la ligne
+  // détectée remplace la ligne écrite d'avance plutôt que de doubler.
+  const reperes=configsVersDonnees(inv.configs);
+  donnees=donnees.filter(function(d){
+    return !reperes.some(function(r){return memeDossier(d.p,r.p);});
+  }).concat(reperes);
   return {
     meta:{version:1,nom:'Migration PC — inventaire importé',soustitre:desc.join(' · ')},
     cats:cats,
@@ -2338,6 +2346,59 @@ function inventaireVersProfil(inv){
     ordre:[],
     requetes:{}
   };
+}
+
+// Un dossier de configuration repéré par le scanner devient une ligne de
+// l'onglet « Données ». Les clés et les trousseaux passent en priorité haute
+// et portent l'avertissement qui va avec : ce sont des secrets, pas des
+// réglages.
+function configsVersDonnees(configs){
+  if(!Array.isArray(configs)||!configs.length)return [];
+  const sensible=/clé|cle |ssh|gpg|mot de passe|trousseau/i;
+  return configs.map(function(c,i){
+    const nom=String(c.nom||('Configuration '+(i+1)));
+    const secret=sensible.test(nom)||sensible.test(String(c.quoi||''));
+    const bouts=[];
+    if(c.quoi)bouts.push(String(c.quoi));
+    if(c.tailleMo!=null&&c.tailleMo!=='')bouts.push(fmtMo(c.tailleMo));
+    bouts.push('repéré par le scan');
+    const e={
+      id:'cfg'+(i+1),
+      n:nom,
+      pr:secret?'high':'med',
+      p:String(c.chemin||''),
+      note:bouts.join(' · ')
+    };
+    if(secret)e.warn='Contient des secrets : à copier sur un support chiffré, jamais dans un dossier partagé.';
+    return e;
+  });
+}
+
+// « %USERPROFILE%\.ssh » écrit d'avance et « C:\Users\moi\.ssh » constaté
+// désignent le même dossier. On compare la fin du chemin, pas son début : le
+// début est justement ce qui diffère d'une machine à l'autre. Deux segments,
+// parce qu'un seul confondrait tous les dossiers nommés « User ».
+function memeDossier(a,b){
+  const bouts=function(x){
+    return String(x||'').toLowerCase().replace(/\//g,'\\')
+      .replace(/[%][^%]*[%]/g,'').split('\\')
+      .filter(function(m){return m&&m!=='.';});
+  };
+  const A=bouts(a),B=bouts(b);
+  if(!A.length||!B.length)return false;
+  const n=Math.min(2,A.length,B.length);
+  for(let i=1;i<=n;i++){
+    if(A[A.length-i]!==B[B.length-i])return false;
+  }
+  return true;
+}
+
+function fmtMo(mo){
+  const n=Number(mo);
+  if(!isFinite(n)||n<=0)return 'vide';
+  if(n<1)return 'moins de 1 Mo';
+  if(n<1024)return Math.round(n)+' Mo';
+  return (n/1024).toFixed(1).replace('.',',')+' Go';
 }
 
 const LIBELLES_CATS={

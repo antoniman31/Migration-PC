@@ -452,3 +452,91 @@ function Read-Variables {
     Write-Host " $(@($vars).Count) relevee(s)"
     return $vars
 }
+
+# ---------------------------------------------------------------- configurations
+#
+# Installer un logiciel prend une commande winget ; retrouver ses reglages prend
+# une soiree. Le scanner savait relever ce qui est installe, jamais ou vivent
+# les reglages — l'onglet « Donnees » listait des chemins ecrits a la main.
+#
+# Cette table dit ou chaque logiciel range sa configuration. Elle est forcement
+# incomplete : elle couvre ce qui revient souvent, et s'allonge d'une ligne.
+# Rien n'est devine — un chemin absent de la table n'est pas cherche, et un
+# chemin de la table qui n'existe pas sur la machine n'est pas retenu.
+#
+# `cle` vaut $null pour ce qui ne depend d'aucun logiciel installe (les cles
+# SSH existent sans client SSH declare). Sinon c'est la cle normalisee du
+# logiciel, celle que Get-Cle produit.
+$ConfigsConnues = @(
+    @{ cle=$null;              nom='Clés SSH';                chemins=@('%USERPROFILE%\.ssh');                            quoi='Clés privées et known_hosts. À traiter comme un mot de passe.' }
+    @{ cle=$null;              nom='Configuration Git';       chemins=@('%USERPROFILE%\.gitconfig');                      quoi='Nom, courriel, alias, options.' }
+    @{ cle=$null;              nom='Clés GPG';                chemins=@('%APPDATA%\gnupg');                               quoi='Trousseau de signature.' }
+    @{ cle='visualstudiocode'; nom='Visual Studio Code';      chemins=@('%APPDATA%\Code\User');                           quoi='Réglages, raccourcis, extraits. La liste des extensions s''exporte à part.' }
+    @{ cle='notepadpp';        nom='Notepad++';               chemins=@('%APPDATA%\Notepad++');                           quoi='Thème, sessions, macros.' }
+    @{ cle='sublimetext';      nom='Sublime Text';            chemins=@('%APPDATA%\Sublime Text\Packages\User');          quoi='Réglages et paquets.' }
+    @{ cle='autohotkey';       nom='AutoHotkey';              chemins=@('%USERPROFILE%\Documents\AutoHotkey');            quoi='Vos scripts.' }
+    @{ cle='obsidian';         nom='Obsidian';                chemins=@('%APPDATA%\obsidian');                            quoi='Réglages. Les notes vivent dans vos coffres, ailleurs.' }
+    @{ cle='powertoys';        nom='PowerToys';               chemins=@('%LOCALAPPDATA%\Microsoft\PowerToys');            quoi='Réglages de chaque module.' }
+    @{ cle='windowsterminal';  nom='Windows Terminal';        chemins=@('%LOCALAPPDATA%\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState'); quoi='settings.json : profils, thèmes, raccourcis.' }
+    @{ cle='mozillafirefox';   nom='Profils Firefox';         chemins=@('%APPDATA%\Mozilla\Firefox\Profiles');            quoi='Marque-pages, extensions, cookies. Volumineux.' }
+    @{ cle='mozillathunderbird';nom='Thunderbird';            chemins=@('%APPDATA%\Thunderbird\Profiles');                quoi='Comptes et courriels locaux. Volumineux.' }
+    @{ cle='filezilla';        nom='FileZilla';               chemins=@('%APPDATA%\FileZilla');                           quoi='Sites enregistrés. Contient des mots de passe.' }
+    @{ cle='winscp';           nom='WinSCP';                  chemins=@('%APPDATA%\WinSCP.ini');                          quoi='Sessions enregistrées.' }
+    @{ cle='qbittorrent';      nom='qBittorrent';             chemins=@('%APPDATA%\qBittorrent','%LOCALAPPDATA%\qBittorrent'); quoi='Réglages et torrents en cours.' }
+    @{ cle='obsstudio';        nom='OBS Studio';              chemins=@('%APPDATA%\obs-studio');                          quoi='Scènes, sources, profils d''encodage.' }
+    @{ cle='vlcmediaplayer';   nom='VLC';                     chemins=@('%APPDATA%\vlc');                                 quoi='Réglages et équaliseur.' }
+    @{ cle='krita';            nom='Krita';                   chemins=@('%APPDATA%\krita','%LOCALAPPDATA%\krita');        quoi='Brosses, espaces de travail.' }
+    @{ cle='gimp';             nom='GIMP';                    chemins=@('%APPDATA%\GIMP');                                quoi='Brosses, greffons, préférences.' }
+    @{ cle='blender';          nom='Blender';                 chemins=@('%APPDATA%\Blender Foundation\Blender');          quoi='Préférences, greffons, thèmes.' }
+    @{ cle='unityhub';         nom='Unity';                   chemins=@('%APPDATA%\Unity','%APPDATA%\UnityHub');          quoi='Licences et réglages de l''éditeur.' }
+    @{ cle='androidstudio';    nom='Android Studio';          chemins=@('%APPDATA%\Google');                              quoi='Réglages de l''IDE. Les SDK se retéléchargent.' }
+    @{ cle='intellijidea';     nom='JetBrains';               chemins=@('%APPDATA%\JetBrains');                           quoi='Réglages communs aux IDE JetBrains.' }
+    @{ cle='docker';           nom='Docker Desktop';          chemins=@('%APPDATA%\Docker','%USERPROFILE%\.docker');      quoi='Réglages. Les images se retéléchargent.' }
+    @{ cle='steam';            nom='Steam — sauvegardes';     chemins=@('%PROGRAMFILES(X86)%\Steam\userdata');            quoi='Sauvegardes des jeux hors cloud, et configurations de manettes.' }
+    @{ cle='vortex';           nom='Vortex';                  chemins=@('%APPDATA%\Vortex');                              quoi='Profils de mods.' }
+    @{ cle='icue';             nom='Corsair iCUE';            chemins=@('%APPDATA%\Corsair');                             quoi='Profils d''éclairage et macros.' }
+    @{ cle='signalrgb';        nom='SignalRGB';               chemins=@('%APPDATA%\WhirlwindFX');                         quoi='Effets et agencement des appareils.' }
+    @{ cle='rainmeter';        nom='Rainmeter';               chemins=@('%APPDATA%\Rainmeter','%USERPROFILE%\Documents\Rainmeter'); quoi='Habillages et dispositions.' }
+    @{ cle='windhawk';         nom='Windhawk';                chemins=@('%PROGRAMDATA%\Windhawk\Engine\Mods');            quoi='Modifications installées et leurs réglages.' }
+    @{ cle='sharex';           nom='ShareX';                  chemins=@('%USERPROFILE%\Documents\ShareX');                quoi='Flux de capture et destinations.' }
+    @{ cle='everything';       nom='Everything';              chemins=@('%APPDATA%\Everything');                          quoi='Filtres et signets de recherche.' }
+)
+
+function Get-TailleDossier {
+    param([string]$Chemin)
+    try {
+        if (-not (Test-Path -LiteralPath $Chemin)) { return $null }
+        $item = Get-Item -LiteralPath $Chemin -Force -ErrorAction Stop
+        if (-not $item.PSIsContainer) { return [math]::Round($item.Length / 1MB, 2) }
+        $somme = (Get-ChildItem -LiteralPath $Chemin -Recurse -File -Force -ErrorAction SilentlyContinue |
+                  Measure-Object -Property Length -Sum).Sum
+        if (-not $somme) { return 0 }
+        return [math]::Round($somme / 1MB, 2)
+    } catch { return $null }
+}
+
+function Read-Configs {
+    param([string[]]$ClesInstallees = @())
+    Write-Host "  dossiers de configuration..." -NoNewline
+    $trouves = @()
+    foreach ($regle in $ConfigsConnues) {
+        # Une regle rattachee a un logiciel ne s'applique que s'il est installe :
+        # sinon on proposerait d'emporter les restes d'un logiciel desinstalle.
+        if ($regle.cle -and ($ClesInstallees -notcontains $regle.cle)) { continue }
+        foreach ($brut in $regle.chemins) {
+            $chemin = [Environment]::ExpandEnvironmentVariables($brut)
+            # Un chemin non resolu garde ses %...% : inutile d'aller plus loin.
+            if ($chemin -like '*%*') { continue }
+            if (-not (Test-Path -LiteralPath $chemin)) { continue }
+            $trouves += [ordered]@{
+                nom      = $regle.nom
+                chemin   = $chemin
+                quoi     = $regle.quoi
+                tailleMo = Get-TailleDossier -Chemin $chemin
+                logiciel = $regle.cle
+            }
+        }
+    }
+    Write-Host " $(@($trouves).Count) trouve(s)"
+    return $trouves
+}

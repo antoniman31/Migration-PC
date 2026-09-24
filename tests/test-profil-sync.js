@@ -153,7 +153,16 @@ requis.forEach(function(f){
 // premiere par hoisting, et le code qu'on vient d'ecrire n'est jamais execute.
 // Ce piege s'est produit trois fois dans ce fichier (mkLicField, mkEnvFields,
 // mkDepBadge), chaque fois sans le moindre message.
-const script=html.match(/<script>([\s\S]*)<\/script>/);
+// index.html porte plusieurs blocs <script> : un tres court en tete, qui ne
+// charge le resultat d'un scan qu'en file://, et le gros bloc de la page. Une
+// regex gloutonne les avalait tous les deux avec le HTML entre eux. On prend
+// le plus long.
+function blocJS(html){
+  const blocs=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
+  if(!blocs.length)throw new Error('aucun bloc <script> inline dans index.html');
+  return blocs.reduce((a,b)=>b.length>a.length?b:a);
+}
+const script=[null,blocJS(html)];
 if(script){
   const noms={},doubles=[];
   const re=/^function\s+([A-Za-z_$][\w$]*)\s*\(/gm;

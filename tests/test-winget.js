@@ -6,7 +6,16 @@
 const fs=require('fs'),vm=require('vm'),path=require('path');
 const racine=path.join(__dirname,'..');
 const html=fs.readFileSync(path.join(racine,'index.html'),'utf8');
-const js=html.match(/<script>([\s\S]*)<\/script>/)[1];
+// index.html porte plusieurs blocs <script> : un tres court en tete, qui ne
+// charge le resultat d'un scan qu'en file://, et le gros bloc de la page. Une
+// regex gloutonne les avalait tous les deux avec le HTML entre eux. On prend
+// le plus long.
+function blocJS(html){
+  const blocs=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
+  if(!blocs.length)throw new Error('aucun bloc <script> inline dans index.html');
+  return blocs.reduce((a,b)=>b.length>a.length?b:a);
+}
+const js=blocJS(html);
 const store={};const fichiers=[];
 function mkEl(id){return{id,textContent:'',innerHTML:'',value:'',style:{},dataset:{},classList:{_s:new Set(),add(c){this._s.add(c)},remove(c){this._s.delete(c)},toggle(c,v){v?this._s.add(c):this._s.delete(c)},contains(c){return this._s.has(c)}},setAttribute(){},appendChild(){},removeChild(){},click(){},focus(){},querySelector:()=>null,querySelectorAll:()=>[],addEventListener(){},getContext:()=>null};}
 const els={};const document={documentElement:mkEl('h'),body:mkEl('b'),getElementById(i){return els[i]||(els[i]=mkEl(i))},querySelectorAll:()=>[],querySelector:()=>null,createElement:t=>mkEl(t),addEventListener(){},set title(v){},get title(){return''}};

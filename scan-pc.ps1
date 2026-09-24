@@ -52,6 +52,7 @@ param(
     [switch]$SansStore,
     [switch]$SansJeux,
     [switch]$SansVariables,
+    [switch]$SansConfigs,
     [switch]$ToutInclure
 )
 
@@ -88,6 +89,10 @@ if (-not $SansJeux) {
 }
 $variables = if ($SansVariables) { [ordered]@{} } else { Read-Variables }
 
+# Les dossiers de configuration des logiciels qu'on vient de detecter :
+# installer un logiciel prend une commande, retrouver ses reglages une soiree.
+$configs = if ($SansConfigs) { @() } else { Read-Configs -ClesInstallees @($resultats.Keys) }
+
 $apps = $resultats.Values | Sort-Object { $_.nom }
 
 $os = try { (Get-CimInstance Win32_OperatingSystem -ErrorAction Stop).Caption } catch { 'Windows' }
@@ -103,6 +108,7 @@ $inventaire = [ordered]@{
     apps    = @($apps)
     # Reprises telles quelles dans les champs prevus par la checklist.
     variables = $variables
+    configs   = @($configs)
 }
 
 $json = $inventaire | ConvertTo-Json -Depth 6
@@ -120,6 +126,10 @@ Write-Host ""
 Write-Host "$(@($apps).Count) applications retenues, dont $avecWinget avec un identifiant winget." -ForegroundColor Green
 if ($totalGo) {
     Write-Host "Taille connue : $([math]::Round($totalGo, 1)) Go — partielle, toutes les sources ne la donnent pas."
+}
+if (@($configs).Count) {
+    $mo = ($configs | Where-Object { $_.tailleMo } | Measure-Object -Property tailleMo -Sum).Sum
+    Write-Host "$(@($configs).Count) dossiers de configuration reperes$(if ($mo) { " ($([math]::Round($mo,0)) Mo)" })."
 }
 if (@($variables).Count) {
     Write-Host "$(@($variables).Count) variable(s) d'environnement relevee(s)."
