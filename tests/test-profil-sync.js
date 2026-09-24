@@ -149,6 +149,31 @@ requis.forEach(function(f){
   ok('versionné (non ignoré) : '+f,!ignore,'exclu par .gitignore');
 });
 
+// L'inverse, et il compte davantage : ces fichiers-là décrivent la machine de
+// celui qui a lancé le scan. resultat-scan.js est en plus chargé par la page à
+// l'ouverture — versionné, il partirait en ligne et s'appliquerait chez tous
+// les visiteurs. Un de mes propres essais en avait laissé un dans le dossier.
+['resultat-scan.js','inventaire-pc.json','verification-pc.json',
+ 'verification-sauvegardes.json','profil-local.json'].forEach(function(f){
+  let ignore=false;
+  try{
+    execFileSync('git',['check-ignore','-q',f],{cwd:racine,stdio:'ignore'});
+    ignore=true;
+  }catch(e){
+    if(e.status!==1)return;
+  }
+  ok('jamais versionné : '+f,ignore,'MANQUE dans .gitignore');
+  // Et pas seulement ignoré : absent de l'index, au cas où il y aurait été
+  // ajouté avant que la règle existe.
+  let suivi=false;
+  try{
+    const sortie=execFileSync('git',['ls-files','--error-unmatch',f],
+      {cwd:racine,stdio:['ignore','pipe','ignore']});
+    suivi=String(sortie).trim().length>0;
+  }catch(e){ /* absent de l'index : c'est ce qu'on veut */ }
+  ok('ni suivi par git : '+f,!suivi,'présent dans l\'index git');
+});
+
 // Une fonction definie deux fois : la seconde ecrase silencieusement la
 // premiere par hoisting, et le code qu'on vient d'ecrire n'est jamais execute.
 // Ce piege s'est produit trois fois dans ce fichier (mkLicField, mkEnvFields,

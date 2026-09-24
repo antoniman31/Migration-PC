@@ -78,20 +78,24 @@ Write-Host ""
 Write-Host "Inventaire des logiciels installes" -ForegroundColor Cyan
 Write-Host "----------------------------------"
 
-$null = Read-Winget
-$null = Read-Registre
-if (-not $SansStore) { $null = Read-Store }
+$null = Invoke-Detecteur -Nom 'Winget' -Bloc { Read-Winget }
+$null = Invoke-Detecteur -Nom 'Registre' -Bloc { Read-Registre }
+if (-not $SansStore) { $null = Invoke-Detecteur -Nom 'Store' -Bloc { Read-Store } }
 if (-not $SansJeux) {
-    $null = Read-Steam
-    $null = Read-Epic
-    $null = Read-GOG
-    $null = Read-Xbox
+    $null = Invoke-Detecteur -Nom 'Steam' -Bloc { Read-Steam }
+    $null = Invoke-Detecteur -Nom 'Epic' -Bloc { Read-Epic }
+    $null = Invoke-Detecteur -Nom 'GOG' -Bloc { Read-GOG }
+    $null = Invoke-Detecteur -Nom 'Xbox' -Bloc { Read-Xbox }
 }
-$variables = if ($SansVariables) { [ordered]@{} } else { Read-Variables }
+$variables = if ($SansVariables) { [ordered]@{} } else {
+    Invoke-Detecteur -Nom 'variables' -Bloc { Read-Variables }
+}
 
 # Les dossiers de configuration des logiciels qu'on vient de detecter :
 # installer un logiciel prend une commande, retrouver ses reglages une soiree.
-$configs = if ($SansConfigs) { @() } else { Read-Configs -ClesInstallees @($resultats.Keys) }
+$configs = if ($SansConfigs) { @() } else {
+    @(Invoke-Detecteur -Nom 'configurations' -Bloc { Read-Configs -ClesInstallees @($resultats.Keys) })
+}
 
 $apps = $resultats.Values | Sort-Object { $_.nom }
 
@@ -119,7 +123,7 @@ if (Get-Command Write-ResultatPourSite -ErrorAction SilentlyContinue) {
 }
 
 $avecWinget = @($apps | Where-Object { $_.winget }).Count
-$totalGo = ($apps | Where-Object { $_.tailleGo } | Measure-Object -Property tailleGo -Sum).Sum
+$totalGo = Get-Somme $apps 'tailleGo'
 $chemin = (Resolve-Path $Sortie).Path
 
 Write-Host ""
@@ -128,7 +132,7 @@ if ($totalGo) {
     Write-Host "Taille connue : $([math]::Round($totalGo, 1)) Go — partielle, toutes les sources ne la donnent pas."
 }
 if (@($configs).Count) {
-    $mo = ($configs | Where-Object { $_.tailleMo } | Measure-Object -Property tailleMo -Sum).Sum
+    $mo = Get-Somme $configs 'tailleMo'
     Write-Host "$(@($configs).Count) dossiers de configuration reperes$(if ($mo) { " ($([math]::Round($mo,0)) Mo)" })."
 }
 if (@($variables).Count) {

@@ -11,3 +11,10 @@
 
 # Node
 node_modules/
+
+# Produits par les scripts de scan a cote de la page. resultat-scan.js decrit
+# la machine de celui qui l'a lance, et la page le charge a l'ouverture :
+# versionne, il partirait en ligne et s'appliquerait chez tous les visiteurs.
+/resultat-scan.js
+/verification-pc.json
+/verification-sauvegardes.json

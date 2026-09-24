@@ -356,8 +356,8 @@ function Read-Epic {
     Write-Host "  Epic Games..." -NoNewline
     # Epic depose un manifeste JSON par jeu installe. Le dossier est fixe et
     # partage par toutes les installations, quel que soit le disque des jeux.
-    $dossier = Join-Path $env:ProgramData 'Epic\EpicGamesLauncher\Data\Manifests'
-    if (-not (Test-Path $dossier)) {
+    $dossier = Join-CheminSur $env:ProgramData 'Epic\EpicGamesLauncher\Data\Manifests'
+    if (-not $dossier -or -not (Test-Path $dossier)) {
         Write-Host " non installe, ignore" -ForegroundColor Yellow
         return 0
     }
@@ -510,14 +510,70 @@ $ConfigsConnues = @(
     @{ cle='everything';       nom='Everything';              chemins=@('%APPDATA%\Everything');                          quoi='Filtres et signets de recherche.' }
 )
 
+# Un detecteur qui echoue ne doit pas emporter le scan entier. Le script tourne
+# avec $ErrorActionPreference = 'Stop' — il le faut, une erreur silencieuse
+# produirait un inventaire incomplet sans le dire — mais chaque source est
+# independante : winget absent, Store indisponible, Epic pas installe, ce sont
+# des situations normales. Celle qui echoue le dit et laisse la place aux
+# autres, comme la page isole le rendu de chaque onglet.
+function Invoke-Detecteur {
+    param(
+        [Parameter(Mandatory)] [string] $Nom,
+        [Parameter(Mandatory)] [scriptblock] $Bloc
+    )
+    try {
+        return & $Bloc
+    } catch {
+        # Le Write-Host du detecteur s'est arrete en cours de ligne.
+        Write-Host ""
+        Write-Host ("  {0} : ignore, {1}" -f $Nom, $_.Exception.Message) -ForegroundColor Yellow
+        return 0
+    }
+}
+
+# Join-Path s'arrete net quand le chemin de depart est vide, et une seule
+# variable d'environnement absente suffisait a faire tomber tout le scan.
+function Join-CheminSur {
+    param([string]$Base, [string]$Suite)
+    if ([string]::IsNullOrWhiteSpace($Base)) { return $null }
+    # Join-Path interprete le debut comme un nom de lecteur et s'arrete quand il
+    # n'existe pas. On assemble nous-memes : ce chemin ne sert qu'a un
+    # Test-Path juste apres, qui tranchera.
+    # -ErrorAction Stop : sans lui l'erreur de Join-Path n'est pas bloquante,
+    # le catch ne la voit pas, et la fonction rend une chaine vide.
+    try {
+        return (Join-Path $Base $Suite -ErrorAction Stop)
+    } catch {
+        return ($Base.TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar + $Suite)
+    }
+}
+
+# Measure-Object sur une collection vide ne renvoie aucun objet : lire .Sum
+# dessus est une erreur sous Set-StrictMode, et le script s'arretait la — apres
+# avoir ecrit le fichier, donc en affichant une erreur rouge sur un scan reussi.
+# Le cas n'a rien d'exotique : aucune source ne donne la taille de toutes les
+# applications, et certaines n'en donnent aucune.
+function Get-Somme {
+    param($Elements, [string]$Propriete)
+    if (-not $Elements) { return 0 }
+    # Sous Set-StrictMode, lire une propriete absente est deja une erreur : on
+    # verifie qu'elle existe avant, plutot que de compter sur $null.
+    $avecValeur = @($Elements | Where-Object {
+        $_ -and $_.PSObject.Properties[$Propriete] -and $_.$Propriete
+    })
+    if ($avecValeur.Count -eq 0) { return 0 }
+    $mesure = $avecValeur | Measure-Object -Property $Propriete -Sum
+    if (-not $mesure -or $null -eq $mesure.Sum) { return 0 }
+    return $mesure.Sum
+}
+
 function Get-TailleDossier {
     param([string]$Chemin)
     try {
         if (-not (Test-Path -LiteralPath $Chemin)) { return $null }
         $item = Get-Item -LiteralPath $Chemin -Force -ErrorAction Stop
         if (-not $item.PSIsContainer) { return [math]::Round($item.Length / 1MB, 2) }
-        $somme = (Get-ChildItem -LiteralPath $Chemin -Recurse -File -Force -ErrorAction SilentlyContinue |
-                  Measure-Object -Property Length -Sum).Sum
+        $somme = Get-Somme (Get-ChildItem -LiteralPath $Chemin -Recurse -File -Force -ErrorAction SilentlyContinue) 'Length'
         if (-not $somme) { return 0 }
         return [math]::Round($somme / 1MB, 2)
     } catch { return $null }

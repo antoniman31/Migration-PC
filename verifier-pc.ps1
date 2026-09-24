@@ -113,14 +113,14 @@ Write-Host ""
 # ---------------------------------------------------------------- detection
 
 Write-Host "Detection des logiciels presents" -ForegroundColor Cyan
-$null = Read-Winget
-$null = Read-Registre
-$null = Read-Store
+$null = Invoke-Detecteur -Nom 'Winget' -Bloc { Read-Winget }
+$null = Invoke-Detecteur -Nom 'Registre' -Bloc { Read-Registre }
+$null = Invoke-Detecteur -Nom 'Store' -Bloc { Read-Store }
 if (-not $SansJeux) {
-    $null = Read-Steam
-    $null = Read-Epic
-    $null = Read-GOG
-    $null = Read-Xbox
+    $null = Invoke-Detecteur -Nom 'Steam' -Bloc { Read-Steam }
+    $null = Invoke-Detecteur -Nom 'Epic' -Bloc { Read-Epic }
+    $null = Invoke-Detecteur -Nom 'GOG' -Bloc { Read-GOG }
+    $null = Invoke-Detecteur -Nom 'Xbox' -Bloc { Read-Xbox }
 }
 $installes = @($resultats.Values)
 Write-Host ""

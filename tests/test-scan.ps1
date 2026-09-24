@@ -49,6 +49,42 @@ Add-App -Nom 'Notepad' -Editeur 'Microsoft' -Version '11.0' -Source 'store' -Win
 ok 'deux entrees distinctes' $resultats.Count 2
 ok 'chacune garde son winget' (@($resultats.Values | Where-Object { $_.winget -eq 'Notepad++.Notepad++' })).Count 1
 
+"--- robustesse : ce qui faisait tomber le scan entier ---"
+# Trois pieges, tous rencontres en executant le script pour de vrai, tous
+# fatals : $ErrorActionPreference vaut 'Stop' — il le faut, un scan
+# silencieusement incomplet serait pire — donc la moindre erreur non geree
+# arretait tout, parfois APRES l ecriture du fichier.
+
+# 1. Measure-Object sur une collection vide ne renvoie aucun objet, et lire
+#    .Sum dessus est une erreur sous Set-StrictMode. Le cas n a rien
+#    d exotique : peu de sources donnent la taille des applications.
+ok 'somme de rien'              (Get-Somme @() 'tailleGo') 0
+ok 'somme de nulls'             (Get-Somme @($null, $null) 'tailleGo') 0
+ok 'propriete absente'          (Get-Somme @([pscustomobject]@{ nom = 'A' }) 'tailleGo') 0
+ok 'melange avec et sans'       (Get-Somme @([pscustomobject]@{ tailleGo = 1.5 }, [pscustomobject]@{ nom = 'B' }) 'tailleGo') 1.5
+ok 'toutes renseignees'         (Get-Somme @([pscustomobject]@{ tailleGo = 2 }, [pscustomobject]@{ tailleGo = 3 }) 'tailleGo') 5
+ok 'valeurs a zero'             (Get-Somme @([pscustomobject]@{ tailleGo = 0 }) 'tailleGo') 0
+
+# 2. Une source en panne emportait les six autres. Chacune est independante :
+#    winget absent, Store indisponible, Epic pas installe sont des situations
+#    normales, pas des raisons d abandonner l inventaire.
+ok 'une source qui echoue rend 0' (Invoke-Detecteur -Nom 'test' -Bloc { throw 'panne simulee' }) 0
+ok 'une source qui marche passe'  (Invoke-Detecteur -Nom 'test' -Bloc { 42 }) 42
+$suite = 0
+$null = Invoke-Detecteur -Nom 'test' -Bloc { throw 'panne' }
+$suite = Invoke-Detecteur -Nom 'test' -Bloc { 7 }
+ok 'et la suivante tourne quand meme' $suite 7
+
+# 3. Join-Path s arrete net sur un chemin de depart vide : une seule variable
+#    d environnement absente suffisait.
+ok 'chemin sans base'           (Join-CheminSur '' 'Epic') $null
+ok 'chemin sans base (null)'     (Join-CheminSur $null 'Epic') $null
+# Un lecteur inexistant ne doit pas jeter : ce chemin part dans un Test-Path
+# qui tranchera. « C: » n'existe pas sur la machine qui fait tourner ceci.
+ok 'lecteur inexistant, pas d exception' ([string]::IsNullOrEmpty((Join-CheminSur 'C:\Base' 'Epic'))) $false
+$base = [System.IO.Path]::GetTempPath().TrimEnd([System.IO.Path]::DirectorySeparatorChar)
+ok 'chemin normal'              (Join-CheminSur $base 'Epic') (Join-Path $base 'Epic')
+
 "--- dossiers de configuration ---"
 # Un dossier de config ne se devine pas : il est cherche la ou la table le dit,
 # et seulement si le logiciel correspondant est installe.

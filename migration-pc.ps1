@@ -55,17 +55,19 @@ function Invoke-Action {
     }
 
     $script = Join-Path $Racine $Action.script
-    $args = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $script)
+    # Surtout pas $args : c'est la variable automatique des arguments non lies,
+    # et l'ecraser dans un script est un piege classique.
+    $parametres = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $script)
 
     if ($Action.PSObject.Properties['dossier'] -and $Action.dossier) {
         $dossier = Read-DossierSauvegarde
         if (-not $dossier) { return @{ ok = $false; message = "Annule." } }
-        $args += @('-Destination', $dossier)
+        $parametres += @('-Destination', $dossier)
     }
 
     # Une nouvelle fenetre : le script ecrit beaucoup, et on veut pouvoir lire
     # sa sortie apres coup meme si le lanceur est referme.
-    Start-Process -FilePath 'powershell.exe' -ArgumentList $args -Wait
+    Start-Process -FilePath 'powershell.exe' -ArgumentList $parametres -Wait
     return @{ ok = $true; message = "Termine. Lisez la fenetre du script pour le detail." }
 }
 

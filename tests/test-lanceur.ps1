@@ -80,6 +80,18 @@ $source = Get-Content (Join-Path $racine 'migration-pc.ps1') -Raw
 ok 'un repli texte existe'         ($source -match 'Show-MenuTexte') $true
 ok 'l interface est testee, pas supposee' ($source -match 'Test-InterfaceGraphique') $true
 ok 'et forcable en ligne de commande' ($source -match '\[switch\]\$Console') $true
+# $args est la variable automatique des arguments non lies : l'ecraser dans un
+# script est un piege classique, et le parseur le voit.
+$ecrases = @()
+$arbre = [System.Management.Automation.Language.Parser]::ParseFile(
+    (Join-Path $racine 'migration-pc.ps1'), [ref]$null, [ref]$null)
+$arbre.FindAll({ param($n) $n -is [System.Management.Automation.Language.AssignmentStatementAst] }, $true) |
+    ForEach-Object {
+        $gauche = $_.Left
+        if ($gauche -is [System.Management.Automation.Language.VariableExpressionAst] -and
+            $gauche.VariablePath.UserPath -eq 'args') { $ecrases += $gauche.Extent.StartLineNumber }
+    }
+ok 'la variable automatique $args n est pas ecrasee' ($ecrases -join ', ') ''
 
 Write-Host ""
 if ($script:ko -gt 0) { Write-Host "$script:ko EN ECHEC" -ForegroundColor Red; exit 1 }
