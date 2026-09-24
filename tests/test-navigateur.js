@@ -101,6 +101,22 @@ if(fs.existsSync(profilLocal)){
   ok('en-tête',await pg.textContent('#profil-titre'),p.meta.nom);
 }
 
+console.log('\n--- filet d\'erreur ---');
+// Une exception pendant un rendu doit devenir visible, et ne pas emporter les autres onglets.
+ok('bandeau masqué au départ',await pg.isVisible('#panne'),false);
+await pg.evaluate(()=>{window.renderApps=()=>{throw new Error('panne simulée');};renderAll();});
+await pg.waitForTimeout(200);
+ok('bandeau visible après la panne',await pg.isVisible('#panne'),true);
+const detail=await pg.textContent('#panne-detail');
+ok('onglet fautif nommé',detail.indexOf('Apps')>=0,true);
+ok('message d\'erreur repris',detail.indexOf('panne simulée')>=0,true);
+ok('les autres onglets survivent',(await pg.$$('#list-npc .item')).length>0,true);
+await pg.click('.panne-fermer');
+ok('bandeau refermable',await pg.isVisible('#panne'),false);
+// La panne ci-dessus est volontaire : on la retire du bilan d'erreurs final.
+erreurs.length=0;
+await pg.reload({waitUntil:'networkidle'});
+
 console.log('\n--- thème sombre ---');
 await pg.click('#theme-btn');
 ok('thème basculé',await pg.getAttribute('html','data-theme'),'dark');

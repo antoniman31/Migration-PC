@@ -108,6 +108,10 @@ d'environnement.
 **Sortie** — export de la progression, du profil, du script winget complet ou partiel,
 de la checklist en texte, et impression globale ou par onglet.
 
+**En cas de problème** — chaque onglet est rendu séparément. Si l'un échoue, les autres
+s'affichent quand même et un bandeau nomme l'onglet fautif et l'erreur, au lieu de
+laisser une page à moitié vide sans explication.
+
 ## Formats de fichiers
 
 Le bouton **Importer** accepte trois formats et les reconnaît tout seul.
@@ -180,22 +184,43 @@ JSON est le seul transfert fiable.
 ## Tests
 
 ```bash
-node tests/test-checklist.js      # extrait le JS de index.html, l'exécute dans un DOM simulé
-pwsh -File tests/test-scan.ps1    # classement, fusion et parsing du scanner
-npm install playwright            # une seule fois, pour la suite ci-dessous
-node tests/test-navigateur.js     # rendu réel dans Chromium
+npm install                       # une seule fois
+npm test                          # profil + checklist, sans navigateur ni Windows
+npm run test:scan                 # scanner (nécessite PowerShell)
+npm run test:navigateur           # rendu réel dans Chromium
 ```
 
-Les deux premières suites tournent sans navigateur ni Windows. `tests/test-checklist.js`
-rejoue l'import d'un inventaire réellement produit par le scanner
+Quatre suites, dans l'ordre où la CI les lance.
+
+`tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
+`presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
+identifiants uniques sur les quatre onglets, priorités valides, catégories déclarées,
+ordre conseillé ne citant que des éléments existants.
+
+`tests/test-checklist.js` extrait le JS de `index.html` et l'exécute dans un DOM simulé.
+Il rejoue l'import d'un inventaire réellement produit par le scanner
 (`tests/inventaire-exemple.json`), ce qui couvre la chaîne de bout en bout.
+
+`tests/test-scan.ps1` couvre le classement, la fusion entre sources et le parsing de la
+sortie winget, sans toucher à la machine.
 
 `tests/test-navigateur.js` charge la page dans un vrai Chromium et vérifie ce qu'un DOM
 simulé ne voit pas : que les quatre panneaux sont bien frères et non imbriqués, que les
 éléments ont une taille non nulle, que la saisie des clés de licence survit à un
-rechargement. Deux variables d'environnement facultatives : `CHROME` pour pointer un
-binaire Chromium existant, `PROFIL` pour tester votre propre profil à la place de
-l'exemple (par défaut il cherche `profil-local.json` à la racine).
+rechargement, et qu'une exception pendant un rendu s'affiche au lieu de disparaître.
+Deux variables d'environnement facultatives : `CHROME` pour pointer un binaire Chromium
+existant, `PROFIL` pour tester votre propre profil à la place de l'exemple (par défaut
+il cherche `profil-local.json` à la racine).
+
+### Intégration continue
+
+`.github/workflows/ci.yml` lance les quatre suites à chaque push et sur chaque pull
+request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
+mis en ligne.
+
+Pour que ce garde-fou serve, le dépôt doit être réglé sur **Settings → Pages → Source :
+GitHub Actions**. Sur « Deploy from a branch », GitHub publierait la branche en parallèle
+et court-circuiterait les tests.
 
 ## Déploiement
 
@@ -204,8 +229,12 @@ Migration-PC/
 ├── index.html                    # la checklist (tout est dedans)
 ├── scan-pc.ps1                   # le scanner Windows
 ├── presets/exemple.json          # profil d'exemple, aussi embarqué dans index.html
-└── tests/                        # suites Node, PowerShell et navigateur
+├── tests/                        # suites Node, PowerShell et navigateur
+└── .github/workflows/ci.yml      # tests, puis publication si tout est vert
 ```
+
+`package.json` ne sert qu'aux tests : `index.html` n'a aucune dépendance et n'a jamais
+besoin d'être construit.
 
 Les fichiers personnels (`profil-*.json`, `inventaire-*.json`, `progression-*.json`)
 sont exclus par `.gitignore` : gardez le vôtre en local, hors du dépôt.

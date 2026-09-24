@@ -4,3 +4,6 @@ inventaire-pc.json
 inventaire-*.json
 !tests/inventaire-exemple.json
 progression-*.json
+
+# Node
+node_modules/

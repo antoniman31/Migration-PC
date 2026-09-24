@@ -1,0 +1,89 @@
+# Verifier, puis publier — dans cet ordre, et jamais l'un sans l'autre.
+#
+# Avant ce workflow, GitHub Pages publiait directement la branche : n'importe
+# quel push partait en ligne sans qu'un seul test ne tourne. C'est ce qui a
+# laisse passer en production un index.html dont trois onglets sur quatre
+# etaient invisibles. Le deploiement depend donc maintenant du job de tests.
+#
+# Pour que ce workflow soit reellement la source du site, le depot doit etre
+# regle sur Settings -> Pages -> Source : GitHub Actions. Laisse sur
+# « Deploy from a branch », GitHub continuerait de publier la branche en
+# parallele et ce garde-fou ne servirait a rien.
+name: Vérification et publication
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Lecture seule pour les tests. Les droits d'ecriture sur Pages sont demandes
+# par le job de publication seulement, plus bas.
+permissions:
+  contents: read
+
+# Un push qui en suit un autre de pres rend le premier sans objet. On annule
+# l'execution en cours plutot que de publier deux fois de suite.
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verifier:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Le test navigateur a besoin de Chromium. --with-deps installe aussi
+      # les bibliotheques systeme que le runner n'a pas par defaut, sans quoi
+      # le navigateur se lance puis meurt sans message exploitable.
+      - name: Installer Playwright et Chromium
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      # Suites rapides d'abord : elles echouent en quelques secondes et
+      # evitent d'attendre le navigateur pour une erreur de donnees.
+      - name: Profil d'exemple — synchronisation et cohérence
+        run: node tests/test-profil-sync.js
+
+      - name: Checklist — DOM simulé
+        run: node tests/test-checklist.js
+
+      # pwsh est preinstalle sur les runners ubuntu-latest.
+      - name: Scanner — classement, fusion, parsing
+        run: pwsh -File tests/test-scan.ps1
+
+      - name: Checklist — rendu navigateur
+        run: node tests/test-navigateur.js
+
+  publier:
+    name: Publier sur Pages
+    needs: verifier
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      # Le site est le depot lui-meme : pas d'etape de construction, le
+      # fichier publie est exactement celui qui vient d'etre teste.
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deploiement
+        uses: actions/deploy-pages@v4

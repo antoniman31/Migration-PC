@@ -303,11 +303,35 @@ body.compact .item{padding:5px 0}
 
 /* ── V6 : compact masque dep ── */
 body.compact .b-dep{display:none}
+
+/* Bandeau de panne : un échec de rendu doit se voir, pas disparaître dans la console. */
+.panne{display:none;margin:0 0 12px;padding:10px 14px;gap:10px;align-items:flex-start;
+  background:rgba(220,60,60,0.10);border:.5px solid rgba(220,60,60,0.45);border-radius:10px}
+.panne.visible{display:flex}
+.panne-ico{font-size:15px;line-height:1.4;flex-shrink:0}
+.panne-txt{flex:1;display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--tx);min-width:0}
+.panne-txt b{font-weight:600}
+#panne-detail{font-family:"Cascadia Code","Consolas",monospace;font-size:11px;color:var(--tx2);word-break:break-word}
+.panne-aide{font-size:11px;color:var(--tx2)}
+.panne-fermer{flex-shrink:0;background:transparent;border:none;color:var(--tx2);font-size:13px;cursor:pointer;padding:0 2px}
+.panne-fermer:hover{color:var(--tx)}
+@media print{.panne{display:none!important}}
 </style>
 </head>
 <body>
 <canvas id="confetti-canvas"></canvas>
 <div class="app"><div class="card">
+
+<div class="panne" id="panne" role="alert">
+  <span class="panne-ico">⚠️</span>
+  <div class="panne-txt">
+    <b>Un problème est survenu pendant l'affichage.</b>
+    <span id="panne-detail"></span>
+    <span class="panne-aide">Le reste de la page continue de fonctionner. Si cela se répète, réinitialiser le profil ou recharger la page.</span>
+  </div>
+  <button class="panne-fermer" onclick="masquerPanne()" title="Masquer">✕</button>
+</div>
+
 
 <div class="hdr">
   <div class="hdr-left">
@@ -1089,7 +1113,28 @@ function updateTitle(){
   document.title='('+done+'/'+all.length+') '+(PROFIL_NOM||'Migration PC');
 }
 
-function renderAll(){renderNPC();renderApps();renderData();renderPWA();updateNextBtns();}
+function signalerPanne(ou,err){
+  console.error('['+ou+']',err);
+  const bloc=document.getElementById('panne');
+  const det=document.getElementById('panne-detail');
+  if(det)det.textContent=ou+' : '+(err&&err.message?err.message:String(err));
+  if(bloc)bloc.classList.add('visible');
+}
+function masquerPanne(){
+  const b=document.getElementById('panne');if(b)b.classList.remove('visible');
+}
+// Isole un rendu : si l'un échoue, les autres s'affichent quand même et
+// l'erreur devient visible au lieu de laisser une page à moitié vide.
+function proteger(ou,fn){
+  try{fn();return true;}catch(e){signalerPanne(ou,e);return false;}
+}
+function renderAll(){
+  proteger('Nouveau PC',renderNPC);
+  proteger('Apps',renderApps);
+  proteger('Données',renderData);
+  proteger('PWA',renderPWA);
+  proteger('Boutons suivant',updateNextBtns);
+}
 
 // ═══ RESET ═══
 function resetSection(sec){
