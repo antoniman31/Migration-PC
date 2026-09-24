@@ -2017,6 +2017,17 @@ const PROFIL_DEFAUT = {
         "sy3"
       ],
       "d": "Deux machines qui modifient le même fichier hors ligne produisent deux versions, et la plupart des outils tranchent en silence. Une règle simple suffit : fermer ses fichiers avant de changer de machine, et attendre que la synchronisation affiche « à jour » avant de refermer le capot."
+    },
+    {
+      "id": "s24",
+      "n": "local.properties de vos projets Android",
+      "p": "Dans chaque projet, à côté de build.gradle",
+      "note": "Chaque projet Android en a un, hors de git, et il contient le chemin du SDK de l'ANCIENNE machine. Après migration, le projet refuse de compiler pour cette seule raison : corriger sdk.dir, ou supprimer le fichier et laisser Android Studio le refaire.",
+      "pr": "med",
+      "cas": [
+        "migration",
+        "second"
+      ]
     }
   ],
   "pwa": [
@@ -2444,7 +2455,12 @@ function inventaireVersProfil(inv){
   const oublies=grosDossiersVersDonnees(inv.dossiers,
     donnees.map(function(d){return d.p;}));
   donnees=donnees.concat(oublies);
+  // Les clés de signature passent devant : quelques kilo-octets, mais les
+  // seuls fichiers de la liste qu'aucune réinstallation ne rattrape.
+  const cles=precieuxVersDonnees(inv.precieux,donnees.map(function(d){return d.p;}));
+  donnees=cles.concat(donnees);
   if(oublies.length)desc.push(oublies.length+' gros dossier'+(oublies.length>1?'s':'')+' hors liste');
+  if(cles.length)desc.push(cles.length+' clé'+(cles.length>1?'s':'')+' de signature');
   return {
     meta:{version:1,nom:'Migration PC — inventaire importé',soustitre:desc.join(' · ')},
     cats:cats,
@@ -2488,6 +2504,35 @@ function grosDossiersVersDonnees(dossiers,dejaReclames){
       pr:'med',
       p:chemin,
       note:bouts.join(' · ')
+    });
+  });
+  return out;
+}
+
+// Les cles de signature trouvees sur le disque. Elles passent en priorite
+// haute avec un avertissement : perdre un keystore de release oblige a passer
+// par la procedure de reinitialisation de cle de l'editeur, et un debug
+// keystore perdu fait changer la signature de tous les builds de debug.
+function precieuxVersDonnees(precieux,dejaReclames){
+  if(!Array.isArray(precieux)||!precieux.length)return [];
+  const reclames=Array.isArray(dejaReclames)?dejaReclames:[];
+  const out=[];
+  precieux.forEach(function(f,i){
+    if(!f||typeof f!=='object')return;
+    const chemin=String(f.chemin==null?'':f.chemin).trim();
+    if(!chemin)return;
+    if(reclames.some(function(p){return recouvre(p,chemin);}))return;
+    const bouts=[];
+    const ko=Number(f.tailleKo);
+    if(isFinite(ko)&&ko>0)bouts.push(Math.round(ko)+' Ko');
+    bouts.push('trouvé sur le disque');
+    out.push({
+      id:'cle'+(i+1),
+      n:String(f.nom||chemin),
+      pr:'high',
+      p:chemin,
+      note:bouts.join(' · '),
+      warn:'Ne se recrée pas. Perdu, il faut passer par la procédure de réinitialisation de clé de l\'éditeur, et les applications déjà installées ne peuvent plus être mises à jour.'
     });
   });
   return out;

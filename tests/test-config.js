@@ -152,6 +152,31 @@ ok('mais comble ce qui manquait',await pg.evaluate(()=>CONFIG.ssd),'Un SSD');
 await pg.evaluate(()=>{CONFIG={};saveConfig();construireConfig();
   appliquerProfil(PROFIL_DEFAUT,false);});
 
+console.log('\n--- les clés de signature ---');
+// Quelques kilo-octets, et les seuls fichiers de la liste qu'aucune
+// réinstallation ne rattrape : un keystore de release perdu oblige à passer
+// par la procédure de réinitialisation de clé chez l'éditeur.
+await pg.evaluate(()=>{appliquerProfil(PROFIL_DEFAUT,false);});
+await pg.evaluate(()=>traiterDonnees({
+  type:'inventaire-migration-pc',machine:{},
+  apps:[{nom:'A',cat:'system',source:'registre'}],
+  variables:{},configs:[],materiel:{},outils:[],dossiers:[],
+  precieux:[{nom:'release.jks',chemin:'C:\\dev\\app\\release.jks',tailleKo:2.3},
+            {nom:'debug.keystore',chemin:'C:\\Users\\a\\.android\\debug.keystore',tailleKo:2.2},
+            {chemin:'  '},null]},''));
+await pg.waitForTimeout(400);
+ok('elles passent devant tout le reste',
+  await pg.evaluate(()=>DATA_SAVES[0].n),'release.jks');
+ok('en priorité haute',await pg.evaluate(()=>DATA_SAVES[0].pr),'high');
+ok('avec un avertissement qui dit pourquoi',
+  await pg.evaluate(()=>(DATA_SAVES[0].warn||'').indexOf('recrée')>=0),true);
+ok('les entrées vides ne comptent pas',
+  await pg.evaluate(()=>DATA_SAVES.filter(d=>String(d.id).indexOf('cle')===0).length),2);
+ok('et le sous-titre les annonce',
+  (await pg.textContent('#profil-sous')).indexOf('2 clés de signature')>=0,true);
+await pg.evaluate(()=>{appliquerProfil(PROFIL_DEFAUT,false);});
+await pg.waitForTimeout(300);
+
 console.log('\n--- les gros dossiers qu\'on oublie ---');
 // Le projet ne détectait aucun fichier personnel : l'onglet Données est une
 // liste écrite à la main, et ce qui n'y figure pas n'est rappelé par rien.

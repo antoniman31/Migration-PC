@@ -141,6 +141,43 @@ ok 'sans code, rien'                 (@($pil | Where-Object { $_.nom -eq 'Sans c
 ok 'le probleme est nomme'           (@($pil | Where-Object { $_.nom -match 'Ethernet' })[0].probleme) 'aucun pilote installe'
 ok 'liste vide, rien'                (@(Format-Pilotes -Peripheriques @())).Count 0
 
+"--- les cles de signature, qui ne se recreent pas ---"
+# Un keystore de release perdu oblige a passer par la procedure de
+# reinitialisation de cle chez l editeur. Il pese quelques kilo-octets et vit
+# la ou son proprietaire l a mis : on ne peut pas deviner, on peut chercher.
+$bacK = Join-Path ([System.IO.Path]::GetTempPath()) ("mpc-cles-" + (Get-Random))
+try {
+    foreach ($d in @('MonProjet', 'node_modules\truc', 'AppData\Local', '.gradle\caches')) {
+        New-Item -ItemType Directory -Path (Join-Path $bacK $d) -Force | Out-Null
+    }
+    Set-Content -LiteralPath (Join-Path $bacK 'MonProjet\release.jks') -Value 'x'
+    Set-Content -LiteralPath (Join-Path $bacK 'MonProjet\upload.keystore') -Value 'x'
+    Set-Content -LiteralPath (Join-Path $bacK 'MonProjet\lisez-moi.txt') -Value 'x'
+    # Du bruit : des keystores d echafaudage que personne ne cherche a sauver.
+    Set-Content -LiteralPath (Join-Path $bacK 'node_modules\truc\test.jks') -Value 'x'
+    Set-Content -LiteralPath (Join-Path $bacK 'AppData\Local\cache.keystore') -Value 'x'
+    Set-Content -LiteralPath (Join-Path $bacK '.gradle\caches\vieux.jks') -Value 'x'
+
+    $k = @(Find-FichiersPrecieux -Racine $bacK -Modele '%USERPROFILE%')
+    $noms = @($k | ForEach-Object { $_.nom })
+    ok 'les deux cles du projet sont vues' $k.Count 2
+    ok 'un .jks'                      ($noms -contains 'release.jks') $true
+    ok 'un .keystore'                 ($noms -contains 'upload.keystore') $true
+    ok 'pas les autres fichiers'      ($noms -contains 'lisez-moi.txt') $false
+    # Signaler ceux-la noierait les vrais.
+    ok 'node_modules est ecarte'      ($noms -contains 'test.jks') $false
+    ok 'AppData aussi'                ($noms -contains 'cache.keystore') $false
+    ok 'les caches Gradle aussi'      ($noms -contains 'vieux.jks') $false
+    # Le modele decrit un chemin Windows : deux separateurs melanges ne se
+    # reliraient nulle part.
+    $m = @($k | Where-Object { $_.nom -eq 'release.jks' })[0].modele
+    ok 'le modele est variabilise'    $m '%USERPROFILE%\MonProjet\release.jks'
+    ok 'sans separateur etranger'     ($m -like '*/*') $false
+    ok 'une racine absente ne rend rien' (@(Find-FichiersPrecieux -Racine (Join-Path $bacK 'nexistepas')).Count) 0
+} finally {
+    Remove-Item $bacK -Recurse -Force -ErrorAction SilentlyContinue
+}
+
 "--- les extensions, qu on ne reinstalle pas a la main ---"
 $bacX = Join-Path ([System.IO.Path]::GetTempPath()) ("mpc-ext-" + (Get-Random))
 try {

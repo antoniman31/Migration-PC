@@ -152,13 +152,22 @@ communes à toute réinstallation Windows, aucun script n'est nécessaire.
 | VS Code, Chrome, Edge, Brave, Firefox | Les extensions installées |
 | Variables d'environnement | Les variables personnalisées de l'utilisateur |
 | SDK Android, WSL, scoop, Chocolatey, npm, pip | Les chaînes d'outils qu'aucun installateur n'enregistre |
-| Profil et disques fixes | Les gros dossiers que la checklist ne réclame pas |
+| Profil et disques fixes | Les gros dossiers que la checklist ne réclame pas, et les clés de signature |
 
 Une entrée vue par plusieurs sources est fusionnée : le nom vient du registre,
 l'identifiant winget de winget, la taille sur disque de celle qui la connaît, et rien
 n'apparaît deux fois. Chaque application est classée par catégorie selon des mots-clés,
 avec une priorité et une durée estimée — tout cela reste modifiable à la main dans le
 JSON.
+
+**Les clés qui ne se recréent pas.** Un keystore de release Android perdu oblige à passer
+par la procédure de réinitialisation de clé chez l'éditeur, et les applications déjà
+publiées ne peuvent plus être mises à jour avec l'ancienne signature. Il pèse quelques
+kilo-octets et vit là où son propriétaire l'a mis, souvent dans un dossier de projet : on
+ne peut pas deviner, on peut chercher. Le scan relève les `.jks`, `.keystore`, `.pfx` et
+`.p12` du profil et des disques, en écartant ce qui produit du bruit — `node_modules`,
+les caches Gradle, `AppData` — et la page les place en tête de l'onglet Données, en
+priorité haute, avec un avertissement qui dit pourquoi.
 
 **Les gros dossiers qu'on oublie.** Le projet ne détectait aucun fichier personnel :
 l'onglet Données est une liste de chemins écrite à la main, et ce qui n'y figure pas

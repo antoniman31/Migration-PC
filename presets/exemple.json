@@ -993,6 +993,17 @@
         "sy3"
       ],
       "d": "Deux machines qui modifient le même fichier hors ligne produisent deux versions, et la plupart des outils tranchent en silence. Une règle simple suffit : fermer ses fichiers avant de changer de machine, et attendre que la synchronisation affiche « à jour » avant de refermer le capot."
+    },
+    {
+      "id": "s24",
+      "n": "local.properties de vos projets Android",
+      "p": "Dans chaque projet, à côté de build.gradle",
+      "note": "Chaque projet Android en a un, hors de git, et il contient le chemin du SDK de l'ANCIENNE machine. Après migration, le projet refuse de compiler pour cette seule raison : corriger sdk.dir, ou supprimer le fichier et laisser Android Studio le refaire.",
+      "pr": "med",
+      "cas": [
+        "migration",
+        "second"
+      ]
     }
   ],
   "pwa": [

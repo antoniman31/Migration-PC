@@ -128,6 +128,15 @@ if (-not $SansGrosDossiers) {
     })
 }
 
+# Certains fichiers ne se recreent pas et ne vivent nulle part de previsible :
+# un keystore de release Android perdu oblige a passer par la procedure de
+# reinitialisation de cle de Google pour continuer a publier. Quelques
+# kilo-octets, la ou son proprietaire l'a mis.
+$precieux = @()
+if (-not $SansGrosDossiers) {
+    $precieux = @(Invoke-Detecteur -Nom 'cles de signature' -Bloc { Read-FichiersPrecieux })
+}
+
 $outils = @()
 if (-not $SansOutils) {
     $outils += @(Invoke-Detecteur -Nom 'SDK Android'      -Bloc { Read-SdkAndroid })
@@ -160,6 +169,7 @@ $inventaire = [ordered]@{
     materiel  = $materiel
     outils    = @($outils)
     dossiers  = @($dossiers)
+    precieux  = @($precieux)
 }
 
 $json = $inventaire | ConvertTo-Json -Depth 6
@@ -181,6 +191,10 @@ if ($totalGo) {
 if (@($configs).Count) {
     $mo = Get-Somme $configs 'tailleMo'
     Write-Host "$(@($configs).Count) dossiers de configuration reperes$(if ($mo) { " ($([math]::Round($mo,0)) Mo)" })."
+}
+if (@($precieux).Count) {
+    Write-Host "$(@($precieux).Count) cle(s) de signature trouvee(s)." -ForegroundColor Yellow
+    Write-Host "  Un keystore perdu ne se recree pas : il ouvre la porte a une procedure chez l editeur."
 }
 if (@($dossiers).Count) {
     $mo = Get-Somme $dossiers 'tailleMo'

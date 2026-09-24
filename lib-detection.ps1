@@ -819,6 +819,81 @@ function Read-GrosDossiers {
     return $out
 }
 
+# ---------------------------------------------------------------- fichiers rares
+#
+# Certains fichiers ne se recreent pas et ne vivent nulle part de previsible.
+# Un keystore de release Android en est le cas type : perdu, il faut passer par
+# la procedure de reinitialisation de cle de Google pour continuer a publier.
+# Il pese quelques kilo-octets et se trouve la ou son proprietaire l'a mis,
+# souvent dans un dossier de projet. On ne peut pas deviner ou ; on peut
+# chercher, et le signaler.
+#
+# On ne copie rien : on nomme, et la checklist s'occupe du reste.
+
+$script:ExtensionsPrecieuses = @('*.jks', '*.keystore', '*.pfx', '*.p12')
+
+# Ce qui produit du bruit : des keystores de test, des certificats
+# d'echafaudage, des copies de cache. Les signaler noierait le vrai.
+$script:DossiersBruyants = @(
+    'node_modules', '.gradle', '.m2', 'caches', 'AppData', 'Windows',
+    'Program Files', 'Program Files (x86)', 'ProgramData', '$Recycle.Bin',
+    '.git', 'build', 'vendor', 'Packages', 'AndroidStudio', 'Sdk', 'venv',
+    '.venv', 'site-packages', 'target', 'dist', 'obj'
+)
+
+function Test-DossierBruyant {
+    param([string]$Chemin)
+    if ([string]::IsNullOrWhiteSpace($Chemin)) { return $false }
+    $bouts = ($Chemin -replace '/', '\') -split '\\'
+    foreach ($b in $bouts) {
+        foreach ($n in $script:DossiersBruyants) {
+            if ($b -eq $n) { return $true }
+        }
+    }
+    return $false
+}
+
+function Find-FichiersPrecieux {
+    param([string]$Racine, [double]$BudgetSecondes = 30, [string]$Modele = '')
+    $out = @()
+    if ([string]::IsNullOrWhiteSpace($Racine) -or -not (Test-Path -LiteralPath $Racine)) { return $out }
+    $chrono = [System.Diagnostics.Stopwatch]::StartNew()
+    $base = (Get-Item -LiteralPath $Racine -Force -ErrorAction SilentlyContinue)
+    if (-not $base) { return $out }
+    $prefixe = $base.FullName.TrimEnd('\', '/')
+    foreach ($f in (Get-ChildItem -LiteralPath $Racine -Recurse -File -Force `
+                        -Include $script:ExtensionsPrecieuses -ErrorAction SilentlyContinue)) {
+        if ($chrono.Elapsed.TotalSeconds -gt $BudgetSecondes) { break }
+        $dossier = Split-Path $f.FullName -Parent
+        if (Test-DossierBruyant -Chemin $dossier.Substring([math]::Min($prefixe.Length, $dossier.Length))) { continue }
+        # Le modele decrit un chemin Windows : on ne laisse pas se melanger les
+        # deux separateurs, sinon il ne se relit nulle part.
+        $rel = ($f.FullName.Substring($prefixe.Length) -replace '/', '\').TrimStart('\')
+        $out += [ordered]@{
+            nom      = $f.Name
+            chemin   = $f.FullName
+            modele   = if ($Modele) { ($Modele.TrimEnd('\', '/') + '\' + $rel) } else { '' }
+            tailleKo = [math]::Round($f.Length / 1KB, 1)
+        }
+    }
+    return $out
+}
+
+function Read-FichiersPrecieux {
+    param([double]$BudgetSecondes = 60)
+    Write-Host "  clés de signature..." -NoNewline
+    $racines = @(Get-RacinesAExplorer)
+    if (-not $racines.Count) { Write-Host " aucune racine, ignore" -ForegroundColor Yellow; return @() }
+    $part = $BudgetSecondes / $racines.Count
+    $out = @()
+    foreach ($r in $racines) {
+        $out += @(Find-FichiersPrecieux -Racine $r.chemin -BudgetSecondes $part -Modele $r.modele)
+    }
+    if (-not $out.Count) { Write-Host " aucune trouvée" -ForegroundColor Yellow; return @() }
+    Write-Host " $($out.Count) fichier(s)"
+    return $out
+}
+
 # ---------------------------------------------------------------- outils
 #
 # Une machine de developpement porte des choses qu'aucun installateur
