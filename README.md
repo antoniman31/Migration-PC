@@ -23,6 +23,7 @@ Les scripts sont facultatifs.
   - [Vérifier les sauvegardes](#vérifier-les-sauvegardes)
 - [Migration ou réinstallation](#migration-ou-réinstallation)
 - [La checklist](#la-checklist)
+  - [Repartir de zéro](#repartir-de-zéro)
   - [Mode guidé](#mode-guidé)
   - [Accessibilité](#accessibilité)
 - [Formats de fichiers](#formats-de-fichiers)
@@ -264,7 +265,23 @@ laisser une page à moitié vide sans explication.
 **Revenir en arrière** — réinitialiser une section ou importer un fichier remplace du
 travail. Ces actions ne demandent pas de confirmation — on clique « oui » par réflexe —
 mais s'annulent après coup depuis un bandeau, qui restaure aussi bien les cases que le
-profil remplacé.
+profil remplacé et le scénario choisi.
+
+### Repartir de zéro
+
+Le bouton ♻️ de la barre du haut ouvre un panneau avec deux portées distinctes, décrites
+avant d'être offertes :
+
+- **Tout décocher** remet la progression à zéro sur les cinq onglets. Les notes, les clés
+  de licence, les variables d'environnement et le profil chargé restent en place. C'est
+  ce qu'on veut pour recommencer la même migration sur une autre machine.
+- **Tout effacer** vide tout ce que le navigateur a mémorisé — progression, notes, clés,
+  variables, profil importé — et revient au profil d'exemple. Les fichiers déjà exportés
+  ne sont pas touchés : ils sont sur le disque, pas dans la page.
+
+Les deux passent par le même bandeau d'annulation que le reste du site plutôt que par une
+boîte de confirmation. Une seconde chance après coup vaut mieux qu'un « oui » réflexe
+avant. Échap referme le panneau et rend le focus au bouton qui l'a ouvert.
 
 ### Mode guidé
 
@@ -418,13 +435,14 @@ npm run test:a11y                 # accessibilité et réversibilité
 npm run test:guide                # mode guidé
 npm run test:quitter              # onglet « Avant de quitter »
 npm run test:scenarios            # migration ou réinstallation
+npm run test:reinit               # remises à zéro et leur annulation
 ```
 
 `npm test` ne lance que ce qui tourne partout sans rien installer. Les suites
 navigateur demandent Chromium (`npm install` le fournit via Playwright), les suites
 PowerShell demandent `pwsh`.
 
-Seize suites, dans l'ordre où la CI les lance.
+Dix-sept suites, dans l'ordre où la CI les lance.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
@@ -474,9 +492,15 @@ disparaître, le parcours d'une tâche à l'autre, la copie de la commande dans 
 presse-papier, et le fait que ce mode tient les mêmes exigences de contraste, de cible
 tactile et de clavier que la vue liste.
 
+`tests/test-reinit.js` couvre les deux remises à zéro : que « Tout décocher » ne touche
+ni aux notes, ni aux clés, ni au profil, que « Tout effacer » vide bien les trois clés du
+navigateur et que rien ne revient après un rechargement, et que l'annulation rend dans
+les deux cas ce qui avait été effacé — profil importé et scénario compris. Il mesure
+aussi le panneau à 360 px de large, dans les deux thèmes.
+
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les seize suites à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les dix-sept suites à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 

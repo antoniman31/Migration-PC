@@ -329,6 +329,35 @@ body.compact .item{padding:5px 0}
 /* ── V6 : compact masque dep ── */
 body.compact .b-dep{display:none}
 
+/* ═══ Panneau des remises à zéro ═══
+   Deux actions destructrices de portée différente. Les poser côte à côte
+   dans la barre du haut inviterait à cliquer sans lire ; un panneau permet
+   de dire ce que chacune efface avant de l'offrir. */
+.reglages{display:none;margin:0 0 12px;padding:14px 16px;border-radius:10px;
+  background:var(--bg2);border:.5px solid var(--brd2)}
+.reglages.visible{display:block}
+.reglages-titre{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:12px}
+.reglages-choix{display:flex;flex-direction:column;gap:10px}
+.reglages-item{display:flex;align-items:flex-start;gap:12px;padding:10px 12px;
+  border:.5px solid var(--brd);border-radius:9px;background:var(--bg)}
+.reglages-txt{flex:1;min-width:0}
+.reglages-nom{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:3px}
+.reglages-desc{font-size:12px;color:var(--tx2);line-height:1.5}
+.reglages-item button{flex-shrink:0;padding:8px 14px;font-size:12px;font-weight:600;
+  border-radius:8px;cursor:pointer;min-height:40px;border:.5px solid var(--brd2);
+  background:var(--bg2);color:var(--tx)}
+.reglages-item button:hover{background:var(--bg3)}
+.reglages-danger button{border-color:var(--bh-bd);color:var(--bh-tx);background:var(--bh-bg)}
+.reglages-danger button:hover{background:var(--bh-tx);color:#fff;border-color:var(--bh-tx)}
+.reglages-fermer{margin-top:12px;font-size:12px;color:var(--tx2);background:transparent;
+  border:none;cursor:pointer;padding:6px 2px;min-height:34px}
+.reglages-fermer:hover{color:var(--tx)}
+@media (max-width:560px){
+  .reglages-item{flex-direction:column;align-items:stretch}
+  .reglages-item button{width:100%}
+}
+@media print{.reglages{display:none!important}}
+
 /* ═══ Sélecteur de scénario ═══
    Migrer vers une autre machine ou réinstaller celle qu'on a partagent
    l'essentiel ; seuls quelques éléments diffèrent. Le sélecteur filtre plutôt
@@ -549,6 +578,27 @@ body.guide-actif .day-est{display:none}
 <canvas id="confetti-canvas"></canvas>
 <div class="app"><div class="card">
 
+<div class="reglages" id="reglages" role="region" aria-label="Réinitialiser">
+  <div class="reglages-titre">Réinitialiser</div>
+  <div class="reglages-choix">
+    <div class="reglages-item">
+      <div class="reglages-txt">
+        <div class="reglages-nom">Décocher toute la checklist</div>
+        <div class="reglages-desc">Remet la progression à zéro sur les cinq onglets. Les notes, les clés de licence, les variables et le profil chargé sont conservés.</div>
+      </div>
+      <button type="button" onclick="toutDecocher()">Tout décocher</button>
+    </div>
+    <div class="reglages-item reglages-danger">
+      <div class="reglages-txt">
+        <div class="reglages-nom">Remettre le site à zéro</div>
+        <div class="reglages-desc">Efface tout ce que ce navigateur a mémorisé — progression, notes, clés de licence, variables, profil importé — et revient au profil d'exemple. Vos fichiers exportés ne sont pas touchés.</div>
+      </div>
+      <button type="button" onclick="remiseAZero()">Tout effacer</button>
+    </div>
+  </div>
+  <button class="reglages-fermer" type="button" onclick="fermerReglages()">Fermer</button>
+</div>
+
 <div class="verif" id="verif" role="region" aria-label="Éléments détectés sur cette machine"></div>
 
 <div class="annul" id="annul" role="status">
@@ -586,6 +636,7 @@ body.guide-actif .day-est{display:none}
     <button class="icon-btn" type="button" id="guide-btn" onclick="basculerGuide()" aria-pressed="false" title="Afficher une seule tâche à la fois">🎯 Mode guidé</button>
     <button class="icon-btn icon-only hdr-session" type="button" id="session-start-btn" onclick="startSession()" title="Commencer une session" aria-label="Commencer une session">▶</button>
     <button class="icon-btn icon-only" type="button" onclick="exportProfil()" title="Exporter le profil (les listes, sans la progression)" aria-label="Exporter le profil">🧩</button>
+    <button class="icon-btn icon-only" type="button" id="reglages-btn" onclick="basculerReglages()" title="Réinitialiser" aria-label="Réinitialiser" aria-expanded="false" aria-controls="reglages">♻️</button>
     <button class="icon-btn icon-only" type="button" onclick="window.print()" title="Imprimer" aria-label="Imprimer">🖨️</button>
     <button class="icon-btn" type="button" id="theme-btn" onclick="toggleTheme()"><span id="theme-ico" aria-hidden="true">🌙</span> <span id="theme-lbl">Sombre</span></button>
   </div>
@@ -2409,6 +2460,17 @@ function updateTitle(){
 // Délégué sur le document : les items sont reconstruits à chaque rendu, et
 // rattacher un écouteur à chacun les multiplierait à chaque fois.
 function clavierGlobal(e){
+  // Échap referme le panneau ouvert et rend le focus au bouton qui l'a ouvert,
+  // sinon on se retrouve à tabuler dans un panneau qu'on croyait fermé.
+  if(e.key==='Escape'||e.key==='Esc'){
+    const b=document.getElementById('reglages');
+    if(b&&b.classList.contains('visible')){
+      fermerReglages();
+      const btn=document.getElementById('reglages-btn');
+      if(btn)btn.focus();
+    }
+    return;
+  }
   if(e.key!=='Enter'&&e.key!==' '&&e.key!=='Spacebar')return;
   const cible=e.target.closest&&e.target.closest('[role="checkbox"]');
   if(!cible)return;
@@ -2752,7 +2814,10 @@ function copieEtat(){
 // Appelée AVANT l'action destructrice. Le profil n'est mémorisé que lorsque
 // l'action le remplace, pour ne pas recopier 30 Ko à chaque réinitialisation.
 function memoriserAnnulation(libelle,avecProfil){
-  annulation={libelle:libelle,etat:copieEtat(),
+  // Le scénario fait partie de ce qu'on voit à l'écran : une annulation qui
+  // rendrait la progression sans rendre le filtre laisserait une liste qui ne
+  // correspond plus à ce qu'on avait sous les yeux.
+  annulation={libelle:libelle,etat:copieEtat(),scenario:scenario,
     profil:avecProfil?JSON.parse(JSON.stringify(profilCourant())):null};
   afficherBandeau(libelle,true);
 }
@@ -2785,6 +2850,7 @@ function annuler(){
   if(a.profil){
     try{appliquerProfil(a.profil,true);}catch(e){signalerPanne('Annulation',e);}
   }
+  if(a.scenario&&a.scenario!==scenario)changerScenario(a.scenario);
   S.checked=a.etat.checked;S.notes=a.etat.notes;S.dates=a.etat.dates;
   S.lic=a.etat.lic;S.env=a.etat.env;
   saveState();renderAll();updateGlobal();renderHistory();
@@ -2818,6 +2884,68 @@ function renderAll(){
 }
 
 // ═══ RESET ═══
+// Deux portées, qu'il faut distinguer clairement : décocher la progression
+// laisse les listes, les notes et le profil en place ; la remise à zéro
+// efface tout ce que la page a mémorisé et revient au profil d'exemple.
+// Les deux sont annulables : c'est plus utile qu'une confirmation qu'on
+// accepte par réflexe.
+
+function toutDecocher(){
+  const n=Object.keys(S.checked).length;
+  // Même quand il n'y a rien à faire on referme : sinon le panneau resterait
+  // ouvert par-dessus le bandeau qui explique pourquoi rien n'a bougé.
+  if(!n){fermerReglages();informer('Rien à décocher : aucune case n\'est cochée.');return;}
+  memoriserAnnulation(n+' case'+(n>1?'s':'')+' décochée'+(n>1?'s':'')
+    +' sur toute la checklist. Notes, clés et profil conservés.',false);
+  S.checked={};S.dates={};
+  saveState();renderAll();updateGlobal();renderHistory();
+  fermerReglages();
+}
+
+function remiseAZero(){
+  const avaitProfil=!!chargerProfilMemorise();
+  // On mémorise AVANT d'effacer : l'annulation restaure l'état et le profil.
+  memoriserAnnulation('Site remis à zéro : progression, notes, clés et profil importé effacés.',true);
+  try{
+    localStorage.removeItem(CLE_ETAT);
+    localStorage.removeItem(CLE_PROFIL);
+    localStorage.removeItem(CLE_SCENARIO);
+  }catch(e){console.error(e);}
+  S.checked={};S.notes={};S.dates={};S.lic={};S.env={};S.lastSave=null;
+  history=[];openNotes={};sautees={};
+  scenario='tout';
+  // Le thème suit les préférences du système, ce n'est pas une donnée de
+  // travail : on le laisse tel quel.
+  try{appliquerProfil(PROFIL_DEFAUT,false);}
+  catch(e){signalerPanne('Remise à zéro',e);}
+  majSelecteurScenario();
+  renderHistory();
+  fermerReglages();
+  if(!avaitProfil)document.getElementById('annul-txt').textContent=
+    'Site remis à zéro : progression, notes et clés effacées.';
+}
+
+// ── Panneau des remises à zéro ─────────────────────────────────────────
+// Deux actions destructrices méritent d'être expliquées avant d'être
+// offertes, plutôt que posées côte à côte dans une barre déjà chargée.
+function basculerReglages(){
+  const b=document.getElementById('reglages');
+  if(!b)return;
+  const ouvert=b.classList.toggle('visible');
+  const btn=document.getElementById('reglages-btn');
+  if(btn)btn.setAttribute('aria-expanded',ouvert?'true':'false');
+  if(ouvert){
+    const p=b.querySelector('button');
+    if(p)p.focus();
+  }
+}
+function fermerReglages(){
+  const b=document.getElementById('reglages');
+  if(b)b.classList.remove('visible');
+  const btn=document.getElementById('reglages-btn');
+  if(btn)btn.setAttribute('aria-expanded','false');
+}
+
 function resetSection(sec){
   const map={};ONGLETS.forEach(function(c){map[c]=donneesDe(c);});
   const cochees=map[sec].filter(function(x){return S.checked[x.id];}).length;

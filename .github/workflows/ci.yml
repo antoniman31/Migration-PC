@@ -105,6 +105,9 @@ jobs:
       - name: Migration ou réinstallation
         run: node tests/test-scenarios.js
 
+      - name: Remises à zéro
+        run: node tests/test-reinit.js
+
   publier:
     name: Publier sur Pages
     needs: verifier
