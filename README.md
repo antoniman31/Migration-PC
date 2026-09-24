@@ -70,6 +70,10 @@ elle appelle les mêmes scripts, qu'on peut toujours lancer à la main. Une acti
 manque un fichier reste affichée, grisée, avec la raison : plus utile qu'une action
 absente dont on ignore pourquoi.
 
+Après chaque action, elle dit quoi faire ensuite sur le site — quel onglet, quel bouton.
+Et une entrée **Par où commencer ?** décrit le parcours complet des trois situations :
+changer de PC, réinstaller sur place, garder les deux machines.
+
 Sans interface graphique — PowerShell 7 sans Windows Desktop, session distante — elle
 bascule sur un menu texte qui propose exactement les mêmes choix. `-Console` le force.
 
@@ -353,12 +357,23 @@ que l'écran serait pire que pas de fichier.
 
 ### Ma configuration
 
-**⋯ Plus → Ma configuration** ouvre cinq champs : carte mère, processeur, carte
-graphique, mémoire, SSD. Ce qu'on y écrit fait deux choses. Les intitulés des pilotes
+Les scripts relèvent le matériel et remplissent ces champs tout seuls : Windows connaît
+la machine, il n'y a pas de raison de recopier une étiquette de carton. Une valeur déjà
+saisie n'est jamais écrasée — elle est peut-être plus précise que ce que Windows
+rapporte, et c'est la personne qui a raison.
+
+**⋯ Plus → Ma configuration** ouvre les mêmes cinq champs à remplir à la main : carte
+mère, processeur, carte graphique, mémoire, SSD. Ce qu'on y écrit fait deux choses. Les intitulés des pilotes
 portent le modèle — « Pilote chipset — ASUS B850-A » — là où ils disaient « de la carte
 mère », et seulement ceux-là : « Désactiver le CSM » n'a que faire d'un numéro de
 modèle. Et les boutons « Rechercher » visent le support du constructeur au lieu des mots
 génériques de l'intitulé.
+
+**Les périphériques sans pilote** sont listés à part, après une vérification du nouveau
+PC. Ce n'est pas une déduction : c'est ce que le gestionnaire de périphériques affiche
+avec un point d'exclamation, repris tel quel. Chaque ligne porte un bouton de recherche
+qui cite le modèle de votre carte mère, puisque c'est elle qui porte le réseau, l'audio
+et les contrôleurs.
 
 Ce que ce bloc ne fait pas, volontairement : deviner quel pilote va avec quel modèle.
 Il faudrait une table de correspondances que personne ne tient à jour, et on servirait

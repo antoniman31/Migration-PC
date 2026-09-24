@@ -91,6 +91,74 @@ ok('aucun intitulé cassé',await pg.evaluate(()=>{
   CONFIG={};appliquerProfil(PROFIL_DEFAUT,false);
   return n.every(x=>x.length>0&&x.indexOf('undefined')<0);}),true);
 
+console.log('\n--- le matériel détecté remplit la configuration ---');
+// Windows connaît la machine : la saisie à la main n'est qu'un repli.
+await pg.click('.config-vider');await pg.waitForTimeout(300);
+await pg.evaluate(()=>traiterDonnees({
+  type:'inventaire-migration-pc',genere:'2026-09-24T14:00:00',
+  machine:{os:'Windows 11',nom:'PC'},
+  apps:[{nom:'7-Zip',cat:'outils',source:'registre',winget:'7zip.7zip'}],
+  variables:{},configs:[],
+  materiel:{cm:'ASUSTeK ROG STRIX B850-A',cpu:'AMD Ryzen 7 9800X3D',
+            gpu:'NVIDIA GeForce RTX 5070 Ti',ram:'32 Go DDR5 6000 MT/s',
+            ssd:'Samsung SSD 9100 PRO 2TB'}},''));
+await pg.waitForTimeout(450);
+ok('les cinq champs sont remplis',
+  await pg.evaluate(()=>COMPOSANTS.filter(c=>CONFIG[c.cle]).length),5);
+ok('le sous-titre le dit',
+  (await pg.textContent('#profil-sous')).indexOf('5 composants repris')>=0,true);
+ok('et les intitulés en profitent aussitôt',
+  (await nomsNpc()).some(n=>/^Pilote chipset.*B850-A$/.test(n)),true);
+
+console.log('\n--- une saisie à la main n\'est pas écrasée ---');
+// Ce que la personne a écrit est peut-être plus précis que ce que Windows
+// rapporte : c'est elle qui a raison.
+await pg.evaluate(()=>{CONFIG={cm:'Ma carte à moi'};saveConfig();construireConfig();});
+await pg.evaluate(()=>traiterDonnees({
+  type:'inventaire-migration-pc',machine:{},apps:[{nom:'A',cat:'x',source:'y'}],
+  variables:{},configs:[],materiel:{cm:'ASUSTeK autre chose',gpu:'RTX 4060'}},''));
+await pg.waitForTimeout(400);
+ok('la valeur saisie reste',await pg.evaluate(()=>CONFIG.cm),'Ma carte à moi');
+ok('mais un champ vide se remplit',await pg.evaluate(()=>CONFIG.gpu),'RTX 4060');
+
+console.log('\n--- les périphériques sans pilote ---');
+await pg.evaluate(()=>traiterDonnees({
+  type:'verification-migration-pc',machine:{nom:'NEUF'},trouves:[],
+  materiel:{cm:'ASUSTeK ROG STRIX B850-A'},
+  pilotes:[{nom:'Contrôleur Ethernet',classe:'',probleme:'aucun pilote installe',code:28},
+           {nom:'Realtek Audio',classe:'MEDIA',probleme:'ne demarre pas',code:10}]},''));
+await pg.waitForTimeout(400);
+ok('le panneau s\'affiche même sans rien à cocher',await pg.isVisible('.pilotes'),true);
+ok('les deux périphériques y sont',(await pg.$$('.pil-item')).length,2);
+ok('le problème est nommé',
+  (await pg.textContent('.pilotes')).indexOf('aucun pilote installe')>=0,true);
+ok('la recherche cite la carte mère',await pg.evaluate(()=>
+  /B850-A/.test(document.querySelector('.pil-item .sm-btn').getAttribute('onclick'))),true);
+ok('aucun panneau de panne',await pg.isVisible('#panne'),false);
+await pg.evaluate(()=>{try{fermerVerification();}catch(e){}});
+
+console.log('\n--- un scan qui ne trouve rien n\'est pas une panne ---');
+// C'est justement le cas d'une machine fraîchement installée : le scan tourne,
+// ne trouve presque rien, et ouvrir la page sur un panneau rouge serait faux.
+await pg.evaluate(()=>{CONFIG={};saveConfig();construireConfig();});
+const vide=await pg.evaluate(()=>traiterDonnees({
+  type:'inventaire-migration-pc',machine:{nom:'NEUF'},apps:[],variables:{},configs:[],
+  materiel:{cm:'ASUS B850-A'}},''));
+await pg.waitForTimeout(350);
+ok('l\'import est accepté',vide,true);
+ok('aucun panneau d\'erreur',await pg.isVisible('#panne'),false);
+ok('on le dit calmement',
+  (await pg.textContent('#annul-txt')).indexOf('aucune application détectée')>=0,true);
+ok('le matériel est repris quand même',await pg.evaluate(()=>CONFIG.cm),'ASUS B850-A');
+ok('et le profil d\'exemple reste en place',
+  await pg.evaluate(()=>APPS_DATA.length>0),true);
+
+console.log('\n--- une vérification sans pilote en défaut ---');
+await pg.evaluate(()=>traiterDonnees({
+  type:'verification-migration-pc',machine:{nom:'NEUF'},trouves:[],pilotes:[]},''));
+await pg.waitForTimeout(300);
+ok('rien ne s\'affiche',await pg.isVisible('.pilotes'),false);
+
 console.log('\n--- l\'affichage selon la taille de l\'écran ---');
 const mesure=async(w,h)=>{
   await pg.setViewportSize({width:w,height:h});

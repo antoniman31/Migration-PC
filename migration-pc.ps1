@@ -51,7 +51,7 @@ function Invoke-Action {
     if ($Action.PSObject.Properties['fichier']) {
         $cible = Join-Path $Racine $Action.fichier
         Start-Process $cible
-        return @{ ok = $true; message = "Checklist ouverte." }
+        return @{ ok = $true; message = "Checklist ouverte."; suite = $Action.suite }
     }
 
     $script = Join-Path $Racine $Action.script
@@ -68,7 +68,7 @@ function Invoke-Action {
     # Une nouvelle fenetre : le script ecrit beaucoup, et on veut pouvoir lire
     # sa sortie apres coup meme si le lanceur est referme.
     Start-Process -FilePath 'powershell.exe' -ArgumentList $parametres -Wait
-    return @{ ok = $true; message = "Termine. Lisez la fenetre du script pour le detail." }
+    return @{ ok = $true; message = "Termine."; suite = $Action.suite }
 }
 
 function Read-DossierSauvegarde {
@@ -123,18 +123,32 @@ function Show-MenuTexte {
             }
         }
         Write-Host ""
+        Write-Host ("  {0}. Par ou commencer ?" -f (@($Actions).Count + 1))
+        Write-Host "     Le parcours complet, selon ce que vous voulez faire." -ForegroundColor DarkGray
+        Write-Host ""
         Write-Host "  0. Quitter"
         Write-Host ""
         $choix = Read-Host "  Votre choix"
         if ($choix -eq '0' -or [string]::IsNullOrWhiteSpace($choix)) { return }
         $n = 0
-        if (-not [int]::TryParse($choix, [ref]$n) -or $n -lt 1 -or $n -gt @($Actions).Count) {
+        if (-not [int]::TryParse($choix, [ref]$n) -or $n -lt 1 -or $n -gt (@($Actions).Count + 1)) {
             Write-Host "  Choix inconnu." -ForegroundColor Yellow
+            continue
+        }
+        if ($n -eq (@($Actions).Count + 1)) {
+            Write-Host ""
+            Get-Parcours | ForEach-Object { Write-Host $_ }
             continue
         }
         $res = Invoke-Action -Action $Actions[$n - 1]
         Write-Host ""
         Write-Host ("  " + $res.message) -ForegroundColor $(if ($res.ok) { 'Green' } else { 'Yellow' })
+        # Le plus utile arrive apres : ce qu'il faut faire sur le site.
+        if ($res.ok -and $res.ContainsKey('suite') -and $res.suite) {
+            Write-Host ""
+            Write-Host "  Ensuite, sur le site :" -ForegroundColor Cyan
+            $res.suite | ForEach-Object { Write-Host ("    - " + $_) }
+        }
     }
 }
 
@@ -188,7 +202,11 @@ function Show-Fenetre {
             $this.FindForm().Cursor = [System.Windows.Forms.Cursors]::WaitCursor
             try {
                 $r = Invoke-Action -Action $act
-                $etat.Text = $r.message
+                $texte = $r.message
+                if ($r.ok -and $r.ContainsKey('suite') -and $r.suite) {
+                    $texte = $r.message + "  Ensuite : " + ($r.suite -join '  ')
+                }
+                $etat.Text = $texte
             } catch {
                 $etat.Text = "Erreur : $($_.Exception.Message)"
             } finally {

@@ -336,6 +336,22 @@ body.compact .item{padding:5px 0}
 /* ── V6 : compact masque dep ── */
 body.compact .b-dep{display:none}
 
+/* ═══ Périphériques sans pilote ═══ */
+.pilotes{margin-bottom:14px;padding:14px 16px;border-radius:10px;
+  background:var(--bh-bg);border:.5px solid var(--bh-bd)}
+.pil-titre{font-size:13px;font-weight:600;color:var(--bh-tx);margin-bottom:3px}
+.pil-sous{font-size:12px;color:var(--tx2);line-height:1.55;margin-bottom:10px}
+.pil-item{display:flex;align-items:center;gap:12px;padding:8px 10px;margin-bottom:6px;
+  border-radius:8px;background:var(--bg);border:.5px solid var(--brd)}
+.pil-txt{flex:1;min-width:0}
+.pil-nom{font-size:13px;color:var(--tx)}
+.pil-quoi{font-size:12px;color:var(--tx2)}
+.pil-item .sm-btn{flex-shrink:0}
+@media (max-width:560px){
+  .pil-item{flex-direction:column;align-items:stretch}
+  .pil-item .sm-btn{width:100%}
+}
+
 /* ═══ Les scripts ═══ */
 .outils{display:none;margin:0 0 12px;padding:16px 18px;border-radius:10px;
   background:var(--bg2);border:.5px solid var(--brd2)}
@@ -2283,6 +2299,23 @@ function exportProfil(){
 // Transforme la sortie de scan-pc.ps1 en profil utilisable.
 const CAT_PAR_DEFAUT='system';
 
+// Le scanner relève le matériel : autant remplir les champs prévus pour lui
+// plutôt que de les faire recopier à la main depuis une étiquette de carton.
+// Une saisie existante n'est jamais écrasée — elle est peut-être plus précise
+// que ce que Windows rapporte, et c'est la personne qui a raison.
+function appliquerMateriel(materiel){
+  if(!materiel||typeof materiel!=='object')return 0;
+  let repris=0;
+  COMPOSANTS.forEach(function(c){
+    const v=materiel[c.cle];
+    if(!v||CONFIG[c.cle])return;
+    CONFIG[c.cle]=String(v).trim();
+    repris++;
+  });
+  if(repris){saveConfig();construireConfig();}
+  return repris;
+}
+
 function inventaireVersProfil(inv){
   const apps=Array.isArray(inv.apps)?inv.apps:[];
   if(!apps.length)throw new Error('inventaire vide');
@@ -2293,6 +2326,7 @@ function inventaireVersProfil(inv){
     if(!S.env[v])S.env[v]=String(inv.variables[v]);
   });
   if(vars.length)saveState();
+  const reprisMateriel=appliquerMateriel(inv.materiel);
   const cats={};
   const out=[];
   apps.forEach(function(a,i){
@@ -2322,6 +2356,7 @@ function inventaireVersProfil(inv){
   const total=apps.reduce(function(s,a){return s+(Number(a.tailleGo)||0);},0);
   if(total>0)desc.push(fmtTaille(total)+' connus');
   if(inv.genere)desc.push('scan du '+String(inv.genere).slice(0,10));
+  if(reprisMateriel)desc.push(reprisMateriel+' composant'+(reprisMateriel>1?'s':'')+' repris');
   // L'élément « variables d'environnement » du profil par défaut affiche
   // exactement celles que le scan a relevées, plutôt qu'une liste figée.
   let donnees=PROFIL_DEFAUT.data.map(function(d){
@@ -2434,6 +2469,17 @@ function traiterDonnees(d,provenance){
       return true;
     }
     if(d && d.type==='inventaire-migration-pc'){
+      // Un inventaire sans application n'est pas une panne : c'est ce que
+      // donne une machine fraîchement installée, ou un scan dont les sources
+      // étaient toutes indisponibles. Le dire calmement plutôt que d'ouvrir un
+      // panneau rouge — le cas se produit justement sur un PC neuf.
+      if(!Array.isArray(d.apps)||!d.apps.length){
+        const repris=appliquerMateriel(d.materiel);
+        informer('Scan reçu, mais aucune application détectée.'
+          +(repris?' Le matériel a été repris ('+repris+' composant'+(repris>1?'s':'')+').':'')
+          +' Sur une machine neuve c\'est normal ; sinon, relancez avec -ToutInclure.');
+        return true;
+      }
       const p=inventaireVersProfil(d);
       memoriserAnnulation('Inventaire importé : '+p.apps.length+' applications. Les onglets Nouveau PC, Données et PWA restent ceux du profil d\'exemple.'+suffixe,true);
       appliquerProfil(p,true);
@@ -3098,6 +3144,35 @@ function clavierGlobal(e){
 // avec la raison de chaque correspondance, et c'est la personne qui tranche.
 let verifEnCours=null;
 
+// Windows signale lui-même les périphériques qu'il ne sait pas faire marcher.
+// Ce n'est pas une déduction : c'est le point d'exclamation du gestionnaire de
+// périphériques. On le montre tel quel, avec de quoi chercher.
+function mkPilotesManquants(d){
+  const liste=Array.isArray(d&&d.pilotes)?d.pilotes:[];
+  if(!liste.length)return '';
+  const mat=(d&&d.materiel)||{};
+  const lignes=liste.map(function(p){
+    const nom=String(p&&p.nom||'Périphérique inconnu');
+    const quoi=String(p&&p.probleme||'');
+    // On cherche avec le modèle de la carte mère quand on le connaît : c'est
+    // elle qui porte le réseau, l'audio et les contrôleurs.
+    const base=mat.cm?String(mat.cm)+' ':'';
+    const req=base+nom+' pilote';
+    return '<div class="pil-item">'
+      +'<div class="pil-txt"><div class="pil-nom">'+esc(nom)+'</div>'
+      +'<div class="pil-quoi">'+esc(quoi)+(p&&p.classe?' · '+esc(String(p.classe)):'')+'</div></div>'
+      +'<button type="button" class="sm-btn" onclick="ouvrirAdresse(\''
+      +escJS('https://www.google.com/search?q='+encodeURIComponent(req))+'\')">🔍 Chercher</button>'
+      +'</div>';
+  }).join('');
+  return '<div class="pilotes"><div class="pil-titre">⚠️ '+liste.length
+    +' périphérique'+(liste.length>1?'s':'')+' sans pilote utilisable</div>'
+    +'<div class="pil-sous">Windows les signale comme mal installés. '
+    +(mat.cm?'Le support de '+esc(String(mat.cm))+' est le bon endroit pour la plupart.'
+           :'Le site du fabricant de la carte mère est le bon endroit pour la plupart.')
+    +'</div>'+lignes+'</div>';
+}
+
 function estVerification(d){
   return !!(d&&d.type==='verification-migration-pc'&&Array.isArray(d.trouves));
 }
@@ -3109,6 +3184,8 @@ function afficherVerification(d){
   verifEnCours=d;
   const bloc=document.getElementById('verif');
   if(!bloc)return;
+  appliquerMateriel(d.materiel);
+  const pilotes=mkPilotesManquants(d);
   const index=indexParId();
   // On ne propose que ce qui existe dans le profil chargé et n'est pas déjà coché.
   const proposables=d.trouves.filter(function(t){return index[t.id]&&!S.checked[t.id];});
@@ -3121,13 +3198,20 @@ function afficherVerification(d){
     if(inconnus)msg+=inconnus+' élément(s) détecté(s) ne figurent pas dans le profil chargé. ';
     if(!dejaCochees&&!inconnus)msg='Aucun des éléments du profil n\'a été détecté sur cette machine.';
     informer(msg.trim());
+    // Une machine neuve n'a rien d'installé — c'est justement là que les
+    // périphériques sans pilote comptent le plus.
+    if(pilotes){
+      bloc.innerHTML=pilotes+'<div class="verif-actions">'
+        +'<button class="sm-btn" type="button" onclick="fermerVerification()">Fermer</button></div>';
+      bloc.classList.add('visible');
+    }
     return;
   }
 
   const machine=(d.machine&&d.machine.nom)?d.machine.nom:'cette machine';
   const sures=proposables.filter(function(t){return t.confiance==='sure';}).length;
 
-  let html='<div class="verif-tete">'
+  let html=pilotes+'<div class="verif-tete">'
     +'<b>'+proposables.length+' élément'+(proposables.length>1?'s':'')+' déjà en place</b> sur '+esc(machine)+'. '
     +(sures?sures+' par identifiant winget, ':'')
     +(proposables.length-sures?(proposables.length-sures)+' par nom seul — à vérifier. ':'')

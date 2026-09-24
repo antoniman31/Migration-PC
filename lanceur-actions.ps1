@@ -15,6 +15,12 @@ function Get-ActionsMigration {
             script  = 'scan-pc.ps1'
             requis  = @('scan-pc.ps1', 'lib-detection.ps1')
             duree   = "1 a 3 minutes"
+            suite   = @(
+                "La checklist s'ouvre deja remplie de vos logiciels.",
+                "Onglet « Apps » : decochez ce que vous ne voulez pas reprendre.",
+                "Onglet « Donnees » : les dossiers de reglages reperes s'y trouvent.",
+                "Menu (...) Plus > Exporter le profil, et posez le fichier sur la cle."
+            )
         },
         [ordered]@{
             id      = 'nouveau'
@@ -23,6 +29,12 @@ function Get-ActionsMigration {
             script  = 'verifier-pc.ps1'
             requis  = @('verifier-pc.ps1', 'lib-detection.ps1')
             duree   = "1 a 2 minutes"
+            suite   = @(
+                "La page propose de cocher ce qui est deja installe : verifiez avant.",
+                "Les peripheriques sans pilote sont listes, avec de quoi chercher.",
+                "Onglet « Nouveau PC » : les pilotes portent le modele de votre carte.",
+                "Puis onglet « Apps » : le bouton winget copie la commande d'installation."
+            )
         },
         [ordered]@{
             id      = 'sauvegardes'
@@ -32,6 +44,10 @@ function Get-ActionsMigration {
             requis  = @('verifier-sauvegardes.ps1')
             dossier = $true
             duree   = "selon la taille"
+            suite   = @(
+                "Le rapport dit fichier par fichier ce qui manque ou differe.",
+                "Une copie incomplete se voit ici, pas le jour ou on en a besoin."
+            )
         },
         [ordered]@{
             id      = 'checklist'
@@ -40,6 +56,10 @@ function Get-ActionsMigration {
             fichier = 'index.html'
             requis  = @('index.html')
             duree   = "immediat"
+            suite   = @(
+                "Au premier lancement, deux questions adaptent la liste a votre cas.",
+                "Le selecteur en haut de page permet d'en changer a tout moment."
+            )
         }
     ) | ForEach-Object {
         $a = $_
@@ -50,6 +70,28 @@ function Get-ActionsMigration {
         $a.possible  = ($manquants.Count -eq 0)
         [pscustomobject]$a
     }
+}
+
+# Le parcours complet, pour qui ouvre le lanceur sans savoir par ou commencer.
+function Get-Parcours {
+    @(
+        "  Vous partez d'un PC vers un autre",
+        "    1. Sur l'ANCIEN : inventorier. La page s'ouvre remplie, vous ajustez,",
+        "       vous exportez votre profil sur la cle.",
+        "    2. Sauvegardez vos dossiers, puis verifiez la copie (option 3).",
+        "    3. Sur le NOUVEAU : verifier. La page coche ce qui est deja la et",
+        "       signale les peripheriques sans pilote.",
+        "",
+        "  Vous reinstallez Windows sur CETTE machine",
+        "    1. Inventorier d'abord : apres le formatage, il n'y a plus de source.",
+        "    2. Sauvegardez et verifiez la copie AVANT de formater.",
+        "    3. Apres reinstallation : verifier, sur la meme machine.",
+        "",
+        "  Vous gardez les deux PC",
+        "    Meme chose, mais ne deliez rien sur l'ancien : il reste en service.",
+        "    La page a un cas « Deux PC » qui retire ces etapes et ajoute la",
+        "    synchronisation des dossiers."
+    )
 }
 
 function Get-MessageManquants {

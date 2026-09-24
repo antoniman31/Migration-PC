@@ -197,6 +197,13 @@ if ($donnees.PSObject.Properties['meta'] -and $donnees.meta.PSObject.Properties[
     $nomProfil = $donnees.meta.nom
 }
 
+# Sur une machine neuve, ce qui compte n'est pas seulement ce qui est installe,
+# c'est ce que Windows signale comme mal installe. Ce n'est pas une deduction :
+# c'est ce que le gestionnaire de peripheriques affiche avec un point
+# d'exclamation.
+$materiel = Invoke-Detecteur -Nom 'materiel' -Bloc { Read-Materiel }
+$pilotes  = @(Invoke-Detecteur -Nom 'pilotes' -Bloc { Read-PilotesManquants })
+
 $verification = [ordered]@{
     type    = 'verification-migration-pc'
     version = 1
@@ -209,7 +216,9 @@ $verification = [ordered]@{
         fichier = (Split-Path $cheminProfil -Leaf)
         nom     = $nomProfil
     }
-    trouves = @($trouves)
+    trouves  = @($trouves)
+    materiel = $materiel
+    pilotes  = @($pilotes)
     absents = @($absents)
 }
 
@@ -228,6 +237,14 @@ if ($sures -gt 0)  { Write-Host "  dont $sures par identifiant winget (fiable)" 
 if ($approx -gt 0) { Write-Host "  dont $approx par nom seul, a verifier" -ForegroundColor Yellow }
 if (-not $NomsApproximatifs) {
     Write-Host "  (-NomsApproximatifs elargit la recherche aux noms, avec un risque de faux positif)"
+}
+if (@($pilotes).Count) {
+    Write-Host ""
+    Write-Host "$(@($pilotes).Count) peripherique(s) sans pilote utilisable :" -ForegroundColor Yellow
+    foreach ($p in $pilotes) {
+        Write-Host ("  - {0} ({1})" -f $p.nom, $p.probleme)
+    }
+    Write-Host "  Le site vous indiquera ou chercher, a partir du materiel detecte."
 }
 Write-Host "Fichier ecrit : $chemin"
 Write-Host ""

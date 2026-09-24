@@ -93,6 +93,9 @@ $variables = if ($SansVariables) { [ordered]@{} } else {
 
 # Les dossiers de configuration des logiciels qu'on vient de detecter :
 # installer un logiciel prend une commande, retrouver ses reglages une soiree.
+# Le materiel : Windows le connait, autant ne pas le faire saisir a la main.
+$materiel = Invoke-Detecteur -Nom 'materiel' -Bloc { Read-Materiel }
+
 $configs = if ($SansConfigs) { @() } else {
     @(Invoke-Detecteur -Nom 'configurations' -Bloc { Read-Configs -ClesInstallees @($resultats.Keys) })
 }
@@ -113,6 +116,7 @@ $inventaire = [ordered]@{
     # Reprises telles quelles dans les champs prevus par la checklist.
     variables = $variables
     configs   = @($configs)
+    materiel  = $materiel
 }
 
 $json = $inventaire | ConvertTo-Json -Depth 6

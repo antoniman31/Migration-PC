@@ -604,3 +604,161 @@ function Read-Configs {
     Write-Host " $(@($trouves).Count) trouve(s)"
     return $trouves
 }
+
+# ---------------------------------------------------------------- materiel
+#
+# Le bloc « Ma configuration » de la page attendait une saisie a la main. Or
+# Windows connait deja tout ca. On le lui demande.
+#
+# La lecture (CIM) et la mise en forme sont separees : la lecture ne tourne que
+# sous Windows, la mise en forme se teste partout. C'est elle qui decide de ce
+# qui s'affiche, donc c'est elle qu'il faut pouvoir verifier.
+
+function Format-Materiel {
+    param($CarteMere, $Processeur, $Cartes, $Barrettes, $Disques)
+
+    $config = [ordered]@{}
+
+    if ($CarteMere) {
+        $bouts = @($CarteMere.Manufacturer, $CarteMere.Product) |
+                 Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+        if ($bouts) { $config['cm'] = ($bouts -join ' ').Trim() }
+    }
+
+    if ($Processeur) {
+        $nom = @($Processeur)[0].Name
+        # « AMD Ryzen 7 9800X3D 8-Core Processor » : la fin n'apprend rien.
+        if ($nom) { $config['cpu'] = ($nom -replace '\s*\d+-Core Processor\s*$', '').Trim() }
+    }
+
+    if ($Cartes) {
+        # Les affichages virtuels et le pilote de base de Windows ne sont pas
+        # des cartes graphiques : les nommer enverrait chercher leur pilote.
+        $vraies = @($Cartes | Where-Object {
+            $_.Name -and $_.Name -notmatch 'Basic Display|Remote Display|Virtual|Parsec|IddSample'
+        })
+        if ($vraies.Count) { $config['gpu'] = (@($vraies)[0].Name).Trim() }
+    }
+
+    if ($Barrettes) {
+        $octets = Get-Somme $Barrettes 'Capacity'
+        $go = if ($octets) { [math]::Round($octets / 1GB, 0) } else { 0 }
+        $vitesses = @($Barrettes | Where-Object {
+            $_.PSObject.Properties['ConfiguredClockSpeed'] -and $_.ConfiguredClockSpeed
+        } | ForEach-Object { $_.ConfiguredClockSpeed })
+        $type = @($Barrettes | Where-Object {
+            $_.PSObject.Properties['SMBIOSMemoryType'] -and $_.SMBIOSMemoryType
+        } | ForEach-Object { $_.SMBIOSMemoryType } | Select-Object -First 1)
+        # Indexer un tableau vide jette : les barrettes ne declarent pas toutes
+        # leur type, et certaines machines n'en declarent aucune.
+        $nomType = ''
+        if (@($type).Count -gt 0) {
+            $nomType = switch (@($type)[0]) { 26 { 'DDR4' } 34 { 'DDR5' } default { '' } }
+        }
+        $bouts = @()
+        if ($go) { $bouts += "$go Go" }
+        if ($nomType) { $bouts += $nomType }
+        if ($vitesses) { $bouts += ((@($vitesses) | Measure-Object -Maximum).Maximum.ToString() + ' MT/s') }
+        if ($bouts) { $config['ram'] = ($bouts -join ' ') }
+    }
+
+    if ($Disques) {
+        # Le disque systeme d'abord : c'est celui qu'on remplace ou qu'on garde.
+        $tries = @($Disques | Sort-Object -Property Size -Descending)
+        $principal = if ($tries.Count -gt 0) { $tries[0] } else { $null }
+        if ($principal -and $principal.PSObject.Properties['Model'] -and $principal.Model) {
+            $modele = $principal.Model.Trim()
+            $go = 0
+            if ($principal.PSObject.Properties['Size'] -and $principal.Size) {
+                $go = [math]::Round($principal.Size / 1GB, 0)
+            }
+            # « Samsung SSD 9100 PRO 2TB 1863 Go » dit deux fois la meme chose :
+            # on n'ajoute la taille que si le modele ne la porte pas deja.
+            $dejaDite = ($modele -match '\d+\s*(To|TB|Go|GB)\b')
+            $config['ssd'] = if ($go -and -not $dejaDite) { "$modele $go Go" } else { $modele }
+        }
+    }
+
+    return $config
+}
+
+function Read-Materiel {
+    Write-Host "  materiel..." -NoNewline
+    $config = [ordered]@{}
+    try {
+        $config = Format-Materiel `
+            -CarteMere  (Get-CimInstance Win32_BaseBoard -ErrorAction SilentlyContinue) `
+            -Processeur (Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue) `
+            -Cartes     (Get-CimInstance Win32_VideoController -ErrorAction SilentlyContinue) `
+            -Barrettes  (Get-CimInstance Win32_PhysicalMemory -ErrorAction SilentlyContinue) `
+            -Disques    (Get-CimInstance Win32_DiskDrive -ErrorAction SilentlyContinue)
+    } catch {
+        Write-Host " indisponible, ignore" -ForegroundColor Yellow
+        return [ordered]@{}
+    }
+    Write-Host " $(@($config.Keys).Count) composant(s)"
+    return $config
+}
+
+# ---------------------------------------------------------------- pilotes
+#
+# Ce qu'on peut dire honnetement des pilotes, et ce qu'on ne peut pas.
+#
+# On NE PEUT PAS dire « installez le pilote X version Y » : il faudrait une
+# table reliant chaque modele de materiel a son pilote, que personne ne tient
+# a jour, et on servirait des liens faux qui ont l'air vrais.
+#
+# On PEUT dire quels peripheriques Windows signale comme mal installes. Ce
+# n'est pas une deduction, c'est ce que le gestionnaire de peripheriques
+# affiche avec un point d'exclamation. C'est exactement « ce qui manque ».
+
+# Les codes que Windows attribue a un peripherique en defaut. Seuls ceux qui
+# designent un probleme de pilote nous interessent : un peripherique
+# simplement desactive par l'utilisateur n'a rien a reparer.
+$CodesPilote = @{
+    1  = 'mal configure'
+    10 = 'ne demarre pas'
+    18 = 'pilote a reinstaller'
+    19 = 'configuration abimee'
+    28 = 'aucun pilote installe'
+    31 = 'pilote indisponible'
+    37 = 'le pilote refuse de demarrer'
+    39 = 'pilote absent ou abime'
+    43 = 'arrete par Windows'
+}
+
+function Format-Pilotes {
+    param($Peripheriques)
+    $manquants = @()
+    foreach ($p in @($Peripheriques)) {
+        if (-not $p) { continue }
+        if (-not $p.PSObject.Properties['ConfigManagerErrorCode']) { continue }
+        $code = $p.ConfigManagerErrorCode
+        if (-not $CodesPilote.ContainsKey([int]$code)) { continue }
+        $nom = if ($p.PSObject.Properties['Name'] -and $p.Name) { $p.Name } else { 'Peripherique inconnu' }
+        $manquants += [ordered]@{
+            nom      = [string]$nom
+            classe   = if ($p.PSObject.Properties['PNPClass'] -and $p.PNPClass) { [string]$p.PNPClass } else { '' }
+            probleme = $CodesPilote[[int]$code]
+            code     = [int]$code
+        }
+    }
+    return $manquants
+}
+
+function Read-PilotesManquants {
+    Write-Host "  peripheriques sans pilote..." -NoNewline
+    try {
+        $tout = Get-CimInstance Win32_PnPEntity -ErrorAction Stop
+        $r = Format-Pilotes -Peripheriques $tout
+        if (@($r).Count) {
+            Write-Host " $(@($r).Count) a regler" -ForegroundColor Yellow
+        } else {
+            Write-Host " aucun"
+        }
+        return $r
+    } catch {
+        Write-Host " indisponible, ignore" -ForegroundColor Yellow
+        return @()
+    }
+}

@@ -62,6 +62,27 @@ ok 'un message vide si rien ne manque' (Get-MessageManquants @()) ''
 
 Remove-Item $t -Recurse -Force -ErrorAction SilentlyContinue
 
+"`n--- ce qui se passe apres ---"
+# Lancer le script n'est que la moitie du chemin : savoir quoi faire ensuite
+# sur le site est le reste, et c'est la que les gens se perdent.
+ok 'chaque action dit la suite' (@($a | Where-Object {
+      -not $_.PSObject.Properties['suite'] -or @($_.suite).Count -eq 0 })).Count 0
+$inventaire = $a | Where-Object { $_.id -eq 'ancien' }
+ok 'elle nomme un onglet du site' ((@($inventaire.suite) -join ' ') -match 'Apps|Donnees') $true
+$verif = $a | Where-Object { $_.id -eq 'nouveau' }
+ok 'elle parle des pilotes'       ((@($verif.suite) -join ' ') -match 'pilote') $true
+
+$parcours = @(Get-Parcours)
+ok 'un parcours complet existe'   ($parcours.Count -gt 0) $true
+$texte = $parcours -join ' '
+# Les trois situations que la page sait traiter doivent y figurer : c'est la
+# question posee par le lanceur, et la reponse doit couvrir les trois.
+ok 'il couvre le changement de PC' ($texte -match "d'un PC vers un autre") $true
+ok 'la reinstallation sur place'   ($texte -match 'reinstallez Windows') $true
+ok 'et le cas des deux PC'         ($texte -match 'gardez les deux') $true
+# Le piege le plus couteux du parcours : formater avant d'avoir verifie la copie.
+ok 'il previent avant le formatage' ($texte -match 'AVANT de formater') $true
+
 "`n--- les fichiers du lanceur ---"
 foreach ($f in @('migration-pc.ps1', 'lanceur-actions.ps1', 'Migration PC.bat')) {
     ok "« $f » existe" (Test-Path -LiteralPath (Join-Path $racine $f)) $true

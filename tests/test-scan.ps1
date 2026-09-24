@@ -85,6 +85,61 @@ ok 'lecteur inexistant, pas d exception' ([string]::IsNullOrEmpty((Join-CheminSu
 $base = [System.IO.Path]::GetTempPath().TrimEnd([System.IO.Path]::DirectorySeparatorChar)
 ok 'chemin normal'              (Join-CheminSur $base 'Epic') (Join-Path $base 'Epic')
 
+"--- materiel ---"
+# Windows connait la machine : le bloc « Ma configuration » de la page n'a plus
+# a etre saisi a la main. La lecture CIM ne tourne que sous Windows ; c'est la
+# mise en forme qui decide de ce qui s'affiche, et elle se teste partout.
+$m = Format-Materiel `
+    -CarteMere  ([pscustomobject]@{ Manufacturer = 'ASUSTeK COMPUTER INC.'; Product = 'ROG STRIX B850-A' }) `
+    -Processeur ([pscustomobject]@{ Name = 'AMD Ryzen 7 9800X3D 8-Core Processor' }) `
+    -Cartes     @([pscustomobject]@{ Name = 'Microsoft Basic Display Adapter' },
+                  [pscustomobject]@{ Name = 'NVIDIA GeForce RTX 5070 Ti' }) `
+    -Barrettes  @([pscustomobject]@{ Capacity = 17179869184; ConfiguredClockSpeed = 6000; SMBIOSMemoryType = 34 },
+                  [pscustomobject]@{ Capacity = 17179869184; ConfiguredClockSpeed = 6000; SMBIOSMemoryType = 34 }) `
+    -Disques    @([pscustomobject]@{ Model = 'Samsung SSD 9100 PRO 2TB'; Size = 2000398934016 })
+ok 'carte mere complete'      $m.cm 'ASUSTeK COMPUTER INC. ROG STRIX B850-A'
+# « 8-Core Processor » n'apprend rien et allonge tous les intitules.
+ok 'processeur sans le suffixe' $m.cpu 'AMD Ryzen 7 9800X3D'
+# Le pilote d'affichage de base n'est pas une carte graphique : le nommer
+# enverrait chercher son pilote au lieu de celui de la vraie carte.
+ok 'la vraie carte graphique'  $m.gpu 'NVIDIA GeForce RTX 5070 Ti'
+ok 'memoire totale et type'    $m.ram '32 Go DDR5 6000 MT/s'
+# « Samsung SSD 9100 PRO 2TB 1863 Go » dirait deux fois la meme chose.
+ok 'taille non repetee'        $m.ssd 'Samsung SSD 9100 PRO 2TB'
+
+$vide = Format-Materiel -CarteMere $null -Processeur $null -Cartes @() -Barrettes @() -Disques @()
+ok 'une machine muette ne jette pas' (@($vide.Keys)).Count 0
+# Des barrettes qui ne declarent pas leur type : indexer un tableau vide jette.
+$partiel = Format-Materiel -CarteMere $null -Processeur $null -Cartes @() `
+    -Barrettes @([pscustomobject]@{ Capacity = 8589934592 }) -Disques @()
+ok 'barrettes sans type declare' $partiel.ram '8 Go'
+$virtuel = Format-Materiel -CarteMere $null -Processeur $null `
+    -Cartes @([pscustomobject]@{ Name = 'Parsec Virtual Display' }) -Barrettes @() -Disques @()
+ok 'un affichage virtuel est ignore' ($virtuel.Contains('gpu')) $false
+$sansTaille = Format-Materiel -CarteMere $null -Processeur $null -Cartes @() -Barrettes @() `
+    -Disques @([pscustomobject]@{ Model = 'KINGSTON SNV2S1000G'; Size = 1000204886016 })
+ok 'taille ajoutee quand elle manque' $sansTaille.ssd 'KINGSTON SNV2S1000G 932 Go'
+
+"`n--- peripheriques sans pilote ---"
+# On ne devine pas quel pilote installer — il faudrait une table que personne
+# ne tient a jour. On rapporte ce que Windows signale lui-meme, c'est-a-dire le
+# point d'exclamation du gestionnaire de peripheriques.
+$peripheriques = @(
+    [pscustomobject]@{ Name = 'Controleur Ethernet'; PNPClass = $null;   ConfigManagerErrorCode = 28 }
+    [pscustomobject]@{ Name = 'RTX 5070 Ti';         PNPClass = 'Display'; ConfigManagerErrorCode = 0 }
+    [pscustomobject]@{ Name = 'Realtek Audio';       PNPClass = 'MEDIA'; ConfigManagerErrorCode = 10 }
+    [pscustomobject]@{ Name = 'Webcam desactivee';   PNPClass = 'Camera'; ConfigManagerErrorCode = 22 }
+    [pscustomobject]@{ Name = 'Sans code';           PNPClass = 'Net' }
+)
+$pil = @(Format-Pilotes -Peripheriques $peripheriques)
+ok 'seuls les problemes de pilote'  $pil.Count 2
+ok 'un peripherique sain est ignore' (@($pil | Where-Object { $_.nom -match '5070' })).Count 0
+# Code 22 : desactive par l'utilisateur. Il n'y a rien a reparer.
+ok 'un peripherique desactive aussi' (@($pil | Where-Object { $_.nom -match 'Webcam' })).Count 0
+ok 'sans code, rien'                 (@($pil | Where-Object { $_.nom -eq 'Sans code' })).Count 0
+ok 'le probleme est nomme'           (@($pil | Where-Object { $_.nom -match 'Ethernet' })[0].probleme) 'aucun pilote installe'
+ok 'liste vide, rien'                (@(Format-Pilotes -Peripheriques @())).Count 0
+
 "--- dossiers de configuration ---"
 # Un dossier de config ne se devine pas : il est cherche la ou la table le dit,
 # et seulement si le logiciel correspondant est installe.
