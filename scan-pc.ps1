@@ -26,6 +26,10 @@
 .PARAMETER SansVariables
     Ne releve pas les variables d'environnement personnalisees.
 
+.PARAMETER SansOutils
+    Ne releve pas les chaines d'outils : SDK Android, WSL, scoop, Chocolatey,
+    paquets globaux npm et pip.
+
 .PARAMETER ToutInclure
     Conserve aussi les entrees habituellement filtrees (redistribuables Visual C++,
     mises a jour, composants systeme). Produit une liste beaucoup plus longue.
@@ -53,6 +57,7 @@ param(
     [switch]$SansJeux,
     [switch]$SansVariables,
     [switch]$SansConfigs,
+    [switch]$SansOutils,
     [switch]$ToutInclure
 )
 
@@ -96,6 +101,18 @@ $variables = if ($SansVariables) { [ordered]@{} } else {
 # Le materiel : Windows le connait, autant ne pas le faire saisir a la main.
 $materiel = Invoke-Detecteur -Nom 'materiel' -Bloc { Read-Materiel }
 
+# Une machine de developpement porte des chaines d'outils qu'aucun installateur
+# n'enregistre : ni le registre, ni winget, ni le Store n'en savent rien. On ne
+# les copie pas — elles pesent des dizaines de Go et se retelechargent — on
+# emporte la liste et la commande qui remet chaque chose en place.
+$outils = @()
+if (-not $SansOutils) {
+    $outils += @(Invoke-Detecteur -Nom 'SDK Android'      -Bloc { Read-SdkAndroid })
+    $outils += @(Invoke-Detecteur -Nom 'WSL'              -Bloc { Read-Wsl })
+    $outils += @(Invoke-Detecteur -Nom 'scoop/Chocolatey' -Bloc { Read-GestionnairesPaquets })
+    $outils += @(Invoke-Detecteur -Nom 'npm/pip'          -Bloc { Read-OutilsLangages })
+}
+
 $configs = if ($SansConfigs) { @() } else {
     @(Invoke-Detecteur -Nom 'configurations' -Bloc { Read-Configs -ClesInstallees @($resultats.Keys) })
 }
@@ -117,6 +134,7 @@ $inventaire = [ordered]@{
     variables = $variables
     configs   = @($configs)
     materiel  = $materiel
+    outils    = @($outils)
 }
 
 $json = $inventaire | ConvertTo-Json -Depth 6
@@ -138,6 +156,11 @@ if ($totalGo) {
 if (@($configs).Count) {
     $mo = Get-Somme $configs 'tailleMo'
     Write-Host "$(@($configs).Count) dossiers de configuration reperes$(if ($mo) { " ($([math]::Round($mo,0)) Mo)" })."
+}
+if (@($outils).Count) {
+    $familles = @($outils | Group-Object -Property { $_.famille } | Sort-Object Name)
+    Write-Host "$(@($outils).Count) outil(s) releve(s) : $(($familles | ForEach-Object { "$($_.Name) ($($_.Count))" }) -join ', ')."
+    Write-Host "  Ils ne sont pas copies : la liste et leur commande d installation suffisent."
 }
 $nombreVariables = Get-Nombre $variables
 if ($nombreVariables) {

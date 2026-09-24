@@ -152,6 +152,44 @@ ok('mais comble ce qui manquait',await pg.evaluate(()=>CONFIG.ssd),'Un SSD');
 await pg.evaluate(()=>{CONFIG={};saveConfig();construireConfig();
   appliquerProfil(PROFIL_DEFAUT,false);});
 
+console.log('\n--- les chaînes d\'outils ---');
+// Ni le registre, ni winget, ni le Store ne savent quoi que ce soit du SDK
+// Android, de WSL ou des paquets globaux de npm : ils n'apparaissaient nulle
+// part. Ils arrivent avec leur commande deja ecrite — on ne la devine pas.
+await pg.evaluate(()=>traiterDonnees({
+  type:'inventaire-migration-pc',machine:{os:'Windows 11',nom:'PC'},
+  apps:[{nom:'7-Zip',cat:'system',source:'registre',winget:'7zip.7zip'}],
+  variables:{},configs:[],materiel:{},
+  outils:[{famille:'SDK Android',id:'platforms;android-34',commande:'sdkmanager "platforms;android-34"'},
+          {famille:'WSL',id:'Ubuntu-22.04',nom:'Ubuntu-22.04 (par défaut)',commande:'wsl --install -d Ubuntu-22.04'},
+          {famille:'npm (global)',id:'typescript',version:'5.6.2',commande:'npm install -g typescript'},
+          // Ce qu'un fichier reçu peut porter et qui ne doit rien produire.
+          {id:'   ',commande:'rien'},null,'pas un objet']},''));
+await pg.waitForTimeout(400);
+ok('les trois outils sont là',
+  await pg.evaluate(()=>APPS_DATA.filter(a=>a.c==='outils').length),3);
+ok('les entrées vides ne comptent pas',
+  (await pg.textContent('#profil-sous')).indexOf('3 outils de développement')>=0,true);
+ok('ils ont leur catégorie à eux',
+  await pg.evaluate(()=>!!CATS.outils),true);
+// La commande est recopiee telle quelle : deviner celle d'un paquet scoop ou
+// du SDK servirait un ordre faux qui a l'air vrai.
+ok('la commande est celle du scanner',await pg.evaluate(()=>{
+  const b=[...document.querySelectorAll('#list-apps .b-winget')]
+    .find(x=>x.textContent.indexOf('sdkmanager')>=0);
+  return b?b.getAttribute('onclick'):'(aucun bouton)';
+}).then(a=>a.indexOf('sdkmanager')>=0),true);
+// Un inventaire sans outils ne doit pas ouvrir une categorie vide.
+await pg.evaluate(()=>traiterDonnees({
+  type:'inventaire-migration-pc',machine:{},apps:[{nom:'A',cat:'x',source:'y'}],
+  variables:{},configs:[],materiel:{},outils:[]},''));
+await pg.waitForTimeout(350);
+ok('aucun outil, aucune catégorie',await pg.evaluate(()=>!!CATS.outils),false);
+ok('et le sous-titre n\'en parle pas',
+  (await pg.textContent('#profil-sous')).indexOf('outil')>=0,false);
+await pg.evaluate(()=>{appliquerProfil(PROFIL_DEFAUT,false);});
+await pg.waitForTimeout(300);
+
 console.log('\n--- les périphériques sans pilote ---');
 await pg.evaluate(()=>traiterDonnees({
   type:'verification-migration-pc',machine:{nom:'NEUF'},trouves:[],

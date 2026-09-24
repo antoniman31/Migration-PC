@@ -2307,6 +2307,7 @@ function exportProfil(){
 // ═══ INVENTAIRE → PROFIL ═══
 // Transforme la sortie de scan-pc.ps1 en profil utilisable.
 const CAT_PAR_DEFAUT='system';
+const CAT_OUTILS='outils';
 
 // Le scanner relève le matériel : autant remplir les champs prévus pour lui
 // plutôt que de les faire recopier à la main depuis une étiquette de carton.
@@ -2381,11 +2382,45 @@ function inventaireVersProfil(inv){
       d:bouts.join(' · ')||'Détecté sur l\'ancien PC.'
     });
   });
+  // Les chaines d'outils : SDK Android, WSL, scoop, npm, pip. Aucun
+  // installateur ne les enregistre, donc elles n'apparaissaient nulle part.
+  // Elles arrivent avec leur commande d'installation deja ecrite : on ne la
+  // devine pas, le scanner la fournit. Une categorie a part, parce que les
+  // melanger aux applications noierait les deux listes.
+  const outils=Array.isArray(inv.outils)?inv.outils:[];
+  // Ce qu'on a vraiment retenu, pas ce que le fichier annoncait : un profil
+  // recu peut porter des entrees vides, et le sous-titre les compterait.
+  let outilsRetenus=0;
+  if(outils.length){
+    cats[CAT_OUTILS]=LIBELLES_CATS[CAT_OUTILS]||'Chaînes d\'outils';
+    outils.forEach(function(o,i){
+      if(!o||typeof o!=='object')return;
+      const id=String(o.id==null?'':o.id).trim();
+      if(!id)return;
+      const bouts=[];
+      if(o.version)bouts.push('version '+o.version);
+      bouts.push('relevé sur l\'ancien PC');
+      out.push({
+        id:'out'+(i+1),
+        n:String(o.nom||id),
+        c:CAT_OUTILS,
+        src:String(o.famille||'Outil'),
+        cmd:o.commande?String(o.commande):undefined,
+        p:'med',
+        t:3,
+        d:bouts.join(' · ')
+      });
+      outilsRetenus++;
+    });
+    if(!outilsRetenus)delete cats[CAT_OUTILS];
+  }
+
   const machine=inv.machine||{};
   const desc=[];
   if(machine.os)desc.push(machine.os);
   if(machine.nom)desc.push(machine.nom);
-  desc.push(out.length+' applications détectées');
+  desc.push(apps.length+' applications détectées');
+  if(outilsRetenus)desc.push(outilsRetenus+' outil'+(outilsRetenus>1?'s':'')+' de développement');
   const total=apps.reduce(function(s,a){return s+(Number(a.tailleGo)||0);},0);
   if(total>0)desc.push(fmtTaille(total)+' connus');
   if(inv.genere)desc.push('scan du '+String(inv.genere).slice(0,10));
@@ -2472,7 +2507,8 @@ function fmtMo(mo){
 const LIBELLES_CATS={
   dev:'🛠️ Développement',jeux:'🎮 Jeux & Launchers',reseau:'🌐 Réseau & Sécurité',
   bureautique:'📄 Bureautique & Web',media:'🎵 Médias',system:'🔧 Utilitaires Système',
-  comms:'💬 Communication',securite:'🛡️ Sécurité',pilotes:'🎛️ Pilotes & Périphériques'
+  comms:'💬 Communication',securite:'🛡️ Sécurité',pilotes:'🎛️ Pilotes & Périphériques',
+  outils:'⚙️ Chaînes d\'outils'
 };
 
 // ═══ IMPORT UNIFIÉ ═══
@@ -2763,6 +2799,15 @@ function copyWinget(w,evt){
     const o=el.innerHTML;el.innerHTML='✓ Copié !';setTimeout(function(){el.innerHTML=o;},1500);
   }).catch(function(){informer('Copie impossible dans ce navigateur. Commande : '+cmd);});
 }
+// Une commande fournie telle quelle, sans rien deviner autour.
+function copierCommande(cmd,evt){
+  evt.stopPropagation();
+  navigator.clipboard.writeText(cmd).then(function(){
+    const el=evt.target.closest('.b-winget');if(!el)return;
+    const o=el.innerHTML;el.innerHTML='✓ Copié !';setTimeout(function(){el.innerHTML=o;},1500);
+  }).catch(function(){informer('Copie impossible dans ce navigateur. Commande : '+cmd);});
+}
+
 function copyCatWinget(cat,evt){
   evt.stopPropagation();
   const apps=APPS_DATA.filter(function(a){return a.c===cat&&a.w;});
@@ -2930,7 +2975,12 @@ function mkAppItem(a){
   const ck=!!S.checked[a.id];
   const dt=ck&&S.dates[a.id]?'<span class="item-date">✓ '+fmtDate(S.dates[a.id])+'</span>':'';
   // Un span cliquable n'est ni focusable ni annonce : c'est un bouton.
-  const wBadge=a.w?'<button type="button" class="badge b-winget" onclick="copyWinget(\''+escJS(a.w)+'\',event)" title="Copier la commande d\'installation" aria-label="Copier la commande winget '+esc(a.w)+'">📋 '+esc(a.w)+'</button>':'';
+  // `w` est un identifiant winget, dont on fabrique la commande. `cmd` est une
+  // commande deja ecrite : un paquet de scoop, de npm ou du SDK Android ne
+  // s'installe pas par winget, et deviner sa commande serait servir un ordre
+  // faux qui a l'air vrai. Le scanner la fournit, on la recopie telle quelle.
+  const wBadge=a.w?'<button type="button" class="badge b-winget" onclick="copyWinget(\''+escJS(a.w)+'\',event)" title="Copier la commande d\'installation" aria-label="Copier la commande winget '+esc(a.w)+'">📋 '+esc(a.w)+'</button>'
+    :(a.cmd?'<button type="button" class="badge b-winget" onclick="copierCommande(\''+escJS(a.cmd)+'\',event)" title="Copier la commande d\'installation" aria-label="Copier la commande '+esc(a.cmd)+'">📋 '+esc(a.cmd)+'</button>':'');
   const pBadge=a.p==='high'?'<span class="badge b-high">⚡ Haute</span>':'';
   const tBadge=a.t?'<span class="badge b-time">⏱ '+fmtTime(a.t)+'</span>':'';
   const warn=a.warn?'<div class="warn-badge">⚠️ '+esc(a.warn)+'</div>':'';

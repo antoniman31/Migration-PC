@@ -495,6 +495,215 @@ function Read-Variables {
     return $vars
 }
 
+# ---------------------------------------------------------------- outils
+#
+# Une machine de developpement porte des choses qu'aucun installateur
+# n'enregistre : le SDK Android, les distributions WSL, les paquets de scoop et
+# de Chocolatey, les outils globaux de npm, pip ou cargo. Rien de tout cela
+# n'apparait dans le registre, ni dans winget, ni dans le Store. Le scan les
+# ignorait donc entierement.
+#
+# On ne les copie pas : ils pesent des dizaines de Go et se retelechargent.
+# Ce qu'on emporte, c'est la LISTE — et pour chacun la commande qui le remet en
+# place. C'est exactement ce qu'on fait deja pour les logiciels avec winget.
+#
+# La lecture et la mise en forme sont separees : trouver un SDK sur la machine
+# ne se teste que sur Windows, mettre en forme ce qu'on y a lu se teste partout.
+
+function New-Outil {
+    param([string]$Famille, [string]$Id, [string]$Nom, [string]$Version, [string]$Commande)
+    return [ordered]@{
+        famille  = $Famille
+        id       = $Id
+        nom      = if ($Nom) { $Nom } else { $Id }
+        version  = $Version
+        commande = $Commande
+    }
+}
+
+# Le SDK Android se lit dans son arborescence, sans lancer sdkmanager : c'est
+# plus rapide, cela ne demande pas de Java, et les identifiants obtenus sont
+# exactement ceux que sdkmanager reprend pour reinstaller.
+function Format-PaquetsSdk {
+    param([string]$Racine)
+    $out = @()
+    if ([string]::IsNullOrWhiteSpace($Racine) -or -not (Test-Path -LiteralPath $Racine)) { return $out }
+    # Chaque famille se lit pareil : un dossier, un sous-dossier par version,
+    # et un identifiant « famille;version » que sdkmanager comprend.
+    $familles = @(
+        @{ dossier = 'platforms';    prefixe = 'platforms' }
+        @{ dossier = 'build-tools';  prefixe = 'build-tools' }
+        @{ dossier = 'ndk';          prefixe = 'ndk' }
+        @{ dossier = 'cmake';        prefixe = 'cmake' }
+        @{ dossier = 'system-images'; prefixe = 'system-images'; profond = $true }
+    )
+    foreach ($f in $familles) {
+        $d = Join-Path $Racine $f.dossier
+        if (-not (Test-Path -LiteralPath $d)) { continue }
+        if ($f.Contains('profond') -and $f.profond) {
+            # system-images;android-34;google_apis;x86_64 : trois niveaux.
+            foreach ($a in @(Get-ChildItem -LiteralPath $d -Directory -ErrorAction SilentlyContinue)) {
+                foreach ($b in @(Get-ChildItem -LiteralPath $a.FullName -Directory -ErrorAction SilentlyContinue)) {
+                    foreach ($c in @(Get-ChildItem -LiteralPath $b.FullName -Directory -ErrorAction SilentlyContinue)) {
+                        $id = "$($f.prefixe);$($a.Name);$($b.Name);$($c.Name)"
+                        $out += New-Outil -Famille 'SDK Android' -Id $id -Commande "sdkmanager `"$id`""
+                    }
+                }
+            }
+            continue
+        }
+        foreach ($v in @(Get-ChildItem -LiteralPath $d -Directory -ErrorAction SilentlyContinue)) {
+            $id = "$($f.prefixe);$($v.Name)"
+            $out += New-Outil -Famille 'SDK Android' -Id $id -Commande "sdkmanager `"$id`""
+        }
+    }
+    # Les outils sans version : un dossier, pas de sous-dossier par version.
+    foreach ($seul in @('platform-tools', 'emulator', 'tools')) {
+        if (Test-Path -LiteralPath (Join-Path $Racine $seul)) {
+            $out += New-Outil -Famille 'SDK Android' -Id $seul -Commande "sdkmanager `"$seul`""
+        }
+    }
+    return $out
+}
+
+function Get-RacineSdkAndroid {
+    # L'ordre suit celui d'Android Studio : la variable d'abord, puis
+    # l'emplacement par defaut.
+    foreach ($v in @($env:ANDROID_HOME, $env:ANDROID_SDK_ROOT)) {
+        if ($v -and (Test-Path -LiteralPath $v)) { return $v }
+    }
+    $defaut = Join-CheminSur $env:LOCALAPPDATA 'Android\Sdk'
+    if ($defaut -and (Test-Path -LiteralPath $defaut)) { return $defaut }
+    return $null
+}
+
+function Read-SdkAndroid {
+    Write-Host "  SDK Android..." -NoNewline
+    $racine = Get-RacineSdkAndroid
+    if (-not $racine) { Write-Host " absent, ignore" -ForegroundColor Yellow; return @() }
+    $p = @(Format-PaquetsSdk -Racine $racine)
+    Write-Host " $($p.Count) paquet(s)"
+    return $p
+}
+
+# wsl.exe ecrit en UTF-16 : lu naivement, chaque nom arrive espace de caracteres
+# nuls. Le piege est connu et coute une heure a qui l'ignore.
+function Format-DistributionsWsl {
+    param([string[]]$Lignes)
+    $out = @()
+    foreach ($l in @($Lignes)) {
+        if ($null -eq $l) { continue }
+        $n = ($l -replace "`0", '').Trim()
+        if (-not $n) { continue }
+        # L'en-tete de `wsl --list` n'est pas une distribution.
+        if ($n -match '^(Windows Subsystem|Sous-syst|NAME\s|NOM\s)') { continue }
+        $defaut = $false
+        if ($n -match '^\*\s*') { $defaut = $true; $n = $n -replace '^\*\s*', '' }
+        # `--list --verbose` ajoute l'etat et la version : on ne garde que le nom.
+        $n = ($n -split '\s{2,}')[0].Trim()
+        if (-not $n) { continue }
+        if ($n -match '\(' ) { continue }
+        $out += New-Outil -Famille 'WSL' -Id $n `
+            -Nom $(if ($defaut) { "$n (par defaut)" } else { $n }) `
+            -Commande "wsl --install -d $n"
+    }
+    return $out
+}
+
+function Read-Wsl {
+    Write-Host "  distributions WSL..." -NoNewline
+    if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) {
+        Write-Host " absent, ignore" -ForegroundColor Yellow; return @()
+    }
+    try {
+        $avant = [Console]::OutputEncoding
+        [Console]::OutputEncoding = [System.Text.Encoding]::Unicode
+        try { $brut = @(& wsl.exe --list --quiet 2>$null) }
+        finally { [Console]::OutputEncoding = $avant }
+    } catch {
+        Write-Host " illisible, ignore" -ForegroundColor Yellow; return @()
+    }
+    $d = @(Format-DistributionsWsl -Lignes $brut)
+    Write-Host " $($d.Count) distribution(s)"
+    return $d
+}
+
+# scoop et Chocolatey installent des logiciels qui n'apparaissent ni dans le
+# registre ni dans winget : un dossier par paquet, c'est tout.
+function Format-PaquetsDossier {
+    param([string]$Racine, [string]$Famille, [string]$Modele)
+    $out = @()
+    if ([string]::IsNullOrWhiteSpace($Racine) -or -not (Test-Path -LiteralPath $Racine)) { return $out }
+    foreach ($d in @(Get-ChildItem -LiteralPath $Racine -Directory -ErrorAction SilentlyContinue)) {
+        if ($d.Name -eq 'scoop') { continue }   # scoop se gere lui-meme
+        $out += New-Outil -Famille $Famille -Id $d.Name -Commande ($Modele -f $d.Name)
+    }
+    return $out
+}
+
+function Read-GestionnairesPaquets {
+    Write-Host "  scoop et Chocolatey..." -NoNewline
+    $out = @()
+    $scoop = Join-CheminSur $env:USERPROFILE 'scoop\apps'
+    $out += @(Format-PaquetsDossier -Racine $scoop -Famille 'scoop' -Modele 'scoop install {0}')
+    $choco = Join-CheminSur $env:ProgramData 'chocolatey\lib'
+    $out += @(Format-PaquetsDossier -Racine $choco -Famille 'Chocolatey' -Modele 'choco install {0}')
+    if (-not $out.Count) { Write-Host " absents, ignore" -ForegroundColor Yellow; return @() }
+    Write-Host " $($out.Count) paquet(s)"
+    return $out
+}
+
+# npm ls -g --json rend un objet dependencies : un nom, une version.
+function Format-PaquetsNpm {
+    param([string]$Json)
+    $out = @()
+    if ([string]::IsNullOrWhiteSpace($Json)) { return $out }
+    try { $d = $Json | ConvertFrom-Json } catch { return $out }
+    if (-not $d -or -not $d.PSObject.Properties['dependencies']) { return $out }
+    # npm et corepack sont livres avec Node : les reinstaller n'a pas de sens,
+    # et les voir dans la liste ferait douter du reste.
+    $livresAvecNode = @('npm', 'corepack')
+    foreach ($p in @($d.dependencies.PSObject.Properties)) {
+        if ($livresAvecNode -contains $p.Name) { continue }
+        $v = ''
+        if ($p.Value -and $p.Value.PSObject.Properties['version']) { $v = [string]$p.Value.version }
+        $out += New-Outil -Famille 'npm (global)' -Id $p.Name -Version $v `
+            -Commande "npm install -g $($p.Name)"
+    }
+    return $out
+}
+
+# pip list --format=freeze : « nom==version », une ligne par paquet.
+function Format-PaquetsPip {
+    param([string[]]$Lignes)
+    $out = @()
+    foreach ($l in @($Lignes)) {
+        if ([string]::IsNullOrWhiteSpace($l)) { continue }
+        $t = $l.Trim()
+        if ($t -notmatch '^([A-Za-z0-9._-]+)==(.+)$') { continue }
+        $out += New-Outil -Famille 'pip (utilisateur)' -Id $matches[1] -Version $matches[2] `
+            -Commande "pip install $($matches[1])"
+    }
+    return $out
+}
+
+function Read-OutilsLangages {
+    Write-Host "  outils npm et pip..." -NoNewline
+    $out = @()
+    if (Get-Command npm -ErrorAction SilentlyContinue) {
+        try { $out += @(Format-PaquetsNpm -Json (& npm ls -g --depth=0 --json 2>$null | Out-String)) } catch { }
+    }
+    if (Get-Command pip -ErrorAction SilentlyContinue) {
+        # --not-required : sans lui, la liste se remplit des dependances
+        # transitives — certifi, idna, urllib3 — que personne n'installe
+        # volontairement et que pip remettra toutes seules.
+        try { $out += @(Format-PaquetsPip -Lignes @(& pip list --user --not-required --format=freeze 2>$null)) } catch { }
+    }
+    if (-not $out.Count) { Write-Host " aucun, ignore" -ForegroundColor Yellow; return @() }
+    Write-Host " $($out.Count) outil(s)"
+    return $out
+}
+
 # ---------------------------------------------------------------- configurations
 #
 # Installer un logiciel prend une commande winget ; retrouver ses reglages prend

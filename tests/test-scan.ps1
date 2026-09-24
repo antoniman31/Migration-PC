@@ -141,6 +141,63 @@ ok 'sans code, rien'                 (@($pil | Where-Object { $_.nom -eq 'Sans c
 ok 'le probleme est nomme'           (@($pil | Where-Object { $_.nom -match 'Ethernet' })[0].probleme) 'aucun pilote installe'
 ok 'liste vide, rien'                (@(Format-Pilotes -Peripheriques @())).Count 0
 
+"--- les chaines d outils que rien n enregistre ---"
+# Ni le registre, ni winget, ni le Store ne savent quoi que ce soit du SDK
+# Android, de WSL, de scoop ou des paquets globaux de npm. On ne les copie pas,
+# on emporte la liste et la commande qui remet chacun en place.
+$bacO = Join-Path ([System.IO.Path]::GetTempPath()) ("mpc-outils-" + (Get-Random))
+foreach ($d in @('platforms\android-34', 'platforms\android-35', 'build-tools\34.0.0',
+                 'ndk\26.1.10909125', 'platform-tools', 'emulator',
+                 'system-images\android-34\google_apis\x86_64')) {
+    New-Item -ItemType Directory -Path (Join-Path $bacO "sdk\$d") -Force | Out-Null
+}
+try {
+    $sdk = @(Format-PaquetsSdk -Racine (Join-Path $bacO 'sdk'))
+    $ids = @($sdk | ForEach-Object { $_.id })
+    ok 'une plateforme est vue'      ($ids -contains 'platforms;android-34') $true
+    ok 'les build-tools aussi'       ($ids -contains 'build-tools;34.0.0') $true
+    ok 'le NDK aussi'                ($ids -contains 'ndk;26.1.10909125') $true
+    ok 'platform-tools, sans version' ($ids -contains 'platform-tools') $true
+    # Les images systeme ont trois niveaux : un identifiant tronque ne
+    # reinstallerait pas la bonne image.
+    ok 'une image systeme complete'  ($ids -contains 'system-images;android-34;google_apis;x86_64') $true
+    # L identifiant doit etre celui que sdkmanager reprend tel quel.
+    $p34 = @($sdk | Where-Object { $_.id -eq 'platforms;android-34' })[0]
+    ok 'la commande est utilisable'  $p34.commande 'sdkmanager "platforms;android-34"'
+    ok 'un SDK absent ne rend rien'  (@(Format-PaquetsSdk -Racine (Join-Path $bacO 'nexistepas')).Count) 0
+    ok 'une racine vide non plus'    (@(Format-PaquetsSdk -Racine '').Count) 0
+
+    # wsl.exe ecrit en UTF-16 : lu naivement, chaque nom arrive espace de
+    # caracteres nuls. Le piege coute une heure a qui l ignore.
+    $brut = @("`0W`0i`0n`0d`0o`0w`0s`0 `0S`0u`0b`0s`0y`0s`0t`0e`0m", '* Ubuntu-22.04', 'Debian', '', 'docker-desktop')
+    $wsl = @(Format-DistributionsWsl -Lignes $brut)
+    ok 'trois distributions'         $wsl.Count 3
+    ok 'les nuls sont retires'       ($wsl[0].id) 'Ubuntu-22.04'
+    ok 'la par defaut est signalee'  ($wsl[0].nom) 'Ubuntu-22.04 (par defaut)'
+    ok 'et la commande est juste'    ($wsl[0].commande) 'wsl --install -d Ubuntu-22.04'
+    ok 'l en-tete n est pas une distribution' (@($wsl | Where-Object { $_.id -like '*Subsystem*' }).Count) 0
+
+    New-Item -ItemType Directory -Path (Join-Path $bacO 'scoop\apps\7zip') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $bacO 'scoop\apps\scoop') -Force | Out-Null
+    $sc = @(Format-PaquetsDossier -Racine (Join-Path $bacO 'scoop\apps') -Famille 'scoop' -Modele 'scoop install {0}')
+    ok 'un paquet scoop est vu'      $sc.Count 1
+    ok 'scoop lui-meme est ignore'   (@($sc | Where-Object { $_.id -eq 'scoop' }).Count) 0
+
+    # npm et corepack sont livres avec Node : les voir dans la liste ferait
+    # douter du reste.
+    $npm = @(Format-PaquetsNpm -Json '{"dependencies":{"typescript":{"version":"5.6.2"},"npm":{"version":"10.9.0"},"corepack":{"version":"0.34"}}}')
+    ok 'un paquet global est vu'     $npm.Count 1
+    ok 'avec sa version'             $npm[0].version '5.6.2'
+    ok 'du JSON illisible ne casse rien' (@(Format-PaquetsNpm -Json 'pas du json').Count) 0
+    ok 'rien du tout non plus'       (@(Format-PaquetsNpm -Json '').Count) 0
+
+    $pip = @(Format-PaquetsPip -Lignes @('requests==2.32.3', '', 'ruff==0.6.8', 'ligne invalide'))
+    ok 'deux paquets pip'            $pip.Count 2
+    ok 'la version est separee'      $pip[0].version '2.32.3'
+} finally {
+    Remove-Item $bacO -Recurse -Force -ErrorAction SilentlyContinue
+}
+
 "--- la table des configurations ne doit pas se marcher dessus ---"
 # sauvegarder-configs.ps1 derive le nom du sous-dossier de copie du nom de
 # l entree, en remplacant ce qui n est pas un caractere de nom de fichier.

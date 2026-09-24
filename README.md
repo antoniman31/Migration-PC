@@ -150,12 +150,33 @@ communes à toute réinstallation Windows, aucun script n'est nécessaire.
 | Paquets APPX | Les applications du Microsoft Store |
 | Steam, Epic, GOG, Xbox | Les jeux installés, sur tous les disques |
 | Variables d'environnement | Les variables personnalisées de l'utilisateur |
+| SDK Android, WSL, scoop, Chocolatey, npm, pip | Les chaînes d'outils qu'aucun installateur n'enregistre |
 
 Une entrée vue par plusieurs sources est fusionnée : le nom vient du registre,
 l'identifiant winget de winget, la taille sur disque de celle qui la connaît, et rien
 n'apparaît deux fois. Chaque application est classée par catégorie selon des mots-clés,
 avec une priorité et une durée estimée — tout cela reste modifiable à la main dans le
 JSON.
+
+**Les chaînes d'outils ne sont pas copiées, elles sont listées.** Une machine de
+développement porte des choses qu'aucun installateur n'enregistre : le SDK Android, les
+distributions WSL, les paquets de scoop et de Chocolatey, les outils globaux de npm et
+de pip. Rien de cela n'apparaît dans le registre, ni dans winget, ni dans le Store, donc
+le scan les ignorait entièrement. Les copier n'aurait pas de sens — le seul SDK Android
+pèse vingt à soixante Go et se retélécharge — alors on emporte la liste, et pour chaque
+entrée la commande qui la remet en place. Exactement ce qu'on fait déjà pour les
+logiciels avec winget.
+
+Le SDK se lit dans son arborescence plutôt qu'en lançant `sdkmanager` : c'est plus
+rapide, cela ne demande pas de Java, et les identifiants obtenus — `platforms;android-34`,
+`system-images;android-34;google_apis;x86_64` — sont exactement ceux que `sdkmanager`
+reprend. La commande affichée n'est jamais devinée : le scanner la fournit, la page la
+recopie. Deviner celle d'un paquet scoop reviendrait à servir un ordre faux qui a l'air
+vrai, ce que ce projet évite partout ailleurs.
+
+Deux filtres valent d'être connus : `npm` et `corepack` sont livrés avec Node, et `pip`
+est interrogé avec `--not-required`, sans quoi la liste se remplit des dépendances
+transitives que personne n'installe volontairement.
 
 Les variables d'environnement personnalisées sont relevées et remplissent directement
 les champs prévus par la checklist, sans recopie manuelle. Une valeur déjà saisie n'est
