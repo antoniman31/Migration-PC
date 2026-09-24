@@ -102,6 +102,10 @@ foreach ($c in $configs) {
         $index += [ordered]@{
             nom      = $c.nom
             origine  = $c.chemin
+            # Le chemin encore variabilise : c'est lui que la restauration
+            # deroulera sur la machine d'arrivee, dont le nom d'utilisateur
+            # n'est pas forcement le meme.
+            modele   = if ($c.Contains('modele')) { $c.modele } else { '' }
             dossier  = $sousDossier
             quoi     = $c.quoi
             tailleMo = $c.tailleMo
@@ -135,5 +139,8 @@ Write-Host "$copies dossier(s) copie(s)$(if ($echecs) { ", $echecs echec(s)" }).
 Write-Host "Index ecrit : $fichierIndex"
 Write-Host ""
 Write-Host "Sur le nouveau PC, apres avoir installe les logiciels :"
-Write-Host "  .\restaurer-configs.ps1 -Source $Destination"
+# Le chemin est recopie par l'utilisateur dans une console : s'il contient
+# une espace, la commande suggeree doit deja porter ses guillemets.
+$aRecopier = if ($Destination -match '\s') { '"' + $Destination + '"' } else { $Destination }
+Write-Host "  .\restaurer-configs.ps1 -Source $aRecopier"
 Write-Host ""

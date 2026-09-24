@@ -140,6 +140,20 @@ ok 'sans code, rien'                 (@($pil | Where-Object { $_.nom -eq 'Sans c
 ok 'le probleme est nomme'           (@($pil | Where-Object { $_.nom -match 'Ethernet' })[0].probleme) 'aucun pilote installe'
 ok 'liste vide, rien'                (@(Format-Pilotes -Peripheriques @())).Count 0
 
+"--- la table des configurations ne doit pas se marcher dessus ---"
+# sauvegarder-configs.ps1 derive le nom du sous-dossier de copie du nom de
+# l entree, en remplacant ce qui n est pas un caractere de nom de fichier.
+# Deux entrees qui retombent sur le meme nom se recouvriraient en silence, et
+# l index decrirait deux fois le meme dossier.
+$nomsDeDossier = @($ConfigsConnues | ForEach-Object { ($_.nom -replace '[^\w\- ]', '_').Trim() })
+ok 'chaque entree a un nom'          (@($ConfigsConnues | Where-Object { -not $_.nom }).Count) 0
+ok 'aucun nom de dossier vide'       (@($nomsDeDossier | Where-Object { -not $_ }).Count) 0
+ok 'aucune collision de dossier'     ($nomsDeDossier.Count) (@($nomsDeDossier | Sort-Object -Unique).Count)
+# Le modele garde ses variables : c est lui qui permet de restaurer sous un
+# autre nom d utilisateur. Un chemin en dur dans la table casserait cela.
+$enDur = @($ConfigsConnues | Where-Object { @($_.chemins | Where-Object { $_ -notmatch '%' }).Count -gt 0 })
+ok 'aucun chemin en dur dans la table' $enDur.Count 0
+
 "--- dossiers de configuration ---"
 # Un dossier de config ne se devine pas : il est cherche la ou la table le dit,
 # et seulement si le logiciel correspondant est installe.

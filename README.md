@@ -854,6 +854,14 @@ moins une fois.
 À lancer **après** avoir installé les logiciels, et fenêtres fermées : la plupart lisent
 leurs réglages au démarrage et réécriraient par-dessus en se fermant.
 
+**Le nouveau PC n'a pas forcément le même nom d'utilisateur.** L'index garde donc deux
+chemins par entrée : celui de l'ancienne machine, pour mémoire, et le même avant
+expansion des variables — `%APPDATA%\Code\User`. C'est le second qui est déroulé à
+l'arrivée. Sans cela, la restauration créait un `C:\Users\<ancien nom>\` sur la machine
+neuve, sous un profil que personne n'utilise, et l'annonçait en vert. Un index produit
+par une version antérieure n'a pas ce champ : il se restaure encore, sur le chemin
+d'origine.
+
 **Les dossiers de configuration sont repérés, pas devinés.** Le scanner connaît une
 table d'emplacements — celui de VS Code, de Notepad++, de Firefox, d'OBS, d'une trentaine
 de logiciels courants — et ne retient que ceux qui existent réellement, pour un logiciel

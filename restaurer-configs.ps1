@@ -82,9 +82,36 @@ Write-Host ""
 $horodatage = (Get-Date).ToString('yyyyMMdd-HHmmss')
 $faits = 0; $sautes = 0; $echecs = 0
 
+# Ou reposer une entree, sur CETTE machine.
+#
+# L'index garde deux choses : « origine », le chemin tel qu'il etait sur
+# l'ancien PC, et « modele », le meme avant expansion des variables. Le
+# premier porte le nom d'utilisateur de l'ancienne machine. Restaurer dessus
+# creait C:\Users\<ancien nom>\... sur le PC neuf — un dossier que personne
+# ne lit, sous un profil qui n'existe pas — et l'annoncait en vert.
+#
+# Le modele, lui, se deroule ici : %APPDATA% vaut ce qu'il vaut sur cette
+# machine. On ne retombe sur l'origine que pour un index ancien, qui n'a pas
+# de modele, ou si une variable ne se resout pas.
+function Get-Destination {
+    param($Entree)
+    $modele = ''
+    if ($Entree.PSObject.Properties['modele']) { $modele = [string]$Entree.modele }
+    if ($modele) {
+        $deroule = [Environment]::ExpandEnvironmentVariables($modele)
+        if ($deroule -notlike '*%*') { return $deroule }
+    }
+    return [string]$Entree.origine
+}
+
 foreach ($e in $entrees) {
     $nom = [string]$e.nom
-    $vers = [string]$e.origine
+    $vers = Get-Destination -Entree $e
+    $origine = [string]$e.origine
+    if ($vers -ne $origine) {
+        Write-Host ("  ailleurs {0,-27} {1}" -f $nom, $vers) -ForegroundColor DarkGray
+        Write-Host ("           (sur l'ancien PC : $origine)") -ForegroundColor DarkGray
+    }
     $depuis = Join-Path $Source ([string]$e.dossier)
 
     if (-not (Test-Path -LiteralPath $depuis)) {
@@ -120,7 +147,6 @@ foreach ($e in $entrees) {
         }
         # Le contenu du dossier sauvegarde, pas le dossier lui-meme : sinon on
         # obtiendrait Code\User\User.
-        $source = Get-Item -LiteralPath $depuis -Force
         $interieur = @(Get-ChildItem -LiteralPath $depuis -Force)
         if ($interieur.Count -eq 1 -and $interieur[0].PSIsContainer -and
             $interieur[0].Name -eq (Split-Path $vers -Leaf)) {

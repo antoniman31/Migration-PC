@@ -80,6 +80,47 @@ try {
     # script qui ecrase soit acceptable.
     ok 'et reste lisible'             (Get-Content -LiteralPath (Join-Path $misDeCote[0].FullName 'id_ed25519') -Raw).Trim() 'CLE DU NOUVEAU PC'
 
+    "`n--- le nouveau PC n a pas le meme nom d utilisateur ---"
+    # C'est le cas normal d'une migration, pas un cas tordu. L'index gardait
+    # « C:\Users\<ancien nom>\.ssh » : restaurer dessus creait ce dossier sur
+    # le PC neuf, sous un profil que personne n'utilise, et l'annoncait en vert.
+    $neuf = Join-Path $T 'profil-du-neuf'
+    $null = New-Item -ItemType Directory -Path $neuf -Force
+    $ancienProfil = $env:USERPROFILE
+    # Les blocs precedents ont deja mis un .ssh de cote ici : ce qu'on verifie,
+    # c'est qu'aucun NOUVEAU deplacement n'a lieu sous l'ancien profil.
+    $avantCote = @(Get-ChildItem -LiteralPath $ancienProfil -Filter '.ssh.avant-migration-*' -Force -ErrorAction SilentlyContinue).Count
+    $env:USERPROFILE = $neuf
+    try {
+        & (Join-Path $racine 'restaurer-configs.ps1') -Source $dest *> $null
+        ok 'les cles arrivent chez le nouvel utilisateur' `
+            (Test-Path -LiteralPath (Join-Path $neuf '.ssh\id_ed25519')) $true
+        ok 'avec le bon contenu' `
+            (Get-Content -LiteralPath (Join-Path $neuf '.ssh\id_ed25519') -Raw).Trim() 'CLE ORIGINALE'
+        # Et surtout : rien n'a ete ecrit sous le profil de l'ancienne machine.
+        $apresCote = @(Get-ChildItem -LiteralPath $ancienProfil -Filter '.ssh.avant-migration-*' -Force -ErrorAction SilentlyContinue).Count
+        ok 'l ancien profil n est pas touche' $apresCote $avantCote
+    } finally {
+        $env:USERPROFILE = $ancienProfil
+    }
+
+    "`n--- un index d avant, sans modele ---"
+    # Une sauvegarde faite par la version precedente n'a pas de champ
+    # « modele » : elle doit continuer a se restaurer, sur son chemin d'origine.
+    $vieux = Join-Path $T 'cle\vieux'
+    $null = New-Item -ItemType Directory -Path (Join-Path $vieux 'Truc') -Force
+    Set-Content -Path (Join-Path $vieux 'Truc\reglages.txt') -Value 'ANCIEN FORMAT'
+    $cible = Join-Path $T 'cible-heritee'
+    $vieilIndex = [ordered]@{
+        type = 'configs-migration-pc'; version = 1; genere = (Get-Date).ToString('o')
+        machine = 'ANCIEN-PC'
+        entrees = @([ordered]@{ nom = 'Truc'; origine = $cible; dossier = 'Truc'; quoi = ''; tailleMo = 0 })
+    }
+    Set-Content -LiteralPath (Join-Path $vieux 'index-configs.json') -Value ($vieilIndex | ConvertTo-Json -Depth 6) -Encoding UTF8
+    & (Join-Path $racine 'restaurer-configs.ps1') -Source $vieux *> $null
+    ok 'un index sans modele se restaure encore' `
+        (Get-Content -LiteralPath (Join-Path $cible 'reglages.txt') -Raw).Trim() 'ANCIEN FORMAT'
+
     "`n--- ce qu il refuse de faire ---"
     $vide = Join-Path $T 'pas-un-dossier-de-sauvegarde'
     $null = New-Item -ItemType Directory -Path $vide -Force

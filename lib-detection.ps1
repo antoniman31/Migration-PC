@@ -609,6 +609,11 @@ function Read-Configs {
             $trouves += [ordered]@{
                 nom      = $regle.nom
                 chemin   = $chemin
+                # Le chemin AVANT expansion : « %APPDATA%\Code\User » vaut sur
+                # n'importe quelle machine, « C:\Users\antoni\... » seulement
+                # sur celle-ci. C'est lui qui permet de restaurer sous un autre
+                # nom d'utilisateur.
+                modele   = $brut
                 quoi     = $regle.quoi
                 tailleMo = Get-TailleDossier -Chemin $chemin
                 logiciel = $regle.cle
