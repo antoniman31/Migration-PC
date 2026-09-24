@@ -30,14 +30,18 @@ réinstaller dans le bon ordre, et ne pas oublier de sauvegarder ce qui n'existe
 local. Ce projet couvre les trois.
 
 ```
-Ancien PC                          Nouveau PC
-─────────                          ──────────
-scan-pc.ps1                        index.html
-    │                                  │
-    └──► inventaire-pc.json ───────────┘
-         (clé USB)                 liste à cocher
-                                   + script winget
+Ancien PC                              Nouveau PC
+─────────                              ──────────
+scan-pc.ps1 ──► inventaire-pc.json ──► index.html ◄── verifier-pc.ps1
+                                           ▲              (constate ce qui
+verifier-sauvegardes.ps1 ──────────────────┘               est déjà installé)
+  (compare les dossiers copiés)
 ```
+
+Trois scripts, une page. `scan-pc.ps1` inventorie la machine qu'on quitte,
+`verifier-pc.ps1` constate ce qui est déjà en place sur celle qu'on installe, et
+`verifier-sauvegardes.ps1` vérifie que les dossiers ont bien été copiés. Tous les trois
+partagent leur logique de détection, qui vit une seule fois dans `lib-detection.ps1`.
 
 Le scan n'est pas obligatoire : la page s'ouvre sur un profil d'exemple utilisable tel
 quel, et vous pouvez écrire le vôtre.
@@ -93,6 +97,49 @@ par défaut, sinon la liste dépasse largement ce qu'on réinstalle vraiment.
 Le script n'a pas besoin des droits administrateur, mais sans eux les logiciels
 installés par d'autres comptes utilisateurs peuvent manquer. Il n'écrit qu'un fichier
 local et n'envoie rien sur le réseau.
+
+## Vérifier le nouveau PC
+
+Installer dix applications puis cocher dix cases à la main est du travail inutile. Sur
+la machine fraîchement installée :
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\verifier-pc.ps1
+```
+
+Le script détecte ce qui est déjà présent, le rapproche des éléments du profil et écrit
+`verification-pc.json`. À l'import, la page affiche la liste avec la raison de chaque
+correspondance — identifiant winget, ou nom seul — et **rien n'est coché sans votre
+validation** : un rapprochement par nom peut confondre deux logiciels voisins, et une
+case cochée à tort fait sauter une installation.
+
+Par défaut, seuls les identifiants winget sont retenus : moins de correspondances,
+aucune fausse. `-NomsApproximatifs` élargit la recherche aux noms.
+
+## Vérifier les sauvegardes
+
+L'onglet Données liste des chemins et on coche en confiance. Ce script compare les deux
+côtés :
+
+```powershell
+.\verifier-sauvegardes.ps1 -Destination D:\sauvegarde-migration
+```
+
+Pour chaque élément qui désigne un vrai dossier, il compte les fichiers et mesure la
+taille à la source et dans la copie, puis classe : conforme, écart de taille, incomplet,
+copie absente. Un élément qui ne désigne aucun dossier — « Courriels et espaces
+clients » — est rapporté comme non vérifiable plutôt que passé sous silence. Un champ
+peut porter plusieurs chemins séparés par une virgule ou par « et » : ils sont traités
+un par un.
+
+Le rapport produit est aussi une progression : l'importer coche les éléments vérifiés
+conformes. `-ToleranceParCent` règle l'écart de taille toléré, 2 % par défaut.
+
+| Option | Effet |
+|---|---|
+| `-Destination <chemin>` | Le dossier de sauvegarde à comparer (obligatoire) |
+| `-Profil <chemin>` | Le profil à vérifier (par défaut `profil-local.json`, puis l'exemple) |
+| `-ToleranceParCent <n>` | Écart de taille toléré avant signalement |
 
 ## La checklist
 
@@ -167,7 +214,14 @@ sont coupées, confettis compris.
 
 ## Formats de fichiers
 
-Le bouton **Importer** accepte quatre formats et les reconnaît tout seul.
+Le bouton **Importer** accepte six formats et les reconnaît tout seul.
+
+**Vérification de PC** — produite par `verifier-pc.ps1`, reconnue à son champ `type`.
+Seul format qui ne s'applique pas directement : la page affiche la liste et attend
+confirmation.
+
+**Rapport de sauvegardes** — produit par `verifier-sauvegardes.ps1`. C'est une
+progression ordinaire enrichie du détail de la comparaison.
 
 **Export winget** — le fichier produit par `winget export -o apps.json` sur n'importe
 quel PC, sans rien installer de ce projet. Il ne contient que des identifiants, donc les
@@ -271,7 +325,7 @@ npm run test:a11y                 # accessibilité et réversibilité
 npm run test:guide                # mode guidé
 ```
 
-Onze suites, dans l'ordre où la CI les lance.
+Quatorze suites, dans l'ordre où la CI les lance.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
@@ -285,8 +339,14 @@ a coûté trois bugs au projet.
 Il rejoue l'import d'un inventaire réellement produit par le scanner
 (`tests/inventaire-exemple.json`), ce qui couvre la chaîne de bout en bout.
 
-`tests/test-scan.ps1` couvre le classement, la fusion entre sources et le parsing de la
-sortie winget, sans toucher à la machine.
+`tests/test-scan.ps1` et `tests/test-verification.ps1` couvrent le classement, la fusion
+entre sources, le parsing de la sortie winget et le rapprochement avec le profil, sans
+toucher à la machine.
+
+`tests/test-sauvegardes.ps1` **exécute réellement** `verifier-sauvegardes.ps1` sur une
+arborescence construite pour l'occasion — copie fidèle, copie tronquée, copie vide,
+source absente, chemins multiples — et constate son verdict. C'est le seul script
+PowerShell du projet qui tourne hors Windows, puisqu'il ne lit que des fichiers.
 
 `tests/test-navigateur.js` charge la page dans un vrai Chromium et vérifie ce qu'un DOM
 simulé ne voit pas : que les quatre panneaux sont bien frères et non imbriqués, que les
@@ -317,7 +377,7 @@ tactile et de clavier que la vue liste.
 
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les onze suites à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les quatorze suites à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 
@@ -330,12 +390,18 @@ et court-circuiterait les tests.
 ```
 Migration-PC/
 ├── index.html                    # la checklist (tout est dedans)
-├── scan-pc.ps1                   # le scanner Windows
+├── lib-detection.ps1             # détection partagée par les trois scripts
+├── scan-pc.ps1                   # inventorie l'ancien PC
+├── verifier-pc.ps1               # constate ce qui est déjà sur le nouveau
+├── verifier-sauvegardes.ps1      # compare les dossiers copiés
 ├── manifest.json, sw.js, icons/  # installation et fonctionnement hors ligne
 ├── presets/exemple.json          # profil d'exemple, aussi embarqué dans index.html
 ├── tests/                        # suites Node, PowerShell et navigateur
 └── .github/workflows/ci.yml      # tests, puis publication si tout est vert
 ```
+
+Les trois scripts PowerShell ont besoin de `lib-detection.ps1` à côté d'eux : copiez le
+dossier, pas un fichier isolé.
 
 `package.json` ne sert qu'aux tests : `index.html` n'a aucune dépendance et n'a jamais
 besoin d'être construit.

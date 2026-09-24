@@ -1,0 +1,148 @@
+{
+  "type": "sauvegardes-migration-pc",
+  "version": 3,
+  "exported": 1790230335695,
+  "destination": "/tmp/claude-0/-home-user-Migration-PC/5b239acd-66ab-55a0-a6d0-97b62189c244/scratchpad/sv/dst",
+  "resume": {
+    "conformes": 1,
+    "problemes": 3,
+    "nonVerifiables": 1
+  },
+  "elements": [
+    {
+      "id": "s1",
+      "nom": "Documents",
+      "etat": "ok",
+      "detail": "",
+      "chemins": [
+        {
+          "chemin": "%SV%/src/Documents",
+          "source": "/tmp/claude-0/-home-user-Migration-PC/5b239acd-66ab-55a0-a6d0-97b62189c244/scratchpad/sv/src/Documents",
+          "copie": "/tmp/claude-0/-home-user-Migration-PC/5b239acd-66ab-55a0-a6d0-97b62189c244/scratchpad/sv/dst/s1",
+          "etat": "ok",
+          "fichiersSource": 5,
+          "fichiersCopie": 5,
+          "octetsSource": 100000,
+          "octetsCopie": 100000,
+          "ecartParCent": 0.0
+        }
+      ]
+    },
+    {
+      "id": "s2",
+      "nom": "Bureau",
+      "etat": "ecart-taille",
+      "detail": "",
+      "chemins": [
+        {
+          "chemin": "%SV%/src/Desktop",
+          "source": "/tmp/claude-0/-home-user-Migration-PC/5b239acd-66ab-55a0-a6d0-97b62189c244/scratchpad/sv/src/Desktop",
+          "copie": "/tmp/claude-0/-home-user-Migration-PC/5b239acd-66ab-55a0-a6d0-97b62189c244/scratchpad/sv/dst/s2",
+          "etat": "ecart-taille",
+          "fichiersSource": 1,
+          "fichiersCopie": 1,
+          "octetsSource": 5000,
+          "octetsCopie": 3000,
+          "ecartParCent": 40.0
+        }
+      ]
+    },
+    {
+      "id": "s5",
+      "nom": "Clés SSH",
+      "etat": "incomplet",
+      "detail": "",
+      "chemins": [
+        {
+          "chemin": "%SV%/src/.ssh",
+          "source": "/tmp/claude-0/-home-user-Migration-PC/5b239acd-66ab-55a0-a6d0-97b62189c244/scratchpad/sv/src/.ssh",
+          "copie": "/tmp/claude-0/-home-user-Migration-PC/5b239acd-66ab-55a0-a6d0-97b62189c244/scratchpad/sv/dst/s5",
+          "etat": "incomplet",
+          "fichiersSource": 1,
+          "fichiersCopie": 0,
+          "octetsSource": 400,
+          "octetsCopie": 0,
+          "ecartParCent": 100.0
+        }
+      ]
+    },
+    {
+      "id": "s6",
+      "nom": "Licences logicielles",
+      "etat": "non-verifiable",
+      "detail": "« Courriels et espaces clients » ne designe pas un chemin",
+      "chemins": []
+    },
+    {
+      "id": "s9",
+      "nom": "Dossier vide",
+      "etat": "rien-a-sauvegarder",
+      "detail": "",
+      "chemins": [
+        {
+          "chemin": "%SV%/src/Vide",
+          "source": "/tmp/claude-0/-home-user-Migration-PC/5b239acd-66ab-55a0-a6d0-97b62189c244/scratchpad/sv/src/Vide",
+          "etat": "source-absente",
+          "fichiersSource": 0,
+          "fichiersCopie": 0,
+          "octetsSource": 0,
+          "octetsCopie": 0
+        }
+      ]
+    },
+    {
+      "id": "s11",
+      "nom": "Source inexistante",
+      "etat": "rien-a-sauvegarder",
+      "detail": "",
+      "chemins": [
+        {
+          "chemin": "%SV%/src/JamaisCree",
+          "source": "/tmp/claude-0/-home-user-Migration-PC/5b239acd-66ab-55a0-a6d0-97b62189c244/scratchpad/sv/src/JamaisCree",
+          "etat": "source-absente",
+          "fichiersSource": 0,
+          "fichiersCopie": 0,
+          "octetsSource": 0,
+          "octetsCopie": 0
+        }
+      ]
+    },
+    {
+      "id": "s12",
+      "nom": "Deux dossiers",
+      "etat": "manquant",
+      "detail": "",
+      "chemins": [
+        {
+          "chemin": "%SV%/src/Documents",
+          "source": "/tmp/claude-0/-home-user-Migration-PC/5b239acd-66ab-55a0-a6d0-97b62189c244/scratchpad/sv/src/Documents",
+          "etat": "copie-absente",
+          "fichiersSource": 5,
+          "fichiersCopie": 0,
+          "octetsSource": 100000,
+          "octetsCopie": 0
+        },
+        {
+          "chemin": "%SV%/src/Desktop",
+          "source": "/tmp/claude-0/-home-user-Migration-PC/5b239acd-66ab-55a0-a6d0-97b62189c244/scratchpad/sv/src/Desktop",
+          "etat": "copie-absente",
+          "fichiersSource": 1,
+          "fichiersCopie": 0,
+          "octetsSource": 5000,
+          "octetsCopie": 0
+        }
+      ]
+    }
+  ],
+  "state": {
+    "checked": {
+      "s1": true
+    },
+    "notes": {},
+    "dates": {
+      "s1": 1790230335695
+    },
+    "lic": {},
+    "env": {}
+  }
+}

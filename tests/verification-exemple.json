@@ -1,0 +1,17 @@
+{
+  "type": "verification-migration-pc",
+  "version": 1,
+  "genere": "2026-09-24T11:20:00.000+02:00",
+  "machine": { "os": "Windows 11 Pro 24H2", "nom": "PC-NEUF" },
+  "profil": { "fichier": "exemple.json", "nom": "Migration Windows — profil type" },
+  "trouves": [
+    { "id": "a1", "nom": "7-Zip", "detecte": "7-Zip 24.08 (x64)", "version": "24.08", "source": "registre, winget", "raison": "identifiant winget 7zip.7zip", "confiance": "sure" },
+    { "id": "a3", "nom": "VLC", "detecte": "VLC media player", "version": "3.0.21", "source": "registre", "raison": "identifiant winget VideoLAN.VLC", "confiance": "sure" },
+    { "id": "a13", "nom": "Steam", "detecte": "Steam", "version": "", "source": "registre", "raison": "nom correspondant a « Steam »", "confiance": "approximative" },
+    { "id": "zz9", "nom": "Absent du profil", "detecte": "Truc", "version": "", "source": "registre", "raison": "nom correspondant", "confiance": "approximative" }
+  ],
+  "absents": [
+    { "id": "a7", "nom": "Git" },
+    { "id": "a10", "nom": "Visual Studio Code" }
+  ]
+}

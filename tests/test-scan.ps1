@@ -1,11 +1,9 @@
-# Tests du scanner : charge les fonctions de scan-pc.ps1 sans lancer le scan reel.
+# Tests de la detection partagee. Depuis que les trois scripts s'appuient sur
+# lib-detection.ps1, il suffit de la charger : elle ne fait rien d'elle-meme.
 #   pwsh -File tests/test-scan.ps1
-$src = Get-Content "$PSScriptRoot/../scan-pc.ps1" -Raw
-$coupe = $src.IndexOf('# ---------------------------------------------------------------- execution')
-if ($coupe -lt 0) { Write-Error "marqueur d'execution introuvable dans scan-pc.ps1"; exit 1 }
-$corps = $src.Substring(0, $coupe) -replace '\[CmdletBinding\(\)\]', ''
-$corps = [regex]::Replace($corps, 'param\(\r?\n(    .*\r?\n)+\)', '$ToutInclure = $false')
-Invoke-Expression $corps
+$ToutInclure = $false
+$resultats = @{}
+. "$PSScriptRoot/../lib-detection.ps1"
 $script:ko=0
 function ok($l,$a,$b){ if($a -eq $b){"  ok   $l -> $a"} else {"  FAIL $l -> $a (attendu $b)";$script:ko++} }
 

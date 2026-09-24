@@ -66,9 +66,21 @@ jobs:
       - name: Dépendances entre éléments
         run: node tests/test-dependances.js
 
+      - name: Import d'une vérification de PC
+        run: node tests/test-verification-pc.js
+
       # pwsh est preinstalle sur les runners ubuntu-latest.
       - name: Scanner — classement, fusion, parsing
         run: pwsh -File tests/test-scan.ps1
+
+      - name: Vérification du PC — rapprochement
+        run: pwsh -File tests/test-verification.ps1
+
+      # Le seul script PowerShell du projet qui tourne vraiment hors Windows :
+      # il ne lit que des fichiers. Le test l'execute sur une arborescence
+      # construite pour l'occasion, au lieu de simuler ses resultats.
+      - name: Vérification des sauvegardes — exécution réelle
+        run: pwsh -File tests/test-sauvegardes.ps1
 
       - name: Checklist — rendu navigateur
         run: node tests/test-navigateur.js
