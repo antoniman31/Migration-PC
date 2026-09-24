@@ -16,6 +16,103 @@
     "system": "🔧 Utilitaires Système",
     "comms": "💬 Communication"
   },
+  "quitter": [
+    {
+      "id": "q1",
+      "n": "Désactiver les logiciels Adobe",
+      "p": "Application → Aide → Se déconnecter",
+      "note": "Désinstaller ou formater ne désactive rien : l'activation reste attachée à une machine qui n'existe plus, et une licence n'en autorise qu'un nombre limité.",
+      "pr": "high",
+      "warn": "À faire pendant que l'ancien PC fonctionne encore. Après le formatage, il faut passer par le support."
+    },
+    {
+      "id": "q2",
+      "n": "Délier les autres licences liées à la machine",
+      "p": "Chaque éditeur concerné",
+      "note": "Antivirus, utilitaires système, logiciels de montage, suites de création. Tout ce qui s'active par clé plutôt que par compte est concerné. La page « mes appareils » de chaque compte en ligne les liste.",
+      "pr": "high"
+    },
+    {
+      "id": "q3",
+      "n": "Transférer l'application d'authentification",
+      "p": "Téléphone — fonction de transfert",
+      "note": "Les jetons ne se copient pas. Utiliser la fonction de transfert prévue, et le faire avant de changer de téléphone si les deux migrations tombent ensemble.",
+      "pr": "high",
+      "warn": "Sans transfert ni codes de secours, les comptes concernés deviennent inaccessibles."
+    },
+    {
+      "id": "q4",
+      "n": "Sortir les codes de récupération 2FA",
+      "p": "Chaque compte → Sécurité",
+      "note": "Le filet quand le transfert échoue. Les imprimer ou les mettre dans un gestionnaire de mots de passe, jamais sur la machine qu'on efface.",
+      "pr": "high"
+    },
+    {
+      "id": "q5",
+      "n": "Noter la clé de récupération BitLocker",
+      "p": "Paramètres → Chiffrement de l'appareil",
+      "note": "Si le disque est chiffré et que vous comptez y revenir chercher un fichier oublié, sans cette clé il est illisible. Cela vaut aussi pour un disque secondaire.",
+      "pr": "high"
+    },
+    {
+      "id": "q6",
+      "n": "Vérifier que les sauvegardes sont restaurables",
+      "p": "Le support de sauvegarde",
+      "note": "Ouvrir quelques fichiers au hasard depuis la copie, pas depuis l'original. Une sauvegarde jamais relue n'est qu'une intention.",
+      "pr": "high",
+      "warn": "Dernière occasion de s'en apercevoir. Après le formatage, il n'y a plus de source."
+    },
+    {
+      "id": "q7",
+      "n": "Désautoriser Steam Guard",
+      "p": "Steam → Paramètres → Sécurité",
+      "note": "Retirer l'ancien PC des appareils autorisés évite qu'il compte dans la limite, et coupe l'accès si la machine change de mains.",
+      "pr": "med"
+    },
+    {
+      "id": "q8",
+      "n": "Désautoriser iTunes et les lecteurs liés",
+      "p": "Compte → Autorisations",
+      "note": "Le nombre d'ordinateurs autorisés est limité et ne se libère pas tout seul. Une machine formatée reste comptée.",
+      "pr": "med"
+    },
+    {
+      "id": "q9",
+      "n": "Se déconnecter des sessions ouvertes",
+      "p": "Comptes en ligne → Appareils connectés",
+      "note": "Messageries, réseaux sociaux, services de stockage. Une session laissée ouverte sur une machine cédée le reste.",
+      "pr": "med"
+    },
+    {
+      "id": "q10",
+      "n": "Récupérer les licences encore inconnues",
+      "p": "Belarc Advisor, ProduKey ou l'éditeur",
+      "note": "Les clés saisies il y a des années et jamais notées. Les relever tant que le système fonctionne.",
+      "pr": "med"
+    },
+    {
+      "id": "q11",
+      "n": "Exporter les profils Wi-Fi",
+      "p": "netsh wlan export profile key=clear folder=.",
+      "note": "Exporte chaque réseau enregistré avec sa clé. Utile pour les réseaux dont plus personne ne connaît le mot de passe.",
+      "pr": "med"
+    },
+    {
+      "id": "q12",
+      "n": "Photographier les réglages personnalisés",
+      "p": "Appareil photo du téléphone",
+      "note": "Disposition des icônes, profils de couleur des écrans, macros de périphériques, réglages audio. Une photo remplace une heure de tâtonnements.",
+      "pr": "ok"
+    },
+    {
+      "id": "q13",
+      "n": "Effacer le disque de façon sécurisée",
+      "p": "Outil du fabricant du SSD, ou chiffrement puis formatage",
+      "note": "Seulement si la machine est vendue ou donnée. Un formatage ordinaire laisse les données récupérables ; sur un SSD, un Secure Erase du fabricant est plus fiable qu'un écrasement.",
+      "pr": "ok",
+      "warn": "À ne faire qu'après avoir vérifié les sauvegardes et désactivé les licences."
+    }
+  ],
   "npc": [
     {
       "id": "n13",

@@ -13,7 +13,8 @@
     "test:a11y": "node tests/test-accessibilite.js",
     "sync": "node scripts-sync.js",
     "test:guide": "node tests/test-guide.js",
-    "test:verification": "node tests/test-verification-pc.js"
+    "test:verification": "node tests/test-verification-pc.js",
+    "test:quitter": "node tests/test-quitter.js"
   },
   "devDependencies": {
     "playwright": "^1.63.0"

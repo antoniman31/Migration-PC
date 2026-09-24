@@ -10,7 +10,11 @@ const fs=require('fs'),path=require('path');
 const racine=path.join(__dirname,'..');
 const HTML='file://'+path.join(racine,'index.html');
 const PROFIL=JSON.parse(fs.readFileSync(path.join(racine,'presets','exemple.json'),'utf8'));
-const TOTAL=PROFIL.npc.length+PROFIL.apps.length+PROFIL.data.length+PROFIL.pwa.length;
+const SECTIONS=['quitter','npc','apps','data','pwa'];
+const TOTAL=SECTIONS.reduce(function(n,s){return n+((PROFIL[s]||[]).length);},0);
+// La file suit l'ordre des onglets : ce qui se fait sur l'ancien PC passe en
+// premier quand le profil déclare cette section.
+const PREMIERE=(PROFIL.quitter&&PROFIL.quitter.length)?'Avant de quitter':'Nouveau PC';
 const lancement={args:['--no-sandbox']};
 if(process.env.CHROME)lancement.executablePath=process.env.CHROME;
 
@@ -47,7 +51,7 @@ const t=await pg.evaluate(()=>({
   reste:document.querySelector('.guide-reste').textContent}));
 console.log('   ',JSON.stringify(t));
 ok('une seule tâche affichée',t.titres,1);
-ok('la 1re est la 1re étape machine',t.onglet,'Nouveau PC');
+ok('la 1re tâche vient de la 1re section',t.onglet,PREMIERE);
 ok('compteur présent',t.etape,'Tâche 1 sur '+TOTAL);
 
 console.log('\n--- ce qui reste visible : commande et avertissement ---');

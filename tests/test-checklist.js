@@ -54,7 +54,9 @@ eq('entête rendue',els['profil-titre'].textContent,DEF.meta.nom);
 eq('filtres générés',els['cat-filters'].innerHTML.split('<button').length-1,Object.keys(DEF.cats).length+1);
 eq('liste apps rendue',els['list-apps'].innerHTML.length>500,true);
 eq('liste npc rendue',els['list-npc'].innerHTML.length>500,true);
-const TOT=DEF.npc.length+DEF.apps.length+DEF.data.length+DEF.pwa.length;
+// Somme de toutes les sections du profil, y compris celles ajoutées depuis.
+const SECTIONS=['quitter','npc','apps','data','pwa'];
+const TOT=SECTIONS.reduce(function(n,s){return n+((DEF[s]||[]).length);},0);
 eq('total global',String(els['gp-total'].textContent),String(TOT));
 
 console.log('\n--- cocher une tâche ---');

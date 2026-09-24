@@ -178,8 +178,16 @@ conformes. `-ToleranceParCent` règle l'écart de taille toléré, 2 % par défa
 
 ## La checklist
 
-Quatre onglets : **Nouveau PC**, **Apps**, **Données** à sauvegarder, **PWA**
-(raccourcis web).
+Cinq onglets : **Avant de quitter** l'ancien PC, **Nouveau PC**, **Apps**, **Données** à
+sauvegarder, **PWA** (raccourcis web).
+
+Le premier onglet regroupe ce qui se fait sur la machine qu'on abandonne et qui ne se
+rattrape pas ensuite : désactiver les licences Adobe et les autres activations liées au
+matériel — désinstaller ou formater ne désactive rien —, transférer l'application
+d'authentification et sortir les codes de récupération, noter la clé BitLocker, vérifier
+que les sauvegardes sont restaurables, désautoriser Steam et iTunes, et effacer le
+disque en sécurité si la machine est cédée. Les trois groupes sont classés par ce qu'on
+risque : irréversible, pénible à rattraper, confort.
 
 L'onglet Nouveau PC suit l'ordre réel d'une installation, et commence avant Windows :
 les réglages du BIOS — TPM 2.0 et Secure Boot, qui conditionnent l'installation de
@@ -319,6 +327,7 @@ pour que la page fonctionne sans serveur. Après avoir modifié le fichier, lanc
 ```javascript
 meta   // { nom, soustitre } — affichés dans l'en-tête
 cats   // { clé: libellé } — les catégories de l'onglet Apps
+quitter // { id, n, p, note, pr, warn? } — facultatif, sur l'ancien PC
 npc    // { id, o, n, src, p, t, d, post?, dep?, warn? }
 apps   // { id, n, c, src, w?, p, t, d, dep?, warn? }
 data   // { id, n, p, note, pr, lic?, env? }
@@ -330,6 +339,9 @@ requetes // { "Nom de l'app": "requête de recherche" }
 `p` et `pr` valent `high`, `med` ou `ok` · `t` est une durée en minutes · `o` est le
 numéro d'étape · `post: true` classe l'étape dans les vérifications d'après-installation
 · `w` est l'identifiant winget · `warn` affiche un avertissement.
+
+La section `quitter` est facultative : un profil qui ne la déclare pas affiche quatre
+onglets, comme avant.
 
 `dep` accepte deux formes. Une **chaîne** est un libellé affiché tel quel, sans
 vérification possible — c'est le format d'origine, toujours accepté. Un **tableau
@@ -375,13 +387,14 @@ npm run test:pwa                  # installabilité et fonctionnement hors ligne
 npm run test:mobile               # ergonomie tactile
 npm run test:a11y                 # accessibilité et réversibilité
 npm run test:guide                # mode guidé
+npm run test:quitter              # onglet « Avant de quitter »
 ```
 
 `npm test` ne lance que ce qui tourne partout sans rien installer. Les suites
 navigateur demandent Chromium (`npm install` le fournit via Playwright), les suites
 PowerShell demandent `pwsh`.
 
-Quatorze suites, dans l'ordre où la CI les lance.
+Quinze suites, dans l'ordre où la CI les lance.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
@@ -433,7 +446,7 @@ tactile et de clavier que la vue liste.
 
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les quatorze suites à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les quinze suites à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 

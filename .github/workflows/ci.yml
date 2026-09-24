@@ -99,6 +99,9 @@ jobs:
       - name: Mode guidé
         run: node tests/test-guide.js
 
+      - name: Onglet « Avant de quitter »
+        run: node tests/test-quitter.js
+
   publier:
     name: Publier sur Pages
     needs: verifier

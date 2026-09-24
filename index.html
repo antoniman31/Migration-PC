@@ -611,13 +611,30 @@ body.guide-actif .day-est{display:none}
 <section class="guide" id="guide" aria-live="polite"></section>
 
 <div class="tabs" role="tablist" aria-label="Sections de la checklist">
-  <button class="tab active" type="button" role="tab" aria-selected="true" aria-controls="panel-npc" onclick="switchTab('npc')" id="tab-npc">🖥️ Nouveau PC <span class="tab-badge" id="badge-npc">0/0</span></button>
+  <button class="tab active" type="button" role="tab" aria-selected="true" aria-controls="panel-quitter" onclick="switchTab('quitter')" id="tab-quitter">🚪 Avant de quitter <span class="tab-badge" id="badge-quitter">0/0</span></button>
+  <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-npc" onclick="switchTab('npc')" id="tab-npc">🖥️ Nouveau PC <span class="tab-badge" id="badge-npc">0/0</span></button>
   <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-apps" onclick="switchTab('apps')" id="tab-apps">📦 Apps <span class="tab-badge" id="badge-apps">0/0</span></button>
   <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-data" onclick="switchTab('data')" id="tab-data">💾 Données <span class="tab-badge" id="badge-data">0/0</span></button>
   <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-pwa" onclick="switchTab('pwa')" id="tab-pwa">🌍 PWA <span class="tab-badge" id="badge-pwa">0/0</span></button>
 </div>
 
-<div class="panel active" id="panel-npc" role="tabpanel" aria-labelledby="tab-npc" tabindex="0">
+<div class="panel active" id="panel-quitter" role="tabpanel" aria-labelledby="tab-quitter" tabindex="0">
+  <div class="tbar">
+    <span class="tbar-info">🚪 À faire sur l'ANCIEN PC, avant de formater ou de le céder</span>
+    <div class="tbar-right"><button class="sm-btn" type="button" onclick="printTab('quitter')" title="Imprimer cet onglet">🖨️ Onglet</button>
+      <button class="sm-btn" type="button" onclick="resetSection('quitter')">Réinitialiser</button></div>
+  </div>
+  <div class="sec-prog">
+    <div class="sec-bar-bg"><div class="sec-bar-fill" id="bar-quitter" style="width:0%"></div></div>
+    <span class="sec-prog-txt"><b id="done-quitter">0</b>/<span id="total-quitter">0</span></span>
+  </div>
+  <div class="sec-content" id="list-quitter"></div>
+  <div class="next-tab-btn" id="next-quitter">
+    <button class="next-btn" type="button" onclick="switchTab('npc')" id="next-quitter-btn">Nouveau PC <span id="next-quitter-count"></span> →</button>
+  </div>
+</div>
+
+<div class="panel" id="panel-npc" role="tabpanel" aria-labelledby="tab-npc" tabindex="0">
   <div class="tbar">
     <span class="tbar-info">🔢 Suivre l'ordre numéroté du haut vers le bas</span>
     <div class="tbar-right"><button class="sm-btn" onclick="printTab('npc')" title="Imprimer cet onglet">🖨️ Onglet</button>
@@ -719,6 +736,103 @@ const PROFIL_DEFAUT = {
     "system": "🔧 Utilitaires Système",
     "comms": "💬 Communication"
   },
+  "quitter": [
+    {
+      "id": "q1",
+      "n": "Désactiver les logiciels Adobe",
+      "p": "Application → Aide → Se déconnecter",
+      "note": "Désinstaller ou formater ne désactive rien : l'activation reste attachée à une machine qui n'existe plus, et une licence n'en autorise qu'un nombre limité.",
+      "pr": "high",
+      "warn": "À faire pendant que l'ancien PC fonctionne encore. Après le formatage, il faut passer par le support."
+    },
+    {
+      "id": "q2",
+      "n": "Délier les autres licences liées à la machine",
+      "p": "Chaque éditeur concerné",
+      "note": "Antivirus, utilitaires système, logiciels de montage, suites de création. Tout ce qui s'active par clé plutôt que par compte est concerné. La page « mes appareils » de chaque compte en ligne les liste.",
+      "pr": "high"
+    },
+    {
+      "id": "q3",
+      "n": "Transférer l'application d'authentification",
+      "p": "Téléphone — fonction de transfert",
+      "note": "Les jetons ne se copient pas. Utiliser la fonction de transfert prévue, et le faire avant de changer de téléphone si les deux migrations tombent ensemble.",
+      "pr": "high",
+      "warn": "Sans transfert ni codes de secours, les comptes concernés deviennent inaccessibles."
+    },
+    {
+      "id": "q4",
+      "n": "Sortir les codes de récupération 2FA",
+      "p": "Chaque compte → Sécurité",
+      "note": "Le filet quand le transfert échoue. Les imprimer ou les mettre dans un gestionnaire de mots de passe, jamais sur la machine qu'on efface.",
+      "pr": "high"
+    },
+    {
+      "id": "q5",
+      "n": "Noter la clé de récupération BitLocker",
+      "p": "Paramètres → Chiffrement de l'appareil",
+      "note": "Si le disque est chiffré et que vous comptez y revenir chercher un fichier oublié, sans cette clé il est illisible. Cela vaut aussi pour un disque secondaire.",
+      "pr": "high"
+    },
+    {
+      "id": "q6",
+      "n": "Vérifier que les sauvegardes sont restaurables",
+      "p": "Le support de sauvegarde",
+      "note": "Ouvrir quelques fichiers au hasard depuis la copie, pas depuis l'original. Une sauvegarde jamais relue n'est qu'une intention.",
+      "pr": "high",
+      "warn": "Dernière occasion de s'en apercevoir. Après le formatage, il n'y a plus de source."
+    },
+    {
+      "id": "q7",
+      "n": "Désautoriser Steam Guard",
+      "p": "Steam → Paramètres → Sécurité",
+      "note": "Retirer l'ancien PC des appareils autorisés évite qu'il compte dans la limite, et coupe l'accès si la machine change de mains.",
+      "pr": "med"
+    },
+    {
+      "id": "q8",
+      "n": "Désautoriser iTunes et les lecteurs liés",
+      "p": "Compte → Autorisations",
+      "note": "Le nombre d'ordinateurs autorisés est limité et ne se libère pas tout seul. Une machine formatée reste comptée.",
+      "pr": "med"
+    },
+    {
+      "id": "q9",
+      "n": "Se déconnecter des sessions ouvertes",
+      "p": "Comptes en ligne → Appareils connectés",
+      "note": "Messageries, réseaux sociaux, services de stockage. Une session laissée ouverte sur une machine cédée le reste.",
+      "pr": "med"
+    },
+    {
+      "id": "q10",
+      "n": "Récupérer les licences encore inconnues",
+      "p": "Belarc Advisor, ProduKey ou l'éditeur",
+      "note": "Les clés saisies il y a des années et jamais notées. Les relever tant que le système fonctionne.",
+      "pr": "med"
+    },
+    {
+      "id": "q11",
+      "n": "Exporter les profils Wi-Fi",
+      "p": "netsh wlan export profile key=clear folder=.",
+      "note": "Exporte chaque réseau enregistré avec sa clé. Utile pour les réseaux dont plus personne ne connaît le mot de passe.",
+      "pr": "med"
+    },
+    {
+      "id": "q12",
+      "n": "Photographier les réglages personnalisés",
+      "p": "Appareil photo du téléphone",
+      "note": "Disposition des icônes, profils de couleur des écrans, macros de périphériques, réglages audio. Une photo remplace une heure de tâtonnements.",
+      "pr": "ok"
+    },
+    {
+      "id": "q13",
+      "n": "Effacer le disque de façon sécurisée",
+      "p": "Outil du fabricant du SSD, ou chiffrement puis formatage",
+      "note": "Seulement si la machine est vendue ou donnée. Un formatage ordinaire laisse les données récupérables ; sur un SSD, un Secure Erase du fabricant est plus fiable qu'un écrasement.",
+      "pr": "ok",
+      "warn": "À ne faire qu'après avoir vérifié les sauvegardes et désactivé les licences."
+    }
+  ],
   "npc": [
     {
       "id": "n13",
@@ -1460,7 +1574,18 @@ const PROFIL_DEFAUT = {
 
 const CLE_PROFIL='mpc_profil_v1', CLE_ETAT='mpc_state_v1', CLE_THEME='mpc_theme';
 
-let CATS={}, NPC_DATA=[], APPS_DATA=[], DATA_SAVES=[], PWA_DATA=[], INSTALL_ORDER=[], SEARCH_QUERIES={};
+let CATS={}, NPC_DATA=[], APPS_DATA=[], DATA_SAVES=[], PWA_DATA=[], QUITTER_DATA=[], INSTALL_ORDER=[], SEARCH_QUERIES={};
+
+// La liste des onglets vivait en sept exemplaires dans le fichier. En ajouter
+// un obligeait à les retrouver tous, et en oublier un ne se voyait pas.
+const ONGLETS=['quitter','npc','apps','data','pwa'];
+const NOM_ONGLET={quitter:'Avant de quitter',npc:'Nouveau PC',apps:'Apps',data:'Données',pwa:'PWA'};
+function donneesDe(cle){
+  return {quitter:QUITTER_DATA,npc:NPC_DATA,apps:APPS_DATA,data:DATA_SAVES,pwa:PWA_DATA}[cle]||[];
+}
+function tousLesItems(){
+  return ONGLETS.reduce(function(acc,c){return acc.concat(donneesDe(c));},[]);
+}
 let PROFIL_NOM='', PROFIL_SOUS='';
 
 // ═══ PROFILS ═══
@@ -1478,6 +1603,8 @@ function appliquerProfil(p,memoriser){
   APPS_DATA=Array.isArray(p.apps)?p.apps:[];
   DATA_SAVES=Array.isArray(p.data)?p.data:[];
   PWA_DATA=Array.isArray(p.pwa)?p.pwa:[];
+  // Facultatif : un profil qui ne la déclare pas garde quatre onglets.
+  QUITTER_DATA=Array.isArray(p.quitter)?p.quitter:[];
   INSTALL_ORDER=Array.isArray(p.ordre)?p.ordre:[];
   SEARCH_QUERIES=p.requetes||{};
   // Une catégorie utilisée par une app mais absente de cats reste affichable.
@@ -1521,7 +1648,7 @@ function reinitProfil(){
 // Le profil chargé, reconstruit depuis les listes en mémoire.
 function profilCourant(){
   return {meta:{version:1,nom:PROFIL_NOM,soustitre:PROFIL_SOUS},cats:CATS,
-    npc:NPC_DATA,apps:APPS_DATA,data:DATA_SAVES,pwa:PWA_DATA,
+    npc:NPC_DATA,apps:APPS_DATA,data:DATA_SAVES,pwa:PWA_DATA,quitter:QUITTER_DATA,
     ordre:INSTALL_ORDER,requetes:SEARCH_QUERIES};
 }
 
@@ -1649,7 +1776,7 @@ function handleImport(evt){
 // ═══ STATE ═══
 const PRIO = {high:0,med:1,ok:2};
 let S = {checked:{},notes:{},dates:{},lastSave:null,lic:{},env:{}};
-let curTab='npc',curCat='all',noWinget=false,viewMode='normal',isDark=false;
+let curTab='quitter',curCat='all',noWinget=false,viewMode='normal',isDark=false;
 let openNotes={},history=[],donePerTab={};
 let session={active:false,start:null,count:0,timer:null};
 
@@ -1691,7 +1818,7 @@ function setMode(m){
 // ═══ TABS ═══
 function switchTab(t){
   curTab=t;
-  ['npc','apps','data','pwa'].forEach(x=>{
+  ONGLETS.forEach(x=>{
     const onglet=document.getElementById('tab-'+x);
     onglet.classList.toggle('active',x===t);
     onglet.setAttribute('aria-selected',x===t?'true':'false');
@@ -1704,7 +1831,9 @@ function switchTab(t){
 // retrouver son remplaçant et d'y remettre le focus, sinon la tabulation
 // repart du début de la page à chaque case cochée.
 function marquerPositions(){
-  ['list-npc','list-apps','list-data','list-pwa','gsearch-results'].forEach(function(c){
+  // Dérivée des onglets déclarés : une liste figée ici laissait le nouvel
+  // onglet sans data-pos, donc sans restauration du focus après une coche.
+  ONGLETS.map(function(c){return 'list-'+c;}).concat('gsearch-results').forEach(function(c){
     const p=document.getElementById(c);if(!p)return;
     p.querySelectorAll('[role="checkbox"]').forEach(function(e,i){
       e.setAttribute('data-pos',c+'-'+i);
@@ -1773,7 +1902,7 @@ function updateSessionDisplay(){const e=Math.floor((Date.now()-session.start)/10
 
 // ═══ CONFETTI ═══
 function checkTabComplete(){
-  const tabs={npc:NPC_DATA,apps:APPS_DATA,data:DATA_SAVES,pwa:PWA_DATA};
+  const tabs={};ONGLETS.forEach(function(c){tabs[c]=donneesDe(c);});
   Object.keys(tabs).forEach(function(tab){
     const data=tabs[tab];
     const done=data.filter(function(x){return S.checked[x.id];}).length;
@@ -1932,15 +2061,31 @@ function checkAllCat(cat,evt){
 
 // ═══ RENDER DATA ═══
 function renderData(){
+  renderParPriorite('data',DATA_SAVES,
+    {high:'🔴 Critique — sauvegarder en priorité absolue',
+     med:'🟡 Important — à ne pas oublier',
+     ok:'🟢 Optionnel — pratique mais récupérable'});
+}
+
+// « Avant de quitter » partage la mise en forme de « Données » : mêmes
+// groupes de priorité, mêmes champs. Ce qui change est le moment et l'enjeu —
+// ces actions se font sur l'ancien PC et ne se rattrapent pas après coup.
+function renderQuitter(){
+  renderParPriorite('quitter',QUITTER_DATA,
+    {high:'🔴 Irréversible — perdu pour de bon si oublié',
+     med:'🟡 Pénible à rattraper',
+     ok:'🟢 Confort'});
+}
+
+function renderParPriorite(onglet,donnees,labels){
   const groups={high:[],med:[],ok:[]};
-  DATA_SAVES.forEach(function(s){groups[s.pr].push(s);});
-  const labels={high:'🔴 Critique — sauvegarder en priorité absolue',med:'🟡 Important — à ne pas oublier',ok:'🟢 Optionnel — pratique mais récupérable'};
+  donnees.forEach(function(s){(groups[s.pr]||groups.ok).push(s);});
   let html='';let first=true;
   ['high','med','ok'].forEach(function(pr){
     const grp=groups[pr];if(!grp.length)return;
     const dn=grp.filter(function(s){return S.checked[s.id];}).length;
     const allDone=dn===grp.length;
-    html+='<div class="sec-hdr'+(first?' first':'')+'">'+labels[pr]+'<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+grp.length+'</span><button class="chk-all" onclick="checkAllData(\''+pr+'\',event)">'+(allDone?'Décocher tout':'Tout cocher')+'</button></div></div>';
+    html+='<div class="sec-hdr'+(first?' first':'')+'">'+labels[pr]+'<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+grp.length+'</span><button class="chk-all" type="button" onclick="checkAllPriorite(\''+onglet+'\',\''+pr+'\',event)">'+(allDone?'Décocher tout':'Tout cocher')+'</button></div></div>';
     grp.forEach(function(s){
       const ck=!!S.checked[s.id];
       const dt=ck&&S.dates[s.id]?'<span class="item-date">✓ '+fmtDate(S.dates[s.id])+'</span>':'';
@@ -1960,16 +2105,17 @@ function renderData(){
     });
     first=false;
   });
-  document.getElementById('list-data').innerHTML=html;
-  updateSecProg('data',DATA_SAVES);
+  document.getElementById('list-'+onglet).innerHTML=html;
+  updateSecProg(onglet,donnees);
 }
-function checkAllData(pr,evt){
+function checkAllPriorite(onglet,pr,evt){
   evt.stopPropagation();
-  const items=DATA_SAVES.filter(function(s){return s.pr===pr;});
+  const items=donneesDe(onglet).filter(function(s){return s.pr===pr;});
+  if(!items.length)return;
   const all=items.every(function(s){return S.checked[s.id];});
   const now=Date.now();
   items.forEach(function(s){if(all){delete S.checked[s.id];delete S.dates[s.id];}else{S.checked[s.id]=true;S.dates[s.id]=now;}});
-  saveState();renderData();updateGlobal();checkTabComplete();
+  saveState();renderAll();updateGlobal();checkTabComplete();
 }
 
 // ═══ RENDER PWA ═══
@@ -2009,6 +2155,7 @@ function globalSearch(){
   const res=document.getElementById('gsearch-results');
   if(!q){cnt.style.display='none';res.classList.remove('active');res.innerHTML='';return;}
   const sections=[
+    {label:'🚪 Avant de quitter',items:QUITTER_DATA.filter(function(x){return x.n.toLowerCase().indexOf(q)>=0||(x.p||'').toLowerCase().indexOf(q)>=0||(x.note||'').toLowerCase().indexOf(q)>=0;})},
     {label:'🖥️ Nouveau PC',items:NPC_DATA.filter(function(x){return x.n.toLowerCase().indexOf(q)>=0||x.d.toLowerCase().indexOf(q)>=0;})},
     {label:'📦 Apps',items:APPS_DATA.filter(function(x){return x.n.toLowerCase().indexOf(q)>=0||(x.w&&x.w.toLowerCase().indexOf(q)>=0)||x.d.toLowerCase().indexOf(q)>=0;})},
     {label:'💾 Données',items:DATA_SAVES.filter(function(x){return x.n.toLowerCase().indexOf(q)>=0||x.p.toLowerCase().indexOf(q)>=0;})},
@@ -2048,7 +2195,7 @@ function updateSecProg(sec,data){
 }
 
 function updateGlobal(){
-  const all=NPC_DATA.concat(APPS_DATA,DATA_SAVES,PWA_DATA);
+  const all=tousLesItems();
   const done=all.filter(function(x){return S.checked[x.id];}).length;
   const total=all.length;
   const pct=total?Math.round(done/total*100):0;
@@ -2079,7 +2226,7 @@ function updateDayEst(){
 }
 
 function updateTitle(){
-  const all=NPC_DATA.concat(APPS_DATA,DATA_SAVES,PWA_DATA);
+  const all=tousLesItems();
   const done=all.filter(function(x){return S.checked[x.id];}).length;
   document.title='('+done+'/'+all.length+') '+(PROFIL_NOM||'Migration PC');
 }
@@ -2205,6 +2352,9 @@ const ONGLET_DE={};   // id d'élément → onglet d'origine, pour l'intitulé
 // dépendances quand le profil en déclare.
 function fileGuide(){
   const sections=[
+    // L'ancien PC d'abord : ces actions ne se rattrapent pas une fois la
+    // machine formatée.
+    ['Avant de quitter',QUITTER_DATA],
     ['Nouveau PC',NPC_DATA.slice().sort(function(a,b){return (a.o||0)-(b.o||0);})],
     ['Apps',APPS_DATA],
     ['Données',DATA_SAVES],
@@ -2339,7 +2489,7 @@ function copierCmdGuide(){
 // Les deux coexistent : un profil ancien continue de fonctionner à l'identique.
 
 function tousLesElements(){
-  return NPC_DATA.concat(APPS_DATA,DATA_SAVES,PWA_DATA);
+  return tousLesItems();
 }
 
 let _index=null;
@@ -2479,6 +2629,7 @@ function proteger(ou,fn){
   try{fn();return true;}catch(e){signalerPanne(ou,e);return false;}
 }
 function renderAll(){
+  proteger('Avant de quitter',renderQuitter);
   proteger('Nouveau PC',renderNPC);
   proteger('Apps',renderApps);
   proteger('Données',renderData);
@@ -2489,10 +2640,8 @@ function renderAll(){
 }
 
 // ═══ RESET ═══
-const NOM_ONGLET={npc:'Nouveau PC',apps:'Apps',data:'Données',pwa:'PWA'};
-
 function resetSection(sec){
-  const map={npc:NPC_DATA,apps:APPS_DATA,data:DATA_SAVES,pwa:PWA_DATA};
+  const map={};ONGLETS.forEach(function(c){map[c]=donneesDe(c);});
   const cochees=map[sec].filter(function(x){return S.checked[x.id];}).length;
   if(!cochees){
     informer('Rien à réinitialiser dans « '+NOM_ONGLET[sec]+' » : aucune case cochée.');
@@ -2648,6 +2797,11 @@ function categoriePourNom(texte){
 
 function exportTxt(){
   const lines=[(PROFIL_NOM||'MIGRATION PC').toUpperCase(),PROFIL_SOUS||'',''];
+  if(QUITTER_DATA.length){
+    lines.push('=== AVANT DE QUITTER L\'ANCIEN PC ===');
+    QUITTER_DATA.forEach(function(s){lines.push((S.checked[s.id]?'[x]':'[ ]')+' '+s.n+(s.p?'\n    '+s.p:''));});
+    lines.push('');
+  }
   lines.push('=== NOUVEAU PC ===');
   NPC_DATA.slice().sort(function(a,b){return a.o-b.o;}).forEach(function(n){lines.push((S.checked[n.id]?'[x]':'[ ]')+' '+n.o+'. '+n.n);});
   lines.push('','=== APPS ===');
@@ -2735,6 +2889,7 @@ function saveEnv(varname,val){
 // ═══ V6 : BOUTON SUIVANT ═══
 function updateNextBtns(){
   var tabs=[
+    {id:'quitter',data:QUITTER_DATA,btnId:'next-quitter-btn',cntId:'next-quitter-count'},
     {id:'npc',data:NPC_DATA,btnId:'next-npc-btn',cntId:'next-npc-count'},
     {id:'apps',data:APPS_DATA,btnId:'next-apps-btn',cntId:'next-apps-count'},
     {id:'data',data:DATA_SAVES,btnId:'next-data-btn',cntId:'next-data-count'},
@@ -2776,7 +2931,7 @@ function exportWingetRemaining(){
 
 // ═══ V6 : IMPRESSION PAR ONGLET ═══
 function printTab(tab){
-  var panels=['npc','apps','data','pwa'];
+  var panels=ONGLETS;
   panels.forEach(function(p){
     var el=document.getElementById('panel-'+p);
     if(el)el.setAttribute('data-print',p===tab?'show':'hide');

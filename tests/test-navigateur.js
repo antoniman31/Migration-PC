@@ -13,7 +13,8 @@ const HTML='file://'+path.join(racine,'index.html');
 // retoucher ce fichier a chaque enrichissement du contenu, ce qui finit par
 // le faire mentir.
 const PROFIL=JSON.parse(fs.readFileSync(path.join(racine,'presets','exemple.json'),'utf8'));
-const TOTAL=PROFIL.npc.length+PROFIL.apps.length+PROFIL.data.length+PROFIL.pwa.length;
+const SECTIONS=['quitter','npc','apps','data','pwa'];
+const TOTAL=SECTIONS.reduce(function(n,s){return n+((PROFIL[s]||[]).length);},0);
 let ko=0;
 const ok=(l,a,b)=>{const p=(b===undefined?!!a:a===b);console.log((p?'  ok   ':'  FAIL ')+l+' → '+a+(p?'':' (attendu '+b+')'));if(!p)ko++;};
 
@@ -44,6 +45,9 @@ const memeParent=await pg.evaluate(()=>{
 ok('panneaux frères',memeParent,true);
 
 console.log('\n--- onglet Nouveau PC ---');
+// Ce n'est plus l'onglet ouvert au chargement : il faut y aller.
+await pg.click('#tab-npc');
+await pg.waitForTimeout(150);
 ok('items rendus',(await pg.$$('#list-npc .item')).length,PROFIL.npc.length);
 ok('badge étape visible',await pg.isVisible('#list-npc .b-num'));
 

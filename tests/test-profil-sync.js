@@ -33,7 +33,9 @@ ok('profil embarqué identique à presets/exemple.json',
 
 // Invariants du profil lui-meme : un id en double fait porter une case a deux
 // elements, et la progression devient fausse sans que rien ne le signale.
-const tous=[].concat(fichier.npc||[],fichier.apps||[],fichier.data||[],fichier.pwa||[]);
+// « quitter » est facultatif : un profil qui ne la déclare pas reste valide.
+const tous=[].concat(fichier.quitter||[],fichier.npc||[],fichier.apps||[],
+                     fichier.data||[],fichier.pwa||[]);
 const vus=new Set(),doublons=[];
 tous.forEach(function(e){if(vus.has(e.id))doublons.push(e.id);vus.add(e.id);});
 ok('identifiants uniques sur les quatre onglets',doublons.length===0,doublons.join(', '));
@@ -45,7 +47,8 @@ const prioValides=['high','med','ok'];
 const mauvaisePrio=(fichier.apps||[]).concat(fichier.npc||[]).filter(function(e){return e.p&&prioValides.indexOf(e.p)<0;});
 ok('priorités valides',mauvaisePrio.length===0,mauvaisePrio.map(e=>e.id+'='+e.p).join(', '));
 
-const mauvaisePr=(fichier.data||[]).filter(function(e){return prioValides.indexOf(e.pr)<0;});
+const mauvaisePr=(fichier.data||[]).concat(fichier.quitter||[])
+  .filter(function(e){return prioValides.indexOf(e.pr)<0;});
 ok('priorités de sauvegarde valides',mauvaisePr.length===0,mauvaisePr.map(e=>e.id+'='+e.pr).join(', '));
 
 // Types des champs : une description qui serait un tableau et une dependance
