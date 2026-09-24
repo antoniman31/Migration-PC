@@ -177,7 +177,8 @@
         "n13"
       ],
       "d": "Seulement si une version corrige un problème qui vous concerne, ou si le processeur est plus récent que la carte. Un BIOS qui fonctionne n'a pas besoin d'être mis à jour.",
-      "warn": "Ne jamais couper l'alimentation pendant la mise à jour : la carte mère devient inutilisable."
+      "warn": "Ne jamais couper l'alimentation pendant la mise à jour : la carte mère devient inutilisable.",
+      "comp": "cm"
     },
     {
       "id": "n15",
@@ -225,7 +226,8 @@
       "dep": [
         "n13"
       ],
-      "d": "Sans ce profil, la mémoire tourne à sa fréquence de base, bien en dessous de ce pour quoi vous l'avez payée. XMP chez Intel, EXPO chez AMD."
+      "d": "Sans ce profil, la mémoire tourne à sa fréquence de base, bien en dessous de ce pour quoi vous l'avez payée. XMP chez Intel, EXPO chez AMD.",
+      "comp": "ram"
     },
     {
       "id": "n17",
@@ -318,7 +320,8 @@
       ],
       "d": "Au minimum le pilote réseau, idéalement le chipset aussi. Si Windows ne reconnaît pas la carte réseau au premier démarrage, il n'y a pas d'autre machine sous la main pour aller le chercher — contrairement à une migration, où l'ancien PC est encore là.",
       "warn": "À faire avant de formater. Après, il est trop tard pour télécharger quoi que ce soit.",
-      "pilote": true
+      "pilote": true,
+      "comp": "cm"
     },
     {
       "id": "n36",
@@ -449,7 +452,8 @@
       ],
       "d": "Gère l'USB, le SATA, le NVMe et la gestion d'énergie. À installer avant les autres pilotes.",
       "warn": "Télécharger uniquement sur le site officiel du fabricant.",
-      "pilote": true
+      "pilote": true,
+      "comp": "cm"
     },
     {
       "id": "n3",
@@ -462,7 +466,8 @@
         "n2"
       ],
       "d": "À récupérer sur une clé USB AVANT la migration si le nouveau PC n'a pas de réseau au premier démarrage : sans lui, impossible de télécharger quoi que ce soit.",
-      "pilote": true
+      "pilote": true,
+      "comp": "cm"
     },
     {
       "id": "n4",
@@ -475,7 +480,8 @@
         "n2"
       ],
       "d": "Windows installe un pilote générique ; celui du fabricant débloque les sorties et les effets spécifiques.",
-      "pilote": true
+      "pilote": true,
+      "comp": "cm"
     },
     {
       "id": "n5",
@@ -489,7 +495,8 @@
       ],
       "d": "Pilote officiel du GPU. Choisir la branche Game Ready ou Studio selon l'usage.",
       "warn": "Télécharger uniquement sur le site du fabricant — beaucoup de faux sites de pilotes.",
-      "pilote": true
+      "pilote": true,
+      "comp": "gpu"
     },
     {
       "id": "n8",
@@ -525,7 +532,8 @@
       "p": "ok",
       "t": 10,
       "post": true,
-      "d": "Comparer les débits mesurés à ceux annoncés. Un écart important signale souvent un mauvais port M.2, partagé avec d'autres connecteurs."
+      "d": "Comparer les débits mesurés à ceux annoncés. Un écart important signale souvent un mauvais port M.2, partagé avec d'autres connecteurs.",
+      "comp": "ssd"
     },
     {
       "id": "n11",

@@ -35,8 +35,10 @@ console.log('\n--- ce que le menu contient ---');
 await pg.click('#menu-btn');await pg.waitForTimeout(200);
 const items=await pg.evaluate(()=>
   [...document.querySelectorAll('#hdr-menu-liste button')].map(x=>x.textContent.trim()));
-ok('six actions',items.length,6);
-['Commencer une session','Exporter le profil','Adapter à mon cas','Réinitialiser','Exporter en texte','Imprimer'].forEach(t=>
+// Le compte exact changera encore : ce qui doit tenir, c'est qu'elles soient
+// toutes nommees et atteignables, pas qu'elles soient six.
+ok('les actions rares sont la',items.length>=6,true);
+['Commencer une session','Exporter le profil','Ma configuration','Adapter à mon cas','Réinitialiser','Exporter en texte','Imprimer'].forEach(t=>
   ok('« '+t+' » y est',items.some(x=>x.indexOf(t)>=0),true));
 ok('chaque action a un libelle, pas qu\'un emoji',
   items.every(t=>t.replace(/[^\p{L}]/gu,'').length>3),true);
@@ -59,7 +61,7 @@ ok('le bouton lui-meme referme',await pg.isVisible('#hdr-menu-liste'),false);
 // ouvert par-dessus la page, le focus deja ailleurs.
 await pg.evaluate(()=>document.getElementById('menu-btn').focus());
 await pg.keyboard.press('Enter');await pg.waitForTimeout(200);
-for(let i=0;i<6;i++)await pg.keyboard.press('Tab');
+for(let i=0;i<items.length+1;i++)await pg.keyboard.press('Tab');
 await pg.waitForTimeout(200);
 ok('sortir au clavier referme aussi',await pg.isVisible('#hdr-menu-liste'),false);
 ok('et le focus a bien quitte le menu',

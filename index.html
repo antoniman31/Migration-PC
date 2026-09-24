@@ -66,6 +66,7 @@ a{color:var(--acc-fort);text-decoration:none}
 a:hover{text-decoration:underline}
 code{font-family:"Cascadia Code","Consolas",monospace;font-size:.9em}
 .app{max-width:900px;margin:0 auto;padding:16px}
+
 .card{background:var(--bg);border:.5px solid var(--brd);border-radius:12px;overflow:hidden;margin-bottom:10px}
 
 /* HEADER */
@@ -334,6 +335,32 @@ body.compact .item{padding:5px 0}
 
 /* ── V6 : compact masque dep ── */
 body.compact .b-dep{display:none}
+
+/* ═══ Ma configuration ═══ */
+.config{display:none;margin:0 0 12px;padding:16px 18px;border-radius:10px;
+  background:var(--bg2);border:.5px solid var(--brd2)}
+.config.visible{display:block}
+.config-tete{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
+.config-titre{font-size:14px;font-weight:600;color:var(--tx);margin-bottom:3px}
+.config-sous{font-size:12px;color:var(--tx2);line-height:1.55}
+.config-resume{flex-shrink:0;font-size:12px;color:var(--tx3);white-space:nowrap}
+.config-ligne{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.config-label{flex-shrink:0;width:126px;font-size:13px;color:var(--tx2)}
+.config-input{flex:1;min-width:0;padding:9px 12px;min-height:40px;font-size:13px;
+  border:.5px solid var(--brd2);border-radius:8px;background:var(--bg);color:var(--tx)}
+.config-input:focus{outline:2px solid var(--acc);outline-offset:1px}
+.config-pied{display:flex;gap:14px;align-items:center;margin-top:12px}
+.config-fermer,.config-vider{font-size:12px;background:transparent;border:none;
+  cursor:pointer;padding:6px 2px;min-height:34px;color:var(--tx2)}
+.config-fermer:hover{color:var(--tx)}
+.config-vider{margin-left:auto;color:var(--bh-tx)}
+.config-vider:hover{text-decoration:underline}
+@media (max-width:560px){
+  .config-tete{flex-direction:column;gap:6px}
+  .config-ligne{flex-direction:column;align-items:stretch;gap:4px}
+  .config-label{width:auto}
+}
+@media print{.config{display:none!important}}
 
 /* ═══ Deux questions au premier lancement ═══
    Un questionnaire qui barre l'entrée se subit ; celui-ci se propose et se
@@ -626,11 +653,55 @@ body.guide-actif .day-est{display:none}
   .sec-hdr{padding-bottom:10px}
   .sec-content .item{margin-top:4px}
 }
+
+/* ═══ Grands écrans ═══
+   La page a d'abord été dessinée pour tenir sur un téléphone, et ces réglages
+   la suivaient jusque sur un 27 pouces : 900 px de large et du texte à 11 px
+   au milieu d'un écran vide. Tout ce qui suit ne s'applique qu'au-delà d'une
+   largeur que seul un écran d'ordinateur atteint — mobile et tablette gardent
+   exactement ce qu'ils avaient. */
+@media (min-width:1200px){
+  :root{
+    --t-tache:15px;   /* intitulé d'une tâche, 13 px en dessous */
+    --t-desc:13px;    /* sa description, 11 px      */
+    --t-badge:11px;   /* les étiquettes, 10 px      */
+    --t-titre:22px;   /* le titre de la page, 18 px */
+  }
+  .item-name{font-size:var(--t-tache)}
+  .item-desc,.save-path,.save-note,.warn-badge{font-size:var(--t-desc)}
+  .badge,.tab-badge{font-size:var(--t-badge)}
+  h1{font-size:var(--t-titre)}
+  .tab,.scen-btn,.icon-btn{font-size:13px}
+  .item-desc{line-height:1.6}
+}
+@media (min-width:1400px){
+  /* Une description tenait sur trois lignes dans 900 px ; elle en prend une ou
+     deux ici. On ne va pas au-delà de 1200 px : une ligne de texte trop longue
+     se relit mal, et la checklist est faite pour être parcourue. */
+  .app{max-width:1200px;padding:20px}
+}
 </style>
 </head>
 <body>
 <canvas id="confetti-canvas"></canvas>
 <div class="app"><div class="card">
+
+<div class="config" id="config" role="region" aria-label="Ma configuration">
+  <div class="config-tete">
+    <div>
+      <div class="config-titre">Ma configuration</div>
+      <div class="config-sous">Les intitulés des pilotes portent le modèle, et les boutons
+        « Rechercher » visent le support du constructeur au lieu de mots génériques.
+        Tout est facultatif, et reste dans ce navigateur.</div>
+    </div>
+    <span class="config-resume" id="config-resume"></span>
+  </div>
+  <div id="config-champs"></div>
+  <div class="config-pied">
+    <button class="config-fermer" type="button" onclick="fermerConfig()">Fermer</button>
+    <button class="config-vider" type="button" onclick="viderConfig()">Tout effacer</button>
+  </div>
+</div>
 
 <div class="debut" id="debut" role="region" aria-label="Adapter la liste à votre cas">
   <div class="debut-titre">Deux questions pour adapter la liste</div>
@@ -703,6 +774,7 @@ body.guide-actif .day-est{display:none}
         <button type="button" role="menuitem" id="session-start-btn" onclick="depuisMenu(startSession)"><span class="hdr-menu-ico" aria-hidden="true">▶</span>Commencer une session</button>
         <button type="button" role="menuitem" onclick="depuisMenu(exportProfil)"><span class="hdr-menu-ico" aria-hidden="true">🧩</span>Exporter le profil</button>
         <button type="button" role="menuitem" id="reglages-btn" onclick="depuisMenu(basculerReglages)"><span class="hdr-menu-ico" aria-hidden="true">♻️</span>Réinitialiser…</button>
+        <button type="button" role="menuitem" id="config-btn" onclick="depuisMenu(basculerConfig)" aria-expanded="false"><span class="hdr-menu-ico" aria-hidden="true">🔧</span>Ma configuration…</button>
         <button type="button" role="menuitem" onclick="depuisMenu(relancerDebut)"><span class="hdr-menu-ico" aria-hidden="true">🧭</span>Adapter à mon cas…</button>
         <button type="button" role="menuitem" onclick="depuisMenu(exportTxt)"><span class="hdr-menu-ico" aria-hidden="true">📄</span>Exporter en texte</button>
         <button type="button" role="menuitem" onclick="depuisMenu(function(){window.print();})"><span class="hdr-menu-ico" aria-hidden="true">🖨️</span>Imprimer</button>
@@ -1053,7 +1125,8 @@ const PROFIL_DEFAUT = {
         "n13"
       ],
       "d": "Seulement si une version corrige un problème qui vous concerne, ou si le processeur est plus récent que la carte. Un BIOS qui fonctionne n'a pas besoin d'être mis à jour.",
-      "warn": "Ne jamais couper l'alimentation pendant la mise à jour : la carte mère devient inutilisable."
+      "warn": "Ne jamais couper l'alimentation pendant la mise à jour : la carte mère devient inutilisable.",
+      "comp": "cm"
     },
     {
       "id": "n15",
@@ -1101,7 +1174,8 @@ const PROFIL_DEFAUT = {
       "dep": [
         "n13"
       ],
-      "d": "Sans ce profil, la mémoire tourne à sa fréquence de base, bien en dessous de ce pour quoi vous l'avez payée. XMP chez Intel, EXPO chez AMD."
+      "d": "Sans ce profil, la mémoire tourne à sa fréquence de base, bien en dessous de ce pour quoi vous l'avez payée. XMP chez Intel, EXPO chez AMD.",
+      "comp": "ram"
     },
     {
       "id": "n17",
@@ -1194,7 +1268,8 @@ const PROFIL_DEFAUT = {
       ],
       "d": "Au minimum le pilote réseau, idéalement le chipset aussi. Si Windows ne reconnaît pas la carte réseau au premier démarrage, il n'y a pas d'autre machine sous la main pour aller le chercher — contrairement à une migration, où l'ancien PC est encore là.",
       "warn": "À faire avant de formater. Après, il est trop tard pour télécharger quoi que ce soit.",
-      "pilote": true
+      "pilote": true,
+      "comp": "cm"
     },
     {
       "id": "n36",
@@ -1325,7 +1400,8 @@ const PROFIL_DEFAUT = {
       ],
       "d": "Gère l'USB, le SATA, le NVMe et la gestion d'énergie. À installer avant les autres pilotes.",
       "warn": "Télécharger uniquement sur le site officiel du fabricant.",
-      "pilote": true
+      "pilote": true,
+      "comp": "cm"
     },
     {
       "id": "n3",
@@ -1338,7 +1414,8 @@ const PROFIL_DEFAUT = {
         "n2"
       ],
       "d": "À récupérer sur une clé USB AVANT la migration si le nouveau PC n'a pas de réseau au premier démarrage : sans lui, impossible de télécharger quoi que ce soit.",
-      "pilote": true
+      "pilote": true,
+      "comp": "cm"
     },
     {
       "id": "n4",
@@ -1351,7 +1428,8 @@ const PROFIL_DEFAUT = {
         "n2"
       ],
       "d": "Windows installe un pilote générique ; celui du fabricant débloque les sorties et les effets spécifiques.",
-      "pilote": true
+      "pilote": true,
+      "comp": "cm"
     },
     {
       "id": "n5",
@@ -1365,7 +1443,8 @@ const PROFIL_DEFAUT = {
       ],
       "d": "Pilote officiel du GPU. Choisir la branche Game Ready ou Studio selon l'usage.",
       "warn": "Télécharger uniquement sur le site du fabricant — beaucoup de faux sites de pilotes.",
-      "pilote": true
+      "pilote": true,
+      "comp": "gpu"
     },
     {
       "id": "n8",
@@ -1401,7 +1480,8 @@ const PROFIL_DEFAUT = {
       "p": "ok",
       "t": 10,
       "post": true,
-      "d": "Comparer les débits mesurés à ceux annoncés. Un écart important signale souvent un mauvais port M.2, partagé avec d'autres connecteurs."
+      "d": "Comparer les débits mesurés à ceux annoncés. Un écart important signale souvent un mauvais port M.2, partagé avec d'autres connecteurs.",
+      "comp": "ssd"
     },
     {
       "id": "n11",
@@ -2317,7 +2397,18 @@ function fmtTaille(go){
   return (n<10?n.toFixed(1):Math.round(n))+' Go';
 }
 function fmtDate(ts){if(!ts)return '';const d=new Date(ts),now=new Date(),diff=Math.floor((now-d)/86400000);if(diff===0)return "aujourd'hui";if(diff===1)return 'hier';if(diff<7)return 'il y a '+diff+'j';return d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});}
-function searchUrl(name){const q=SEARCH_QUERIES[name]||('download '+name+' official');return 'https://www.google.com/search?q='+encodeURIComponent(q);}
+function searchUrl(name,e){
+  // Avec un modèle déclaré, on cherche le support du constructeur plutôt que
+  // les mots génériques de l'intitulé : « ASUS B850-A pilote chipset » amène
+  // sur la bonne page, « pilote chipset de la carte mère » nulle part.
+  const c=composantDe(e);
+  // Le modèle plus deux mots, pas le modèle plus la phrase entière : « ASUS
+  // B850-A support pilotes » tombe sur la page du constructeur, « ASUS B850-A
+  // Télécharger les pilotes sur une clé USB pilote officiel » sur rien.
+  if(c)return 'https://www.google.com/search?q='+encodeURIComponent(c+' support pilotes');
+  const q=SEARCH_QUERIES[name]||('download '+name+' official');
+  return 'https://www.google.com/search?q='+encodeURIComponent(q);
+}
 
 // ═══ STORAGE ═══
 function loadState(){
@@ -2502,7 +2593,7 @@ function launchConfetti(){
 // ═══ RENDER ITEM HELPERS ═══
 // Purement visuelle : l'état accessible est porté par l'item, qui est la case.
 function mkChkbox(){return '<div class="chkbox" aria-hidden="true"><span class="chkbox-mark">✓</span></div>';}
-function mkLink(name){return '<div class="item-link"><a class="lnk-btn" href="'+esc(searchUrl(name))+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔍 Rechercher</a></div>';}
+function mkLink(name,e){return '<div class="item-link"><a class="lnk-btn" href="'+esc(searchUrl(name,e))+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔍 Rechercher</a></div>';}
 function mkDirectLink(url){
   const u=urlSure(url);
   // Pas d'adresse utilisable : plutot que d'offrir un bouton qui ne mene nulle
@@ -2543,13 +2634,13 @@ function renderNPC(){
     html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(item)+'">'
       +mkChkbox()
       +'<div class="item-body">'
-        +'<div class="item-name-row"><span class="b-num">'+item.o+'</span><span class="item-name">'+esc(libelleDe(item))+'</span>'+dt+mkNoteBtn(item.id)+'</div>'
+        +'<div class="item-name-row"><span class="b-num">'+item.o+'</span><span class="item-name">'+esc(preciser(item,libelleDe(item)))+'</span>'+dt+mkNoteBtn(item.id)+'</div>'
         +'<div class="item-badges">'+srcBadge+tBadge+pBadge+depBadge+'</div>'
         +'<div class="item-desc">'+esc(texte(descDe(item)))+'</div>'
         +warn
         +mkNoteArea(item.id)
       +'</div>'
-      +mkLink(libelleDe(item))
+      +mkLink(libelleDe(item),item)
     +'</div>';
   });
   cont.innerHTML=html;
@@ -2640,7 +2731,7 @@ function mkAppItem(a){
       +warn
       +mkNoteArea(a.id)
     +'</div>'
-    +mkLink(libelleDe(a))
+    +mkLink(libelleDe(a),a)
   +'</div>';
 }
 
@@ -3052,7 +3143,7 @@ function renderGuide(){
     +'</div>'
     +'<div class="guide-corps">'
       +'<div class="guide-onglet">'+esc(onglet)+'</div>'
-      +'<h2 class="guide-titre">'+esc(libelleDe(t))+'</h2>';
+      +'<h2 class="guide-titre">'+esc(preciser(t,libelleDe(t)))+'</h2>';
 
   if(desc)html+='<p class="guide-desc">'+esc(desc)+'</p>';
 
@@ -3077,7 +3168,7 @@ function renderGuide(){
     +'<button type="button" onclick="sauterTache(\''+escJS(t.id)+'\')">Passer</button>'
     +(urlSure(t.u)
         ?'<button type="button" onclick="ouvrirAdresse(\''+escJS(urlSure(t.u))+'\')">🔗 Ouvrir</button>'
-        :'<button type="button" onclick="ouvrirAdresse(\''+escJS(searchUrl(libelleDe(t)))+'\')">🔍 Rechercher</button>')
+        :'<button type="button" onclick="ouvrirAdresse(\''+escJS(searchUrl(libelleDe(t),t))+'\')">🔍 Rechercher</button>')
     +'</div>'
   +'</div>';
   bloc.innerHTML=html;
@@ -3318,10 +3409,12 @@ function remiseAZero(){
     localStorage.removeItem(CLE_PROFIL);
     localStorage.removeItem(CLE_SCENARIO);
     localStorage.removeItem(CLE_DEBUT);
+    localStorage.removeItem(CLE_CONFIG);
   }catch(e){console.error(e);}
   S.checked={};S.notes={};S.dates={};S.lic={};S.env={};S.lastSave=null;
   journal=[];openNotes={};sautees={};
   scenario='tout';
+  CONFIG={};construireConfig();fermerConfig();
   // Le thème suit les préférences du système, ce n'est pas une donnée de
   // travail : on le laisse tel quel.
   try{appliquerProfil(PROFIL_DEFAUT,false);}
@@ -3331,6 +3424,98 @@ function remiseAZero(){
   fermerReglages();
   if(!avaitProfil)document.getElementById('annul-txt').textContent=
     'Site remis à zéro : progression, notes et clés effacées.';
+}
+
+// ── Ma configuration ───────────────────────────────────────────────────
+// « Pilote chipset de la carte mère » ne dit pas quelle carte mère, et le
+// bouton Rechercher cherchait ces mots-là. Les composants saisis ici précisent
+// les intitulés et ciblent les recherches sur le bon modèle.
+//
+// Ce que ce bloc ne fait PAS, volontairement : deviner quel pilote va avec
+// quelle carte mère. Il faudrait une table de correspondances que personne ne
+// tient à jour, et on servirait des liens faux qui ont l'air vrais. La page
+// vous amène au bon endroit ; c'est vous qui lisez la page du constructeur.
+const CLE_CONFIG='mpc_config_v1';
+const COMPOSANTS=[
+  {cle:'cm', label:'Carte mère',      exemple:'ASUS ROG STRIX B850-A'},
+  {cle:'cpu',label:'Processeur',      exemple:'AMD Ryzen 7 9800X3D'},
+  {cle:'gpu',label:'Carte graphique', exemple:'NVIDIA RTX 5070 Ti'},
+  {cle:'ram',label:'Mémoire',         exemple:'32 Go DDR5-6000'},
+  {cle:'ssd',label:'SSD',             exemple:'Samsung 9100 PRO 2 To'}
+];
+let CONFIG={};
+
+function chargerConfig(){
+  try{
+    const r=localStorage.getItem(CLE_CONFIG);
+    if(r){const d=JSON.parse(r);if(d&&typeof d==='object')CONFIG=d;}
+  }catch(e){console.error(e);}
+}
+function saveConfig(){
+  try{localStorage.setItem(CLE_CONFIG,JSON.stringify(CONFIG));}
+  catch(e){console.error(e);}
+}
+function majConfig(cle,valeur){
+  const v=String(valeur||'').trim();
+  if(v)CONFIG[cle]=v;else delete CONFIG[cle];
+  saveConfig();
+  renderAll();updateGlobal();
+  majResumeConfig();
+}
+// Le composant auquel une étape se rapporte, s'il est déclaré.
+function composantDe(e){
+  return (e&&e.comp&&CONFIG[e.comp])?CONFIG[e.comp]:'';
+}
+// L'intitulé gagne le modèle réel : « Pilote chipset — ASUS B850-A ».
+function preciser(e,libelle){
+  const c=composantDe(e);
+  return c?libelle+' — '+c:libelle;
+}
+
+function basculerConfig(){
+  const b=document.getElementById('config');
+  if(!b)return;
+  const ouvert=b.classList.toggle('visible');
+  const btn=document.getElementById('config-btn');
+  if(btn)btn.setAttribute('aria-expanded',ouvert?'true':'false');
+  if(ouvert){
+    b.scrollIntoView({block:'nearest',behavior:mouvementReduit()?'auto':'smooth'});
+    const p=b.querySelector('input');
+    if(p)p.focus();
+  }
+}
+function fermerConfig(){
+  const b=document.getElementById('config');
+  if(b)b.classList.remove('visible');
+  const btn=document.getElementById('config-btn');
+  if(btn)btn.setAttribute('aria-expanded','false');
+}
+function construireConfig(){
+  const zone=document.getElementById('config-champs');
+  if(!zone)return;
+  zone.innerHTML=COMPOSANTS.map(function(c){
+    return '<label class="config-ligne">'
+      +'<span class="config-label">'+esc(c.label)+'</span>'
+      +'<input type="text" class="config-input" id="cfg-'+esc(c.cle)+'"'
+      +' value="'+esc(CONFIG[c.cle]||'')+'"'
+      +' placeholder="'+esc(c.exemple)+'"'
+      +' oninput="majConfig(\''+escJS(c.cle)+'\',this.value)">'
+      +'</label>';
+  }).join('');
+  majResumeConfig();
+}
+function majResumeConfig(){
+  const r=document.getElementById('config-resume');
+  if(!r)return;
+  const remplis=COMPOSANTS.filter(function(c){return CONFIG[c.cle];});
+  r.textContent=remplis.length
+    ? remplis.length+' composant'+(remplis.length>1?'s':'')+' sur '+COMPOSANTS.length
+    : '';
+}
+function viderConfig(){
+  if(!Object.keys(CONFIG).length){informer('La configuration est déjà vide.');return;}
+  CONFIG={};saveConfig();construireConfig();renderAll();updateGlobal();
+  informer('Configuration effacée.');
 }
 
 // ── Deux questions au premier lancement ────────────────────────────────
@@ -3675,6 +3860,7 @@ window.addEventListener('DOMContentLoaded',function(){
   }catch(e){}
   applyTheme();
   loadState();
+  chargerConfig();
   document.addEventListener('input',function(e){
     if(e.target.classList.contains('lic-input')){saveLic(e.target.dataset.id,e.target.value);}
     if(e.target.classList.contains('env-input')){saveEnv(e.target.dataset.var,e.target.value);}
@@ -3688,6 +3874,7 @@ window.addEventListener('DOMContentLoaded',function(){
   const memorise=chargerProfilMemorise();
   try{appliquerProfil(memorise||PROFIL_DEFAUT,false);}
   catch(e){console.error(e);appliquerProfil(PROFIL_DEFAUT,false);}
+  construireConfig();
   renderHistory();
   enregistrerServiceWorker();
   // Page vierge seulement : quelqu'un qui a déjà coché sait ce qu'il fait.

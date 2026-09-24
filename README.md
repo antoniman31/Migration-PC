@@ -312,6 +312,23 @@ winget restant ou du fichier `winget import`, et impression globale ou par ongle
 ce qui sort suit le scénario choisi et ses intitulés : un fichier qui dirait autre chose
 que l'écran serait pire que pas de fichier.
 
+### Ma configuration
+
+**⋯ Plus → Ma configuration** ouvre cinq champs : carte mère, processeur, carte
+graphique, mémoire, SSD. Ce qu'on y écrit fait deux choses. Les intitulés des pilotes
+portent le modèle — « Pilote chipset — ASUS B850-A » — là où ils disaient « de la carte
+mère », et seulement ceux-là : « Désactiver le CSM » n'a que faire d'un numéro de
+modèle. Et les boutons « Rechercher » visent le support du constructeur au lieu des mots
+génériques de l'intitulé.
+
+Ce que ce bloc ne fait pas, volontairement : deviner quel pilote va avec quel modèle.
+Il faudrait une table de correspondances que personne ne tient à jour, et on servirait
+des liens faux qui ont l'air vrais. La page amène au bon endroit ; c'est vous qui lisez
+la page du constructeur.
+
+Tout est facultatif, reste dans ce navigateur, et le champ `comp` du profil décide à
+quel composant une étape se rattache.
+
 **Si l'enregistrement échoue** — le stockage du navigateur a un quota, et il peut
 être refusé en navigation privée ou sur un site bloqué. La barre « Récent » porte à
 droite l'état de la sauvegarde : l'heure du dernier enregistrement, ou un avertissement.
@@ -527,13 +544,14 @@ npm run test:menu                 # menu « Plus » de la barre du haut
 npm run test:hostile              # profil piégé : aucune injection
 npm run test:sauvegarde           # aucun échec d'enregistrement silencieux
 npm run test:debut                # deux questions d'ouverture et second PC
+npm run test:config               # bloc configuration et affichage grand écran
 ```
 
 `npm test` ne lance que ce qui tourne partout sans rien installer. Les suites
 navigateur demandent Chromium (`npm install` le fournit via Playwright), les suites
 PowerShell demandent `pwsh`.
 
-Vingt et une suites, dans l'ordre où la CI les lance.
+Vingt-deux suites, dans l'ordre où la CI les lance.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
@@ -611,9 +629,15 @@ répondu, se rappelle depuis le menu, et qu'en mode « deux PC » on ne désauto
 rien sur une machine encore en service — tout en revérifiant qu'en migration les étapes
 d'origine reviennent intactes.
 
+`tests/test-config.js` vérifie que les composants saisis précisent les intitulés des
+pilotes — et seulement ceux-là, pas « Désactiver le CSM » —, que les recherches visent
+le support du constructeur, qu'un profil ne déclarant aucun composant s'affiche
+normalement, et que l'élargissement sur grand écran ne change rien au téléphone ni à la
+tablette.
+
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les vingt et une suites à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les vingt-deux suites à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 

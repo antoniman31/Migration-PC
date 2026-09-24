@@ -120,6 +120,9 @@ jobs:
       - name: Deux questions et second PC
         run: node tests/test-debut.js
 
+      - name: Configuration et affichage
+        run: node tests/test-config.js
+
   publier:
     name: Publier sur Pages
     needs: verifier
