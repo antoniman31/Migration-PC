@@ -9,7 +9,8 @@
     "test:navigateur": "node tests/test-navigateur.js",
     "test:scan": "pwsh -File tests/test-scan.ps1",
     "test:pwa": "node tests/test-pwa.js",
-    "test:mobile": "node tests/test-mobile.js"
+    "test:mobile": "node tests/test-mobile.js",
+    "test:a11y": "node tests/test-accessibilite.js"
   },
   "devDependencies": {
     "playwright": "^1.63.0"

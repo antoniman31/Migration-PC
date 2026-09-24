@@ -78,6 +78,9 @@ jobs:
       - name: Ergonomie tactile
         run: STRICT=1 node tests/test-mobile.js
 
+      - name: Accessibilité et réversibilité
+        run: node tests/test-accessibilite.js
+
   publier:
     name: Publier sur Pages
     needs: verifier

@@ -13,10 +13,22 @@
 <title>Migration PC — Checklist</title>
 <style>
 :root{
-  --acc:#5493FF;--accl:rgba(84,147,255,0.12);--accb:rgba(84,147,255,0.3);
+  /* Trois rôles pour une seule teinte, comme le fait le système de couleurs
+     de Material 3 en séparant une couleur de sa variante « on surface ».
+       --acc      aplats, bordures, barres — non textuel, seuil 3:1
+       --acc-fort texte bleu et anneau de focus — seuil 4.5:1, vérifié sur le
+                  fond gris des bandeaux et pas seulement sur blanc
+       --acc-fond fond bleu portant du texte blanc — reste foncé dans les deux
+                  thèmes, sinon le blanc dessus retombe à 3,00:1
+     #5493FF n'atteint que 3,00:1 sur blanc : il ne peut pas porter de texte. */
+  --acc:#5493FF;--acc-fort:#3c6ab8;--acc-fond:#4274c9;
+  --accl:rgba(84,147,255,0.12);--accb:rgba(84,147,255,0.3);
   --bg:#ffffff;--bg2:#f7f7f7;--bg3:#eeeeee;
   --brd:rgba(0,0,0,0.09);--brd2:rgba(0,0,0,0.18);
-  --tx:#111111;--tx2:#666666;--tx3:#aaaaaa;
+  /* --tx3 était à #aaaaaa, soit 2,32:1 : illisible pour beaucoup de gens.
+     #6b6b6b donne 4,97:1 sur blanc et 4,59:1 sur le gris des bandeaux, où il
+     sert le plus, tout en restant nettement plus discret que --tx2. */
+  --tx:#111111;--tx2:#666666;--tx3:#6b6b6b;
   --bh-bg:#fff0f0;--bh-tx:#a32d2d;--bh-bd:#f09595;
   --bm-bg:#faeeda;--bm-tx:#854f0b;--bm-bd:#e9b86a;
   --bok-bg:#eaf3de;--bok-tx:#3b6d11;--bok-bd:#97c459;
@@ -31,7 +43,10 @@
 [data-theme=dark]{
   --bg:#181818;--bg2:#212121;--bg3:#2a2a2a;
   --brd:rgba(255,255,255,0.09);--brd2:rgba(255,255,255,0.18);
-  --tx:#f0f0f0;--tx2:#a0a0a0;--tx3:#777;
+  /* Sur fond sombre le bleu d'origine porte déjà du texte (5,91:1), mais un
+     fond bleu doit rester foncé pour le texte blanc qu'il porte. */
+  --acc-fort:#5493FF;
+  --tx:#f0f0f0;--tx2:#a0a0a0;--tx3:#909090;
   --bh-bg:#3a1515;--bh-tx:#f09595;--bh-bd:#7a2020;
   --bm-bg:#2e2200;--bm-tx:#fac775;--bm-bd:#6b4a00;
   --bok-bg:#162010;--bok-tx:#97c459;--bok-bd:#2d4a15;
@@ -47,7 +62,7 @@
 html,body{min-height:100vh;background:var(--bg);color:var(--tx);font-family:"Segoe UI",system-ui,sans-serif;font-size:14px;line-height:1.5;transition:background .2s,color .2s}
 button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 button{cursor:pointer;background:none;border:none}
-a{color:var(--acc);text-decoration:none}
+a{color:var(--acc-fort);text-decoration:none}
 a:hover{text-decoration:underline}
 code{font-family:"Cascadia Code","Consolas",monospace;font-size:.9em}
 .app{max-width:900px;margin:0 auto;padding:16px}
@@ -57,13 +72,13 @@ code{font-family:"Cascadia Code","Consolas",monospace;font-size:.9em}
 .hdr{padding:20px 20px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .hdr-left{flex:1;min-width:200px}
 .logo-row{display:flex;align-items:center;gap:10px;margin-bottom:4px}
-.logo{width:30px;height:30px;background:var(--acc);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-weight:700;font-size:14px}
+.logo{width:30px;height:30px;background:var(--acc-fond);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-weight:700;font-size:14px}
 h1{font-size:18px;font-weight:600;color:var(--tx);letter-spacing:-.3px}
 .sub{font-size:12px;color:var(--tx2);margin-bottom:14px}
 .hdr-right{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
 .icon-btn{padding:5px 10px;font-size:12px;border:.5px solid var(--brd2);border-radius:8px;background:var(--bg2);color:var(--tx2);display:flex;align-items:center;gap:5px;transition:background .12s}
 .icon-btn:hover{background:var(--bg3)}
-.icon-btn.active{background:var(--accl);border-color:var(--accb);color:var(--acc)}
+.icon-btn.active{background:var(--accl);border-color:var(--accb);color:var(--acc-fort)}
 
 /* DAY EST */
 .day-est{padding:10px 20px;background:var(--bg2);border-bottom:.5px solid var(--brd);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
@@ -74,15 +89,15 @@ h1{font-size:18px;font-weight:600;color:var(--tx);letter-spacing:-.3px}
 .day-card-bar{width:36px;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
 .day-card-fill{height:100%;background:var(--acc);transition:width .4s}
 .day-total{font-size:12px;color:var(--tx2)}
-.day-total b{color:var(--acc);font-weight:600}
+.day-total b{color:var(--acc-fort);font-weight:600}
 
 /* SESSION */
 .session-bar{padding:8px 20px;background:var(--accl);border-bottom:.5px solid var(--accb);display:none;align-items:center;gap:10px;flex-wrap:wrap}
 .session-bar.active{display:flex}
 .session-dot{width:8px;height:8px;border-radius:50%;background:var(--acc);animation:pulse 1.5s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.session-info{font-size:12px;color:var(--acc);flex:1}
-.session-stop{padding:4px 10px;font-size:11px;border:.5px solid var(--accb);border-radius:6px;color:var(--acc);font-weight:500;background:transparent}
+.session-info{font-size:12px;color:var(--acc-fort);flex:1}
+.session-stop{padding:4px 10px;font-size:11px;border:.5px solid var(--accb);border-radius:6px;color:var(--acc-fort);font-weight:500;background:transparent}
 .session-stop:hover{background:rgba(84,147,255,.15)}
 
 /* SYNC — géré dans le header */
@@ -92,7 +107,7 @@ h1{font-size:18px;font-weight:600;color:var(--tx);letter-spacing:-.3px}
 .gp-info{min-width:140px}
 .gp-label{font-size:10px;color:var(--tx2);text-transform:uppercase;letter-spacing:.06em}
 .gp-val{font-size:13px;color:var(--tx)}
-.gp-pct{font-size:16px;font-weight:700;color:var(--acc)}
+.gp-pct{font-size:16px;font-weight:700;color:var(--acc-fort)}
 .gp-bar-wrap{flex:1;display:flex;align-items:center;gap:10px;min-width:180px}
 .gp-bar-bg{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
 .gp-bar-fill{height:100%;background:var(--acc);border-radius:3px;transition:width .4s}
@@ -104,7 +119,7 @@ h1{font-size:18px;font-weight:600;color:var(--tx);letter-spacing:-.3px}
 #gsearch-input{width:100%;padding:6px 10px;border:.5px solid var(--brd2);border-radius:8px;background:var(--bg2);color:var(--tx);outline:none}
 #gsearch-input::placeholder{color:var(--tx3)}
 .gsearch-count{font-size:11px;color:var(--tx2)}
-.gsearch-count b{color:var(--acc);font-weight:600}
+.gsearch-count b{color:var(--acc-fort);font-weight:600}
 #gsearch-results{display:none;padding:0 20px 12px;background:var(--bg);border-bottom:.5px solid var(--brd)}
 #gsearch-results.active{display:block}
 .gsr-tab{font-size:10px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.05em;padding:8px 0 4px;border-bottom:.5px solid var(--brd);margin-top:4px}
@@ -120,9 +135,9 @@ h1{font-size:18px;font-weight:600;color:var(--tx);letter-spacing:-.3px}
 /* TABS */
 .tabs{display:flex;border-bottom:.5px solid var(--brd);padding:0 20px;background:var(--bg);overflow-x:auto}
 .tab{padding:10px 14px;font-size:13px;font-weight:500;color:var(--tx2);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;flex-shrink:0;background:transparent;border-top:none;border-left:none;border-right:none}
-.tab.active{color:var(--acc);border-bottom-color:var(--acc)}
+.tab.active{color:var(--acc-fort);border-bottom-color:var(--acc-fort)}
 .tab:hover:not(.active){color:var(--tx)}
-.tab-badge{background:var(--accl);color:var(--acc);font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600}
+.tab-badge{background:var(--accl);color:var(--acc-fort);font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600}
 .panel{display:none}
 .panel.active{display:block}
 #panel-npc.active{background:var(--tint-npc)}
@@ -142,12 +157,12 @@ body.compact .item{padding:5px 0}
 .sort-sel{padding:6px 8px;border:.5px solid var(--brd2);border-radius:8px;background:var(--bg2);color:var(--tx);outline:none}
 .fbs{display:flex;gap:4px;flex-wrap:wrap}
 .fb{padding:4px 9px;font-size:12px;border:.5px solid var(--brd);border-radius:8px;background:var(--bg);color:var(--tx2);white-space:nowrap}
-.fb.active{background:var(--accl);border-color:var(--accb);color:var(--acc);font-weight:500}
+.fb.active{background:var(--accl);border-color:var(--accb);color:var(--acc-fort);font-weight:500}
 .fb:hover:not(.active){background:var(--bg2)}
 .tbar-right{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
 .sm-btn{padding:4px 10px;font-size:11px;border:.5px solid var(--brd2);border-radius:6px;background:var(--bg);color:var(--tx2);font-weight:500}
 .sm-btn:hover{background:var(--bg3)}
-.sm-btn.active{background:var(--accl);color:var(--acc);border-color:var(--accb)}
+.sm-btn.active{background:var(--accl);color:var(--acc-fort);border-color:var(--accb)}
 .tbar-info{font-size:12px;color:var(--tx2)}
 
 /* SECTION PROGRESS */
@@ -155,7 +170,7 @@ body.compact .item{padding:5px 0}
 .sec-bar-bg{flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
 .sec-bar-fill{height:100%;background:var(--acc);border-radius:2px;transition:width .4s}
 .sec-prog-txt{font-size:11px;color:var(--tx2);white-space:nowrap}
-.sec-prog-txt b{font-weight:600;color:var(--acc)}
+.sec-prog-txt b{font-weight:600;color:var(--acc-fort)}
 
 /* SECTION HEADERS */
 .sec-content{padding:0 20px}
@@ -163,10 +178,10 @@ body.compact .item{padding:5px 0}
 .sec-hdr.first{border-top:none;margin-top:0}
 .sec-hdr-r{display:flex;align-items:center;gap:6px}
 .sec-hdr-cnt{font-size:10px;color:var(--tx3)}
-.chk-all{font-size:10px;color:var(--acc);padding:2px 7px;border:.5px solid var(--accb);border-radius:5px;background:transparent;text-transform:none;letter-spacing:normal;font-weight:500}
+.chk-all{font-size:10px;color:var(--acc-fort);padding:2px 7px;border:.5px solid var(--accb);border-radius:5px;background:transparent;text-transform:none;letter-spacing:normal;font-weight:500}
 .chk-all:hover{background:var(--accl)}
 .cat-winget{font-size:10px;color:var(--tx2);padding:2px 7px;border:.5px solid var(--brd);border-radius:5px;background:transparent;text-transform:none;letter-spacing:normal}
-.cat-winget:hover{color:var(--acc);border-color:var(--accb);background:var(--accl)}
+.cat-winget:hover{color:var(--acc-fort);border-color:var(--accb);background:var(--accl)}
 
 /* ITEMS */
 .item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:.5px solid var(--brd);cursor:pointer;border-radius:4px}
@@ -175,7 +190,7 @@ body.compact .item{padding:5px 0}
 .item.done .item-name{text-decoration:line-through;color:var(--tx2)}
 .item.done .item-badges,.item.done .item-desc,.item.done .save-path,.item.done .save-note{opacity:.4}
 .chkbox{width:17px;height:17px;border:1.5px solid var(--brd2);border-radius:4px;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;background:var(--bg);color:#fff;font-size:11px;font-weight:700;line-height:1}
-.item.done .chkbox{background:var(--acc);border-color:var(--acc)}
+.item.done .chkbox{background:var(--acc);border-color:var(--acc-fort)}
 .chkbox-mark{display:none}
 .item.done .chkbox-mark{display:inline}
 .item-body{flex:1;min-width:0}
@@ -183,17 +198,17 @@ body.compact .item{padding:5px 0}
 .item-name{font-size:13px;font-weight:500;color:var(--tx)}
 .item-date{font-size:10px;color:var(--tx3);font-style:italic}
 .note-btn{font-size:11px;color:var(--tx3);padding:1px 4px;border-radius:4px;border:none;background:transparent}
-.note-btn:hover{color:var(--acc);background:var(--accl)}
-.note-btn.has-note{color:var(--acc)}
+.note-btn:hover{color:var(--acc-fort);background:var(--accl)}
+.note-btn.has-note{color:var(--acc-fort)}
 .item-badges{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;align-items:center}
 .item-desc{font-size:11px;color:var(--tx2);margin-top:3px;line-height:1.45}
 .warn-badge{font-size:11px;color:var(--warn-tx);background:var(--warn-bg);border:.5px solid var(--warn-bd);border-radius:5px;padding:2px 8px;margin-top:5px;display:inline-block;font-weight:500}
 .note-area{margin-top:6px;display:none}
 .note-area.open{display:block}
 .note-area textarea{width:100%;font-size:11px;padding:5px 7px;border:.5px solid var(--brd2);border-radius:6px;background:var(--bg2);color:var(--tx);resize:vertical;min-height:38px;outline:none;font-family:inherit}
-.note-area textarea:focus{border-color:var(--acc)}
+.note-area textarea:focus{border-color:var(--acc-fort)}
 .item-link{flex-shrink:0;margin-top:1px}
-.lnk-btn{font-size:11px;color:var(--acc);padding:3px 8px;border:.5px solid var(--accb);border-radius:8px;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;background:transparent}
+.lnk-btn{font-size:11px;color:var(--acc-fort);padding:3px 8px;border:.5px solid var(--accb);border-radius:8px;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;background:transparent}
 .lnk-btn:hover{background:var(--accl);text-decoration:none}
 .save-path{font-size:10px;font-family:"Cascadia Code","Consolas",monospace;color:var(--tx2);margin-top:3px;word-break:break-all}
 .save-note{font-size:10px;color:var(--tx3);margin-top:2px;font-style:italic}
@@ -201,13 +216,13 @@ body.compact .item{padding:5px 0}
 /* BADGES */
 .badge{font-size:10px;padding:1px 6px;border-radius:8px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;border:.5px solid transparent}
 .b-src{background:var(--bg2);color:var(--tx2);border-color:var(--brd2)}
-.b-winget{background:var(--accl);color:var(--acc);border-color:var(--accb);font-family:"Cascadia Code","Consolas",monospace;cursor:pointer}
+.b-winget{background:var(--accl);color:var(--acc-fort);border-color:var(--accb);font-family:"Cascadia Code","Consolas",monospace;cursor:pointer}
 .b-winget:hover{opacity:.8}
 .b-time{background:var(--bg2);color:var(--tx2);border-color:var(--brd)}
 .b-high{background:var(--bh-bg);color:var(--bh-tx);border-color:var(--bh-bd)}
 .b-pwa{background:var(--bpwa-bg);color:var(--bpwa-tx);border-color:var(--bpwa-bd)}
 .b-sync{background:var(--bord-bg);color:var(--bord-tx);border-color:var(--bord-bd);font-weight:600}
-.b-num{width:22px;height:22px;border-radius:50%;background:var(--accl);color:var(--acc);border:.5px solid var(--accb);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.b-num{width:22px;height:22px;border-radius:50%;background:var(--accl);color:var(--acc-fort);border:.5px solid var(--accb);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
 .item.done .b-num{background:var(--bok-bg);color:var(--bok-tx);border-color:var(--bok-bd)}
 .b-crit{background:var(--bh-bg);color:var(--bh-tx);border-color:var(--bh-bd)}
 .b-imp{background:var(--bm-bg);color:var(--bm-tx);border-color:var(--bm-bd)}
@@ -215,7 +230,7 @@ body.compact .item{padding:5px 0}
 
 /* HDR ACTIONS */
 .hdr-sep{width:.5px;height:20px;background:var(--brd2);margin:0 2px}
-.primary-btn{background:var(--acc)!important;color:#fff!important;border-color:var(--acc)!important}
+.primary-btn{background:var(--acc-fond)!important;color:#fff!important;border-color:var(--acc-fond)!important}
 .primary-btn:hover{opacity:.9!important}
 .hdr-session{background:var(--bok-bg)!important;color:var(--bok-tx)!important;border-color:var(--bok-bd)!important}
 .hdr-session:hover{opacity:.85!important}
@@ -246,14 +261,14 @@ body.compact .item{padding:5px 0}
 .icon-btn.icon-only{padding:5px 8px;min-width:32px;justify-content:center}
 
 /* ── AMÉLIO 2 : tab badge contraste ── */
-.tab-badge{background:rgba(84,147,255,0.18);color:var(--acc);font-size:10px;padding:1px 7px;border-radius:10px;font-weight:700;border:.5px solid var(--accb)}
-.tab.active .tab-badge{background:var(--acc);color:#fff;border-color:var(--acc)}
+.tab-badge{background:rgba(84,147,255,0.18);color:var(--acc-fort);font-size:10px;padding:1px 7px;border-radius:10px;font-weight:700;border:.5px solid var(--accb)}
+.tab.active .tab-badge{background:var(--acc-fond);color:#fff;border-color:var(--acc-fond)}
 
 /* ── AMÉLIO 3 : hiérarchie barres du haut ── */
 .day-est{padding:8px 20px;background:var(--bg);border-bottom:.5px solid var(--brd);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 .gp{padding:14px 20px;border-bottom:.5px solid var(--brd);display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--bg2)}
 .gp-label{font-size:10px;color:var(--tx2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
-.gp-pct{font-size:18px;font-weight:800;color:var(--acc)}
+.gp-pct{font-size:18px;font-weight:800;color:var(--acc-fort)}
 
 /* ── AMÉLIO 4 : items plus aérés ── */
 .item{padding:11px 0;gap:12px}
@@ -262,7 +277,7 @@ body.compact .item{padding:5px 0}
 
 /* ── AMÉLIO 5 : bouton Rechercher plus visible ── */
 .lnk-btn{font-size:11px;color:var(--tx2);padding:4px 10px;border:.5px solid var(--brd2);border-radius:8px;background:var(--bg2);font-weight:500;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
-.lnk-btn:hover{background:var(--accl);color:var(--acc);border-color:var(--accb);text-decoration:none}
+.lnk-btn:hover{background:var(--accl);color:var(--acc-fort);border-color:var(--accb);text-decoration:none}
 
 /* ── AMÉLIO 6 : badges winget tronqués ── */
 .b-winget{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-flex}
@@ -286,7 +301,7 @@ body.compact .item{padding:5px 0}
 .lic-field{margin-top:6px;display:flex;align-items:center;gap:6px}
 .lic-field label{font-size:10px;color:var(--tx2);white-space:nowrap;flex-shrink:0}
 .lic-field input{flex:1;font-size:11px;padding:3px 7px;border:.5px solid var(--brd2);border-radius:6px;background:var(--bg2);color:var(--tx);outline:none;font-family:"Cascadia Code","Consolas",monospace}
-.lic-field input:focus{border-color:var(--acc)}
+.lic-field input:focus{border-color:var(--acc-fort)}
 .lic-field input::placeholder{color:var(--tx3)}
 
 /* ── V6 : champ env ── */
@@ -294,22 +309,65 @@ body.compact .item{padding:5px 0}
 .env-row{display:flex;align-items:center;gap:6px}
 .env-row label{font-size:10px;color:var(--tx2);width:110px;flex-shrink:0;font-family:"Cascadia Code","Consolas",monospace}
 .env-row input{flex:1;font-size:11px;padding:3px 7px;border:.5px solid var(--brd2);border-radius:6px;background:var(--bg2);color:var(--tx);outline:none;font-family:"Cascadia Code","Consolas",monospace}
-.env-row input:focus{border-color:var(--acc)}
+.env-row input:focus{border-color:var(--acc-fort)}
 .env-row input::placeholder{color:var(--tx3)}
 
 /* ── V6 : bouton suivant ── */
 .next-tab-btn{display:flex;align-items:center;justify-content:flex-end;padding:10px 20px;border-top:.5px solid var(--brd);background:transparent}
-.next-btn{padding:7px 16px;font-size:12px;border:.5px solid var(--accb);border-radius:8px;background:var(--accl);color:var(--acc);font-weight:500;display:flex;align-items:center;gap:6px;cursor:pointer}
+.next-btn{padding:7px 16px;font-size:12px;border:.5px solid var(--accb);border-radius:8px;background:var(--accl);color:var(--acc-fort);font-weight:500;display:flex;align-items:center;gap:6px;cursor:pointer}
 .next-btn:hover{background:var(--acc);color:#fff}
 .next-btn.incomplete{border-color:var(--brd2);background:var(--bg2);color:var(--tx2)}
 .next-btn.incomplete:hover{background:var(--bg3)}
 
 /* ── V6 : script winget restant ── */
-.sm-btn.warn-btn{border-color:var(--accb);color:var(--acc);background:var(--accl)}
+.sm-btn.warn-btn{border-color:var(--accb);color:var(--acc-fort);background:var(--accl)}
 .sm-btn.warn-btn:hover{background:var(--acc);color:#fff}
 
 /* ── V6 : compact masque dep ── */
 body.compact .b-dep{display:none}
+
+/* ═══ Mouvement réduit ═══
+   prefers-reduced-motion est un réglage du système d'exploitation : certaines
+   personnes désactivent les animations parce qu'elles leur donnent la nausée
+   ou déclenchent des troubles vestibulaires. On coupe transitions et
+   animations plutôt que de les ralentir — une durée quasi nulle vaut mieux
+   que zéro pour ne pas casser les écouteurs transitionend. */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:0.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:0.01ms!important;
+    scroll-behavior:auto!important}
+}
+
+/* ═══ Bandeau d'annulation ═══ */
+.annul{display:none;margin:0 0 12px;padding:9px 14px;gap:12px;align-items:center;
+  background:var(--bg3);border:.5px solid var(--brd2);border-radius:10px}
+.annul.visible{display:flex}
+.annul-txt{flex:1;font-size:12px;color:var(--tx);min-width:0}
+.annul-btn{flex-shrink:0;padding:5px 12px;font-size:12px;font-weight:500;
+  border:.5px solid var(--accb);border-radius:8px;background:var(--accl);
+  color:var(--acc-fort);cursor:pointer;min-height:32px}
+.annul-btn:hover{background:var(--acc-fond);color:#fff;border-color:var(--acc-fond)}
+.annul-fermer{flex-shrink:0;background:transparent;border:none;color:var(--tx2);
+  font-size:13px;cursor:pointer;padding:0 2px;min-width:32px;min-height:32px}
+.annul-fermer:hover{color:var(--tx)}
+@media print{.annul{display:none!important}}
+
+/* ═══ Focus clavier ═══
+   Six règles posaient outline:none sans rien mettre à la place : le focus
+   était strictement invisible (WCAG 2.4.7, et un état obligatoire dans
+   Material 3). :focus-visible ne s'affiche qu'à la navigation clavier, donc
+   le clic à la souris reste net. L'anneau est décalé de 2 px pour rester
+   lisible sur les éléments à fond coloré. */
+:focus-visible{outline:2px solid var(--acc-fort);outline-offset:2px;border-radius:6px}
+.item:focus-visible{outline-offset:-2px}
+/* Repli pour les navigateurs sans :focus-visible : mieux vaut un anneau
+   permanent qu'aucun. */
+@supports not selector(:focus-visible){
+  input:focus,select:focus,textarea:focus,button:focus,a:focus,[tabindex]:focus{
+    outline:2px solid var(--acc-fort);outline-offset:2px}
+}
 
 /* Bandeau de panne : un échec de rendu doit se voir, pas disparaître dans la console. */
 .panne{display:none;margin:0 0 12px;padding:10px 14px;gap:10px;align-items:flex-start;
@@ -387,6 +445,12 @@ body.compact .b-dep{display:none}
 <canvas id="confetti-canvas"></canvas>
 <div class="app"><div class="card">
 
+<div class="annul" id="annul" role="status">
+  <span class="annul-txt" id="annul-txt"></span>
+  <button class="annul-btn" type="button" onclick="annuler()">↩ Annuler</button>
+  <button class="annul-fermer" type="button" onclick="masquerAnnulation()" title="Masquer" aria-label="Masquer">✕</button>
+</div>
+
 <div class="panne" id="panne" role="alert">
   <span class="panne-ico">⚠️</span>
   <div class="panne-txt">
@@ -398,27 +462,27 @@ body.compact .b-dep{display:none}
 </div>
 
 
-<div class="hdr">
+<header class="hdr">
   <div class="hdr-left">
     <div class="logo-row">
-      <div class="logo">📦</div>
+      <div class="logo" aria-hidden="true">📦</div>
       <h1 id="profil-titre">Migration PC</h1>
     </div>
     <p class="sub" id="profil-sous"></p>
   </div>
   <div class="hdr-right">
-    <button class="icon-btn active" id="btn-normal" onclick="setMode('normal')">📋 Normal</button>
-    <button class="icon-btn" id="btn-compact" onclick="setMode('compact')">≡ Compact</button>
-    <div class="hdr-sep"></div>
-    <button class="icon-btn" onclick="importerFichier()" title="Importer un inventaire, un profil ou une progression">📥 Importer</button>
-    <button class="icon-btn primary-btn" onclick="exportJSON()">💾 Sauvegarder</button>
-    <div class="hdr-sep"></div>
-    <button class="icon-btn icon-only hdr-session" id="session-start-btn" onclick="startSession()" title="Commencer une session">▶</button>
-    <button class="icon-btn icon-only" onclick="exportProfil()" title="Exporter le profil (les listes, sans la progression)">🧩</button>
-    <button class="icon-btn icon-only" onclick="window.print()" title="Imprimer">🖨️</button>
-    <button class="icon-btn" id="theme-btn" onclick="toggleTheme()"><span id="theme-ico">🌙</span> <span id="theme-lbl">Sombre</span></button>
+    <button class="icon-btn active" type="button" id="btn-normal" onclick="setMode('normal')" aria-pressed="true">📋 Normal</button>
+    <button class="icon-btn" type="button" id="btn-compact" onclick="setMode('compact')" aria-pressed="false">≡ Compact</button>
+    <div class="hdr-sep" aria-hidden="true"></div>
+    <button class="icon-btn" type="button" onclick="importerFichier()" title="Importer un inventaire, un profil ou une progression">📥 Importer</button>
+    <button class="icon-btn primary-btn" type="button" onclick="exportJSON()">💾 Sauvegarder</button>
+    <div class="hdr-sep" aria-hidden="true"></div>
+    <button class="icon-btn icon-only hdr-session" type="button" id="session-start-btn" onclick="startSession()" title="Commencer une session" aria-label="Commencer une session">▶</button>
+    <button class="icon-btn icon-only" type="button" onclick="exportProfil()" title="Exporter le profil (les listes, sans la progression)" aria-label="Exporter le profil">🧩</button>
+    <button class="icon-btn icon-only" type="button" onclick="window.print()" title="Imprimer" aria-label="Imprimer">🖨️</button>
+    <button class="icon-btn" type="button" id="theme-btn" onclick="toggleTheme()"><span id="theme-ico" aria-hidden="true">🌙</span> <span id="theme-lbl">Sombre</span></button>
   </div>
-</div>
+</header>
 
 <div class="day-est">
   <span class="day-est-label">⏱ Estimation journée</span>
@@ -432,7 +496,7 @@ body.compact .b-dep{display:none}
   <button class="session-stop" onclick="stopSession()">⏹ Arrêter</button>
 </div>
 
-<input type="file" id="json-file" accept=".json" style="display:none" onchange="handleImport(event)">
+<input type="file" id="json-file" accept=".json" style="display:none" tabindex="-1" aria-hidden="true" onchange="handleImport(event)">
 
 <div class="gp">
   <div class="gp-info">
@@ -440,14 +504,14 @@ body.compact .b-dep{display:none}
     <div class="gp-val"><span class="gp-pct" id="gp-pct">0%</span> · <span id="gp-done">0</span>/<span id="gp-total">0</span> tâches</div>
   </div>
   <div class="gp-bar-wrap">
-    <div class="gp-bar-bg"><div class="gp-bar-fill" id="gp-bar" style="width:0%"></div></div>
+    <div class="gp-bar-bg" role="progressbar" id="gp-bar-wrap" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Progression globale"><div class="gp-bar-fill" id="gp-bar" style="width:0%"></div></div>
     <span class="gp-time" id="gp-time">⏱ ~0min restant</span>
   </div>
 </div>
 
 <div class="gsearch">
   <div class="gsearch-wrap">
-    <input type="text" id="gsearch-input" placeholder="🔍 Recherche globale (tous onglets)..." oninput="globalSearch()">
+    <input type="search" id="gsearch-input" aria-label="Recherche globale sur les quatre onglets" placeholder="🔍 Recherche globale (tous onglets)..." oninput="globalSearch()">
   </div>
   <span class="gsearch-count" id="gsearch-count" style="display:none"><b id="gsearch-n">0</b> résultats</span>
 </div>
@@ -458,14 +522,15 @@ body.compact .b-dep{display:none}
   <span id="history-items" style="color:var(--tx3);font-style:italic">aucune action</span>
 </div>
 
-<div class="tabs">
-  <button class="tab active" onclick="switchTab('npc')" id="tab-npc">🖥️ Nouveau PC <span class="tab-badge" id="badge-npc">0/0</span></button>
-  <button class="tab" onclick="switchTab('apps')" id="tab-apps">📦 Apps <span class="tab-badge" id="badge-apps">0/0</span></button>
-  <button class="tab" onclick="switchTab('data')" id="tab-data">💾 Données <span class="tab-badge" id="badge-data">0/0</span></button>
-  <button class="tab" onclick="switchTab('pwa')" id="tab-pwa">🌍 PWA <span class="tab-badge" id="badge-pwa">0/0</span></button>
+<main>
+<div class="tabs" role="tablist" aria-label="Sections de la checklist">
+  <button class="tab active" type="button" role="tab" aria-selected="true" aria-controls="panel-npc" onclick="switchTab('npc')" id="tab-npc">🖥️ Nouveau PC <span class="tab-badge" id="badge-npc">0/0</span></button>
+  <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-apps" onclick="switchTab('apps')" id="tab-apps">📦 Apps <span class="tab-badge" id="badge-apps">0/0</span></button>
+  <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-data" onclick="switchTab('data')" id="tab-data">💾 Données <span class="tab-badge" id="badge-data">0/0</span></button>
+  <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="panel-pwa" onclick="switchTab('pwa')" id="tab-pwa">🌍 PWA <span class="tab-badge" id="badge-pwa">0/0</span></button>
 </div>
 
-<div class="panel active" id="panel-npc">
+<div class="panel active" id="panel-npc" role="tabpanel" aria-labelledby="tab-npc" tabindex="0">
   <div class="tbar">
     <span class="tbar-info">🔢 Suivre l'ordre numéroté — dans cet ordre après Windows</span>
     <div class="tbar-right"><button class="sm-btn" onclick="printTab('npc')" title="Imprimer cet onglet">🖨️ Onglet</button>
@@ -481,12 +546,12 @@ body.compact .b-dep{display:none}
   </div>
 </div>
 
-<div class="panel" id="panel-apps">
+<div class="panel" id="panel-apps" role="tabpanel" aria-labelledby="tab-apps" tabindex="0">
   <div class="tbar">
     <div class="search-wrap">
-      <input type="text" id="apps-search" placeholder="🔍 Rechercher une app..." oninput="renderApps()">
+      <input type="search" id="apps-search" aria-label="Rechercher une application" placeholder="🔍 Rechercher une app..." oninput="renderApps()">
     </div>
-    <select class="sort-sel" id="apps-sort" onchange="renderApps()">
+    <select class="sort-sel" id="apps-sort" aria-label="Trier les applications" onchange="renderApps()">
       <option value="cat">Par catégorie</option>
       <option value="prio">Par priorité</option>
       <option value="time">Par durée</option>
@@ -514,7 +579,7 @@ body.compact .b-dep{display:none}
   <div id="apps-empty" style="display:none;padding:24px;text-align:center;color:var(--tx2);font-size:13px">Aucune app trouvée</div>
 </div>
 
-<div class="panel" id="panel-data">
+<div class="panel" id="panel-data" role="tabpanel" aria-labelledby="tab-data" tabindex="0">
   <div class="tbar">
     <span class="tbar-info">💾 Sauvegarder avant de migrer — par ordre de priorité</span>
     <div class="tbar-right"><button class="sm-btn" onclick="printTab('data')" title="Imprimer cet onglet">🖨️ Onglet</button>
@@ -530,7 +595,7 @@ body.compact .b-dep{display:none}
   </div>
 </div>
 
-<div class="panel" id="panel-pwa">
+<div class="panel" id="panel-pwa" role="tabpanel" aria-labelledby="tab-pwa" tabindex="0">
   <div class="tbar">
     <span class="tbar-info">🌍 Raccourcis Chrome — se restaurent automatiquement avec la sync Google après install Chrome</span>
     <div class="tbar-right"><button class="sm-btn" onclick="printTab('pwa')" title="Imprimer cet onglet">🖨️ Onglet</button>
@@ -542,8 +607,7 @@ body.compact .b-dep{display:none}
   </div>
   <div class="sec-content" id="list-pwa"></div>
 </div>
-
-
+</main>
 
 </div></div>
 <script>
@@ -696,14 +760,20 @@ function chargerProfilMemorise(){
 }
 
 function reinitProfil(){
-  if(!confirm('Revenir au profil d\'exemple ? La progression en cours est conservée, mais les cases des éléments absents du profil d\'exemple ne seront plus affichées.'))return;
+  memoriserAnnulation('Retour au profil d\'exemple. La progression est conservée.',true);
   try{localStorage.removeItem(CLE_PROFIL);}catch(e){}
   appliquerProfil(PROFIL_DEFAUT,false);
 }
 
+// Le profil chargé, reconstruit depuis les listes en mémoire.
+function profilCourant(){
+  return {meta:{version:1,nom:PROFIL_NOM,soustitre:PROFIL_SOUS},cats:CATS,
+    npc:NPC_DATA,apps:APPS_DATA,data:DATA_SAVES,pwa:PWA_DATA,
+    ordre:INSTALL_ORDER,requetes:SEARCH_QUERIES};
+}
+
 function exportProfil(){
-  const p={meta:{version:1,nom:PROFIL_NOM,soustitre:PROFIL_SOUS},cats:CATS,npc:NPC_DATA,apps:APPS_DATA,data:DATA_SAVES,pwa:PWA_DATA,ordre:INSTALL_ORDER,requetes:SEARCH_QUERIES};
-  dl(new Blob([JSON.stringify(p,null,2)],{type:'application/json'}),'profil-migration-pc.json');
+  dl(new Blob([JSON.stringify(profilCourant(),null,2)],{type:'application/json'}),'profil-migration-pc.json');
 }
 
 // ═══ INVENTAIRE → PROFIL ═══
@@ -787,25 +857,29 @@ function handleImport(evt){
     try{
       if(estExportWinget(d)){
         const p=wingetVersProfil(d);
+        memoriserAnnulation('Export winget importé : '+p.apps.length+' paquets. Les noms sont déduits des identifiants.',true);
         appliquerProfil(p,true);
-        alert('✓ Export winget importé : '+p.apps.length+' paquets.\n\nLes noms sont déduits des identifiants, et les onglets « Nouveau PC », « Données » et « PWA » restent ceux du profil d\'exemple.');
         return;
       }
       if(d && d.type==='inventaire-migration-pc'){
         const p=inventaireVersProfil(d);
+        memoriserAnnulation('Inventaire importé : '+p.apps.length+' applications. Les onglets Nouveau PC, Données et PWA restent ceux du profil d\'exemple.',true);
         appliquerProfil(p,true);
-        alert('✓ Inventaire importé : '+p.apps.length+' applications.\n\nLes étapes « Nouveau PC », « Données » et « PWA » restent celles du profil d\'exemple — à adapter à ta machine.');
         return;
       }
       if(profilValide(d)){
+        memoriserAnnulation('Profil importé.',true);
         appliquerProfil(d,true);
-        alert('✓ Profil importé : '+(NPC_DATA.length+APPS_DATA.length+DATA_SAVES.length+PWA_DATA.length)+' éléments.');
+        document.getElementById('annul-txt').textContent=
+          'Profil importé : '+(NPC_DATA.length+APPS_DATA.length+DATA_SAVES.length+PWA_DATA.length)+' éléments.';
         return;
       }
       if(d && d.state){
+        memoriserAnnulation('Progression importée.',false);
         S={checked:d.state.checked||{},notes:d.state.notes||{},dates:d.state.dates||{},lic:d.state.lic||{},env:d.state.env||{},lastSave:null};
         saveState();renderAll();updateGlobal();
-        alert('✓ Progression importée : '+Object.keys(S.checked).length+' tâches cochées.');
+        document.getElementById('annul-txt').textContent=
+          'Progression importée : '+Object.keys(S.checked).length+' tâches cochées.';
         return;
       }
       alert('❌ Format non reconnu.\n\nAttendu : un fichier winget export, un inventaire produit par scan-pc.ps1, un profil, ou une progression exportée depuis cette page.');
@@ -847,18 +921,40 @@ function applyTheme(){document.documentElement.setAttribute('data-theme',isDark?
 function toggleTheme(){isDark=!isDark;try{localStorage.setItem(CLE_THEME,isDark?'dark':'light');}catch(e){}applyTheme();}
 
 // ═══ MODE ═══
-function setMode(m){viewMode=m;document.body.className=m==='compact'?'compact':'';document.getElementById('btn-normal').classList.toggle('active',m==='normal');document.getElementById('btn-compact').classList.toggle('active',m==='compact');}
+function setMode(m){
+  viewMode=m;
+  document.body.className=m==='compact'?'compact':'';
+  ['normal','compact'].forEach(function(x){
+    const b=document.getElementById('btn-'+x);
+    b.classList.toggle('active',m===x);
+    b.setAttribute('aria-pressed',m===x?'true':'false');
+  });
+}
 
 // ═══ TABS ═══
 function switchTab(t){
   curTab=t;
   ['npc','apps','data','pwa'].forEach(x=>{
-    document.getElementById('tab-'+x).classList.toggle('active',x===t);
+    const onglet=document.getElementById('tab-'+x);
+    onglet.classList.toggle('active',x===t);
+    onglet.setAttribute('aria-selected',x===t?'true':'false');
     document.getElementById('panel-'+x).classList.toggle('active',x===t);
   });
 }
 
 // ═══ TOGGLE ITEM ═══
+// Après un rendu, l'élément focalisé a disparu du DOM. data-pos permet de
+// retrouver son remplaçant et d'y remettre le focus, sinon la tabulation
+// repart du début de la page à chaque case cochée.
+function marquerPositions(){
+  ['list-npc','list-apps','list-data','list-pwa','gsearch-results'].forEach(function(c){
+    const p=document.getElementById(c);if(!p)return;
+    p.querySelectorAll('[role="checkbox"]').forEach(function(e,i){
+      e.setAttribute('data-pos',c+'-'+i);
+    });
+  });
+}
+
 function toggle(id,name){
   if(S.checked[id]){delete S.checked[id];delete S.dates[id];addHistory(name,false);}
   else{S.checked[id]=true;S.dates[id]=Date.now();if(session.active)session.count++;addHistory(name,true);}
@@ -935,10 +1031,14 @@ function launchConfetti(){
 }
 
 // ═══ RENDER ITEM HELPERS ═══
-function mkChkbox(){return '<div class="chkbox"><span class="chkbox-mark">✓</span></div>';}
+// Purement visuelle : l'état accessible est porté par l'item, qui est la case.
+function mkChkbox(){return '<div class="chkbox" aria-hidden="true"><span class="chkbox-mark">✓</span></div>';}
 function mkLink(name){return '<div class="item-link"><a class="lnk-btn" href="'+searchUrl(name)+'" target="_blank" onclick="event.stopPropagation()">🔍 Rechercher</a></div>';}
 function mkDirectLink(url){return '<div class="item-link"><a class="lnk-btn" href="'+url+'" target="_blank" onclick="event.stopPropagation()">🔗 Ouvrir</a></div>';}
-function mkNoteBtn(id){const has=S.notes[id]?'has-note':'';return '<button class="note-btn '+has+'" id="nb-'+id+'" onclick="toggleNote(\''+id+'\',event)">📝</button>';}
+function mkNoteBtn(id){
+  const has=S.notes[id]?'has-note':'';
+  const libelle=S.notes[id]?'Modifier la note':'Ajouter une note';
+  return '<button class="note-btn '+has+'" id="nb-'+id+'" type="button" title="'+libelle+'" aria-label="'+libelle+'" onclick="toggleNote(\''+id+'\',event)">📝</button>';}
 function mkNoteArea(id){const open=openNotes[id]?'open':'';const val=S.notes[id]||'';return '<div class="note-area '+open+'" id="na-'+id+'"><textarea placeholder="Note personnelle..." onclick="event.stopPropagation()" oninput="saveNote(\''+id+'\',this.value)">'+esc(val)+'</textarea></div>';}
 
 // ═══ RENDER NPC ═══
@@ -959,7 +1059,7 @@ function renderNPC(){
     const tBadge=item.t?'<span class="badge b-time">⏱ '+fmtTime(item.t)+'</span>':'';
     const depBadge=item.dep?mkDepBadge(item.dep):'';
     const warn=item.warn?'<div class="warn-badge">⚠️ '+esc(item.warn)+'</div>':'';
-    html+='<div class="item'+(ck?' done':'')+'" onclick="toggle(\''+item.id+'\',\''+esc(item.n).replace(/'/g,"\\'")+'\')">'
+    html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="toggle(\''+item.id+'\',\''+esc(item.n).replace(/'/g,"\\'")+'\')">'
       +mkChkbox()
       +'<div class="item-body">'
         +'<div class="item-name-row"><span class="b-num">'+item.o+'</span><span class="item-name">'+esc(item.n)+'</span>'+dt+mkNoteBtn(item.id)+'</div>'
@@ -1029,12 +1129,13 @@ function renderApps(){
 function mkAppItem(a){
   const ck=!!S.checked[a.id];
   const dt=ck&&S.dates[a.id]?'<span class="item-date">✓ '+fmtDate(S.dates[a.id])+'</span>':'';
-  const wBadge=a.w?'<span class="badge b-winget" onclick="copyWinget(\''+a.w+'\',event)" title="Copier">📋 '+esc(a.w)+'</span>':'';
+  // Un span cliquable n'est ni focusable ni annonce : c'est un bouton.
+  const wBadge=a.w?'<button type="button" class="badge b-winget" onclick="copyWinget(\''+a.w+'\',event)" title="Copier la commande d\'installation" aria-label="Copier la commande winget '+esc(a.w)+'">📋 '+esc(a.w)+'</button>':'';
   const pBadge=a.p==='high'?'<span class="badge b-high">⚡ Haute</span>':'';
   const tBadge=a.t?'<span class="badge b-time">⏱ '+fmtTime(a.t)+'</span>':'';
   const warn=a.warn?'<div class="warn-badge">⚠️ '+esc(a.warn)+'</div>':'';
   const depBadge=a.dep?mkDepBadge(a.dep):'';
-  return '<div class="item'+(ck?' done':'')+'" onclick="toggle(\''+a.id+'\',\''+esc(a.n).replace(/'/g,"\\'")+'\')">'
+  return '<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="toggle(\''+a.id+'\',\''+esc(a.n).replace(/'/g,"\\'")+'\')">'
     +mkChkbox()
     +'<div class="item-body">'
       +'<div class="item-name-row"><span class="item-name">'+esc(a.n)+'</span>'+dt+mkNoteBtn(a.id)+'</div>'
@@ -1071,7 +1172,7 @@ function renderData(){
       const ck=!!S.checked[s.id];
       const dt=ck&&S.dates[s.id]?'<span class="item-date">✓ '+fmtDate(S.dates[s.id])+'</span>':'';
       const pBadge=pr==='high'?'<span class="badge b-crit">Critique</span>':pr==='med'?'<span class="badge b-imp">Important</span>':'<span class="badge b-opt">Optionnel</span>';
-      html+='<div class="item'+(ck?' done':'')+'" onclick="toggle(\''+s.id+'\',\''+esc(s.n).replace(/'/g,"\\'")+'\')">'
+      html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="toggle(\''+s.id+'\',\''+esc(s.n).replace(/'/g,"\\'")+'\')">'
         +mkChkbox()
         +'<div class="item-body">'
           +'<div class="item-name-row"><span class="item-name">'+esc(s.n)+'</span>'+dt+mkNoteBtn(s.id)+'</div>'
@@ -1106,7 +1207,7 @@ function renderPWA(){
   PWA_DATA.forEach(function(p){
     const ck=!!S.checked[p.id];
     const dt=ck&&S.dates[p.id]?'<span class="item-date">✓ '+fmtDate(S.dates[p.id])+'</span>':'';
-    html+='<div class="item'+(ck?' done':'')+'" onclick="toggle(\''+p.id+'\',\''+esc(p.n).replace(/'/g,"\\'")+'\')">'
+    html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="toggle(\''+p.id+'\',\''+esc(p.n).replace(/'/g,"\\'")+'\')">'
       +mkChkbox()
       +'<div class="item-body">'
         +'<div class="item-name-row"><span class="item-name">'+esc(p.n)+'</span>'+dt+mkNoteBtn(p.id)+'</div>'
@@ -1150,7 +1251,7 @@ function globalSearch(){
     sec.items.forEach(function(item){
       const ck=!!S.checked[item.id];
       const name=item.n;
-      html+='<div class="item'+(ck?' done':'')+'" onclick="toggle(\''+item.id+'\',\''+esc(name).replace(/'/g,"\\'")+'\');globalSearch()">'
+      html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="toggle(\''+item.id+'\',\''+esc(name).replace(/'/g,"\\'")+'\');globalSearch()">'
         +mkChkbox()
         +'<div class="item-body"><div class="item-name-row"><span class="item-name">'+esc(name)+'</span></div>'
         +'<div class="item-desc" style="margin-top:2px">'+esc(item.d||item.p||'')+'</div></div>'
@@ -1196,7 +1297,10 @@ function updateDayEst(){
     const done=s.data.filter(function(x){return S.checked[x.id];}).length;
     const pct=s.data.length?Math.round(done/s.data.length*100):0;
     totalRem+=rem;
-    return '<div class="day-card" onclick="switchTab(\''+s.tab+'\')"><span style="font-weight:600">'+s.label+'</span><div class="day-card-bar"><div class="day-card-fill" style="width:'+pct+'%"></div></div><span>'+(fmtTime(rem)||'✓')+'</span></div>';
+    return '<button type="button" class="day-card" onclick="switchTab(\''+s.tab+'\')" aria-label="Aller à '+esc(s.label)+', '+done+' sur '+s.data.length+' fait">'
+      +'<span style="font-weight:600">'+s.label+'</span>'
+      +'<div class="day-card-bar" role="progressbar" aria-valuenow="'+pct+'" aria-valuemin="0" aria-valuemax="100"><div class="day-card-fill" style="width:'+pct+'%"></div></div>'
+      +'<span>'+(fmtTime(rem)||'✓')+'</span></button>';
   }).join('');
   document.getElementById('day-total-val').textContent=fmtTime(totalRem)||'✓ Terminé !';
 }
@@ -1205,6 +1309,79 @@ function updateTitle(){
   const all=NPC_DATA.concat(APPS_DATA,DATA_SAVES,PWA_DATA);
   const done=all.filter(function(x){return S.checked[x.id];}).length;
   document.title='('+done+'/'+all.length+') '+(PROFIL_NOM||'Migration PC');
+}
+
+// Entrée et Espace activent une case, comme sur une vraie case à cocher.
+// Délégué sur le document : les items sont reconstruits à chaque rendu, et
+// rattacher un écouteur à chacun les multiplierait à chaque fois.
+function clavierGlobal(e){
+  if(e.key!=='Enter'&&e.key!==' '&&e.key!=='Spacebar')return;
+  const cible=e.target.closest&&e.target.closest('[role="checkbox"]');
+  if(!cible)return;
+  // Un bouton à l'intérieur de la ligne (note, copie) garde son propre rôle.
+  if(e.target!==cible&&e.target.closest('button,a,input,textarea,select'))return;
+  e.preventDefault();          // Espace ferait défiler la page
+  cible.click();
+  // Le rendu remplace la ligne : on rend le focus à celle qui a pris sa place.
+  const pos=cible.getAttribute('data-pos');
+  if(pos){
+    const suiv=document.querySelector('[data-pos="'+pos+'"]');
+    if(suiv)suiv.focus();
+  }
+}
+
+// ═══ ANNULATION ═══
+// Réinitialiser une section et importer un fichier détruisent du travail sans
+// retour possible. Une confirmation de plus ne règle rien : on clique « oui »
+// par réflexe. Ce qu'il faut, c'est pouvoir revenir en arrière après coup.
+let annulation=null;
+
+function copieEtat(){
+  return {checked:Object.assign({},S.checked),notes:Object.assign({},S.notes),
+    dates:Object.assign({},S.dates),lic:Object.assign({},S.lic),
+    env:Object.assign({},S.env)};
+}
+
+// Appelée AVANT l'action destructrice. Le profil n'est mémorisé que lorsque
+// l'action le remplace, pour ne pas recopier 30 Ko à chaque réinitialisation.
+function memoriserAnnulation(libelle,avecProfil){
+  annulation={libelle:libelle,etat:copieEtat(),
+    profil:avecProfil?JSON.parse(JSON.stringify(profilCourant())):null};
+  afficherBandeau(libelle,true);
+}
+
+// Même bandeau sans bouton quand il n'y a rien à défaire : un bouton Annuler
+// qui ne fait rien est pire que pas de bouton.
+function informer(libelle){
+  annulation=null;
+  afficherBandeau(libelle,false);
+}
+
+function afficherBandeau(libelle,avecBouton){
+  const bloc=document.getElementById('annul');
+  const txt=document.getElementById('annul-txt');
+  const btn=bloc?bloc.querySelector('.annul-btn'):null;
+  if(txt)txt.textContent=libelle;
+  if(btn)btn.style.display=avecBouton?'':'none';
+  if(bloc)bloc.classList.add('visible');
+}
+
+function masquerAnnulation(){
+  const b=document.getElementById('annul');if(b)b.classList.remove('visible');
+  annulation=null;
+}
+
+function annuler(){
+  if(!annulation)return;
+  const a=annulation;
+  annulation=null;
+  if(a.profil){
+    try{appliquerProfil(a.profil,true);}catch(e){signalerPanne('Annulation',e);}
+  }
+  S.checked=a.etat.checked;S.notes=a.etat.notes;S.dates=a.etat.dates;
+  S.lic=a.etat.lic;S.env=a.etat.env;
+  saveState();renderAll();updateGlobal();renderHistory();
+  masquerAnnulation();
 }
 
 function signalerPanne(ou,err){
@@ -1228,12 +1405,21 @@ function renderAll(){
   proteger('Données',renderData);
   proteger('PWA',renderPWA);
   proteger('Boutons suivant',updateNextBtns);
+  proteger('Positions',marquerPositions);
 }
 
 // ═══ RESET ═══
+const NOM_ONGLET={npc:'Nouveau PC',apps:'Apps',data:'Données',pwa:'PWA'};
+
 function resetSection(sec){
   const map={npc:NPC_DATA,apps:APPS_DATA,data:DATA_SAVES,pwa:PWA_DATA};
-  if(!confirm('Réinitialiser cette section ?'))return;
+  const cochees=map[sec].filter(function(x){return S.checked[x.id];}).length;
+  if(!cochees){
+    informer('Rien à réinitialiser dans « '+NOM_ONGLET[sec]+' » : aucune case cochée.');
+    return;
+  }
+  memoriserAnnulation(cochees+' case'+(cochees>1?'s':'')+' décochée'+(cochees>1?'s':'')
+    +' dans « '+NOM_ONGLET[sec]+' ».',false);
   map[sec].forEach(function(x){delete S.checked[x.id];delete S.dates[x.id];});
   saveState();renderAll();updateGlobal();
 }
@@ -1409,6 +1595,7 @@ window.addEventListener('DOMContentLoaded',function(){
     if(e.target.classList.contains('lic-input')){saveLic(e.target.dataset.id,e.target.value);}
     if(e.target.classList.contains('env-input')){saveEnv(e.target.dataset.var,e.target.value);}
   });
+  document.addEventListener('keydown',clavierGlobal);
   // Le profil mémorisé prime sur celui d'exemple. appliquerProfil déclenche le rendu.
   const memorise=chargerProfilMemorise();
   try{appliquerProfil(memorise||PROFIL_DEFAUT,false);}

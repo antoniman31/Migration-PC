@@ -30,10 +30,13 @@ ok('total affiché',await pg.textContent('#gp-total'),'45');
 ok('filtres catégories',(await pg.$$('#cat-filters .fb')).length,8);
 
 // Les quatre panneaux doivent etre freres : imbriques, les onglets deviennent
-// invisibles des qu'on quitte le premier.
-const imbrication=await pg.evaluate(()=>['npc','apps','data','pwa']
-  .map(t=>document.getElementById('panel-'+t).parentElement.className));
-ok('panneaux frères',imbrication.every(c=>c.indexOf('card')>=0),true);
+// invisibles des qu'on quitte le premier. On compare les parents entre eux
+// plutot qu'a un conteneur nomme : ajouter un <main> ne doit pas casser ce test.
+const memeParent=await pg.evaluate(()=>{
+  const p=['npc','apps','data','pwa'].map(t=>document.getElementById('panel-'+t).parentElement);
+  return p.every(x=>x===p[0]) && !p[0].closest('.panel');
+});
+ok('panneaux frères',memeParent,true);
 
 console.log('\n--- onglet Nouveau PC ---');
 ok('items rendus',(await pg.$$('#list-npc .item')).length,12);

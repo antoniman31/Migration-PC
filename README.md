@@ -136,6 +136,27 @@ de la checklist en texte, et impression globale ou par onglet.
 s'affichent quand même et un bandeau nomme l'onglet fautif et l'erreur, au lieu de
 laisser une page à moitié vide sans explication.
 
+**Revenir en arrière** — réinitialiser une section ou importer un fichier remplace du
+travail. Ces actions ne demandent pas de confirmation — on clique « oui » par réflexe —
+mais s'annulent après coup depuis un bandeau, qui restaure aussi bien les cases que le
+profil remplacé.
+
+### Accessibilité
+
+Tout se fait au clavier : les lignes sont des cases à cocher, atteintes par tabulation
+et activées par Entrée ou Espace, et le focus reste sur la ligne après la coche. L'anneau
+de focus est visible partout (`:focus-visible`), les lignes portent `role="checkbox"` et
+`aria-checked`, les onglets `role="tab"`, et la page a des repères `header` et `main`.
+
+Les contrastes respectent le seuil WCAG de 4,5:1 dans les deux thèmes, mesurés sur le
+fond réellement peint. Le bleu de l'interface est décliné en trois rôles : `--acc` pour
+les aplats et bordures, `--acc-fort` pour le texte et le focus, `--acc-fond` pour les
+fonds bleus portant du texte blanc — `#5493FF` seul n'atteint que 3,00:1 et ne peut pas
+porter de texte.
+
+Le réglage système « réduire les animations » est respecté : transitions et animations
+sont coupées, confettis compris.
+
 ## Formats de fichiers
 
 Le bouton **Importer** accepte quatre formats et les reconnaît tout seul.
@@ -222,9 +243,10 @@ npm run test:scan                 # scanner (nécessite PowerShell)
 npm run test:navigateur           # rendu réel dans Chromium
 npm run test:pwa                  # installabilité et fonctionnement hors ligne
 npm run test:mobile               # ergonomie tactile
+npm run test:a11y                 # accessibilité et réversibilité
 ```
 
-Sept suites, dans l'ordre où la CI les lance.
+Neuf suites, dans l'ordre où la CI les lance.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
@@ -255,9 +277,14 @@ thèmes, et mesure les cibles tactiles, les écarts entre elles, les tailles de 
 les débordements horizontaux. Par défaut il rapporte ; `STRICT=1` le fait échouer, ce
 que la CI utilise.
 
+`tests/test-accessibilite.js` calcule le contraste de chaque texte sur le fond
+réellement peint dans les deux thèmes, parcourt la page au clavier jusqu'à cocher une
+tâche, vérifie les rôles et états annoncés, l'annulation des actions destructrices et le
+respect du mouvement réduit.
+
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les sept suites à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les neuf suites à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 
