@@ -192,6 +192,37 @@ ok 'et une explication'                        (@($avec | Where-Object { [string
 ok 'taille d un dossier absent = null'         (Get-TailleDossier -Chemin (Join-Path $racine 'nexiste-pas')) $null
 Remove-Item -LiteralPath $racine -Recurse -Force -ErrorAction SilentlyContinue
 
+"--- ce qui est un jeu Xbox, et ce qui ne l est pas ---"
+# Le filtre d origine prenait « tout paquet APPX hors de %ProgramFiles% » :
+# Windows range ses propres composants dans C:\Windows\SystemApps, qui passait
+# donc. L inventaire se remplissait de composants systeme etiquetes « Xbox ».
+# On fixe %ProgramFiles% pour que le test dise la meme chose partout, et on le
+# remet apres : sous Windows, il est reel et sert au reste du script.
+$programFilesAvant = $env:ProgramFiles
+$env:ProgramFiles = 'C:\Program Files'
+function Paquet($nom, $ou, $cadre = $false, $signature = 'Store') {
+    [pscustomobject]@{ Name = $nom; InstallLocation = $ou; IsFramework = $cadre; SignatureKind = $signature }
+}
+ok 'un jeu sur un autre disque'   (Test-JeuXbox (Paquet 'Editeur.UnJeu' 'D:\WindowsApps\Editeur.UnJeu_1.0')) $true
+ok 'un jeu dans XboxGames'        (Test-JeuXbox (Paquet 'Editeur.Forza' 'E:\XboxGames\Forza\Content')) $true
+ok 'une appli du Store, non'      (Test-JeuXbox (Paquet 'Microsoft.Todos' 'C:\Program Files\WindowsApps\Microsoft.Todos_2')) $false
+ok 'un composant systeme, non'    (Test-JeuXbox (Paquet 'Microsoft.SecHealthUI' 'C:\Windows\SystemApps\Microsoft.SecHealthUI' $false 'System')) $false
+ok 'un composant hors magasin, non' (Test-JeuXbox (Paquet 'Machin.Truc' 'C:\Windows\SystemApps\Machin.Truc')) $false
+ok 'un cadre applicatif, non'     (Test-JeuXbox (Paquet 'Microsoft.VCLibs' 'D:\WindowsApps\Microsoft.VCLibs' $true)) $false
+ok 'sans emplacement, non'        (Test-JeuXbox (Paquet 'Sans.Lieu' '')) $false
+ok 'rien du tout, non'            (Test-JeuXbox $null) $false
+$env:ProgramFiles = $programFilesAvant
+
+"--- l editeur rendu par le Store ---"
+# Get-AppxPackage rend un nom distingue de certificat. Recopie tel quel, ce
+# pave partait dans l inventaire et s affichait sous le nom du logiciel.
+ok 'le CN est extrait' (Get-EditeurLisible 'CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US') 'Microsoft Corporation'
+ok 'meme si le CN n est pas en tete' (Get-EditeurLisible 'O=Truc, CN=Machin SARL, C=FR') 'Machin SARL'
+ok 'un editeur normal passe tel quel' (Get-EditeurLisible 'Igor Pavlov') 'Igor Pavlov'
+ok 'rien reste rien'                  (Get-EditeurLisible '') ''
+# Le classement s appuie sur l editeur : il doit continuer a marcher apres.
+ok 'le classement survit' (Get-Categorie -Nom 'Un truc' -Editeur (Get-EditeurLisible 'CN=NVIDIA Corporation, C=US')) 'pilotes'
+
 "--- fusion des sources ---"
 $script:resultats = @{}
 Add-App -Nom 'Mozilla Firefox (x64 fr)' -Editeur 'Mozilla' -Version '140.0' -Source 'registre' -Winget ''

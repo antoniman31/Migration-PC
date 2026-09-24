@@ -280,6 +280,17 @@ function Read-Registre {
     return $n
 }
 
+# Le Store rend l'editeur sous la forme d'un nom distingue de certificat :
+# « CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington,
+# C=US ». Recopie tel quel, ce pave partait dans l'inventaire puis s'affichait
+# sous le nom du logiciel dans la checklist. Seul le CN interesse quelqu'un.
+function Get-EditeurLisible {
+    param([string]$Brut)
+    if ([string]::IsNullOrWhiteSpace($Brut)) { return '' }
+    if ($Brut -match '(?:^|,)\s*CN=([^,]+)') { return $matches[1].Trim(' "') }
+    return $Brut.Trim()
+}
+
 # --- source 3 : Microsoft Store ----------------------------------------
 function Read-Store {
     Write-Host "  Microsoft Store..." -NoNewline
@@ -292,7 +303,7 @@ function Read-Store {
             # Les noms de paquets sont des identifiants techniques : on retire
             # le prefixe editeur pour obtenir quelque chose de lisible.
             $lisible = ($nom -replace '^(Microsoft|Microsoft\.)', 'Microsoft ').Trim()
-            Add-App -Nom $lisible -Editeur $p.Publisher -Version $p.Version `
+            Add-App -Nom $lisible -Editeur (Get-EditeurLisible $p.Publisher) -Version $p.Version `
                     -Source 'Microsoft Store' -Winget ''
             $n++
         }
@@ -404,15 +415,38 @@ function Read-GOG {
 }
 
 # --- source 7 : Xbox / Game Pass ---------------------------------------
+# Ce qui fait un jeu Xbox, et ce qui n'en fait pas un.
+#
+# « Tout paquet APPX hors de %ProgramFiles%\WindowsApps » etait trop large :
+# Windows range ses propres composants dans C:\Windows\SystemApps, qui passait
+# donc le filtre. L'inventaire se remplissait de SecHealthUI et de
+# Win32WebViewHost, presentes comme des jeux Xbox.
+#
+# Deux conditions valent mieux qu'une negation : le paquet n'est ni un cadre ni
+# un composant signe par le systeme, ET il est pose dans un magasin de jeux —
+# « WindowsApps » sur un autre disque que celui de Windows, ou « XboxGames »,
+# ou Microsoft range les installations recentes.
+function Test-JeuXbox {
+    param($Paquet)
+    if ($null -eq $Paquet) { return $false }
+    if ($Paquet.PSObject.Properties['IsFramework'] -and $Paquet.IsFramework) { return $false }
+    if ($Paquet.PSObject.Properties['SignatureKind'] -and $Paquet.SignatureKind -eq 'System') { return $false }
+    if (-not $Paquet.PSObject.Properties['InstallLocation']) { return $false }
+    $ou = [string]$Paquet.InstallLocation
+    if (-not $ou) { return $false }
+    $systeme = "$env:ProgramFiles\WindowsApps"
+    if ($systeme -and $ou -like "$systeme*") { return $false }
+    return ($ou -like '*\WindowsApps\*' -or $ou -like '*\XboxGames\*')
+}
+
 function Read-Xbox {
     Write-Host "  Xbox / Game Pass..." -NoNewline
-    # Les jeux Xbox sont des paquets APPX installes hors du dossier habituel :
+    # Les jeux Xbox sont des paquets APPX poses hors du dossier habituel :
     # c'est leur emplacement qui les distingue des applications du Store.
     $n = 0
     try {
         Get-AppxPackage -ErrorAction Stop |
-            Where-Object { -not $_.IsFramework -and $_.InstallLocation -and
-                           $_.InstallLocation -notlike "$env:ProgramFiles\WindowsApps*" } |
+            Where-Object { Test-JeuXbox -Paquet $_ } |
             ForEach-Object {
                 $nom = $_.Name -replace '^[A-Za-z0-9]+\.', ''
                 Add-App -Nom $nom -Editeur 'Xbox' -Version $_.Version -Source 'Xbox' -Winget ''
