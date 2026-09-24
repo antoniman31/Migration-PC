@@ -84,6 +84,9 @@ jobs:
       - name: Accessibilité et réversibilité
         run: node tests/test-accessibilite.js
 
+      - name: Mode guidé
+        run: node tests/test-guide.js
+
   publier:
     name: Publier sur Pages
     needs: verifier

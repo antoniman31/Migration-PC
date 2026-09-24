@@ -129,6 +129,14 @@ calculée depuis les durées, chronomètre de session, historique des dernières
 notes libres sur chaque élément, champs dédiés aux clés de licence et aux variables
 d'environnement.
 
+**Mode guidé** — pour le moment où l'on est debout devant la machine. Une tâche à la
+fois, dans l'ordre des dépendances, avec seulement ce qui sert alors : la commande
+winget prête à copier et l'avertissement s'il y en a un. Filtres, badges, durées et
+recherche disparaissent — ils appartiennent à la préparation. Un bouton fait l'aller et
+le retour, la vue liste reste le défaut et la progression est la même des deux côtés.
+
+![Le mode guidé](captures/mode-guide.png)
+
 **Sortie** — export de la progression, du profil, du script winget complet ou partiel,
 de la checklist en texte, et impression globale ou par onglet.
 
@@ -260,9 +268,10 @@ npm run test:navigateur           # rendu réel dans Chromium
 npm run test:pwa                  # installabilité et fonctionnement hors ligne
 npm run test:mobile               # ergonomie tactile
 npm run test:a11y                 # accessibilité et réversibilité
+npm run test:guide                # mode guidé
 ```
 
-Dix suites, dans l'ordre où la CI les lance.
+Onze suites, dans l'ordre où la CI les lance.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
@@ -301,9 +310,14 @@ réellement peint dans les deux thèmes, parcourt la page au clavier jusqu'à co
 tâche, vérifie les rôles et états annoncés, l'annulation des actions destructrices et le
 respect du mouvement réduit.
 
+`tests/test-guide.js` couvre le mode guidé : ce qui doit rester visible, ce qui doit
+disparaître, le parcours d'une tâche à l'autre, la copie de la commande dans le
+presse-papier, et le fait que ce mode tient les mêmes exigences de contraste, de cible
+tactile et de clavier que la vue liste.
+
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les dix suites à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les onze suites à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 

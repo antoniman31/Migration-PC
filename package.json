@@ -11,7 +11,8 @@
     "test:pwa": "node tests/test-pwa.js",
     "test:mobile": "node tests/test-mobile.js",
     "test:a11y": "node tests/test-accessibilite.js",
-    "sync": "node scripts-sync.js"
+    "sync": "node scripts-sync.js",
+    "test:guide": "node tests/test-guide.js"
   },
   "devDependencies": {
     "playwright": "^1.63.0"
