@@ -66,6 +66,7 @@ if (-not (Test-Path $lib)) {
     Write-Error "lib-detection.ps1 est introuvable a cote de ce script. Copiez les deux fichiers ensemble."
     exit 1
 }
+$resultats = @{}
 . $lib
 
 # Ecriture du resultat a cote de la page, et ouverture du navigateur.
