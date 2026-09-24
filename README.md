@@ -544,7 +544,9 @@ La section `quitter` est facultative : un profil qui ne la déclare pas affiche 
 onglets, comme avant.
 
 `cas` limite un élément à une situation : `["migration"]` ou `["reinstall"]`. Sans ce
-champ, il vaut pour les deux. `pilote: true` marque une étape de l'onglet Nouveau PC
+champ, il vaut pour les deux. Ce que l'élément dit de lui-même passe avant l'onglet où
+il se trouve : « Mes affaires » garde l'onglet Données en entier, mais pas les entrées
+qui se déclarent `["second"]` — elles se réclament d'une autre situation. `pilote: true` marque une étape de l'onglet Nouveau PC
 comme relevant des pilotes : c'est la seule chose que le cas « juste mes affaires »
 garde de cet onglet. Un profil qui n'en marque aucune y verra l'onglet vide, avec un
 message qui le dit. `alt` fournit un libellé et une description de

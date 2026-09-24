@@ -2105,8 +2105,13 @@ function visibleDansScenario(e){
   const cas=Array.isArray(e.cas)?e.cas:[];
   if(cas.indexOf(scenario)>=0)return true;          // nommé explicitement
   if(sc.exclusif){
-    // Un cas exclusif ne garde que ce qu'il réclame : ses onglets en entier,
-    // et ailleurs les seules étapes marquées « pilote ».
+    // Un élément qui nomme ses cas et ne nomme pas celui-ci se réclame d'une
+    // autre situation : « synchroniser les deux PC » n'a rien à faire ici,
+    // même si l'onglet Données est gardé en entier. Ce que l'élément dit de
+    // lui-même passe avant l'onglet où il se trouve.
+    if(cas.length)return false;
+    // Un cas exclusif ne garde ensuite que ce qu'il réclame : ses onglets en
+    // entier, et ailleurs les seules étapes marquées « pilote ».
     if(sc.onglets&&sc.onglets.indexOf(ongletDe(e.id))>=0)return true;
     return !!e.pilote;
   }

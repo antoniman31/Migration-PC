@@ -217,8 +217,14 @@ console.log('\n--- le troisieme cas : juste mes affaires ---');
 // ce qu'il reclame. Sans cette inversion, les reglages BIOS — qui ne portent
 // aucune mention — s'y retrouveraient aussi.
 await pg.click('#sc-affaires');await pg.waitForTimeout(350);
-const pilotes=P.npc.filter(e=>e.pilote).length;
-const attendu=pilotes+P.apps.length+P.data.length+P.pwa.length;
+// Un element qui nomme ses cas et ne nomme pas celui-ci se reclame d'une autre
+// situation : ce qu'il dit de lui-meme passe avant l'onglet ou il se trouve.
+const pourAffaires=e=>!Array.isArray(e.cas)||!e.cas.length||e.cas.indexOf('affaires')>=0;
+const pilotes=P.npc.filter(e=>e.pilote&&pourAffaires(e)).length;
+const dataAff=P.data.filter(pourAffaires).length;
+const appsAff=P.apps.filter(pourAffaires).length;
+const pwaAff=P.pwa.filter(pourAffaires).length;
+const attendu=pilotes+appsAff+dataAff+pwaAff;
 ok('bouton actif',await pg.getAttribute('#sc-affaires','aria-pressed'),'true');
 ok('le total ne compte que les affaires',await pg.textContent('#gp-total'),String(attendu));
 ok('le profil declare bien des pilotes',pilotes>0,true);
@@ -229,9 +235,18 @@ ok('et ce sont bien eux',npcVus.every(n=>/ilote/.test(n)),true);
 ok('aucun reglage BIOS',npcVus.some(n=>/BIOS|Secure Boot|CSM|XMP|EXPO/.test(n)),false);
 ok('ni l\'installation de Windows',npcVus.some(n=>/Installer Windows|NON-RETOUR/.test(n)),false);
 ok('les applications sont toutes la',
-  (await pg.$$('#list-apps .item')).length,P.apps.length);
-ok('les donnees aussi',(await pg.$$('#list-data .item')).length,P.data.length);
-ok('les PWA aussi',(await pg.$$('#list-pwa .item')).length,P.pwa.length);
+  (await pg.$$('#list-apps .item')).length,appsAff);
+ok('les donnees aussi',(await pg.$$('#list-data .item')).length,dataAff);
+ok('les PWA aussi',(await pg.$$('#list-pwa .item')).length,pwaAff);
+
+// Un onglet garde en entier ne ramene pas pour autant ce qui appartient a un
+// autre cas : « synchroniser les deux PC » se declare second:, il n'a rien a
+// faire ici, meme dans un onglet qu'on garde.
+const dAutresCas=P.data.filter(e=>Array.isArray(e.cas)&&e.cas.length&&e.cas.indexOf('affaires')<0);
+ok('le profil declare bien des elements d\'un autre cas',dAutresCas.length>0,true);
+const nomsData=await pg.evaluate(()=>
+  [...document.querySelectorAll('#list-data .item-name')].map(x=>x.textContent));
+ok('aucun ne passe',dAutresCas.some(e=>nomsData.indexOf(e.n)>=0),false);
 
 console.log('\n--- un onglet vide dit pourquoi ---');
 const vide=await pg.textContent('#list-quitter');
