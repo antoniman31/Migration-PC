@@ -386,7 +386,8 @@ body.compact .b-dep{display:none}
     <div class="sec-bar-bg"><div class="sec-bar-fill" id="bar-npc" style="width:0%"></div></div>
     <span class="sec-prog-txt"><b id="done-npc">0</b>/<span id="total-npc">0</span> · <span id="time-npc">~0min</span></span>
   </div>
-  <div class="sec-content" id="list-npc">  <div class="next-tab-btn" id="next-npc">
+  <div class="sec-content" id="list-npc"></div>
+  <div class="next-tab-btn" id="next-npc">
     <button class="next-btn" onclick="switchTab('apps')" id="next-npc-btn">Apps <span id="next-npc-count"></span> →</button>
   </div>
 </div>
@@ -433,7 +434,8 @@ body.compact .b-dep{display:none}
     <div class="sec-bar-bg"><div class="sec-bar-fill" id="bar-data" style="width:0%"></div></div>
     <span class="sec-prog-txt"><b id="done-data">0</b>/<span id="total-data">0</span></span>
   </div>
-  <div class="sec-content" id="list-data">  <div class="next-tab-btn" id="next-data">
+  <div class="sec-content" id="list-data"></div>
+  <div class="next-tab-btn" id="next-data">
     <button class="next-btn" onclick="switchTab('pwa')" id="next-data-btn">PWA <span id="next-data-count"></span> →</button>
   </div>
 </div>
@@ -958,6 +960,8 @@ function renderData(){
           +'<div class="item-badges">'+pBadge+'</div>'
           +'<div class="save-path">'+esc(s.p)+'</div>'
           +(s.note?'<div class="save-note">'+esc(s.note)+'</div>':'')
+          +mkLicField(s)
+          +mkEnvFields(s)
           +mkNoteArea(s.id)
         +'</div>'
       +'</div>';
@@ -1160,9 +1164,12 @@ function mkDepBadge(dep){
 }
 
 // ═══ V6 : CHAMP LICENCE ═══
-function mkLicField(id){
+// Affiché uniquement sur les éléments que le profil marque avec lic.
+function mkLicField(item){
+  if(!item||!item.lic)return '';
+  var id=item.id;
   var val=S.lic&&S.lic[id]?S.lic[id]:'';
-  return '<div class="lic-field" onclick="event.stopPropagation()"><label>Cle licence :</label><input class="lic-input" data-id="'+id+'" type="text" placeholder="Entrer la cle..." value="'+esc(val)+'"></div>';
+  return '<div class="lic-field" onclick="event.stopPropagation()"><label>Clé de licence</label><input class="lic-input" data-id="'+esc(id)+'" type="text" placeholder="Coller la clé..." value="'+esc(val)+'"></div>';
 }
 function saveLic(id,val){
   if(!S.lic)S.lic={};
@@ -1171,10 +1178,12 @@ function saveLic(id,val){
 }
 
 // ═══ V6 : CHAMP ENV ═══
+// env vaut true (liste par défaut) ou un tableau de noms de variables.
 const ENV_VARS=['ANDROID_HOME','JAVA_HOME','PATH_CUSTOM'];
-function mkEnvFields(id){
+function mkEnvFields(item){
+  if(!item||!item.env)return '';
   if(!S.env)S.env={};
-  var vars=['ANDROID_HOME','JAVA_HOME','PATH_CUSTOM'];
+  var vars=Array.isArray(item.env)?item.env:ENV_VARS;
   var fields=vars.map(function(v){
     var val=S.env[v]||'';
     return '<div class="env-row" onclick="event.stopPropagation()"><label>'+v+'</label><input class="env-input" data-var="'+v+'" type="text" placeholder="Chemin..." value="'+esc(val)+'"></div>';

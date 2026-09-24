@@ -181,12 +181,21 @@ JSON est le seul transfert fiable.
 
 ```bash
 node tests/test-checklist.js      # extrait le JS de index.html, l'exécute dans un DOM simulé
-pwsh -File tests/test-scan.ps1    # fonctions de classement, fusion et parsing du scanner
+pwsh -File tests/test-scan.ps1    # classement, fusion et parsing du scanner
+npm install playwright            # une seule fois, pour la suite ci-dessous
+node tests/test-navigateur.js     # rendu réel dans Chromium
 ```
 
-Les deux suites tournent sans navigateur ni Windows. `tests/test-checklist.js` rejoue
-aussi l'import d'un inventaire réellement produit par le scanner
+Les deux premières suites tournent sans navigateur ni Windows. `tests/test-checklist.js`
+rejoue l'import d'un inventaire réellement produit par le scanner
 (`tests/inventaire-exemple.json`), ce qui couvre la chaîne de bout en bout.
+
+`tests/test-navigateur.js` charge la page dans un vrai Chromium et vérifie ce qu'un DOM
+simulé ne voit pas : que les quatre panneaux sont bien frères et non imbriqués, que les
+éléments ont une taille non nulle, que la saisie des clés de licence survit à un
+rechargement. Deux variables d'environnement facultatives : `CHROME` pour pointer un
+binaire Chromium existant, `PROFIL` pour tester votre propre profil à la place de
+l'exemple (par défaut il cherche `profil-local.json` à la racine).
 
 ## Déploiement
 
@@ -195,8 +204,11 @@ Migration-PC/
 ├── index.html                    # la checklist (tout est dedans)
 ├── scan-pc.ps1                   # le scanner Windows
 ├── presets/exemple.json          # profil d'exemple, aussi embarqué dans index.html
-└── tests/                        # suites de tests
+└── tests/                        # suites Node, PowerShell et navigateur
 ```
+
+Les fichiers personnels (`profil-*.json`, `inventaire-*.json`, `progression-*.json`)
+sont exclus par `.gitignore` : gardez le vôtre en local, hors du dépôt.
 
 Le dépôt est publiable tel quel sur GitHub Pages : **Settings → Pages → Deploy from a
 branch → `main` → `/ (root)`**.
