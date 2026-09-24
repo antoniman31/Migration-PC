@@ -18,52 +18,263 @@
   },
   "npc": [
     {
-      "id": "n1",
+      "id": "n13",
       "o": 1,
+      "n": "Entrer dans le BIOS/UEFI",
+      "src": "Touche Suppr ou F2 au démarrage",
+      "p": "high",
+      "t": 5,
+      "d": "Tapoter Suppr dès l'allumage, quatre à cinq fois par seconde. Sur certaines cartes et sur les portables, c'est F2. Tous les réglages qui suivent se font là, avant d'installer Windows."
+    },
+    {
+      "id": "n14",
+      "o": 2,
+      "n": "Mettre à jour le BIOS si nécessaire",
+      "src": "Site du fabricant de la carte mère",
+      "p": "med",
+      "t": 15,
+      "dep": [
+        "n13"
+      ],
+      "d": "Seulement si une version corrige un problème qui vous concerne, ou si le processeur est plus récent que la carte. Un BIOS qui fonctionne n'a pas besoin d'être mis à jour.",
+      "warn": "Ne jamais couper l'alimentation pendant la mise à jour : la carte mère devient inutilisable."
+    },
+    {
+      "id": "n15",
+      "o": 3,
+      "n": "Activer TPM 2.0 et Secure Boot",
+      "src": "BIOS — Sécurité / Avancé",
+      "p": "high",
+      "t": 5,
+      "dep": [
+        "n13"
+      ],
+      "d": "Windows 11 les exige : sans eux, l'installation refuse de démarrer. Le TPM s'appelle PTT chez Intel et fTPM chez AMD. Secure Boot demande parfois de restaurer les clés par défaut avant de pouvoir s'activer."
+    },
+    {
+      "id": "n16",
+      "o": 4,
+      "n": "Désactiver le CSM",
+      "src": "BIOS — Démarrage",
+      "p": "high",
+      "t": 3,
+      "dep": [
+        "n15"
+      ],
+      "d": "Le module de compatibilité fait démarrer en mode ancien (BIOS) au lieu d'UEFI. Secure Boot ne s'active pas tant qu'il est là, et Windows 11 demande un disque en GPT, donc un démarrage UEFI."
+    },
+    {
+      "id": "n7",
+      "o": 5,
+      "n": "Activer le profil XMP / EXPO de la RAM",
+      "src": "BIOS — réglages mémoire",
+      "p": "high",
+      "t": 5,
+      "dep": [
+        "n13"
+      ],
+      "d": "Sans ce profil, la mémoire tourne à sa fréquence de base, bien en dessous de ce pour quoi vous l'avez payée. XMP chez Intel, EXPO chez AMD."
+    },
+    {
+      "id": "n17",
+      "o": 6,
+      "n": "Activer Resizable BAR",
+      "src": "BIOS — Avancé / PCIe",
+      "p": "med",
+      "t": 3,
+      "dep": [
+        "n16"
+      ],
+      "d": "Laisse le processeur accéder à toute la mémoire de la carte graphique d'un coup. Deux à cinq pour cent de performance en jeu, gratuitement. S'appelle Smart Access Memory chez AMD, et demande le mode UEFI."
+    },
+    {
+      "id": "n18",
+      "o": 7,
+      "n": "Activer la virtualisation du processeur",
+      "src": "BIOS — Avancé / CPU",
+      "p": "med",
+      "t": 3,
+      "dep": [
+        "n13"
+      ],
+      "d": "Nécessaire aux machines virtuelles, à WSL, à Docker et aux émulateurs Android. S'appelle SVM chez AMD, VT-x ou Intel Virtualization Technology chez Intel."
+    },
+    {
+      "id": "n19",
+      "o": 8,
+      "n": "Régler l'ordre de démarrage et l'heure",
+      "src": "BIOS — Démarrage",
+      "p": "med",
+      "t": 3,
+      "dep": [
+        "n13"
+      ],
+      "d": "La clé d'installation en premier, le SSD ensuite. Vérifier aussi la date et l'heure : une horloge fausse provoque des erreurs de certificat pendant l'installation."
+    },
+    {
+      "id": "n20",
+      "o": 9,
+      "n": "Régler la courbe des ventilateurs",
+      "src": "BIOS — Monitoring / Fan control",
+      "p": "ok",
+      "t": 10,
+      "dep": [
+        "n13"
+      ],
+      "d": "Le profil par défaut est souvent bruyant pour rien. Un profil silencieux suffit tant que les températures restent correctes, ce qui se vérifie plus loin."
+    },
+    {
+      "id": "n21",
+      "o": 10,
+      "n": "Revérifier les réglages après redémarrage",
+      "src": "BIOS",
+      "p": "high",
+      "t": 5,
+      "dep": [
+        "n15",
+        "n16",
+        "n7",
+        "n17"
+      ],
+      "d": "Enregistrer, sortir, puis revenir dans le BIOS pour contrôler que TPM, Secure Boot, XMP et Resizable BAR sont bien actifs. Il arrive qu'un réglage ne tienne pas au premier enregistrement."
+    },
+    {
+      "id": "n22",
+      "o": 11,
+      "n": "Préparer la clé d'installation Windows",
+      "src": "Media Creation Tool ou Rufus",
+      "p": "high",
+      "t": 20,
+      "d": "Une clé USB de 8 Go minimum, qui sera effacée. Rufus permet en plus de retirer certaines contraintes et de préconfigurer l'installation."
+    },
+    {
+      "id": "n23",
+      "o": 12,
+      "n": "Installer Windows",
+      "src": "Clé USB",
+      "p": "high",
+      "t": 30,
+      "dep": [
+        "n21",
+        "n22"
+      ],
+      "d": "Supprimer toutes les partitions existantes du disque cible pour repartir propre. Ne pas brancher les autres disques pendant l'installation : cela évite que le chargeur de démarrage atterrisse sur le mauvais.",
+      "warn": "Toutes les données du disque choisi sont perdues. Vérifier que les sauvegardes sont faites ET vérifiées."
+    },
+    {
+      "id": "n24",
+      "o": 13,
+      "n": "Choisir le type de compte",
+      "src": "Assistant de première configuration",
+      "p": "med",
+      "t": 5,
+      "dep": [
+        "n23"
+      ],
+      "d": "Compte Microsoft ou compte local. Le compte Microsoft synchronise les réglages et rattache la licence, le compte local garde tout sur la machine. On peut ajouter le compte Microsoft plus tard, l'inverse est plus pénible."
+    },
+    {
+      "id": "n1",
+      "o": 14,
       "n": "Windows Update — tous les correctifs",
       "src": "Paramètres → Windows Update",
       "p": "high",
       "t": 30,
-      "d": "Première chose après l'installation. Relancer jusqu'à ce qu'il n'y ait plus rien, redémarrages compris."
+      "dep": [
+        "n23"
+      ],
+      "d": "Relancer jusqu'à ce qu'il n'y ait plus rien, redémarrages compris, et penser aux mises à jour facultatives qui contiennent souvent des pilotes."
+    },
+    {
+      "id": "n6",
+      "o": 15,
+      "n": "Vérifier l'activation de Windows",
+      "src": "Paramètres → Système → Activation",
+      "p": "high",
+      "t": 5,
+      "dep": [
+        "n23"
+      ],
+      "d": "Une licence liée au compte Microsoft se réactive en se connectant. Une licence OEM s'attache à la carte mère et revient seule après une réinstallation sur le même matériel."
+    },
+    {
+      "id": "n25",
+      "o": 16,
+      "n": "Noter la clé de récupération BitLocker",
+      "src": "Paramètres → Confidentialité → Chiffrement",
+      "p": "high",
+      "t": 5,
+      "dep": [
+        "n6"
+      ],
+      "d": "Windows 11 chiffre souvent le disque sans le dire clairement. Sans cette clé, un démarrage qui tourne mal ou un changement de matériel rend les données définitivement illisibles. La sauvegarder ailleurs que sur cette machine.",
+      "warn": "À faire tout de suite. Une clé perdue ne se retrouve pas."
+    },
+    {
+      "id": "n26",
+      "o": 17,
+      "n": "Retirer les applications préinstallées",
+      "src": "Paramètres → Applications",
+      "p": "med",
+      "t": 15,
+      "dep": [
+        "n1"
+      ],
+      "d": "Les machines de marque arrivent avec des essais d'antivirus et des utilitaires maison. Désinstaller ce qui ne sert pas, sans toucher aux pilotes ni aux utilitaires du fabricant de la carte mère."
+    },
+    {
+      "id": "n27",
+      "o": 18,
+      "n": "Passer les paramètres de confidentialité",
+      "src": "Paramètres → Confidentialité et sécurité",
+      "p": "med",
+      "t": 10,
+      "dep": [
+        "n1"
+      ],
+      "d": "Publicité personnalisée, historique d'activité, données de diagnostic facultatives, autorisations des applications. Rien de vital, mais c'est le moment de le faire une fois pour toutes."
     },
     {
       "id": "n2",
-      "o": 2,
-      "n": "Driver chipset carte mère",
+      "o": 19,
+      "n": "Pilote chipset de la carte mère",
       "src": "Site du fabricant de la carte mère",
       "p": "high",
       "t": 10,
-      "d": "Gère USB, SATA, NVMe et la gestion d'énergie. À installer avant tout le reste.",
-      "warn": "Télécharger uniquement sur le site officiel du fabricant (AMD, Intel, ASUS, MSI, Gigabyte, ASRock)."
+      "dep": [
+        "n1"
+      ],
+      "d": "Gère l'USB, le SATA, le NVMe et la gestion d'énergie. À installer avant les autres pilotes.",
+      "warn": "Télécharger uniquement sur le site officiel du fabricant."
     },
     {
       "id": "n3",
-      "o": 3,
-      "n": "Driver réseau (Ethernet / Wi-Fi)",
+      "o": 20,
+      "n": "Pilote réseau (Ethernet / Wi-Fi)",
       "src": "Site du fabricant de la carte mère",
       "p": "high",
       "t": 5,
-      "d": "À récupérer sur une clé USB AVANT la migration si le nouveau PC n'a pas de réseau au premier démarrage.",
       "dep": [
         "n2"
-      ]
+      ],
+      "d": "À récupérer sur une clé USB AVANT la migration si le nouveau PC n'a pas de réseau au premier démarrage : sans lui, impossible de télécharger quoi que ce soit."
     },
     {
       "id": "n4",
-      "o": 4,
-      "n": "Driver audio",
+      "o": 21,
+      "n": "Pilote audio",
       "src": "Site du fabricant de la carte mère",
       "p": "med",
       "t": 5,
-      "d": "Windows installe un driver générique ; celui du fabricant débloque les sorties et effets spécifiques.",
       "dep": [
         "n2"
-      ]
+      ],
+      "d": "Windows installe un pilote générique ; celui du fabricant débloque les sorties et les effets spécifiques."
     },
     {
       "id": "n5",
-      "o": 5,
-      "n": "Driver carte graphique",
+      "o": 22,
+      "n": "Pilote de carte graphique",
       "src": "nvidia.com / amd.com / intel.com",
       "p": "high",
       "t": 15,
@@ -71,46 +282,24 @@
         "n2"
       ],
       "d": "Pilote officiel du GPU. Choisir la branche Game Ready ou Studio selon l'usage.",
-      "warn": "Télécharger uniquement sur le site du fabricant — beaucoup de faux sites de drivers."
-    },
-    {
-      "id": "n6",
-      "o": 6,
-      "n": "Activation de Windows",
-      "src": "Paramètres → Système → Activation",
-      "p": "high",
-      "t": 5,
-      "d": "Vérifier que la licence est bien reconnue. Une licence liée au compte Microsoft se réactive en se connectant."
-    },
-    {
-      "id": "n7",
-      "o": 7,
-      "n": "Profil XMP / EXPO de la RAM",
-      "src": "BIOS/UEFI",
-      "p": "med",
-      "t": 5,
-      "post": true,
-      "d": "Sans ce profil la RAM tourne à sa fréquence de base. Activer dans le BIOS puis vérifier la fréquence dans le Gestionnaire des tâches → Performance → Mémoire.",
-      "dep": [
-        "n1"
-      ]
+      "warn": "Télécharger uniquement sur le site du fabricant — beaucoup de faux sites de pilotes."
     },
     {
       "id": "n8",
-      "o": 8,
+      "o": 23,
       "n": "Vérifier les températures au repos",
       "src": "HWiNFO64",
       "p": "med",
       "t": 10,
       "post": true,
-      "d": "Repères courants : CPU sous 50 °C, GPU sous 45 °C, SSD sous 50 °C au repos. Au-dessus, vérifier le montage du refroidissement.",
       "dep": [
         "n5"
-      ]
+      ],
+      "d": "Repères courants : processeur sous 50 °C, carte graphique sous 45 °C, SSD sous 50 °C au repos. Au-dessus, vérifier le montage du refroidissement."
     },
     {
       "id": "n9",
-      "o": 9,
+      "o": 24,
       "n": "Vérifier le sens des ventilateurs",
       "src": "Vérification physique",
       "p": "med",
@@ -120,36 +309,49 @@
     },
     {
       "id": "n10",
-      "o": 10,
+      "o": 25,
       "n": "Benchmark du SSD",
       "src": "CrystalDiskMark",
       "p": "ok",
       "t": 10,
       "post": true,
-      "d": "Comparer les débits mesurés à ceux annoncés par le fabricant. Un écart important signale souvent un mauvais port M.2."
+      "d": "Comparer les débits mesurés à ceux annoncés. Un écart important signale souvent un mauvais port M.2, partagé avec d'autres connecteurs."
     },
     {
       "id": "n11",
-      "o": 11,
+      "o": 26,
       "n": "Configurer les écrans (résolution + Hz)",
       "src": "Paramètres → Système → Affichage",
       "p": "med",
       "t": 10,
       "post": true,
+      "dep": [
+        "n5"
+      ],
       "d": "Windows ne choisit pas toujours la fréquence maximale. Régler chaque écran sur sa résolution native et son taux de rafraîchissement maximal."
     },
     {
+      "id": "n28",
+      "o": 27,
+      "n": "Mettre en place une sauvegarde",
+      "src": "Historique des fichiers, OneDrive ou autre",
+      "p": "high",
+      "t": 15,
+      "post": true,
+      "d": "Le moment le plus facile pour s'en occuper, et celui où on le remet toujours à plus tard. Une sauvegarde qui n'a jamais été restaurée n'est pas une sauvegarde : tester une restauration."
+    },
+    {
       "id": "n12",
-      "o": 12,
+      "o": 28,
       "n": "Créer un point de restauration",
       "src": "Créer un point de restauration",
       "p": "med",
       "t": 5,
       "post": true,
-      "d": "Une fois le système propre et à jour, avant d'installer les applications. Filet de sécurité en cas d'installation qui tourne mal.",
       "dep": [
         "n1"
-      ]
+      ],
+      "d": "Une fois le système propre et à jour, avant d'installer les applications. Filet de sécurité en cas d'installation qui tourne mal."
     }
   ],
   "ordre": [
@@ -445,6 +647,69 @@
       "n": "Imprimantes et périphériques",
       "p": "Paramètres → Bluetooth et appareils",
       "note": "Noter les modèles et les adresses réseau pour les reconfigurer plus vite.",
+      "pr": "ok"
+    },
+    {
+      "id": "s13",
+      "n": "Codes de récupération 2FA",
+      "p": "Coffre-fort ou support hors ligne",
+      "note": "Le plus souvent oublié, et le seul qui enferme dehors définitivement. Sortir les codes de secours de chaque compte AVANT de toucher à quoi que ce soit.",
+      "pr": "high"
+    },
+    {
+      "id": "s14",
+      "n": "Application d'authentification",
+      "p": "Sur le téléphone — fonction de transfert",
+      "note": "Les jetons ne se copient pas comme un fichier. Utiliser la fonction de transfert de l'application, et le faire avant de changer de téléphone si les deux migrations tombent en même temps.",
+      "pr": "high"
+    },
+    {
+      "id": "s15",
+      "n": "Clé de récupération BitLocker de cet ancien PC",
+      "p": "Compte Microsoft ou impression",
+      "note": "Si le disque de l'ancien PC est chiffré et que vous comptez y revenir chercher quelque chose, sans cette clé il sera illisible.",
+      "pr": "high"
+    },
+    {
+      "id": "s16",
+      "n": "Favoris du navigateur",
+      "p": "Gestionnaire de favoris → Exporter",
+      "note": "La synchronisation les couvre si elle est active. Sinon, un export HTML prend dix secondes et évite de tout reconstruire.",
+      "pr": "med"
+    },
+    {
+      "id": "s17",
+      "n": "Gestionnaire d'identification Windows",
+      "p": "Panneau de configuration → Comptes d'utilisateurs",
+      "note": "Garde les accès aux partages réseau, aux lecteurs mappés et au bureau à distance. Personne n'y pense, et tout cesse de fonctionner après la réinstallation.",
+      "pr": "med"
+    },
+    {
+      "id": "s18",
+      "n": "Profils Wi-Fi et clés réseau",
+      "p": "netsh wlan export profile key=clear",
+      "note": "La commande exporte chaque réseau enregistré avec sa clé. Utile pour les réseaux dont personne ne se souvient du mot de passe.",
+      "pr": "med"
+    },
+    {
+      "id": "s19",
+      "n": "Profils VPN et certificats",
+      "p": "Paramètres → Réseau → VPN",
+      "note": "Adresses de serveurs, certificats et fichiers de configuration. Un client VPN réinstallé ne retrouve rien tout seul.",
+      "pr": "med"
+    },
+    {
+      "id": "s20",
+      "n": "Archives mail locales",
+      "p": "Fichiers .pst et .ost, dossiers de profil",
+      "note": "Les messages restés en local n'existent nulle part ailleurs. Vérifier aussi les signatures, les règles et les carnets d'adresses.",
+      "pr": "med"
+    },
+    {
+      "id": "s21",
+      "n": "Machines virtuelles",
+      "p": "Selon l'hyperviseur utilisé",
+      "note": "Des dizaines de gigaoctets faciles à oublier, et impossibles à recréer à l'identique. Les arrêter proprement avant de copier.",
       "pr": "ok"
     }
   ],

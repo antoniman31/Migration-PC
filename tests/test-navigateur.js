@@ -9,6 +9,11 @@ const {chromium}=require('playwright');
 const path=require('path'),fs=require('fs');
 const racine=path.join(__dirname,'..');
 const HTML='file://'+path.join(racine,'index.html');
+// Les comptes viennent du profil d'exemple : figer « 45 éléments » oblige à
+// retoucher ce fichier a chaque enrichissement du contenu, ce qui finit par
+// le faire mentir.
+const PROFIL=JSON.parse(fs.readFileSync(path.join(racine,'presets','exemple.json'),'utf8'));
+const TOTAL=PROFIL.npc.length+PROFIL.apps.length+PROFIL.data.length+PROFIL.pwa.length;
 let ko=0;
 const ok=(l,a,b)=>{const p=(b===undefined?!!a:a===b);console.log((p?'  ok   ':'  FAIL ')+l+' → '+a+(p?'':' (attendu '+b+')'));if(!p)ko++;};
 
@@ -26,7 +31,7 @@ console.log('--- chargement ---');
 ok('aucune erreur JS',erreurs.length===0?'oui':'NON : '+erreurs.join(' | '),'oui');
 ok('titre onglet',await pg.title());
 ok('en-tête',await pg.textContent('#profil-titre'),'Migration Windows — profil type');
-ok('total affiché',await pg.textContent('#gp-total'),'45');
+ok('total affiché',await pg.textContent('#gp-total'),String(TOTAL));
 ok('filtres catégories',(await pg.$$('#cat-filters .fb')).length,8);
 
 // Les quatre panneaux doivent etre freres : imbriques, les onglets deviennent
@@ -39,7 +44,7 @@ const memeParent=await pg.evaluate(()=>{
 ok('panneaux frères',memeParent,true);
 
 console.log('\n--- onglet Nouveau PC ---');
-ok('items rendus',(await pg.$$('#list-npc .item')).length,12);
+ok('items rendus',(await pg.$$('#list-npc .item')).length,PROFIL.npc.length);
 ok('badge étape visible',await pg.isVisible('#list-npc .b-num'));
 
 console.log('\n--- onglet Apps (celui qui était cassé en v6) ---');
@@ -65,7 +70,7 @@ await pg.fill('#gsearch-input','');
 
 console.log('\n--- onglets Données et PWA ---');
 await pg.click('#tab-data');
-ok('données rendues',(await pg.$$('#list-data .item')).length,12);
+ok('données rendues',(await pg.$$('#list-data .item')).length,PROFIL.data.length);
 ok('champ licence présent',(await pg.$$('#list-data .lic-field')).length>0);
 ok('champs env présents',(await pg.$$('#list-data .env-row')).length,3);
 await pg.fill('#list-data .lic-input','ABCD-1234-EFGH');

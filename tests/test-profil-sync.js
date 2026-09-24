@@ -48,6 +48,47 @@ ok('priorités valides',mauvaisePrio.length===0,mauvaisePrio.map(e=>e.id+'='+e.p
 const mauvaisePr=(fichier.data||[]).filter(function(e){return prioValides.indexOf(e.pr)<0;});
 ok('priorités de sauvegarde valides',mauvaisePr.length===0,mauvaisePr.map(e=>e.id+'='+e.pr).join(', '));
 
+// Types des champs : une description qui serait un tableau et une dependance
+// qui serait une phrase signalent une inversion des deux, ce qui s'est
+// reellement produit en generant ce profil. Rien ne plante, mais la page
+// affiche « n13 » a la place du texte.
+const mauvaiseDesc=tous.filter(function(e){return e.d!==undefined&&typeof e.d!=='string';});
+ok('les descriptions sont du texte',mauvaiseDesc.length===0,
+   mauvaiseDesc.map(function(e){return e.id;}).join(', '));
+
+const mauvaiseDep=tous.filter(function(e){
+  if(e.dep===undefined)return false;
+  if(typeof e.dep==='string')return false;          // ancien format, toléré
+  if(!Array.isArray(e.dep))return true;
+  return e.dep.some(function(d){return typeof d!=='string';});
+});
+ok('les dépendances sont des identifiants',mauvaiseDep.length===0,
+   mauvaiseDep.map(function(e){return e.id;}).join(', '));
+
+const depInconnue=[];
+tous.forEach(function(e){
+  if(!Array.isArray(e.dep))return;
+  e.dep.forEach(function(d){if(!vus.has(d))depInconnue.push(e.id+'→'+d);});
+});
+ok('les dépendances désignent des éléments existants',depInconnue.length===0,depInconnue.join(', '));
+
+// Dans l'onglet « Nouveau PC », un prerequis doit aussi venir avant dans la
+// numerotation : sinon la liste conseille un ordre que ses propres liens
+// contredisent.
+const rang={};
+(fichier.npc||[]).forEach(function(e){rang[e.id]=e.o;});
+const ordreIncoherent=[];
+(fichier.npc||[]).forEach(function(e){
+  if(!Array.isArray(e.dep))return;
+  e.dep.forEach(function(d){
+    if(rang[d]!==undefined&&rang[d]>rang[e.id])ordreIncoherent.push(e.id+' avant '+d);
+  });
+});
+ok("l'ordre des étapes respecte les prérequis",ordreIncoherent.length===0,ordreIncoherent.join(', '));
+
+const numeros=(fichier.npc||[]).map(function(e){return e.o;});
+ok('numéros d\'étape uniques',new Set(numeros).size===numeros.length);
+
 const catsInconnues=(fichier.apps||[]).filter(function(a){return a.c&&!fichier.cats[a.c];});
 ok('catégories déclarées',catsInconnues.length===0,catsInconnues.map(a=>a.id+'→'+a.c).join(', '));
 

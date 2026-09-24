@@ -6,8 +6,11 @@
 //
 //   node tests/test-guide.js
 const {chromium}=require('playwright');
-const path=require('path');
-const HTML='file://'+path.join(__dirname,'..','index.html');
+const fs=require('fs'),path=require('path');
+const racine=path.join(__dirname,'..');
+const HTML='file://'+path.join(racine,'index.html');
+const PROFIL=JSON.parse(fs.readFileSync(path.join(racine,'presets','exemple.json'),'utf8'));
+const TOTAL=PROFIL.npc.length+PROFIL.apps.length+PROFIL.data.length+PROFIL.pwa.length;
 const lancement={args:['--no-sandbox']};
 if(process.env.CHROME)lancement.executablePath=process.env.CHROME;
 
@@ -45,7 +48,7 @@ const t=await pg.evaluate(()=>({
 console.log('   ',JSON.stringify(t));
 ok('une seule tâche affichée',t.titres,1);
 ok('la 1re est la 1re étape machine',t.onglet,'Nouveau PC');
-ok('compteur présent',/Tâche 1 sur 45/.test(t.etape),true);
+ok('compteur présent',t.etape,'Tâche 1 sur '+TOTAL);
 
 console.log('\n--- ce qui reste visible : commande et avertissement ---');
 await pg.evaluate(()=>{

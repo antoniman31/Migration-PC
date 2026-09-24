@@ -178,8 +178,19 @@ conformes. `-ToleranceParCent` règle l'écart de taille toléré, 2 % par défa
 
 ## La checklist
 
-Quatre onglets : **Nouveau PC** (drivers et vérifications), **Apps**, **Données** à
-sauvegarder, **PWA** (raccourcis web).
+Quatre onglets : **Nouveau PC**, **Apps**, **Données** à sauvegarder, **PWA**
+(raccourcis web).
+
+L'onglet Nouveau PC suit l'ordre réel d'une installation, et commence avant Windows :
+les réglages du BIOS — TPM 2.0 et Secure Boot, qui conditionnent l'installation de
+Windows 11, désactivation du CSM, profil XMP/EXPO, Resizable BAR, virtualisation — puis
+l'installation elle-même, le système, les pilotes, et enfin les vérifications
+matérielles. Chaque étape dit pourquoi elle existe et ce qu'on risque à l'oublier.
+
+L'onglet Données couvre aussi ce qu'on découvre trop tard : les codes de récupération
+2FA, la clé BitLocker, les profils Wi-Fi exportables avec
+`netsh wlan export profile key=clear`, le Gestionnaire d'identification Windows et les
+archives mail locales.
 
 La progression est enregistrée dans le navigateur au fur et à mesure et peut être
 exportée en JSON pour passer d'une machine à l'autre.
