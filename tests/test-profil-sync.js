@@ -77,5 +77,21 @@ requis.forEach(function(f){
   ok('versionné (non ignoré) : '+f,!ignore,'exclu par .gitignore');
 });
 
+// Une fonction definie deux fois : la seconde ecrase silencieusement la
+// premiere par hoisting, et le code qu'on vient d'ecrire n'est jamais execute.
+// Ce piege s'est produit trois fois dans ce fichier (mkLicField, mkEnvFields,
+// mkDepBadge), chaque fois sans le moindre message.
+const script=html.match(/<script>([\s\S]*)<\/script>/);
+if(script){
+  const noms={},doubles=[];
+  const re=/^function\s+([A-Za-z_$][\w$]*)\s*\(/gm;
+  let m;
+  while((m=re.exec(script[1]))!==null){
+    if(noms[m[1]])doubles.push(m[1]);
+    noms[m[1]]=true;
+  }
+  ok('aucune fonction définie deux fois',doubles.length===0,doubles.join(', '));
+}
+
 console.log(ko?'\n'+ko+' TEST(S) EN ECHEC':'\nPROFIL SYNCHRONISE ET COHERENT');
 process.exit(ko?1:0);

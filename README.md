@@ -199,6 +199,10 @@ la progression. Importer une progression fait l'inverse.
 Copiez `presets/exemple.json` et modifiez-le. Les identifiants doivent être uniques
 dans tout le fichier : ce sont eux qui portent les cases cochées.
 
+Le profil d'exemple existe en double : dans ce fichier, et embarqué dans `index.html`
+pour que la page fonctionne sans serveur. Après avoir modifié le fichier, lancez
+`npm run sync` pour recopier l'un dans l'autre — `npm test` échoue s'ils divergent.
+
 ```javascript
 meta   // { nom, soustitre } — affichés dans l'en-tête
 cats   // { clé: libellé } — les catégories de l'onglet Apps
@@ -212,8 +216,20 @@ requetes // { "Nom de l'app": "requête de recherche" }
 
 `p` et `pr` valent `high`, `med` ou `ok` · `t` est une durée en minutes · `o` est le
 numéro d'étape · `post: true` classe l'étape dans les vérifications d'après-installation
-· `w` est l'identifiant winget · `dep` affiche un badge de dépendance · `warn` affiche
-un avertissement.
+· `w` est l'identifiant winget · `warn` affiche un avertissement.
+
+`dep` accepte deux formes. Une **chaîne** est un libellé affiché tel quel, sans
+vérification possible — c'est le format d'origine, toujours accepté. Un **tableau
+d'identifiants** décrit un vrai lien et débloque trois choses : le badge nomme les
+prérequis et se met en évidence tant qu'ils ne sont pas cochés, un avertissement
+apparaît si vous cochez dans le désordre — sans jamais bloquer —, et l'ordre
+d'installation est calculé par tri topologique au lieu d'être maintenu à la main dans
+`ordre`. Les scripts winget, `.ps1` comme `.json`, sortent dans cet ordre. Les cycles
+sont rompus plutôt que de figer la page.
+
+```json
+{ "id": "a10", "n": "Visual Studio Code", "dep": ["a7"] }
+```
 
 Les liens de téléchargement sont volontairement des requêtes de recherche restreintes
 au domaine officiel (`site:7-zip.org download`) plutôt que des URL directes : une URL
@@ -246,12 +262,15 @@ npm run test:mobile               # ergonomie tactile
 npm run test:a11y                 # accessibilité et réversibilité
 ```
 
-Neuf suites, dans l'ordre où la CI les lance.
+Dix suites, dans l'ordre où la CI les lance.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
 identifiants uniques sur les quatre onglets, priorités valides, catégories déclarées,
-ordre conseillé ne citant que des éléments existants.
+ordre conseillé ne citant que des éléments existants. Il contrôle aussi que les fichiers
+dont les tests dépendent sont bien versionnés, et qu'aucune fonction n'est définie deux
+fois dans `index.html` — une redéfinition écrase silencieusement la première et ce piège
+a coûté trois bugs au projet.
 
 `tests/test-checklist.js` extrait le JS de `index.html` et l'exécute dans un DOM simulé.
 Il rejoue l'import d'un inventaire réellement produit par le scanner
@@ -284,7 +303,7 @@ respect du mouvement réduit.
 
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les neuf suites à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les dix suites à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 

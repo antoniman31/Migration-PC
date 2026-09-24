@@ -290,7 +290,10 @@ body.compact .item{padding:5px 0}
 .sec-hdr{text-transform:none;letter-spacing:0;font-size:12px;font-weight:600;color:var(--tx2);padding:10px 0 5px}
 
 /* ── V6 : badge dépendance ── */
-.b-dep{background:var(--bm-bg);color:var(--bm-tx);border:.5px solid var(--bm-bd);font-size:10px;padding:1px 6px;border-radius:8px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px}
+.b-dep{background:var(--bg3);color:var(--tx2);border:.5px solid var(--brd2);font-size:10px;padding:1px 6px;border-radius:8px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px}
+/* Prérequis pas encore coché : c'est là que l'ordre compte. Une fois fait, le
+   badge redevient neutre plutôt que de continuer à réclamer l'attention. */
+.b-dep-manque{background:var(--bm-bg);color:var(--bm-tx);border-color:var(--bm-bd);font-weight:600}
 
 /* ── V6 : section post-install NPC ── */
 .sec-hdr.post-hdr{color:var(--bok-tx);border-color:var(--bok-bd)}
@@ -619,7 +622,9 @@ const PROFIL_DEFAUT = {
     "version": 1,
     "nom": "Migration Windows — profil type",
     "soustitre": "Profil d'exemple · remplace-le par ton inventaire ou ton propre profil",
-    "cles": { "state": "mpc_state_v1" }
+    "cles": {
+      "state": "mpc_state_v1"
+    }
   },
   "cats": {
     "dev": "🛠️ Développement",
@@ -631,58 +636,456 @@ const PROFIL_DEFAUT = {
     "comms": "💬 Communication"
   },
   "npc": [
-    { "id": "n1", "o": 1, "n": "Windows Update — tous les correctifs", "src": "Paramètres → Windows Update", "p": "high", "t": 30, "d": "Première chose après l'installation. Relancer jusqu'à ce qu'il n'y ait plus rien, redémarrages compris." },
-    { "id": "n2", "o": 2, "n": "Driver chipset carte mère", "src": "Site du fabricant de la carte mère", "p": "high", "t": 10, "d": "Gère USB, SATA, NVMe et la gestion d'énergie. À installer avant tout le reste.", "warn": "Télécharger uniquement sur le site officiel du fabricant (AMD, Intel, ASUS, MSI, Gigabyte, ASRock)." },
-    { "id": "n3", "o": 3, "n": "Driver réseau (Ethernet / Wi-Fi)", "src": "Site du fabricant de la carte mère", "p": "high", "t": 5, "d": "À récupérer sur une clé USB AVANT la migration si le nouveau PC n'a pas de réseau au premier démarrage." },
-    { "id": "n4", "o": 4, "n": "Driver audio", "src": "Site du fabricant de la carte mère", "p": "med", "t": 5, "d": "Windows installe un driver générique ; celui du fabricant débloque les sorties et effets spécifiques." },
-    { "id": "n5", "o": 5, "n": "Driver carte graphique", "src": "nvidia.com / amd.com / intel.com", "p": "high", "t": 15, "dep": "Installer avant tout utilitaire d'overclocking", "d": "Pilote officiel du GPU. Choisir la branche Game Ready ou Studio selon l'usage.", "warn": "Télécharger uniquement sur le site du fabricant — beaucoup de faux sites de drivers." },
-    { "id": "n6", "o": 6, "n": "Activation de Windows", "src": "Paramètres → Système → Activation", "p": "high", "t": 5, "d": "Vérifier que la licence est bien reconnue. Une licence liée au compte Microsoft se réactive en se connectant." },
-    { "id": "n7", "o": 7, "n": "Profil XMP / EXPO de la RAM", "src": "BIOS/UEFI", "p": "med", "t": 5, "post": true, "d": "Sans ce profil la RAM tourne à sa fréquence de base. Activer dans le BIOS puis vérifier la fréquence dans le Gestionnaire des tâches → Performance → Mémoire." },
-    { "id": "n8", "o": 8, "n": "Vérifier les températures au repos", "src": "HWiNFO64", "p": "med", "t": 10, "post": true, "d": "Repères courants : CPU sous 50 °C, GPU sous 45 °C, SSD sous 50 °C au repos. Au-dessus, vérifier le montage du refroidissement." },
-    { "id": "n9", "o": 9, "n": "Vérifier le sens des ventilateurs", "src": "Vérification physique", "p": "med", "t": 10, "post": true, "d": "L'air doit entrer par l'avant et le bas, sortir par l'arrière et le haut. Les modèles à flux inversé se montent dans l'autre sens que d'habitude." },
-    { "id": "n10", "o": 10, "n": "Benchmark du SSD", "src": "CrystalDiskMark", "p": "ok", "t": 10, "post": true, "d": "Comparer les débits mesurés à ceux annoncés par le fabricant. Un écart important signale souvent un mauvais port M.2." },
-    { "id": "n11", "o": 11, "n": "Configurer les écrans (résolution + Hz)", "src": "Paramètres → Système → Affichage", "p": "med", "t": 10, "post": true, "d": "Windows ne choisit pas toujours la fréquence maximale. Régler chaque écran sur sa résolution native et son taux de rafraîchissement maximal." },
-    { "id": "n12", "o": 12, "n": "Créer un point de restauration", "src": "Créer un point de restauration", "p": "med", "t": 5, "post": true, "d": "Une fois le système propre et à jour, avant d'installer les applications. Filet de sécurité en cas d'installation qui tourne mal." }
+    {
+      "id": "n1",
+      "o": 1,
+      "n": "Windows Update — tous les correctifs",
+      "src": "Paramètres → Windows Update",
+      "p": "high",
+      "t": 30,
+      "d": "Première chose après l'installation. Relancer jusqu'à ce qu'il n'y ait plus rien, redémarrages compris."
+    },
+    {
+      "id": "n2",
+      "o": 2,
+      "n": "Driver chipset carte mère",
+      "src": "Site du fabricant de la carte mère",
+      "p": "high",
+      "t": 10,
+      "d": "Gère USB, SATA, NVMe et la gestion d'énergie. À installer avant tout le reste.",
+      "warn": "Télécharger uniquement sur le site officiel du fabricant (AMD, Intel, ASUS, MSI, Gigabyte, ASRock)."
+    },
+    {
+      "id": "n3",
+      "o": 3,
+      "n": "Driver réseau (Ethernet / Wi-Fi)",
+      "src": "Site du fabricant de la carte mère",
+      "p": "high",
+      "t": 5,
+      "d": "À récupérer sur une clé USB AVANT la migration si le nouveau PC n'a pas de réseau au premier démarrage.",
+      "dep": [
+        "n2"
+      ]
+    },
+    {
+      "id": "n4",
+      "o": 4,
+      "n": "Driver audio",
+      "src": "Site du fabricant de la carte mère",
+      "p": "med",
+      "t": 5,
+      "d": "Windows installe un driver générique ; celui du fabricant débloque les sorties et effets spécifiques.",
+      "dep": [
+        "n2"
+      ]
+    },
+    {
+      "id": "n5",
+      "o": 5,
+      "n": "Driver carte graphique",
+      "src": "nvidia.com / amd.com / intel.com",
+      "p": "high",
+      "t": 15,
+      "dep": [
+        "n2"
+      ],
+      "d": "Pilote officiel du GPU. Choisir la branche Game Ready ou Studio selon l'usage.",
+      "warn": "Télécharger uniquement sur le site du fabricant — beaucoup de faux sites de drivers."
+    },
+    {
+      "id": "n6",
+      "o": 6,
+      "n": "Activation de Windows",
+      "src": "Paramètres → Système → Activation",
+      "p": "high",
+      "t": 5,
+      "d": "Vérifier que la licence est bien reconnue. Une licence liée au compte Microsoft se réactive en se connectant."
+    },
+    {
+      "id": "n7",
+      "o": 7,
+      "n": "Profil XMP / EXPO de la RAM",
+      "src": "BIOS/UEFI",
+      "p": "med",
+      "t": 5,
+      "post": true,
+      "d": "Sans ce profil la RAM tourne à sa fréquence de base. Activer dans le BIOS puis vérifier la fréquence dans le Gestionnaire des tâches → Performance → Mémoire.",
+      "dep": [
+        "n1"
+      ]
+    },
+    {
+      "id": "n8",
+      "o": 8,
+      "n": "Vérifier les températures au repos",
+      "src": "HWiNFO64",
+      "p": "med",
+      "t": 10,
+      "post": true,
+      "d": "Repères courants : CPU sous 50 °C, GPU sous 45 °C, SSD sous 50 °C au repos. Au-dessus, vérifier le montage du refroidissement.",
+      "dep": [
+        "n5"
+      ]
+    },
+    {
+      "id": "n9",
+      "o": 9,
+      "n": "Vérifier le sens des ventilateurs",
+      "src": "Vérification physique",
+      "p": "med",
+      "t": 10,
+      "post": true,
+      "d": "L'air doit entrer par l'avant et le bas, sortir par l'arrière et le haut. Les modèles à flux inversé se montent dans l'autre sens que d'habitude."
+    },
+    {
+      "id": "n10",
+      "o": 10,
+      "n": "Benchmark du SSD",
+      "src": "CrystalDiskMark",
+      "p": "ok",
+      "t": 10,
+      "post": true,
+      "d": "Comparer les débits mesurés à ceux annoncés par le fabricant. Un écart important signale souvent un mauvais port M.2."
+    },
+    {
+      "id": "n11",
+      "o": 11,
+      "n": "Configurer les écrans (résolution + Hz)",
+      "src": "Paramètres → Système → Affichage",
+      "p": "med",
+      "t": 10,
+      "post": true,
+      "d": "Windows ne choisit pas toujours la fréquence maximale. Régler chaque écran sur sa résolution native et son taux de rafraîchissement maximal."
+    },
+    {
+      "id": "n12",
+      "o": 12,
+      "n": "Créer un point de restauration",
+      "src": "Créer un point de restauration",
+      "p": "med",
+      "t": 5,
+      "post": true,
+      "d": "Une fois le système propre et à jour, avant d'installer les applications. Filet de sécurité en cas d'installation qui tourne mal.",
+      "dep": [
+        "n1"
+      ]
+    }
   ],
-  "ordre": ["a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9", "a10", "a11", "a12", "a13", "a14", "a15", "a16", "a17", "a18"],
+  "ordre": [
+    "a1",
+    "a2",
+    "a3",
+    "a4",
+    "a5",
+    "a6",
+    "a7",
+    "a8",
+    "a9",
+    "a10",
+    "a11",
+    "a12",
+    "a13",
+    "a14",
+    "a15",
+    "a16",
+    "a17",
+    "a18"
+  ],
   "apps": [
-    { "id": "a1", "n": "7-Zip", "c": "system", "src": "Site officiel", "w": "7zip.7zip", "p": "high", "t": 3, "d": "Gestionnaire d'archives. À installer en premier pour ouvrir tout le reste." },
-    { "id": "a2", "n": "Navigateur web", "c": "bureautique", "src": "Site officiel", "w": "Google.Chrome", "p": "high", "t": 5, "dep": "Requis avant les raccourcis web", "d": "Se connecter au compte pour récupérer favoris, mots de passe et extensions." },
-    { "id": "a3", "n": "VLC", "c": "media", "src": "Site officiel", "w": "VideoLAN.VLC", "p": "med", "t": 3, "d": "Lecteur multimédia qui lit à peu près tous les formats sans codec supplémentaire." },
-    { "id": "a4", "n": "PowerToys", "c": "system", "src": "GitHub", "w": "Microsoft.PowerToys", "p": "med", "t": 5, "d": "Boîte à outils Microsoft : gestion de fenêtres, renommage par lot, sélecteur de couleur." },
-    { "id": "a5", "n": "HWiNFO64", "c": "system", "src": "Site officiel", "w": "REALiX.HWiNFO", "p": "med", "t": 3, "d": "Surveillance des températures, tensions et fréquences. Utile pour valider le montage." },
-    { "id": "a6", "n": "CrystalDiskInfo", "c": "system", "src": "Site officiel", "w": "CrystalDewWorld.CrystalDiskInfo", "p": "ok", "t": 3, "d": "État de santé S.M.A.R.T. des disques." },
-    { "id": "a7", "n": "Git", "c": "dev", "src": "Site officiel", "w": "Git.Git", "p": "med", "t": 3, "d": "Gestion de versions. Penser à recopier la configuration et les clés SSH." },
-    { "id": "a8", "n": "Node.js", "c": "dev", "src": "Site officiel", "w": "OpenJS.NodeJS", "p": "med", "t": 5, "d": "Runtime JavaScript et npm." },
-    { "id": "a9", "n": "Python", "c": "dev", "src": "Site officiel", "w": "Python.Python.3.13", "p": "med", "t": 5, "d": "Cocher « Add to PATH » pendant l'installation." },
-    { "id": "a10", "n": "Visual Studio Code", "c": "dev", "src": "Site officiel", "w": "Microsoft.VisualStudioCode", "p": "med", "t": 5, "d": "Éditeur de code. La synchronisation des paramètres restaure extensions et réglages." },
-    { "id": "a11", "n": "Windows Terminal", "c": "dev", "src": "Microsoft Store", "w": "Microsoft.WindowsTerminal", "p": "ok", "t": 3, "d": "Terminal moderne, déjà présent sur Windows 11 récent." },
-    { "id": "a12", "n": "PowerShell 7", "c": "dev", "src": "GitHub", "w": "Microsoft.PowerShell", "p": "med", "t": 3, "d": "Version actuelle de PowerShell, installée à côté de celle de Windows." },
-    { "id": "a13", "n": "Steam", "c": "jeux", "src": "Site officiel", "w": "Valve.Steam", "p": "med", "t": 5, "d": "Bibliothèque de jeux. Penser à pointer le dossier d'installation vers le bon disque." },
-    { "id": "a14", "n": "Discord", "c": "comms", "src": "Site officiel", "w": "Discord.Discord", "p": "med", "t": 5, "d": "Messagerie vocale et texte." },
-    { "id": "a15", "n": "Suite bureautique", "c": "bureautique", "src": "Site officiel", "w": "Microsoft.Office", "p": "med", "t": 15, "d": "Se connecter au compte pour activer la licence." },
-    { "id": "a16", "n": "Client de stockage en ligne", "c": "bureautique", "src": "Site officiel", "w": "Google.GoogleDrive", "p": "med", "t": 10, "d": "Attendre la fin de la synchronisation initiale avant de débrancher l'ancien PC." },
-    { "id": "a17", "n": "Lecteur PDF", "c": "bureautique", "src": "Site officiel", "w": "Adobe.Acrobat.Reader.64-bit", "p": "ok", "t": 5, "d": "Le navigateur suffit souvent ; utile pour les formulaires et les signatures." },
-    { "id": "a18", "n": "Client VPN", "c": "reseau", "src": "Site officiel", "p": "ok", "t": 5, "d": "Si tu en utilises un : réinstaller et se reconnecter avant de remettre le pare-feu en place." }
+    {
+      "id": "a1",
+      "n": "7-Zip",
+      "c": "system",
+      "src": "Site officiel",
+      "w": "7zip.7zip",
+      "p": "high",
+      "t": 3,
+      "d": "Gestionnaire d'archives. À installer en premier pour ouvrir tout le reste."
+    },
+    {
+      "id": "a2",
+      "n": "Navigateur web",
+      "c": "bureautique",
+      "src": "Site officiel",
+      "w": "Google.Chrome",
+      "p": "high",
+      "t": 5,
+      "dep": "Requis avant les raccourcis web",
+      "d": "Se connecter au compte pour récupérer favoris, mots de passe et extensions."
+    },
+    {
+      "id": "a3",
+      "n": "VLC",
+      "c": "media",
+      "src": "Site officiel",
+      "w": "VideoLAN.VLC",
+      "p": "med",
+      "t": 3,
+      "d": "Lecteur multimédia qui lit à peu près tous les formats sans codec supplémentaire."
+    },
+    {
+      "id": "a4",
+      "n": "PowerToys",
+      "c": "system",
+      "src": "GitHub",
+      "w": "Microsoft.PowerToys",
+      "p": "med",
+      "t": 5,
+      "d": "Boîte à outils Microsoft : gestion de fenêtres, renommage par lot, sélecteur de couleur."
+    },
+    {
+      "id": "a5",
+      "n": "HWiNFO64",
+      "c": "system",
+      "src": "Site officiel",
+      "w": "REALiX.HWiNFO",
+      "p": "med",
+      "t": 3,
+      "d": "Surveillance des températures, tensions et fréquences. Utile pour valider le montage."
+    },
+    {
+      "id": "a6",
+      "n": "CrystalDiskInfo",
+      "c": "system",
+      "src": "Site officiel",
+      "w": "CrystalDewWorld.CrystalDiskInfo",
+      "p": "ok",
+      "t": 3,
+      "d": "État de santé S.M.A.R.T. des disques."
+    },
+    {
+      "id": "a7",
+      "n": "Git",
+      "c": "dev",
+      "src": "Site officiel",
+      "w": "Git.Git",
+      "p": "med",
+      "t": 3,
+      "d": "Gestion de versions. Penser à recopier la configuration et les clés SSH."
+    },
+    {
+      "id": "a8",
+      "n": "Node.js",
+      "c": "dev",
+      "src": "Site officiel",
+      "w": "OpenJS.NodeJS",
+      "p": "med",
+      "t": 5,
+      "d": "Runtime JavaScript et npm.",
+      "dep": [
+        "a1"
+      ]
+    },
+    {
+      "id": "a9",
+      "n": "Python",
+      "c": "dev",
+      "src": "Site officiel",
+      "w": "Python.Python.3.13",
+      "p": "med",
+      "t": 5,
+      "d": "Cocher « Add to PATH » pendant l'installation."
+    },
+    {
+      "id": "a10",
+      "n": "Visual Studio Code",
+      "c": "dev",
+      "src": "Site officiel",
+      "w": "Microsoft.VisualStudioCode",
+      "p": "med",
+      "t": 5,
+      "d": "Éditeur de code. La synchronisation des paramètres restaure extensions et réglages.",
+      "dep": [
+        "a7"
+      ]
+    },
+    {
+      "id": "a11",
+      "n": "Windows Terminal",
+      "c": "dev",
+      "src": "Microsoft Store",
+      "w": "Microsoft.WindowsTerminal",
+      "p": "ok",
+      "t": 3,
+      "d": "Terminal moderne, déjà présent sur Windows 11 récent."
+    },
+    {
+      "id": "a12",
+      "n": "PowerShell 7",
+      "c": "dev",
+      "src": "GitHub",
+      "w": "Microsoft.PowerShell",
+      "p": "med",
+      "t": 3,
+      "d": "Version actuelle de PowerShell, installée à côté de celle de Windows."
+    },
+    {
+      "id": "a13",
+      "n": "Steam",
+      "c": "jeux",
+      "src": "Site officiel",
+      "w": "Valve.Steam",
+      "p": "med",
+      "t": 5,
+      "d": "Bibliothèque de jeux. Penser à pointer le dossier d'installation vers le bon disque."
+    },
+    {
+      "id": "a14",
+      "n": "Discord",
+      "c": "comms",
+      "src": "Site officiel",
+      "w": "Discord.Discord",
+      "p": "med",
+      "t": 5,
+      "d": "Messagerie vocale et texte."
+    },
+    {
+      "id": "a15",
+      "n": "Suite bureautique",
+      "c": "bureautique",
+      "src": "Site officiel",
+      "w": "Microsoft.Office",
+      "p": "med",
+      "t": 15,
+      "d": "Se connecter au compte pour activer la licence."
+    },
+    {
+      "id": "a16",
+      "n": "Client de stockage en ligne",
+      "c": "bureautique",
+      "src": "Site officiel",
+      "w": "Google.GoogleDrive",
+      "p": "med",
+      "t": 10,
+      "d": "Attendre la fin de la synchronisation initiale avant de débrancher l'ancien PC."
+    },
+    {
+      "id": "a17",
+      "n": "Lecteur PDF",
+      "c": "bureautique",
+      "src": "Site officiel",
+      "w": "Adobe.Acrobat.Reader.64-bit",
+      "p": "ok",
+      "t": 5,
+      "d": "Le navigateur suffit souvent ; utile pour les formulaires et les signatures."
+    },
+    {
+      "id": "a18",
+      "n": "Client VPN",
+      "c": "reseau",
+      "src": "Site officiel",
+      "p": "ok",
+      "t": 5,
+      "d": "Si tu en utilises un : réinstaller et se reconnecter avant de remettre le pare-feu en place."
+    }
   ],
   "data": [
-    { "id": "s1", "n": "Documents, images, vidéos", "p": "%USERPROFILE%\\Documents, Pictures, Videos", "note": "Les dossiers personnels de base. Vérifier aussi les sous-dossiers de OneDrive.", "pr": "high" },
-    { "id": "s2", "n": "Bureau", "p": "%USERPROFILE%\\Desktop", "note": "Souvent plein de fichiers de travail jamais rangés ailleurs.", "pr": "high" },
-    { "id": "s3", "n": "Téléchargements", "p": "%USERPROFILE%\\Downloads", "note": "À trier avant la migration plutôt qu'après.", "pr": "med" },
-    { "id": "s4", "n": "Projets et code local", "p": "Selon ton organisation", "note": "Tout ce qui n'est pas poussé sur un dépôt distant n'a aucun filet de sécurité.", "pr": "high" },
-    { "id": "s5", "n": "Clés SSH et GPG", "p": "%USERPROFILE%\\.ssh", "note": "Copier sur un support chiffré, jamais dans un espace de stockage partagé.", "pr": "high" },
-    { "id": "s6", "n": "Licences logicielles", "p": "Courriels et espaces clients", "note": "Rassembler les clés des logiciels payants avant de désinstaller quoi que ce soit.", "pr": "high", "lic": true },
-    { "id": "s7", "n": "Variables d'environnement", "p": "Panneau de configuration → Système → Variables d'environnement", "note": "Relever les variables personnalisées et les ajouts au PATH.", "pr": "med", "env": true },
-    { "id": "s8", "n": "Mots de passe du navigateur", "p": "Compte du navigateur ou gestionnaire dédié", "note": "Vérifier que la synchronisation est à jour, ou exporter vers un gestionnaire.", "pr": "high" },
-    { "id": "s9", "n": "Sauvegardes de jeux hors ligne", "p": "%USERPROFILE%\\Documents\\My Games et %APPDATA%", "note": "Les jeux sans sauvegarde en ligne perdent tout. Vérifier avant de formater.", "pr": "med" },
-    { "id": "s10", "n": "Configurations d'applications", "p": "%APPDATA% et %LOCALAPPDATA%", "note": "Réglages, profils et raccourcis personnalisés des logiciels que tu utilises beaucoup.", "pr": "med" },
-    { "id": "s11", "n": "Polices installées", "p": "C:\\Windows\\Fonts", "note": "Seulement celles que tu as ajoutées toi-même.", "pr": "ok" },
-    { "id": "s12", "n": "Imprimantes et périphériques", "p": "Paramètres → Bluetooth et appareils", "note": "Noter les modèles et les adresses réseau pour les reconfigurer plus vite.", "pr": "ok" }
+    {
+      "id": "s1",
+      "n": "Documents, images, vidéos",
+      "p": "%USERPROFILE%\\Documents, Pictures, Videos",
+      "note": "Les dossiers personnels de base. Vérifier aussi les sous-dossiers de OneDrive.",
+      "pr": "high"
+    },
+    {
+      "id": "s2",
+      "n": "Bureau",
+      "p": "%USERPROFILE%\\Desktop",
+      "note": "Souvent plein de fichiers de travail jamais rangés ailleurs.",
+      "pr": "high"
+    },
+    {
+      "id": "s3",
+      "n": "Téléchargements",
+      "p": "%USERPROFILE%\\Downloads",
+      "note": "À trier avant la migration plutôt qu'après.",
+      "pr": "med"
+    },
+    {
+      "id": "s4",
+      "n": "Projets et code local",
+      "p": "Selon ton organisation",
+      "note": "Tout ce qui n'est pas poussé sur un dépôt distant n'a aucun filet de sécurité.",
+      "pr": "high"
+    },
+    {
+      "id": "s5",
+      "n": "Clés SSH et GPG",
+      "p": "%USERPROFILE%\\.ssh",
+      "note": "Copier sur un support chiffré, jamais dans un espace de stockage partagé.",
+      "pr": "high"
+    },
+    {
+      "id": "s6",
+      "n": "Licences logicielles",
+      "p": "Courriels et espaces clients",
+      "note": "Rassembler les clés des logiciels payants avant de désinstaller quoi que ce soit.",
+      "pr": "high",
+      "lic": true
+    },
+    {
+      "id": "s7",
+      "n": "Variables d'environnement",
+      "p": "Panneau de configuration → Système → Variables d'environnement",
+      "note": "Relever les variables personnalisées et les ajouts au PATH.",
+      "pr": "med",
+      "env": true
+    },
+    {
+      "id": "s8",
+      "n": "Mots de passe du navigateur",
+      "p": "Compte du navigateur ou gestionnaire dédié",
+      "note": "Vérifier que la synchronisation est à jour, ou exporter vers un gestionnaire.",
+      "pr": "high"
+    },
+    {
+      "id": "s9",
+      "n": "Sauvegardes de jeux hors ligne",
+      "p": "%USERPROFILE%\\Documents\\My Games et %APPDATA%",
+      "note": "Les jeux sans sauvegarde en ligne perdent tout. Vérifier avant de formater.",
+      "pr": "med"
+    },
+    {
+      "id": "s10",
+      "n": "Configurations d'applications",
+      "p": "%APPDATA% et %LOCALAPPDATA%",
+      "note": "Réglages, profils et raccourcis personnalisés des logiciels que tu utilises beaucoup.",
+      "pr": "med"
+    },
+    {
+      "id": "s11",
+      "n": "Polices installées",
+      "p": "C:\\Windows\\Fonts",
+      "note": "Seulement celles que tu as ajoutées toi-même.",
+      "pr": "ok"
+    },
+    {
+      "id": "s12",
+      "n": "Imprimantes et périphériques",
+      "p": "Paramètres → Bluetooth et appareils",
+      "note": "Noter les modèles et les adresses réseau pour les reconfigurer plus vite.",
+      "pr": "ok"
+    }
   ],
   "pwa": [
-    { "id": "p1", "n": "Messagerie web", "u": "https://mail.google.com", "d": "Raccourci navigateur — revient avec la synchronisation du compte." },
-    { "id": "p2", "n": "Agenda", "u": "https://calendar.google.com", "d": "Raccourci navigateur — revient avec la synchronisation du compte." },
-    { "id": "p3", "n": "Prise de notes", "u": "https://keep.google.com", "d": "Raccourci navigateur — revient avec la synchronisation du compte." }
+    {
+      "id": "p1",
+      "n": "Messagerie web",
+      "u": "https://mail.google.com",
+      "d": "Raccourci navigateur — revient avec la synchronisation du compte."
+    },
+    {
+      "id": "p2",
+      "n": "Agenda",
+      "u": "https://calendar.google.com",
+      "d": "Raccourci navigateur — revient avec la synchronisation du compte."
+    },
+    {
+      "id": "p3",
+      "n": "Prise de notes",
+      "u": "https://keep.google.com",
+      "d": "Raccourci navigateur — revient avec la synchronisation du compte."
+    }
   ],
   "requetes": {
     "7-Zip": "site:7-zip.org download",
@@ -730,6 +1133,7 @@ function appliquerProfil(p,memoriser){
   SEARCH_QUERIES=p.requetes||{};
   // Une catégorie utilisée par une app mais absente de cats reste affichable.
   APPS_DATA.forEach(function(a){if(a.c&&!CATS[a.c])CATS[a.c]=a.c;});
+  viderIndex();
   if(memoriser){try{localStorage.setItem(CLE_PROFIL,JSON.stringify(p));}catch(e){console.error(e);}}
   majEnteteProfil();
   construireFiltresCats();
@@ -957,7 +1361,16 @@ function marquerPositions(){
 
 function toggle(id,name){
   if(S.checked[id]){delete S.checked[id];delete S.dates[id];addHistory(name,false);}
-  else{S.checked[id]=true;S.dates[id]=Date.now();if(session.active)session.count++;addHistory(name,true);}
+  else{
+    // On prévient, on ne bloque pas : l'ordre est un conseil, et il arrive
+    // qu'on coche une tâche faite hors de la checklist.
+    const item=indexParId()[id];
+    const manquantes=item?depsManquantes(item):[];
+    if(manquantes.length){
+      informer('« '+name+' » se fait normalement après : '+manquantes.map(nomDe).join(', ')+'.');
+    }
+    S.checked[id]=true;S.dates[id]=Date.now();if(session.active)session.count++;addHistory(name,true);
+  }
   saveState();
   renderAll();
   updateGlobal();
@@ -1106,8 +1519,15 @@ function renderApps(){
       first=false;
     });
   } else if(sort==='order'){
-    const orderedIds={};INSTALL_ORDER.forEach(function(id,i){orderedIds[id]=i;});
-    items.sort(function(a,b){const ia=orderedIds[a.id]!==undefined?orderedIds[a.id]:9999;const ib=orderedIds[b.id]!==undefined?orderedIds[b.id]:9999;return ia-ib;});
+    // Une liste `ordre` maintenue à la main se désynchronise du profil ; des
+    // dépendances déclarées, elles, restent justes. On préfère donc le calcul
+    // quand il est possible, et on retombe sur la liste sinon.
+    if(aDesDependances()){
+      items=ordreParDependances(items);
+    }else{
+      const orderedIds={};INSTALL_ORDER.forEach(function(id,i){orderedIds[id]=i;});
+      items.sort(function(a,b){const ia=orderedIds[a.id]!==undefined?orderedIds[a.id]:9999;const ib=orderedIds[b.id]!==undefined?orderedIds[b.id]:9999;return ia-ib;});
+    }
     html+='<div class="sec-hdr first">📋 Ordre conseillé pour le Jour J</div>';
     items.forEach(function(a){html+=mkAppItem(a);});
   } else {
@@ -1330,6 +1750,85 @@ function clavierGlobal(e){
   }
 }
 
+// ═══ DÉPENDANCES ═══
+// `dep` accepte deux formes. Une chaîne reste ce qu'elle a toujours été : un
+// libellé affiché tel quel, sans vérification possible — « Installer avant
+// MSI Afterburner » ne désigne rien que le code puisse résoudre. Un tableau
+// d'identifiants, lui, décrit un vrai lien : on peut alors prévenir quand on
+// coche dans le désordre et calculer l'ordre d'installation.
+// Les deux coexistent : un profil ancien continue de fonctionner à l'identique.
+
+function tousLesElements(){
+  return NPC_DATA.concat(APPS_DATA,DATA_SAVES,PWA_DATA);
+}
+
+let _index=null;
+function indexParId(){
+  // Reconstruit à chaque changement de profil, pas à chaque appel.
+  if(_index)return _index;
+  _index={};
+  tousLesElements().forEach(function(e){_index[e.id]=e;});
+  return _index;
+}
+function viderIndex(){_index=null;}
+
+function nomDe(id){
+  const e=indexParId()[id];
+  return e?e.n:id;
+}
+
+// Les identifiants seulement : une chaîne ne décrit aucun lien vérifiable.
+function depsDe(item){
+  if(!item||!item.dep)return [];
+  if(!Array.isArray(item.dep))return [];
+  return item.dep.filter(function(id){return !!indexParId()[id];});
+}
+
+// Ce qui manque avant de pouvoir cocher cet élément.
+function depsManquantes(item){
+  return depsDe(item).filter(function(id){return !S.checked[id];});
+}
+
+function mkDepBadge(dep){
+  if(!dep)return '';
+  if(!Array.isArray(dep))return '<span class="badge b-dep">↳ '+esc(dep)+'</span>';
+  if(!dep.length)return '';
+  const noms=dep.map(nomDe);
+  const manquantes=dep.filter(function(id){return !S.checked[id];});
+  const classe=manquantes.length?'badge b-dep b-dep-manque':'badge b-dep';
+  const titre=manquantes.length
+    ? 'À installer avant : '+manquantes.map(nomDe).join(', ')
+    : 'Prérequis déjà cochés';
+  return '<span class="'+classe+'" title="'+esc(titre)+'">↳ '+esc(noms.join(', '))+'</span>';
+}
+
+// Tri topologique : un élément passe après tout ce dont il dépend. Les cycles
+// sont rompus plutôt que de boucler — un profil mal écrit ne doit pas figer
+// la page. L'ordre d'origine sert de départage entre éléments indépendants.
+function ordreParDependances(items){
+  const dans={};items.forEach(function(e,i){dans[e.id]=i;});
+  const vus={},pile={},sortie=[];
+  function visiter(e){
+    if(vus[e.id])return;
+    if(pile[e.id])return;            // cycle : on s'arrête là
+    pile[e.id]=true;
+    depsDe(e).forEach(function(id){
+      const d=indexParId()[id];
+      if(d&&dans[d.id]!==undefined)visiter(d);
+    });
+    delete pile[e.id];
+    vus[e.id]=true;
+    sortie.push(e);
+  }
+  items.forEach(visiter);
+  return sortie;
+}
+
+// Vrai si le profil décrit au moins une dépendance exploitable.
+function aDesDependances(){
+  return tousLesElements().some(function(e){return depsDe(e).length>0;});
+}
+
 // ═══ ANNULATION ═══
 // Réinitialiser une section et importer un fichier détruisent du travail sans
 // retour possible. Une confirmation de plus ne règle rien : on clique « oui »
@@ -1455,7 +1954,9 @@ const WINGET_SOURCE={
   Type:'Microsoft.PreIndexed.Package'
 };
 
+// winget import traite les paquets dans l'ordre du fichier : on l'ordonne.
 function construireWingetJSON(apps){
+  if(aDesDependances())apps=ordreParDependances(apps);
   return {
     $schema:WINGET_SCHEMA,
     CreationDate:new Date().toISOString(),
@@ -1617,12 +2118,6 @@ function enregistrerServiceWorker(){
   });
 }
 
-// ═══ V6 : BADGE DÉPENDANCE ═══
-function mkDepBadge(dep){
-  if(!dep)return '';
-  return '<span class="badge b-dep">↳ '+esc(dep)+'</span>';
-}
-
 // ═══ V6 : CHAMP LICENCE ═══
 // Affiché uniquement sur les éléments que le profil marque avec lic.
 function mkLicField(item){
@@ -1682,6 +2177,9 @@ function updateNextBtns(){
 function exportWingetRemaining(){
   var remaining=APPS_DATA.filter(function(a){return !S.checked[a.id]&&a.w;});
   if(!remaining.length){alert('Toutes les apps avec winget sont déjà cochées !');return;}
+  // Un script généré dans le désordre installe un greffon avant son hôte :
+  // quand le profil déclare des dépendances, on les respecte.
+  if(aDesDependances())remaining=ordreParDependances(remaining);
   var lines=["# Script winget — Apps restantes","# Exécuter dans PowerShell en tant qu'administrateur",''];
   // Les catégories viennent du profil : une liste figée ici omettait
   // silencieusement les apps des profils qui n'ont pas les mêmes.

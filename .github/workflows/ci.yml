@@ -63,6 +63,9 @@ jobs:
       - name: Inventaire étendu (tailles, variables)
         run: node tests/test-inventaire-etendu.js
 
+      - name: Dépendances entre éléments
+        run: node tests/test-dependances.js
+
       # pwsh est preinstalle sur les runners ubuntu-latest.
       - name: Scanner — classement, fusion, parsing
         run: pwsh -File tests/test-scan.ps1
