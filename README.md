@@ -701,6 +701,12 @@ puis sous **Windows PowerShell 5.1**, celui qui est livré avec Windows et celui
 obtient en double-cliquant sur un `.bat`. C'est la version que les gens exécutent
 vraiment, et elle n'avait jamais rien exécuté.
 
+Ce job **bloque la publication**, au même titre que les suites Linux : rien ne part en
+ligne sans avoir tourné sur le système où il est censé tourner. Il a démarré en
+`continue-on-error` le temps de se stabiliser — un garde-fou neuf qui bloquerait le site
+serait pire que pas de garde-fou — et il l'a perdu dès qu'il a été vert deux fois de
+suite. Un garde-fou qui laisse passer ce qu'il refuse ne sert qu'à décorer.
+
 `tests/test-windows-reel.ps1` va plus loin : il lance le scan pour de vrai, sur la vraie
 machine. Un runner n'est pas un PC de bureau — on ne sait pas ce qui y est installé —
 donc il vérifie la **forme** de ce qui sort et les erreurs qui ne doivent jamais

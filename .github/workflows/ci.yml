@@ -143,14 +143,15 @@ jobs:
   # Les suites restent sur Linux : elles repondent en quelques secondes et
   # attrapent les regressions de logique. Celui-ci ajoute la realite.
   #
-  # `continue-on-error` le temps de le stabiliser : un job neuf qui bloquerait
-  # la publication du site serait pire que pas de job. A retirer des qu'il est
-  # vert deux fois de suite — sinon il ne sert qu'a decorer.
+  # Il a tourne en `continue-on-error` le temps de se stabiliser, puis il est
+  # devenu bloquant : un garde-fou qui laisse passer ce qu'il refuse ne sert
+  # qu'a decorer. Il a trouve son premier vrai defaut au premier passage utile
+  # — un -Include ignore par Windows PowerShell 5.1, qui faisait rapporter le
+  # disque entier a la recherche de cles — invisible partout ailleurs.
   verifier-windows:
     name: Tests sur Windows
     runs-on: windows-latest
     timeout-minutes: 20
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v5
 
@@ -231,7 +232,9 @@ jobs:
 
   publier:
     name: Publier sur Pages
-    needs: verifier
+    # Les deux, et dans les deux versions de PowerShell : ce qui part en ligne
+    # a ete verifie sur le systeme ou il va tourner, pas seulement sur Linux.
+    needs: [verifier, verifier-windows]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
