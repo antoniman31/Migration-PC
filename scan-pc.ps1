@@ -132,7 +132,8 @@ if (@($configs).Count) {
     Write-Host "$(@($configs).Count) dossiers de configuration reperes$(if ($mo) { " ($([math]::Round($mo,0)) Mo)" })."
 }
 if (@($variables).Count) {
-    Write-Host "$(@($variables).Count) variable(s) d'environnement relevee(s)."
+    $nombreVariables = @($variables).Count
+    Write-Host "$nombreVariables variable(s) d'environnement relevee(s)."
 }
 Write-Host "Fichier ecrit : $chemin"
 Write-Host ""
