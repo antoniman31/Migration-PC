@@ -5,7 +5,7 @@
   "description": "Checklist de reinstallation Windows pilotee par un profil, avec inventaire des logiciels installes",
   "license": "MIT",
   "scripts": {
-    "test": "node tests/test-profil-sync.js && node tests/test-checklist.js",
+    "test": "node tests/test-profil-sync.js && node tests/test-checklist.js && node tests/test-winget.js",
     "test:navigateur": "node tests/test-navigateur.js",
     "test:scan": "pwsh -File tests/test-scan.ps1"
   },

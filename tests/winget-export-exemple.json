@@ -1,0 +1,25 @@
+{
+  "$schema": "https://aka.ms/winget-packages.schema.2.0.json",
+  "CreationDate": "2026-09-20T14:32:11.482-00:00",
+  "Sources": [
+    {
+      "Packages": [
+        { "PackageIdentifier": "7zip.7zip" },
+        { "PackageIdentifier": "Mozilla.Firefox", "Version": "142.0" },
+        { "PackageIdentifier": "Valve.Steam" },
+        { "PackageIdentifier": "Discord.Discord" },
+        { "PackageIdentifier": "Microsoft.VisualStudioCode" },
+        { "PackageIdentifier": "VideoLAN.VLC" },
+        { "PackageIdentifier": "Git.Git" },
+        { "PackageIdentifier": "7zip.7zip" }
+      ],
+      "SourceDetails": {
+        "Argument": "https://cdn.winget.microsoft.com/cache",
+        "Identifier": "Microsoft.Winget.Source_8wekyb3d8bbwe",
+        "Name": "winget",
+        "Type": "Microsoft.PreIndexed.Package"
+      }
+    }
+  ],
+  "WinGetVersion": "1.13.10091"
+}

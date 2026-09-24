@@ -97,8 +97,14 @@ système, recherche sur les quatre onglets à la fois, tri des apps par catégor
 priorité, durée ou ordre conseillé, filtre sur les apps sans winget.
 
 **Installation** — le badge winget copie la commande d'installation en un clic, un
-bouton par catégorie copie le script de toute la section, et **⬇️ Script restant**
-exporte un `.ps1` limité aux apps non encore cochées.
+bouton par catégorie copie le script de toute la section. Deux exports pour réinstaller :
+**⬇️ Script restant** produit un `.ps1` limité aux apps non cochées, et
+**⬇️ winget .json** le format officiel de `winget import`, à préférer — il saute ce qui
+est déjà installé et reprend proprement après une interruption.
+
+```powershell
+winget import -i winget-restant.json --accept-package-agreements --accept-source-agreements
+```
 
 **Suivi** — barre de progression globale et par onglet, estimation du temps restant
 calculée depuis les durées, chronomètre de session, historique des dernières actions,
@@ -114,9 +120,16 @@ laisser une page à moitié vide sans explication.
 
 ## Formats de fichiers
 
-Le bouton **Importer** accepte trois formats et les reconnaît tout seul.
+Le bouton **Importer** accepte quatre formats et les reconnaît tout seul.
 
-**Inventaire** — produit par `scan-pc.ps1`, reconnu à son champ `type` :
+**Export winget** — le fichier produit par `winget export -o apps.json` sur n'importe
+quel PC, sans rien installer de ce projet. Il ne contient que des identifiants, donc les
+noms affichés sont déduits : `Mozilla.Firefox` devient Firefox, édité par Mozilla. Les
+catégories sont attribuées par mots-clés.
+
+**Inventaire** — produit par `scan-pc.ps1`, reconnu à son champ `type`. Plus riche
+qu'un export winget : il couvre aussi le Microsoft Store, Steam et les logiciels absents
+du dépôt winget.
 
 ```json
 {
@@ -138,8 +151,8 @@ et celui que produit le bouton 🧩.
 **Progression** — les cases cochées, les notes et les dates, sans les listes. C'est ce
 que produit le bouton 💾.
 
-Importer un inventaire ou un profil remplace les listes mais conserve la progression.
-Importer une progression fait l'inverse.
+Importer un export winget, un inventaire ou un profil remplace les listes mais conserve
+la progression. Importer une progression fait l'inverse.
 
 ## Écrire son propre profil
 
@@ -255,7 +268,13 @@ refuse de démarrer, lancez-le avec `-ExecutionPolicy Bypass`.
 
 **Tous les logiciels n'ont pas d'identifiant winget.** Ceux détectés par le registre
 seul sortent sans commande d'installation : la checklist les affiche avec un lien de
-recherche à la place. Le filtre « Sans winget » permet de les isoler.
+recherche à la place. Le filtre « Sans winget » permet de les isoler, et ils
+n'apparaissent pas dans l'export `winget .json`, qui ne peut contenir que des paquets
+connus de winget.
+
+**Un export winget importé perd les noms d'origine.** Le format ne stocke que les
+identifiants ; `7zip.7zip` donne « 7zip » et non « 7-Zip ». Passer par `scan-pc.ps1`
+donne des noms corrects, puisqu'il lit le registre.
 
 **La déduplication est approximative.** Elle compare les noms en ignorant la version et
 les mentions entre parenthèses, ce qui rapproche correctement `Mozilla Firefox (x64 fr)`

@@ -57,6 +57,9 @@ jobs:
       - name: Checklist — DOM simulé
         run: node tests/test-checklist.js
 
+      - name: Formats winget
+        run: node tests/test-winget.js
+
       # pwsh est preinstalle sur les runners ubuntu-latest.
       - name: Scanner — classement, fusion, parsing
         run: pwsh -File tests/test-scan.ps1

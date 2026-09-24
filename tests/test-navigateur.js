@@ -101,6 +101,18 @@ if(fs.existsSync(profilLocal)){
   ok('en-tête',await pg.textContent('#profil-titre'),p.meta.nom);
 }
 
+console.log('\n--- import d\'un export winget ---');
+const wg=fs.readFileSync(path.join(__dirname,'winget-export-exemple.json'),'utf8');
+await pg.setInputFiles('#json-file',{name:'apps.json',mimeType:'application/json',buffer:Buffer.from(wg)});
+await pg.waitForTimeout(400);
+ok('paquets importés',(await pg.$$('#list-apps .item')).length,7);
+ok('en-tête winget',await pg.textContent('#profil-titre'),'Migration PC — export winget');
+ok('badge identifiant rendu',(await pg.textContent('#list-apps')).indexOf('Mozilla.Firefox')>=0,true);
+ok('bouton winget .json présent',await pg.isVisible('button[onclick="exportWingetJSON(true)"]'),true);
+await pg.reload({waitUntil:'networkidle'});
+await pg.click('#tab-apps');
+ok('profil winget mémorisé après rechargement',(await pg.$$('#list-apps .item')).length,7);
+
 console.log('\n--- filet d\'erreur ---');
 // Une exception pendant un rendu doit devenir visible, et ne pas emporter les autres onglets.
 ok('bandeau masqué au départ',await pg.isVisible('#panne'),false);

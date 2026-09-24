@@ -430,6 +430,7 @@ body.compact .b-dep{display:none}
     <div class="tbar-right">
       <button class="sm-btn" id="btn-no-winget" onclick="toggleNoWinget()">Sans winget</button>
       <button class="sm-btn warn-btn" onclick="exportWingetRemaining()">⬇️ Script restant</button>
+      <button class="sm-btn warn-btn" onclick="exportWingetJSON(true)" title="Format officiel winget import — idempotent et rejouable">⬇️ winget .json</button>
       <button class="sm-btn" onclick="printTab('apps')" title="Imprimer cet onglet">🖨️ Onglet</button>
       <button class="sm-btn" onclick="resetSection('apps')">Réinitialiser</button>
     </div>
@@ -703,6 +704,12 @@ function handleImport(evt){
     try{d=JSON.parse(e.target.result);}
     catch(err){alert('❌ Fichier illisible : ce n\'est pas du JSON valide.');return;}
     try{
+      if(estExportWinget(d)){
+        const p=wingetVersProfil(d);
+        appliquerProfil(p,true);
+        alert('✓ Export winget importé : '+p.apps.length+' paquets.\n\nLes noms sont déduits des identifiants, et les onglets « Nouveau PC », « Données » et « PWA » restent ceux du profil d\'exemple.');
+        return;
+      }
       if(d && d.type==='inventaire-migration-pc'){
         const p=inventaireVersProfil(d);
         appliquerProfil(p,true);
@@ -720,7 +727,7 @@ function handleImport(evt){
         alert('✓ Progression importée : '+Object.keys(S.checked).length+' tâches cochées.');
         return;
       }
-      alert('❌ Format non reconnu.\n\nAttendu : un inventaire produit par scan-pc.ps1, un profil, ou une progression exportée depuis cette page.');
+      alert('❌ Format non reconnu.\n\nAttendu : un fichier winget export, un inventaire produit par scan-pc.ps1, un profil, ou une progression exportée depuis cette page.');
     }catch(err){alert('❌ Import impossible : '+err.message);}
   };
   reader.readAsText(file);evt.target.value='';
@@ -1164,6 +1171,126 @@ function exportWinget(){
   dl(new Blob([lines.join('\n')],{type:'text/plain'}),'winget-migration-pc.ps1');
 }
 
+// Format officiel de `winget export`, relisible par `winget import`.
+// Avantage sur le script .ps1 : l'import est idempotent — il saute ce qui est
+// déjà installé — et reprend proprement après une interruption.
+const WINGET_SCHEMA='https://aka.ms/winget-packages.schema.2.0.json';
+const WINGET_SOURCE={
+  Argument:'https://cdn.winget.microsoft.com/cache',
+  Identifier:'Microsoft.Winget.Source_8wekyb3d8bbwe',
+  Name:'winget',
+  Type:'Microsoft.PreIndexed.Package'
+};
+
+function construireWingetJSON(apps){
+  return {
+    $schema:WINGET_SCHEMA,
+    CreationDate:new Date().toISOString(),
+    Sources:[{
+      Packages:apps.map(function(a){return {PackageIdentifier:a.w};}),
+      SourceDetails:WINGET_SOURCE
+    }],
+    WinGetVersion:'1.13.0'
+  };
+}
+
+function exportWingetJSON(restantesSeulement){
+  var apps=APPS_DATA.filter(function(a){
+    return a.w && (!restantesSeulement || !S.checked[a.id]);
+  });
+  if(!apps.length){
+    alert(restantesSeulement
+      ? 'Toutes les apps installables par winget sont déjà cochées.'
+      : 'Aucune app de ce profil n\'a d\'identifiant winget.');
+    return;
+  }
+  var nom=restantesSeulement?'winget-restant.json':'winget-complet.json';
+  dl(new Blob([JSON.stringify(construireWingetJSON(apps),null,2)],{type:'application/json'}),nom);
+}
+
+// Reconnaît un fichier produit par `winget export`.
+function estExportWinget(d){
+  if(!d||typeof d!=='object')return false;
+  if(typeof d.$schema==='string'&&d.$schema.indexOf('winget-packages')>=0)return true;
+  return Array.isArray(d.Sources)&&d.Sources.some(function(s){return s&&Array.isArray(s.Packages);});
+}
+
+// Un export winget ne contient que des identifiants, pas de noms lisibles.
+// « Mozilla.Firefox » donne donc l'éditeur Mozilla et le nom Firefox.
+function nomDepuisIdentifiant(id){
+  var bouts=String(id).split('.');
+  var nom=bouts.length>1?bouts.slice(1).join(' '):bouts[0];
+  return nom.replace(/([a-z])([A-Z])/g,'$1 $2').trim()||String(id);
+}
+function editeurDepuisIdentifiant(id){
+  var bouts=String(id).split('.');
+  return bouts.length>1?bouts[0]:'';
+}
+
+function wingetVersProfil(d){
+  var vus={},paquets=[];
+  (d.Sources||[]).forEach(function(src){
+    (src&&src.Packages||[]).forEach(function(p){
+      var id=p&&p.PackageIdentifier;
+      if(!id||vus[id])return;
+      vus[id]=true;
+      paquets.push({id:id,version:p.Version||''});
+    });
+  });
+  if(!paquets.length)throw new Error('aucun paquet dans ce fichier winget');
+  var cats={},apps=[];
+  paquets.forEach(function(p,i){
+    var nom=nomDepuisIdentifiant(p.id);
+    var editeur=editeurDepuisIdentifiant(p.id);
+    var cat=categoriePourNom(nom+' '+editeur);
+    if(!cats[cat])cats[cat]=LIBELLES_CATS[cat]||cat;
+    var desc=[];
+    if(editeur)desc.push(editeur);
+    if(p.version)desc.push('version '+p.version);
+    desc.push('identifiant '+p.id);
+    apps.push({id:'wg'+(i+1),n:nom,c:cat,src:'winget',w:p.id,p:'med',t:5,d:desc.join(' · ')});
+  });
+  var quand=d.CreationDate?String(d.CreationDate).slice(0,10):'';
+  return {
+    meta:{version:1,nom:'Migration PC — export winget',
+      soustitre:apps.length+' paquets winget'+(quand?' · export du '+quand:'')},
+    cats:cats,apps:apps,
+    npc:PROFIL_DEFAUT.npc,data:PROFIL_DEFAUT.data,pwa:PROFIL_DEFAUT.pwa,
+    ordre:[],requetes:{}
+  };
+}
+
+// Classement par mots-clés, partagé entre l'import winget et l'import d'inventaire.
+const MOTS_CATS={
+  dev:['visual studio','vs code','git','python','node','java','jdk','android','intellij',
+       'pycharm','docker','unity','godot','unreal','postman','powershell','terminal',
+       'notepad','sublime','winscp','putty','autohotkey'],
+  jeux:['steam','epic','gog','ubisoft','battle.net','riot','minecraft','xbox','rockstar',
+        'vortex','wallpaper engine','playstation','valve'],
+  reseau:['vpn','qbittorrent','transmission','nextdns','wireshark','filezilla','tailscale'],
+  securite:['antivirus','defender','malwarebytes','bitdefender','kaspersky','keepass',
+            'bitwarden','1password','veracrypt'],
+  bureautique:['office','word','excel','powerpoint','outlook','onedrive','chrome','firefox',
+               'edge','opera','brave','acrobat','libreoffice','notion','obsidian','drive',
+               'dropbox','teams','thunderbird','mozilla','google'],
+  media:['vlc','spotify','deezer','itunes','audacity','obs','photoshop','illustrator','gimp',
+         'krita','blender','premiere','davinci','codec','handbrake','foobar','paint','inkscape','plex'],
+  comms:['discord','slack','whatsapp','telegram','signal','zoom','skype','messenger'],
+  pilotes:['nvidia','amd','radeon','realtek','intel','logitech','razer','steelseries','corsair',
+           'icue','signalrgb','afterburner','aura','armoury','elgato','wacom'],
+  system:['7-zip','7zip','winrar','ccleaner','hwinfo','crystaldisk','powertoys','rufus',
+          'everything','treesize','windirstat','aida64','revo','ventoy','windhawk']
+};
+function categoriePourNom(texte){
+  var t=String(texte).toLowerCase();
+  var cats=Object.keys(MOTS_CATS);
+  for(var i=0;i<cats.length;i++){
+    var mots=MOTS_CATS[cats[i]];
+    for(var j=0;j<mots.length;j++){if(t.indexOf(mots[j])>=0)return cats[i];}
+  }
+  return 'system';
+}
+
 function exportTxt(){
   const lines=[(PROFIL_NOM||'MIGRATION PC').toUpperCase(),PROFIL_SOUS||'',''];
   lines.push('=== NOUVEAU PC ===');
@@ -1267,9 +1394,10 @@ function updateNextBtns(){
 function exportWingetRemaining(){
   var remaining=APPS_DATA.filter(function(a){return !S.checked[a.id]&&a.w;});
   if(!remaining.length){alert('Toutes les apps avec winget sont déjà cochées !');return;}
-  var lines=["# Script winget — Apps restantes","# Exécuter en tant qu'administrateur",''];
-  var CATS_ORDER=['dev','jeux','reseau','ia','media','system','drivers','comms'];
-  CATS_ORDER.forEach(function(cat){
+  var lines=["# Script winget — Apps restantes","# Exécuter dans PowerShell en tant qu'administrateur",''];
+  // Les catégories viennent du profil : une liste figée ici omettait
+  // silencieusement les apps des profils qui n'ont pas les mêmes.
+  Object.keys(CATS).forEach(function(cat){
     var apps=remaining.filter(function(a){return a.c===cat;});
     if(!apps.length)return;
     lines.push('# '+(CATS[cat]||cat));
