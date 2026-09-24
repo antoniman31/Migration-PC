@@ -470,13 +470,13 @@ git init
 git add .
 git commit -m "Checklist migration PC v6"
 git branch -M main
-git remote add origin https://github.com/AntoniMan31/migration-pc.git
+git remote add origin https://github.com/antoniman31/Migration-PC.git
 git push -u origin main
 ```
 
 Puis dans les settings du repo : **Settings → Pages → Source : Deploy from a branch → Branch : main → / (root) → Save**
 
-URL finale : `https://antoniman31.github.io/migration-pc`
+URL finale : `https://antoniman31.github.io/Migration-PC`
 
 ### Note sur la confidentialité
 
