@@ -50,6 +50,7 @@
 
 [CmdletBinding()]
 param(
+    [switch]$PasDOuverture,
     [string]$Profil,
     [string]$Sortie = "verification-pc.json",
     [switch]$NomsApproximatifs,
@@ -66,6 +67,10 @@ if (-not (Test-Path $lib)) {
     exit 1
 }
 . $lib
+
+# Ecriture du resultat a cote de la page, et ouverture du navigateur.
+$aide = Join-Path $PSScriptRoot 'ecrire-resultat.ps1'
+if (Test-Path $aide) { . $aide }
 
 # ---------------------------------------------------------------- profil
 
@@ -208,6 +213,10 @@ $verification = [ordered]@{
 }
 
 Set-Content -Path $Sortie -Value ($verification | ConvertTo-Json -Depth 6) -Encoding UTF8
+
+if (Get-Command Write-ResultatPourSite -ErrorAction SilentlyContinue) {
+    Write-ResultatPourSite -Donnees $verification -DossierScript $PSScriptRoot -NePasOuvrir:$PasDOuverture
+}
 $chemin = (Resolve-Path $Sortie).Path
 
 $sures = @($trouves | Where-Object { $_.confiance -eq 'sure' }).Count

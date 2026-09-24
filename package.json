@@ -21,7 +21,8 @@
     "test:hostile": "node tests/test-profil-hostile.js",
     "test:sauvegarde": "node tests/test-sauvegarde.js",
     "test:debut": "node tests/test-debut.js",
-    "test:config": "node tests/test-config.js"
+    "test:config": "node tests/test-config.js",
+    "test:outils": "node tests/test-outils.js"
   },
   "devDependencies": {
     "playwright": "^1.63.0"

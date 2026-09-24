@@ -336,6 +336,34 @@ body.compact .item{padding:5px 0}
 /* ── V6 : compact masque dep ── */
 body.compact .b-dep{display:none}
 
+/* ═══ Les scripts ═══ */
+.outils{display:none;margin:0 0 12px;padding:16px 18px;border-radius:10px;
+  background:var(--bg2);border:.5px solid var(--brd2)}
+.outils.visible{display:block}
+.outils-titre{font-size:14px;font-weight:600;color:var(--tx);margin-bottom:3px}
+.outils-sous{font-size:12px;color:var(--tx2);line-height:1.55;margin-bottom:14px}
+.outils-liste{display:flex;flex-direction:column;gap:8px}
+.outils-item{display:flex;align-items:center;gap:12px;padding:10px 12px;
+  border:.5px solid var(--brd);border-radius:9px;background:var(--bg)}
+.outils-txt{flex:1;min-width:0}
+.outils-nom{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:2px}
+.outils-desc{font-size:12px;color:var(--tx2);line-height:1.5}
+.outils-item a{flex-shrink:0;padding:8px 14px;min-height:40px;display:inline-flex;
+  align-items:center;font-size:12px;font-weight:600;border-radius:8px;
+  border:.5px solid var(--brd2);background:var(--bg2);color:var(--tx);text-decoration:none}
+.outils-item a:hover{background:var(--bg3);border-color:var(--accb)}
+.outils-note{margin-top:14px;padding:12px 14px;border-radius:9px;background:var(--accl);
+  border:.5px solid var(--accb);font-size:12px;color:var(--tx2);line-height:1.6}
+.outils-note code{font-size:11px;padding:1px 5px;border-radius:4px;background:var(--bg2)}
+.outils-fermer{margin-top:12px;font-size:12px;color:var(--tx2);background:transparent;
+  border:none;cursor:pointer;padding:6px 2px;min-height:34px}
+.outils-fermer:hover{color:var(--tx)}
+@media (max-width:560px){
+  .outils-item{flex-direction:column;align-items:stretch}
+  .outils-item a{justify-content:center}
+}
+@media print{.outils{display:none!important}}
+
 /* ═══ Ma configuration ═══ */
 .config{display:none;margin:0 0 12px;padding:16px 18px;border-radius:10px;
   background:var(--bg2);border:.5px solid var(--brd2)}
@@ -683,8 +711,38 @@ body.guide-actif .day-est{display:none}
 </style>
 </head>
 <body>
+<!-- Ecrit par les scripts de scan a cote de index.html, sur la cle USB. Une
+     page ouverte en file:// ne peut pas aller LIRE un fichier (fetch y est
+     refuse), mais elle peut en charger un pose a cote d'elle.
+     On ne tente le chargement qu'en file:// : servie en HTTP, cette page est
+     le site publie, ou ce fichier n'existera jamais — l'y chercher ne ferait
+     qu'inscrire une erreur dans la console de chaque visiteur. -->
+<script>
+if(location.protocol==='file:'){
+  document.write('<script src="resultat-scan.js" onerror="void 0"><\/script>');
+}
+</script>
+
 <canvas id="confetti-canvas"></canvas>
 <div class="app"><div class="card">
+
+<div class="outils" id="outils" role="region" aria-label="Les scripts">
+  <div class="outils-titre">Les scripts pour Windows</div>
+  <div class="outils-sous">Trois scripts font le travail que cette page ne peut pas faire :
+    un navigateur n'a pas le droit de lire votre registre ni la liste de vos logiciels.
+    Ils sont écrits en PowerShell, donc lisibles dans le Bloc-notes avant d'être lancés.</div>
+  <div class="outils-liste" id="outils-liste"></div>
+  <div class="outils-note">
+    <b>Prenez le dossier entier, pas un fichier isolé.</b> Les trois scripts ont besoin de
+    <code>lib-detection.ps1</code> à côté d'eux, et les deux <code>.bat</code> du script
+    qu'ils lancent. Le plus simple est de
+    <a href="https://github.com/antoniman31/Migration-PC/archive/refs/heads/main.zip"
+       target="_blank" rel="noopener noreferrer">télécharger tout le dossier en une fois</a>,
+    de le poser sur une clé USB avec cette page, et de double-cliquer le premier
+    <code>.bat</code> sur l'ancien PC.
+  </div>
+  <button class="outils-fermer" type="button" onclick="fermerOutils()">Fermer</button>
+</div>
 
 <div class="config" id="config" role="region" aria-label="Ma configuration">
   <div class="config-tete">
@@ -774,6 +832,8 @@ body.guide-actif .day-est{display:none}
         <button type="button" role="menuitem" id="session-start-btn" onclick="depuisMenu(startSession)"><span class="hdr-menu-ico" aria-hidden="true">▶</span>Commencer une session</button>
         <button type="button" role="menuitem" onclick="depuisMenu(exportProfil)"><span class="hdr-menu-ico" aria-hidden="true">🧩</span>Exporter le profil</button>
         <button type="button" role="menuitem" id="reglages-btn" onclick="depuisMenu(basculerReglages)"><span class="hdr-menu-ico" aria-hidden="true">♻️</span>Réinitialiser…</button>
+        <button type="button" role="menuitem" onclick="depuisMenu(basculerOutils)"><span class="hdr-menu-ico" aria-hidden="true">⬇️</span>Les scripts pour Windows…</button>
+        <button type="button" role="menuitem" id="scan-rejouer" style="display:none" onclick="depuisMenu(rejouerScanLocal)"><span class="hdr-menu-ico" aria-hidden="true">🔄</span>Recharger le scan de la clé</button>
         <button type="button" role="menuitem" id="config-btn" onclick="depuisMenu(basculerConfig)" aria-expanded="false"><span class="hdr-menu-ico" aria-hidden="true">🔧</span>Ma configuration…</button>
         <button type="button" role="menuitem" onclick="depuisMenu(relancerDebut)"><span class="hdr-menu-ico" aria-hidden="true">🧭</span>Adapter à mon cas…</button>
         <button type="button" role="menuitem" onclick="depuisMenu(exportTxt)"><span class="hdr-menu-ico" aria-hidden="true">📄</span>Exporter en texte</button>
@@ -2290,6 +2350,52 @@ const LIBELLES_CATS={
 // Un seul bouton avale les trois formats : inventaire, profil, progression.
 function importerFichier(){document.getElementById('json-file').click();}
 
+// Le fichier déposé à la main et celui que le scanner écrit à côté de la page
+// empruntent le même chemin : un seul endroit décide de ce qu'est un fichier,
+// et ce qu'il contient reste des données — jamais des instructions.
+// `provenance` dit d'où ça vient, pour qu'une page qui se remplit toute seule
+// s'explique au lieu d'apparaître mystérieusement pleine.
+function traiterDonnees(d,provenance){
+  const suffixe=provenance?' — '+provenance:'';
+  const dire=function(texte){
+    const t=document.getElementById('annul-txt');
+    if(t)t.textContent=texte+suffixe;
+  };
+  try{
+    if(estVerification(d)){
+      afficherVerification(d);
+      return true;
+    }
+    if(estExportWinget(d)){
+      const p=wingetVersProfil(d);
+      memoriserAnnulation('Export winget importé : '+p.apps.length+' paquets. Les noms sont déduits des identifiants.'+suffixe,true);
+      appliquerProfil(p,true);
+      return true;
+    }
+    if(d && d.type==='inventaire-migration-pc'){
+      const p=inventaireVersProfil(d);
+      memoriserAnnulation('Inventaire importé : '+p.apps.length+' applications. Les onglets Nouveau PC, Données et PWA restent ceux du profil d\'exemple.'+suffixe,true);
+      appliquerProfil(p,true);
+      return true;
+    }
+    if(profilValide(d)){
+      memoriserAnnulation('Profil importé.'+suffixe,true);
+      appliquerProfil(d,true);
+      dire('Profil importé : '+(NPC_DATA.length+APPS_DATA.length+DATA_SAVES.length+PWA_DATA.length)+' éléments.');
+      return true;
+    }
+    if(d && d.state){
+      memoriserAnnulation('Progression importée.'+suffixe,false);
+      S={checked:d.state.checked||{},notes:d.state.notes||{},dates:d.state.dates||{},lic:d.state.lic||{},env:d.state.env||{},lastSave:null};
+      saveState();renderAll();updateGlobal();
+      dire('Progression importée : '+Object.keys(S.checked).length+' tâches cochées.');
+      return true;
+    }
+    informer('Format non reconnu. Attendu : un export winget, un inventaire de scan-pc.ps1, une vérification de verifier-pc.ps1, un profil, ou une progression exportée depuis cette page.');
+    return false;
+  }catch(err){signalerPanne('Import',err);return false;}
+}
+
 function handleImport(evt){
   const file=evt.target.files[0];if(!file)return;
   const reader=new FileReader();
@@ -2297,40 +2403,7 @@ function handleImport(evt){
     let d;
     try{d=JSON.parse(e.target.result);}
     catch(err){informer('Fichier illisible : ce n\'est pas du JSON valide.');return;}
-    try{
-      if(estVerification(d)){
-        afficherVerification(d);
-        return;
-      }
-      if(estExportWinget(d)){
-        const p=wingetVersProfil(d);
-        memoriserAnnulation('Export winget importé : '+p.apps.length+' paquets. Les noms sont déduits des identifiants.',true);
-        appliquerProfil(p,true);
-        return;
-      }
-      if(d && d.type==='inventaire-migration-pc'){
-        const p=inventaireVersProfil(d);
-        memoriserAnnulation('Inventaire importé : '+p.apps.length+' applications. Les onglets Nouveau PC, Données et PWA restent ceux du profil d\'exemple.',true);
-        appliquerProfil(p,true);
-        return;
-      }
-      if(profilValide(d)){
-        memoriserAnnulation('Profil importé.',true);
-        appliquerProfil(d,true);
-        document.getElementById('annul-txt').textContent=
-          'Profil importé : '+(NPC_DATA.length+APPS_DATA.length+DATA_SAVES.length+PWA_DATA.length)+' éléments.';
-        return;
-      }
-      if(d && d.state){
-        memoriserAnnulation('Progression importée.',false);
-        S={checked:d.state.checked||{},notes:d.state.notes||{},dates:d.state.dates||{},lic:d.state.lic||{},env:d.state.env||{},lastSave:null};
-        saveState();renderAll();updateGlobal();
-        document.getElementById('annul-txt').textContent=
-          'Progression importée : '+Object.keys(S.checked).length+' tâches cochées.';
-        return;
-      }
-      informer('Format non reconnu. Attendu : un export winget, un inventaire de scan-pc.ps1, une vérification de verifier-pc.ps1, un profil, ou une progression exportée depuis cette page.');
-    }catch(err){signalerPanne('Import',err);}
+    traiterDonnees(d,'');
   };
   reader.readAsText(file);evt.target.value='';
 }
@@ -3410,6 +3483,7 @@ function remiseAZero(){
     localStorage.removeItem(CLE_SCENARIO);
     localStorage.removeItem(CLE_DEBUT);
     localStorage.removeItem(CLE_CONFIG);
+    localStorage.removeItem(CLE_SCAN);
   }catch(e){console.error(e);}
   S.checked={};S.notes={};S.dates={};S.lic={};S.env={};S.lastSave=null;
   journal=[];openNotes={};sautees={};
@@ -3424,6 +3498,107 @@ function remiseAZero(){
   fermerReglages();
   if(!avaitProfil)document.getElementById('annul-txt').textContent=
     'Site remis à zéro : progression, notes et clés effacées.';
+}
+
+// ── Les scripts ────────────────────────────────────────────────────────
+// Ils étaient publiés avec le site depuis le début — la CI met le dépôt entier
+// en ligne — mais rien ne pointait vers eux. Les messages d'erreur parlaient
+// d'« un inventaire de scan-pc.ps1 » sans jamais dire où le trouver.
+const OUTILS=[
+  {f:'1-scanner-ce-pc.bat',n:'1 · Inventorier l\'ancien PC',
+   d:'À double-cliquer sur la machine que vous quittez. Liste ce qui est installé et remplit cette page toute seule.'},
+  {f:'2-verifier-ce-pc.bat',n:'2 · Vérifier le nouveau PC',
+   d:'À double-cliquer sur la machine neuve. Coche ce qui est déjà là, sans rien décider à votre place.'},
+  {f:'verifier-sauvegardes.ps1',n:'Vérifier les sauvegardes',
+   d:'Compare une copie à son original : fichier par fichier, taille par taille. Une sauvegarde non relue n\'est pas une sauvegarde.'},
+  {f:'scan-pc.ps1',n:'scan-pc.ps1',d:'Le script appelé par le premier bouton.'},
+  {f:'verifier-pc.ps1',n:'verifier-pc.ps1',d:'Le script appelé par le second.'},
+  {f:'lib-detection.ps1',n:'lib-detection.ps1',
+   d:'La détection partagée. Sans ce fichier à côté, les trois scripts s\'arrêtent.'}
+];
+
+function construireOutils(){
+  const z=document.getElementById('outils-liste');
+  if(!z)return;
+  z.innerHTML=OUTILS.map(function(o){
+    return '<div class="outils-item"><div class="outils-txt">'
+      +'<div class="outils-nom">'+esc(o.n)+'</div>'
+      +'<div class="outils-desc">'+esc(o.d)+'</div></div>'
+      +'<a href="'+esc(o.f)+'" download="'+esc(o.f)+'">Télécharger</a></div>';
+  }).join('');
+}
+function basculerOutils(){
+  const b=document.getElementById('outils');
+  if(!b)return;
+  const ouvert=b.classList.toggle('visible');
+  if(ouvert){
+    b.scrollIntoView({block:'nearest',behavior:mouvementReduit()?'auto':'smooth'});
+    const p=b.querySelector('a');
+    if(p)p.focus();
+  }
+}
+function fermerOutils(){
+  const b=document.getElementById('outils');
+  if(b)b.classList.remove('visible');
+}
+
+// ── Le résultat d'un scan, posé à côté de la page ──────────────────────
+// Les scripts écrivent resultat-scan.js sur la clé, à côté de index.html.
+// Ouvrir la page suffit alors : plus de fichier à retrouver ni à déposer.
+//
+// Ce fichier est chargé, donc exécuté. Sur sa propre clé c'est sans objet ;
+// avec une clé prêtée, c'est du code qui tourne. On ne peut pas l'empêcher
+// — c'est le prix de l'automatisme —, mais ce qu'il DÉPOSE est traité comme
+// n'importe quel import : des données, jamais des instructions, et la page
+// dit d'où ça vient au lieu d'apparaître pleine sans explication.
+const CLE_SCAN='mpc_scan_vu_v1';
+
+// Deux ouvertures de la page, c'est le même fichier qui se recharge : sans
+// mémoire, le scan s'appliquerait à chaque fois et écraserait les ajustements
+// faits entre-temps. On retient lequel a déjà été appliqué.
+function empreinteScan(d){
+  return [d.type||'',d.genere||'',d.machine||'',
+    (d.apps||[]).length,(d.trouves||[]).length].join('|');
+}
+
+function appliquerScanLocal(){
+  const d=window.MIGRATION_PC_SCAN;
+  if(!d||typeof d!=='object')return;
+  const empreinte=empreinteScan(d);
+  let dejaVu=null;
+  try{dejaVu=localStorage.getItem(CLE_SCAN);}catch(e){}
+  if(dejaVu===empreinte){
+    // Même fichier qu'à la dernière ouverture : on ne touche à rien, mais on
+    // laisse de quoi le réappliquer sciemment.
+    scanEnAttente=d;
+    majBoutonScan();
+    return;
+  }
+  const quand=d.genere?(' du '+String(d.genere).slice(0,10)):'';
+  const machine=d.machine?(' sur '+String(d.machine).slice(0,40)):'';
+  proteger('Scan local',function(){
+    if(traiterDonnees(d,'fichier déposé par le scanner'+quand+machine)){
+      try{localStorage.setItem(CLE_SCAN,empreinte);}catch(e){}
+      scanEnAttente=d;
+      majBoutonScan();
+    }
+  });
+}
+
+// Le fichier reste sur la clé : on garde un moyen de le rejouer, sinon il
+// faudrait le retrouver à la main alors qu'il est juste à côté.
+let scanEnAttente=null;
+function majBoutonScan(){
+  const b=document.getElementById('scan-rejouer');
+  if(b)b.style.display=scanEnAttente?'':'none';
+}
+function rejouerScanLocal(){
+  if(!scanEnAttente){informer('Aucun fichier de scan à côté de cette page.');return;}
+  const d=scanEnAttente;
+  const quand=d.genere?(' du '+String(d.genere).slice(0,10)):'';
+  proteger('Scan local',function(){
+    traiterDonnees(d,'fichier déposé par le scanner'+quand);
+  });
 }
 
 // ── Ma configuration ───────────────────────────────────────────────────
@@ -3875,7 +4050,10 @@ window.addEventListener('DOMContentLoaded',function(){
   try{appliquerProfil(memorise||PROFIL_DEFAUT,false);}
   catch(e){console.error(e);appliquerProfil(PROFIL_DEFAUT,false);}
   construireConfig();
+  construireOutils();
   renderHistory();
+  // Après le profil mémorisé : un scan tout frais a le dernier mot.
+  appliquerScanLocal();
   enregistrerServiceWorker();
   // Page vierge seulement : quelqu'un qui a déjà coché sait ce qu'il fait.
   if(!debutDejaVu()&&!Object.keys(S.checked).length&&scenario==='tout')ouvrirDebut();

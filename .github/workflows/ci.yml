@@ -123,6 +123,9 @@ jobs:
       - name: Configuration et affichage
         run: node tests/test-config.js
 
+      - name: Scripts et chargement automatique
+        run: node tests/test-outils.js
+
   publier:
     name: Publier sur Pages
     needs: verifier

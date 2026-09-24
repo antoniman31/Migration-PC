@@ -47,6 +47,7 @@
 
 [CmdletBinding()]
 param(
+    [switch]$PasDOuverture,
     [string]$Sortie = "inventaire-pc.json",
     [switch]$SansStore,
     [switch]$SansJeux,
@@ -65,6 +66,10 @@ if (-not (Test-Path $lib)) {
     exit 1
 }
 . $lib
+
+# Ecriture du resultat a cote de la page, et ouverture du navigateur.
+$aide = Join-Path $PSScriptRoot 'ecrire-resultat.ps1'
+if (Test-Path $aide) { . $aide }
 
 # ---------------------------------------------------------------- execution
 
@@ -102,6 +107,10 @@ $inventaire = [ordered]@{
 
 $json = $inventaire | ConvertTo-Json -Depth 6
 Set-Content -Path $Sortie -Value $json -Encoding UTF8
+
+if (Get-Command Write-ResultatPourSite -ErrorAction SilentlyContinue) {
+    Write-ResultatPourSite -Donnees $inventaire -DossierScript $PSScriptRoot -NePasOuvrir:$PasDOuverture
+}
 
 $avecWinget = @($apps | Where-Object { $_.winget }).Count
 $totalGo = ($apps | Where-Object { $_.tailleGo } | Measure-Object -Property tailleGo -Sum).Sum

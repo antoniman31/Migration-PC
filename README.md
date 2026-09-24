@@ -16,6 +16,7 @@ Les scripts sont facultatifs.
 ## Sommaire
 
 - [À quoi ça sert](#à-quoi-ça-sert)
+- [Le parcours en deux double-clics](#le-parcours-en-deux-double-clics)
 - [Démarrage rapide](#démarrage-rapide)
 - **Les trois scripts**
   - [Inventorier l'ancien PC](#inventorier-lancien-pc)
@@ -59,6 +60,34 @@ partagent leur logique de détection, qui vit une seule fois dans `lib-detection
 
 Le scan n'est pas obligatoire : la page s'ouvre sur un profil d'exemple utilisable tel
 quel, et vous pouvez écrire le vôtre.
+
+## Le parcours en deux double-clics
+
+Posez le dossier entier sur une clé USB. Sur l'ancien PC, double-cliquez
+**`1-scanner-ce-pc.bat`** : il inventorie la machine, écrit son résultat à côté de la
+page et l'ouvre. La checklist s'affiche **déjà remplie de vos logiciels** — rien à
+importer. Vous ajustez, vous exportez votre profil sur la clé.
+
+Sur le nouveau PC, double-cliquez **`2-verifier-ce-pc.bat`** : il regarde ce qui est
+déjà installé et rouvre la page, qui vous propose de cocher ce qu'elle a reconnu. La clé
+a fait le transport.
+
+Le `.bat` existe pour une seule raison : Windows refuse d'exécuter un `.ps1` par
+double-clic. Il appelle le script en contournant ce blocage pour ce seul lancement, et
+reste lisible dans le Bloc-notes — contrairement à un `.exe`, qu'il faudrait croire sur
+parole pour un outil qui lit tout votre PC.
+
+**Comment la page se remplit toute seule.** Ouverte depuis une clé, elle n'a pas le droit
+d'aller lire un fichier : le navigateur refuse. Mais elle peut charger un fichier
+JavaScript posé à côté d'elle. Les scripts écrivent donc `resultat-scan.js` en plus du
+`.json`, et ouvrir `index.html` suffit. Sans ce fichier, la page s'ouvre normalement.
+
+Ce fichier étant chargé, il est exécuté : sur votre propre clé c'est sans objet, sur une
+clé prêtée c'est du code qui tourne. Ce qu'il dépose est traité comme n'importe quel
+import — des données, jamais des instructions — et la page annonce d'où ça vient au lieu
+d'apparaître pleine sans explication. **⋯ Plus → Les scripts pour Windows** propose les
+fichiers au téléchargement, et `-PasDOuverture` empêche les scripts d'ouvrir le
+navigateur.
 
 ## Démarrage rapide
 
@@ -545,13 +574,14 @@ npm run test:hostile              # profil piégé : aucune injection
 npm run test:sauvegarde           # aucun échec d'enregistrement silencieux
 npm run test:debut                # deux questions d'ouverture et second PC
 npm run test:config               # bloc configuration et affichage grand écran
+npm run test:outils               # scripts proposés et chargement automatique
 ```
 
 `npm test` ne lance que ce qui tourne partout sans rien installer. Les suites
 navigateur demandent Chromium (`npm install` le fournit via Playwright), les suites
 PowerShell demandent `pwsh`.
 
-Vingt-deux suites, dans l'ordre où la CI les lance.
+Vingt-trois suites, dans l'ordre où la CI les lance.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
@@ -635,9 +665,15 @@ le support du constructeur, qu'un profil ne déclarant aucun composant s'affiche
 normalement, et que l'élargissement sur grand écran ne change rien au téléphone ni à la
 tablette.
 
+`tests/test-outils.js` reconstitue une clé USB — la page plus le fichier qu'un scanner y
+dépose — et vérifie que la page s'ouvre déjà remplie, qu'elle dit d'où viennent les
+données, qu'un rechargement n'écrase pas le travail fait depuis, et qu'une clé sans ce
+fichier ou avec un fichier abîmé s'ouvre normalement. Il contrôle aussi que chaque
+fichier proposé au téléchargement existe réellement dans le dépôt.
+
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les vingt-deux suites à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les vingt-trois suites à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 

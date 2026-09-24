@@ -25,7 +25,18 @@ const b=await chromium.launch(lancement);
 const pg=await b.newPage();
 const erreurs=[];
 pg.on('pageerror',e=>erreurs.push(e.message));
-pg.on('console',m=>{if(m.type()==='error')erreurs.push('console: '+m.text());});
+// Une seule absence est attendue et benigne : resultat-scan.js n'existe que
+// sur une cle ou un scan a tourne. On la nomme plutot que de desactiver
+// l'assertion, pour que toute AUTRE erreur de console fasse echouer le test.
+// Le texte du message ne nomme pas la ressource : c'est son emplacement qui
+// le fait. On cible donc l'URL, pour que toute AUTRE erreur de console fasse
+// bien echouer le test.
+pg.on('console',m=>{
+  if(m.type()!=='error')return;
+  const ou=(m.location()&&m.location().url)||'';
+  if(/resultat-scan\.js$/.test(ou))return;
+  erreurs.push('console: '+m.text()+(ou?' ['+ou+']':''));
+});
 await pg.goto(HTML,{waitUntil:'networkidle'});
 
 console.log('--- chargement ---');
