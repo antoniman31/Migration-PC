@@ -133,7 +133,7 @@ if (@($configs).Count) {
 }
 if (@($variables).Count) {
     $nombreVariables = @($variables).Count
-    Write-Host "$nombreVariables variable(s) d'environnement relevee(s)."
+    Write-Host ($nombreVariables.ToString() + " variable(s) d'environnement relevee(s).")
 }
 Write-Host "Fichier ecrit : $chemin"
 Write-Host ""
