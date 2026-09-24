@@ -105,7 +105,7 @@ const profilLocal=process.env.PROFIL||path.join(racine,'profil-local.json');
 if(fs.existsSync(profilLocal)){
   console.log('\n--- profil local ---');
   const p=JSON.parse(fs.readFileSync(profilLocal,'utf8'));
-  const attendu=p.npc.length+p.apps.length+p.data.length+p.pwa.length;
+  const attendu=SECTIONS.reduce(function(n,c){return n+((p[c]||[]).length);},0);
   await pg.setInputFiles('#json-file',{name:'profil.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(p))});
   await pg.waitForTimeout(500);
   ok('items chargés',await pg.textContent('#gp-total'),String(attendu));
