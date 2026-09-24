@@ -329,6 +329,27 @@ body.compact .item{padding:5px 0}
 /* ── V6 : compact masque dep ── */
 body.compact .b-dep{display:none}
 
+/* ═══ Menu « Plus » ═══
+   La barre du haut avait fini à neuf boutons, dont quatre emojis muets qu'il
+   fallait survoler pour savoir ce qu'ils font. Les quatre actions rares
+   passent dans un menu, avec de vrais libellés : moins de choix à balayer
+   pour les actions fréquentes, et les rares deviennent enfin lisibles. */
+.hdr-menu{position:relative}
+.hdr-menu-liste{display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:60;
+  min-width:232px;padding:6px;border-radius:10px;background:var(--bg2);
+  border:.5px solid var(--brd2);box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.hdr-menu-liste.visible{display:block}
+.hdr-menu-liste button{display:flex;align-items:center;gap:10px;width:100%;
+  padding:9px 10px;min-height:40px;font-size:13px;text-align:left;cursor:pointer;
+  border:none;border-radius:7px;background:transparent;color:var(--tx)}
+.hdr-menu-liste button:hover{background:var(--bg3)}
+.hdr-menu-ico{flex-shrink:0;width:18px;text-align:center}
+@media (max-width:560px){
+  .hdr-menu{position:static}
+  .hdr-menu-liste{left:0;right:0;min-width:0}
+}
+@media print{.hdr-menu{display:none!important}}
+
 /* ═══ Panneau des remises à zéro ═══
    Deux actions destructrices de portée différente. Les poser côte à côte
    dans la barre du haut inviterait à cliquer sans lire ; un panneau permet
@@ -634,10 +655,15 @@ body.guide-actif .day-est{display:none}
     <button class="icon-btn primary-btn" type="button" onclick="exportJSON()">💾 Sauvegarder</button>
     <div class="hdr-sep" aria-hidden="true"></div>
     <button class="icon-btn" type="button" id="guide-btn" onclick="basculerGuide()" aria-pressed="false" title="Afficher une seule tâche à la fois">🎯 Mode guidé</button>
-    <button class="icon-btn icon-only hdr-session" type="button" id="session-start-btn" onclick="startSession()" title="Commencer une session" aria-label="Commencer une session">▶</button>
-    <button class="icon-btn icon-only" type="button" onclick="exportProfil()" title="Exporter le profil (les listes, sans la progression)" aria-label="Exporter le profil">🧩</button>
-    <button class="icon-btn icon-only" type="button" id="reglages-btn" onclick="basculerReglages()" title="Réinitialiser" aria-label="Réinitialiser" aria-expanded="false" aria-controls="reglages">♻️</button>
-    <button class="icon-btn icon-only" type="button" onclick="window.print()" title="Imprimer" aria-label="Imprimer">🖨️</button>
+    <div class="hdr-menu">
+      <button class="icon-btn" type="button" id="menu-btn" onclick="basculerMenu()" aria-expanded="false" aria-haspopup="true" aria-controls="hdr-menu-liste">⋯ Plus</button>
+      <div class="hdr-menu-liste" id="hdr-menu-liste" role="menu" aria-label="Plus d'actions">
+        <button type="button" role="menuitem" id="session-start-btn" onclick="depuisMenu(startSession)"><span class="hdr-menu-ico" aria-hidden="true">▶</span>Commencer une session</button>
+        <button type="button" role="menuitem" onclick="depuisMenu(exportProfil)"><span class="hdr-menu-ico" aria-hidden="true">🧩</span>Exporter le profil</button>
+        <button type="button" role="menuitem" id="reglages-btn" onclick="depuisMenu(basculerReglages)"><span class="hdr-menu-ico" aria-hidden="true">♻️</span>Réinitialiser…</button>
+        <button type="button" role="menuitem" onclick="depuisMenu(function(){window.print();})"><span class="hdr-menu-ico" aria-hidden="true">🖨️</span>Imprimer</button>
+      </div>
+    </div>
     <button class="icon-btn" type="button" id="theme-btn" onclick="toggleTheme()"><span id="theme-ico" aria-hidden="true">🌙</span> <span id="theme-lbl">Sombre</span></button>
   </div>
 </header>
@@ -1109,7 +1135,7 @@ const PROFIL_DEFAUT = {
       "src": "Media Creation Tool ou Rufus",
       "p": "high",
       "t": 20,
-      "d": "Une clé USB de 8 Go minimum, qui sera effacée. Rufus permet en plus de retirer certaines contraintes et de préconfigurer l'installation."
+      "d": "Une clé USB de 8 Go minimum, qui sera effacée. Rufus permet en plus de retirer certaines contraintes et de préconfigurer l'installation. Pour aller plus loin, le générateur schneegans.de/windows/unattend-generator prépare un fichier autounattend.xml : déposé à la racine de la clé, il répond à votre place aux questions de l'installation — langue, partitionnement, compte local, réglages de confidentialité — et retire les applications préinstallées. Facultatif, mais ça change une installation de vingt minutes de clics en une installation qu'on lance et qu'on laisse tourner."
     },
     {
       "id": "n23",
@@ -2463,11 +2489,18 @@ function clavierGlobal(e){
   // Échap referme le panneau ouvert et rend le focus au bouton qui l'a ouvert,
   // sinon on se retrouve à tabuler dans un panneau qu'on croyait fermé.
   if(e.key==='Escape'||e.key==='Esc'){
+    // Le menu flotte par-dessus le panneau : on referme le plus haut d'abord.
+    if(menuOuvert()){
+      fermerMenu();
+      const m=document.getElementById('menu-btn');
+      if(m)m.focus();
+      return;
+    }
     const b=document.getElementById('reglages');
     if(b&&b.classList.contains('visible')){
       fermerReglages();
-      const btn=document.getElementById('reglages-btn');
-      if(btn)btn.focus();
+      const m=document.getElementById('menu-btn');
+      if(m)m.focus();
     }
     return;
   }
@@ -2762,9 +2795,15 @@ function depsManquantes(item){
 function mkDepBadge(dep){
   if(!dep)return '';
   if(!Array.isArray(dep))return '<span class="badge b-dep">↳ '+esc(dep)+'</span>';
-  if(!dep.length)return '';
-  const noms=dep.map(nomDe);
-  const manquantes=dep.filter(function(id){return !S.checked[id];});
+  // Un prérequis que le scénario courant masque n'est pas un prérequis : le
+  // nommer enverrait chercher dans la liste une tâche qui n'y est pas.
+  const vus=dep.filter(function(id){
+    const d=indexParId()[id];
+    return d&&visibleDansScenario(d);
+  });
+  if(!vus.length)return '';
+  const noms=vus.map(nomDe);
+  const manquantes=vus.filter(function(id){return !S.checked[id];});
   const classe=manquantes.length?'badge b-dep b-dep-manque':'badge b-dep';
   const titre=manquantes.length
     ? 'À installer avant : '+manquantes.map(nomDe).join(', ')
@@ -2932,9 +2971,8 @@ function basculerReglages(){
   const b=document.getElementById('reglages');
   if(!b)return;
   const ouvert=b.classList.toggle('visible');
-  const btn=document.getElementById('reglages-btn');
-  if(btn)btn.setAttribute('aria-expanded',ouvert?'true':'false');
   if(ouvert){
+    b.scrollIntoView({block:'nearest',behavior:mouvementReduit()?'auto':'smooth'});
     const p=b.querySelector('button');
     if(p)p.focus();
   }
@@ -2942,9 +2980,52 @@ function basculerReglages(){
 function fermerReglages(){
   const b=document.getElementById('reglages');
   if(b)b.classList.remove('visible');
-  const btn=document.getElementById('reglages-btn');
+}
+
+// ── Menu « Plus » ───────────────────────────────────────────────────────
+// Quatre actions rares, sorties de la barre pour qu'elle reste lisible.
+// On les appelle à travers depuisMenu : le menu se referme d'abord, sinon il
+// resterait ouvert par-dessus ce que l'action vient d'afficher.
+// Le système peut demander qu'on évite les animations ; un défilement animé
+// en est une.
+function mouvementReduit(){
+  try{return window.matchMedia('(prefers-reduced-motion: reduce)').matches;}
+  catch(e){return false;}
+}
+function menuOuvert(){
+  const l=document.getElementById('hdr-menu-liste');
+  return !!(l&&l.classList.contains('visible'));
+}
+function basculerMenu(){
+  const l=document.getElementById('hdr-menu-liste');
+  if(!l)return;
+  const ouvert=l.classList.toggle('visible');
+  const btn=document.getElementById('menu-btn');
+  if(btn)btn.setAttribute('aria-expanded',ouvert?'true':'false');
+  if(ouvert){
+    // « Commencer une session » disparaît une fois la session lancée : on
+    // donne le focus au premier item réellement affiché, pas au premier du DOM.
+    const p=Array.prototype.find.call(l.querySelectorAll('button'),
+      function(x){return x.offsetParent!==null;});
+    if(p)p.focus();
+  }
+}
+function fermerMenu(){
+  const l=document.getElementById('hdr-menu-liste');
+  if(l)l.classList.remove('visible');
+  const btn=document.getElementById('menu-btn');
   if(btn)btn.setAttribute('aria-expanded','false');
 }
+function depuisMenu(fn){
+  fermerMenu();
+  try{fn();}catch(e){signalerPanne('Menu',e);}
+}
+// Un menu flottant qui survit à un clic ailleurs finit par masquer la page.
+document.addEventListener('click',function(e){
+  if(!menuOuvert())return;
+  if(e.target.closest&&e.target.closest('.hdr-menu'))return;
+  fermerMenu();
+});
 
 function resetSection(sec){
   const map={};ONGLETS.forEach(function(c){map[c]=donneesDe(c);});

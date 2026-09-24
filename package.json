@@ -16,7 +16,8 @@
     "test:verification": "node tests/test-verification-pc.js",
     "test:quitter": "node tests/test-quitter.js",
     "test:scenarios": "node tests/test-scenarios.js",
-    "test:reinit": "node tests/test-reinit.js"
+    "test:reinit": "node tests/test-reinit.js",
+    "test:menu": "node tests/test-menu.js"
   },
   "devDependencies": {
     "playwright": "^1.63.0"

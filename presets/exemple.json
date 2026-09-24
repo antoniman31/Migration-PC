@@ -306,7 +306,7 @@
       "src": "Media Creation Tool ou Rufus",
       "p": "high",
       "t": 20,
-      "d": "Une clé USB de 8 Go minimum, qui sera effacée. Rufus permet en plus de retirer certaines contraintes et de préconfigurer l'installation."
+      "d": "Une clé USB de 8 Go minimum, qui sera effacée. Rufus permet en plus de retirer certaines contraintes et de préconfigurer l'installation. Pour aller plus loin, le générateur schneegans.de/windows/unattend-generator prépare un fichier autounattend.xml : déposé à la racine de la clé, il répond à votre place aux questions de l'installation — langue, partitionnement, compte local, réglages de confidentialité — et retire les applications préinstallées. Facultatif, mais ça change une installation de vingt minutes de clics en une installation qu'on lance et qu'on laisse tourner."
     },
     {
       "id": "n23",

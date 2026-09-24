@@ -16,6 +16,10 @@ const b=await chromium.launch(lancement);
 const pg=await (await b.newContext({viewport:{width:1200,height:900}})).newPage();
 pg.on('pageerror',e=>console.log('ERREUR JS:',e.message));
 await pg.goto(HTML,{waitUntil:'networkidle'});
+const ouvrirPanneau=async()=>{
+  await pg.click('#menu-btn');await pg.waitForTimeout(120);
+  await pg.click('#reglages-btn');await pg.waitForTimeout(200);
+};
 const defaut=await pg.evaluate(()=>PROFIL_DEFAUT.meta.nom);
 let ko=0;const ok=(l,a,c)=>{const p=(c===undefined?!!a:a===c);console.log((p?'  ok  ':' FAIL ')+l+' → '+JSON.stringify(a)+(p?'':' (attendu '+JSON.stringify(c)+')'));if(!p)ko++;};
 
@@ -32,26 +36,31 @@ const prepare=async()=>pg.evaluate(()=>{
 
 console.log('--- le panneau ---');
 ok('ferme au depart',await pg.isVisible('#reglages'),false);
-ok('bouton replie',await pg.getAttribute('#reglages-btn','aria-expanded'),'false');
-await pg.click('#reglages-btn');await pg.waitForTimeout(200);
+ok('menu replie',await pg.getAttribute('#menu-btn','aria-expanded'),'false');
+await pg.click('#menu-btn');await pg.waitForTimeout(200);
+ok('le menu s\'ouvre',await pg.isVisible('#hdr-menu-liste'),true);
+ok('menu deplie',await pg.getAttribute('#menu-btn','aria-expanded'),'true');
+ok('le focus entre dans le menu',
+  await pg.evaluate(()=>document.getElementById('hdr-menu-liste').contains(document.activeElement)),true);
+await pg.click('#reglages-btn');await pg.waitForTimeout(250);
+ok('le menu se referme derriere lui',await pg.isVisible('#hdr-menu-liste'),false);
 ok('ouvert au clic',await pg.isVisible('#reglages'),true);
-ok('bouton deplie',await pg.getAttribute('#reglages-btn','aria-expanded'),'true');
 ok('le focus entre dans le panneau',
   await pg.evaluate(()=>document.getElementById('reglages').contains(document.activeElement)),true);
 ok('les deux actions sont decrites',
   (await pg.$$('#reglages .reglages-item')).length,2);
 await pg.keyboard.press('Escape');await pg.waitForTimeout(200);
 ok('Echap referme',await pg.isVisible('#reglages'),false);
-ok('et rend le focus au bouton',
-  await pg.evaluate(()=>document.activeElement.id),'reglages-btn');
-await pg.click('#reglages-btn');await pg.waitForTimeout(150);
+ok('et rend le focus au bouton du menu',
+  await pg.evaluate(()=>document.activeElement.id),'menu-btn');
+await ouvrirPanneau();
 await pg.click('#reglages .reglages-fermer');await pg.waitForTimeout(150);
 ok('« Fermer » referme aussi',await pg.isVisible('#reglages'),false);
 
 console.log('\n--- tout decocher ---');
 const n=await prepare();
 await pg.click('#sc-reinstall');await pg.waitForTimeout(250);
-await pg.click('#reglages-btn');await pg.waitForTimeout(150);
+await ouvrirPanneau();
 await pg.click('#reglages .reglages-item:not(.reglages-danger) button');
 await pg.waitForTimeout(300);
 ok('plus aucune case cochee',await pg.evaluate(()=>Object.keys(S.checked).length),0);
@@ -65,7 +74,7 @@ ok('l\'annulation rend les cases',await pg.evaluate(()=>Object.keys(S.checked).l
 
 console.log('\n--- rien a decocher ---');
 await pg.evaluate(()=>{S.checked={};saveState();renderAll();updateGlobal();});
-await pg.click('#reglages-btn');await pg.waitForTimeout(150);
+await ouvrirPanneau();
 await pg.click('#reglages .reglages-item:not(.reglages-danger) button');
 await pg.waitForTimeout(250);
 ok('un bandeau sans bouton inutile',await pg.isVisible('.annul-btn'),false);
@@ -82,7 +91,7 @@ await pg.evaluate(()=>{
 await pg.click('#sc-migration');await pg.waitForTimeout(250);
 ok('le profil importe est en memoire',
   await pg.evaluate(()=>!!localStorage.getItem(CLE_PROFIL)),true);
-await pg.click('#reglages-btn');await pg.waitForTimeout(150);
+await ouvrirPanneau();
 await pg.click('#reglages .reglages-danger button');
 await pg.waitForTimeout(400);
 const stock=await pg.evaluate(()=>({
@@ -116,7 +125,7 @@ console.log('\n--- apres rechargement ---');
 await pg.reload({waitUntil:'networkidle'});
 ok('le profil importe a tenu',await pg.textContent('#profil-titre'),'Profil importé');
 // Puis une remise a zero definitive, suivie d'un rechargement.
-await pg.click('#reglages-btn');await pg.waitForTimeout(150);
+await ouvrirPanneau();
 await pg.click('#reglages .reglages-danger button');await pg.waitForTimeout(400);
 await pg.reload({waitUntil:'networkidle'});
 ok('rien ne revient d\'entre les morts',await pg.textContent('#profil-titre'),defaut);
@@ -127,7 +136,7 @@ console.log('\n--- le panneau sur petit ecran, dans les deux themes ---');
 for(const theme of ['light','dark']){
   await pg.setViewportSize({width:360,height:740});
   await pg.evaluate(t=>document.documentElement.setAttribute('data-theme',t),theme);
-  await pg.click('#reglages-btn');await pg.waitForTimeout(250);
+  await ouvrirPanneau();
   const m=await pg.evaluate(()=>{
     const lum=c=>{const v=c.match(/[\d.]+/g).slice(0,3).map(x=>{x=x/255;
       return x<=0.03928?x/12.92:Math.pow((x+0.055)/1.055,2.4);});

@@ -78,6 +78,43 @@ const g=await pg.evaluate(()=>document.querySelector('.guide-etape').textContent
 ok('le guide compte comme le filtre',g,'Tâche 1 sur '+vis('reinstall'));
 await pg.click('#guide-btn');await pg.waitForTimeout(200);
 
+console.log('\n--- un prerequis masque par le filtre ---');
+// Un element peut dependre d'un autre que le scenario courant ne montre pas.
+// Le badge « ↳ » nommerait alors une tache introuvable dans la liste.
+const sonde=await pg.evaluate(()=>{
+  // On fabrique le cas plutot que d'esperer qu'il existe dans l'exemple.
+  const base=NPC_DATA[0];
+  const cache={id:'zz-cache',o:998,n:'Étape réservée au montage neuf',
+    src:'Test',p:'low',t:5,d:'Test.',cas:['migration']};
+  const suiv={id:'zz-suite',o:999,n:'Étape qui en dépend',
+    src:'Test',p:'low',t:5,d:'Test.',dep:['zz-cache',base.id]};
+  NPC_DATA.push(cache,suiv);viderIndex();renderAll();updateGlobal();
+  // Pas de data-id sur les lignes : on retrouve la nôtre par son intitulé.
+  const ligne=()=>[...document.querySelectorAll('#list-npc .item')]
+    .find(x=>x.textContent.indexOf('Étape qui en dépend')>=0);
+  const lire=()=>{
+    const l=ligne();const b=l&&l.querySelector('.b-dep');
+    return b?b.textContent:null;
+  };
+  changerScenario('migration');const enMigration=lire();
+  changerScenario('reinstall');const enReinstall=lire();
+  // L'intitulé seulement : le badge de la ligne suivante contient le même
+  // texte, et c'est précisément ce qu'on cherche à distinguer.
+  const visible=[...document.querySelectorAll('#list-npc .item-name')]
+    .some(x=>x.textContent.indexOf('montage neuf')>=0);
+  NPC_DATA.splice(NPC_DATA.length-2,2);viderIndex();
+  changerScenario('tout');renderAll();updateGlobal();
+  return {enMigration:enMigration,enReinstall:enReinstall,visible:visible,
+    nomBase:base.n};
+});
+ok('en migration le badge cite les deux prérequis',
+  sonde.enMigration&&sonde.enMigration.indexOf('montage neuf')>=0,true);
+ok('l\'étape masquée l\'est bien en réinstallation',sonde.visible,false);
+ok('et le badge ne la cite plus',
+  sonde.enReinstall&&sonde.enReinstall.indexOf('montage neuf')>=0,false);
+ok('mais garde le prérequis encore visible',
+  !!sonde.enReinstall,true);
+
 await b.close();
 console.log(ko?'\n'+ko+' EN ECHEC':'\nSCENARIOS OPERATIONNELS');
 process.exit(ko?1:0);

@@ -22,7 +22,9 @@ Les scripts sont facultatifs.
   - [Vérifier le nouveau PC](#vérifier-le-nouveau-pc)
   - [Vérifier les sauvegardes](#vérifier-les-sauvegardes)
 - [Migration ou réinstallation](#migration-ou-réinstallation)
+  - [Installer Windows sans rester devant](#installer-windows-sans-rester-devant)
 - [La checklist](#la-checklist)
+  - [La barre du haut](#la-barre-du-haut)
   - [Repartir de zéro](#repartir-de-zéro)
   - [Mode guidé](#mode-guidé)
   - [Accessibilité](#accessibilité)
@@ -201,6 +203,21 @@ Le choix est mémorisé, et une case cochée dans un mode reste cochée dans l'a
 filtre change ce que vous regardez, pas ce que vous avez fait. Le total affiché suit le
 mode, donc il bouge quand vous basculez.
 
+### Installer Windows sans rester devant
+
+L'étape « Préparer la clé d'installation Windows » renvoie vers le générateur de
+[Christoph Schneegans](https://schneegans.de/windows/unattend-generator/). On y coche ce
+qu'on veut — langue, fuseau, partitionnement, compte local plutôt qu'un compte
+Microsoft, réglages de confidentialité, applications préinstallées à retirer — et il
+produit un `autounattend.xml`. Déposé à la racine de la clé, ce fichier répond à votre
+place aux questions de l'installation.
+
+Le projet ne génère pas ce fichier lui-même : il contient des réponses propres à une
+machine et parfois un mot de passe, il n'a rien à faire dans un dépôt public, et le
+générateur en amont est maintenu et couvre bien plus de cas que ce qu'on écrirait ici.
+C'est une suggestion, pas une étape obligatoire — une installation cliquée à la main
+marche tout aussi bien, elle demande juste d'être présent.
+
 ## La checklist
 
 Cinq onglets : **Avant de quitter** l'ancien PC, **Nouveau PC**, **Apps**, **Données** à
@@ -267,9 +284,17 @@ travail. Ces actions ne demandent pas de confirmation — on clique « oui » pa
 mais s'annulent après coup depuis un bandeau, qui restaure aussi bien les cases que le
 profil remplacé et le scénario choisi.
 
+### La barre du haut
+
+Sept boutons, pas dix. Les actions fréquentes restent visibles — vue normale ou compacte,
+importer, sauvegarder, mode guidé, thème — et les quatre rares (commencer une session,
+exporter le profil, réinitialiser, imprimer) vivent dans un menu **⋯ Plus**. Elles y
+portent un vrai libellé au lieu d'un emoji qu'il fallait survoler pour comprendre. Le
+menu se referme après une action, au clic ailleurs, et à Échap.
+
 ### Repartir de zéro
 
-Le bouton ♻️ de la barre du haut ouvre un panneau avec deux portées distinctes, décrites
+**⋯ Plus → Réinitialiser…** ouvre un panneau avec deux portées distinctes, décrites
 avant d'être offertes :
 
 - **Tout décocher** remet la progression à zéro sur les cinq onglets. Les notes, les clés
@@ -436,13 +461,14 @@ npm run test:guide                # mode guidé
 npm run test:quitter              # onglet « Avant de quitter »
 npm run test:scenarios            # migration ou réinstallation
 npm run test:reinit               # remises à zéro et leur annulation
+npm run test:menu                 # menu « Plus » de la barre du haut
 ```
 
 `npm test` ne lance que ce qui tourne partout sans rien installer. Les suites
 navigateur demandent Chromium (`npm install` le fournit via Playwright), les suites
 PowerShell demandent `pwsh`.
 
-Dix-sept suites, dans l'ordre où la CI les lance.
+Dix-huit suites, dans l'ordre où la CI les lance.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
@@ -498,9 +524,14 @@ navigateur et que rien ne revient après un rechargement, et que l'annulation re
 les deux cas ce qui avait été effacé — profil importé et scénario compris. Il mesure
 aussi le panneau à 360 px de large, dans les deux thèmes.
 
+`tests/test-menu.js` compte les boutons restés dans la barre, vérifie qu'aucun n'y est
+réduit à une icône muette, que les quatre actions du menu agissent réellement (la session
+démarre, le profil se télécharge), que le menu se referme par les trois chemins attendus
+et qu'il reste utilisable au clavier comme au doigt.
+
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les dix-sept suites à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les dix-huit suites à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 

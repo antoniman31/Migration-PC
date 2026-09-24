@@ -108,6 +108,9 @@ jobs:
       - name: Remises à zéro
         run: node tests/test-reinit.js
 
+      - name: Menu de la barre du haut
+        run: node tests/test-menu.js
+
   publier:
     name: Publier sur Pages
     needs: verifier
