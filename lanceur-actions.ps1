@@ -4,6 +4,31 @@
 # partout, l'interface graphique seulement sur Windows. Une action mal decrite
 # ou un fichier manquant se voit ici, pas devant l'utilisateur.
 
+# Construire la ligne de commande passee a powershell.exe.
+#
+# Start-Process -ArgumentList @(...) recolle les elements avec des espaces,
+# sans jamais les proteger. Un chemin qui en contient — « D:\Migration PC »,
+# « E:\Sauvegarde du 12 » — se coupait en deux et powershell.exe refusait la
+# ligne entiere en affichant son aide. Le lanceur ne marchait donc que depuis
+# un dossier sans espace, ce qui n'est pas une hypothese qu'on peut faire :
+# le dossier de ce projet s'appelle « Migration PC ». Trouve en l'executant.
+#
+# Les guillemets sont doubles a l'interieur, comme le veut la convention de
+# ligne de commande de Windows. Une chaine sans espace ni guillemet est
+# laissee telle quelle : plus lisible dans les messages d'erreur.
+function Format-Argument {
+    param([string]$Valeur)
+    if ($null -eq $Valeur) { return '""' }
+    if ($Valeur -eq '') { return '""' }
+    if ($Valeur -notmatch '[\s"]') { return $Valeur }
+    return '"' + ($Valeur -replace '"', '""') + '"'
+}
+
+function Get-LigneCommande {
+    param([string[]]$Arguments)
+    return @($Arguments | ForEach-Object { Format-Argument $_ })
+}
+
 function Get-ActionsMigration {
     param([string]$Racine)
 

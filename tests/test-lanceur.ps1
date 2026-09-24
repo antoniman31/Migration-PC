@@ -124,5 +124,38 @@ $arbre.FindAll({ param($n) $n -is [System.Management.Automation.Language.Assignm
 ok 'la variable automatique $args n est pas ecrasee' ($ecrases -join ', ') ''
 
 Write-Host ""
+Write-Host "--- les chemins avec une espace ---" -ForegroundColor Cyan
+# Start-Process -ArgumentList recolle les elements avec des espaces sans les
+# proteger : « D:\Migration PC » se coupait en deux et powershell.exe refusait
+# la ligne entiere. Le dossier de ce projet s'appelle « Migration PC » : ce
+# n'etait pas un cas tordu, c'etait le cas normal.
+ok 'un chemin avec espace est protege' (Format-Argument 'D:\Migration PC\scan-pc.ps1') '"D:\Migration PC\scan-pc.ps1"'
+ok 'un chemin sans espace reste nu'    (Format-Argument 'D:\scan-pc.ps1') 'D:\scan-pc.ps1'
+ok 'un guillemet est double'           (Format-Argument 'a"b') '"a""b"'
+ok 'une chaine vide reste un argument' (Format-Argument '') '""'
+$ligne = Get-LigneCommande @('-File', 'D:\Migration PC\x.ps1', '-Destination', 'E:\Sauvegarde du 12')
+ok 'la ligne garde ses quatre morceaux' $ligne.Count 4
+ok 'et protege les deux chemins' (($ligne | Where-Object { $_ -match '^"' }).Count) 2
+
+# Le vrai lancement, de bout en bout : un script appele depuis un dossier dont
+# le nom contient une espace, avec un argument qui en contient une aussi.
+$bac = Join-Path ([System.IO.Path]::GetTempPath()) ("mpc lanceur " + (Get-Random))
+New-Item -ItemType Directory -Path $bac -Force | Out-Null
+try {
+    $cible = Join-Path $bac 'echo test.ps1'
+    Set-Content -LiteralPath $cible -Value 'param([string]$Destination)' -Encoding UTF8
+    Add-Content -LiteralPath $cible -Value 'Write-Output "RECU:[$Destination]"'
+    $arrivee = Join-Path $bac 'un dossier a moi'
+    $sortie  = Join-Path $bac 'sortie.txt'
+    $p = @('-NoProfile', '-File', $cible, '-Destination', $arrivee)
+    $exe = (Get-Process -Id $PID).Path
+    Start-Process -FilePath $exe -ArgumentList (Get-LigneCommande $p) -Wait -NoNewWindow -RedirectStandardOutput $sortie
+    $lu = (Get-Content -LiteralPath $sortie -Raw).Trim()
+    ok 'le script recoit le chemin entier' $lu "RECU:[$arrivee]"
+} finally {
+    Remove-Item $bac -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+Write-Host ""
 if ($script:ko -gt 0) { Write-Host "$script:ko EN ECHEC" -ForegroundColor Red; exit 1 }
 Write-Host "LANCEUR OPERATIONNEL" -ForegroundColor Green

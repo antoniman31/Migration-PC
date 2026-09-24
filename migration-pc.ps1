@@ -72,7 +72,7 @@ function Invoke-Action {
 
     # Une nouvelle fenetre : le script ecrit beaucoup, et on veut pouvoir lire
     # sa sortie apres coup meme si le lanceur est referme.
-    Start-Process -FilePath 'powershell.exe' -ArgumentList $parametres -Wait
+    Start-Process -FilePath 'powershell.exe' -ArgumentList (Get-LigneCommande $parametres) -Wait
     return @{ ok = $true; message = "Termine."; suite = $Action.suite }
 }
 
