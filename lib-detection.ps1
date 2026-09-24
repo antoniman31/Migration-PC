@@ -495,6 +495,122 @@ function Read-Variables {
     return $vars
 }
 
+# ---------------------------------------------------------------- gros dossiers
+#
+# Le projet ne detectait aucun fichier personnel : l'onglet « Donnees » est une
+# liste de chemins ecrite a la main, qu'on coche en confiance. Si un dossier n'y
+# figure pas, rien ne le rappelle. Un logiciel oublie se reinstalle ; un dossier
+# de photos oublie ne revient pas.
+#
+# On ne copie rien et on ne devine rien : on mesure, on signale ce qui pese, et
+# la page dit ce qui est deja reclame par la checklist. Elle seule connait la
+# liste ; le script, lui, connait le disque.
+
+# Ce que Windows gere lui-meme : le signaler n'apprendrait rien et noierait le
+# reste.
+$script:DossiersSysteme = @(
+    'Windows', 'Program Files', 'Program Files (x86)', 'ProgramData', 'PerfLogs',
+    '$Recycle.Bin', 'System Volume Information', 'Recovery', '$WinREAgent',
+    'Config.Msi', 'MSOCache', 'Intel', 'AMD', 'NVIDIA', 'hiberfil.sys',
+    'AppData', 'Application Data', 'Local Settings', 'Cookies', 'NetHood',
+    'PrintHood', 'Recent', 'SendTo', 'Templates', 'Voisinage d''impression',
+    'Voisinage reseau', 'Menu Demarrer', 'Mes documents'
+)
+
+function Test-DossierSysteme {
+    param([string]$Nom)
+    if ([string]::IsNullOrWhiteSpace($Nom)) { return $true }
+    foreach ($s in $script:DossiersSysteme) {
+        if ($Nom -eq $s) { return $true }
+    }
+    return $false
+}
+
+# La taille d'un dossier, avec un budget de temps. Un disque de plusieurs
+# teraoctets ne se parcourt pas en entier pendant qu'on attend devant l'ecran :
+# mieux vaut une mesure partielle annoncee comme telle qu'un script qui semble
+# fige. Les points de jonction ne sont pas suivis : ils bouclent.
+function Measure-DossierBudget {
+    param([string]$Chemin, [System.Diagnostics.Stopwatch]$Chrono, [double]$BudgetSecondes = 60)
+    $octets = [int64]0
+    $complet = $true
+    try {
+        foreach ($f in (Get-ChildItem -LiteralPath $Chemin -Recurse -File -Force -ErrorAction SilentlyContinue)) {
+            if ($f.Attributes -band [IO.FileAttributes]::ReparsePoint) { continue }
+            $octets += $f.Length
+            if ($Chrono -and $Chrono.Elapsed.TotalSeconds -gt $BudgetSecondes) { $complet = $false; break }
+        }
+    } catch { $complet = $false }
+    return [ordered]@{ octets = $octets; complet = $complet }
+}
+
+# Les dossiers directement sous une racine, mesures un par un. On ne descend
+# pas plus bas : « D:\Projets » se signale mieux que ses quarante sous-dossiers.
+function Measure-DossiersEnfants {
+    param(
+        [string]$Racine,
+        [double]$SeuilMo = 1024,
+        [double]$BudgetSecondes = 60,
+        [string]$Modele = ''
+    )
+    $out = @()
+    if ([string]::IsNullOrWhiteSpace($Racine) -or -not (Test-Path -LiteralPath $Racine)) { return $out }
+    $chrono = [System.Diagnostics.Stopwatch]::StartNew()
+    $enfants = @(Get-ChildItem -LiteralPath $Racine -Directory -Force -ErrorAction SilentlyContinue)
+    foreach ($d in $enfants) {
+        if (Test-DossierSysteme -Nom $d.Name) { continue }
+        if ($d.Attributes -band [IO.FileAttributes]::ReparsePoint) { continue }
+        $m = Measure-DossierBudget -Chemin $d.FullName -Chrono $chrono -BudgetSecondes $BudgetSecondes
+        $mo = [math]::Round($m.octets / 1MB, 1)
+        if ($mo -lt $SeuilMo) { continue }
+        $out += [ordered]@{
+            nom      = $d.Name
+            chemin   = $d.FullName
+            # Variabilise quand la racine l'est : un dossier du profil se
+            # retrouvera sous un autre nom d'utilisateur, un dossier de disque
+            # non.
+            modele   = if ($Modele) { (($Modele.TrimEnd('\', '/')) + '\' + $d.Name) } else { '' }
+            tailleMo = $mo
+            complet  = $m.complet
+        }
+        if ($chrono.Elapsed.TotalSeconds -gt $BudgetSecondes) { break }
+    }
+    return $out
+}
+
+function Get-RacinesAExplorer {
+    $racines = @()
+    if ($env:USERPROFILE -and (Test-Path -LiteralPath $env:USERPROFILE)) {
+        $racines += [ordered]@{ chemin = $env:USERPROFILE; modele = '%USERPROFILE%' }
+    }
+    # Les disques fixes seulement : une cle USB ou un disque reseau branche au
+    # moment du scan ne decrit pas la machine.
+    try {
+        foreach ($d in (Get-CimInstance Win32_LogicalDisk -Filter 'DriveType = 3' -ErrorAction Stop)) {
+            $r = ($d.DeviceID + '\')
+            if ($env:SystemDrive -and $r -like ($env:SystemDrive + '*')) { continue }
+            if (Test-Path -LiteralPath $r) { $racines += [ordered]@{ chemin = $r; modele = '' } }
+        }
+    } catch { }
+    return $racines
+}
+
+function Read-GrosDossiers {
+    param([double]$SeuilMo = 1024, [double]$BudgetSecondes = 120)
+    Write-Host "  gros dossiers..." -NoNewline
+    $out = @()
+    $racines = @(Get-RacinesAExplorer)
+    if (-not $racines.Count) { Write-Host " aucune racine, ignore" -ForegroundColor Yellow; return @() }
+    $part = if ($racines.Count) { $BudgetSecondes / $racines.Count } else { $BudgetSecondes }
+    foreach ($r in $racines) {
+        $out += @(Measure-DossiersEnfants -Racine $r.chemin -SeuilMo $SeuilMo `
+                    -BudgetSecondes $part -Modele $r.modele)
+    }
+    $partiels = @($out | Where-Object { -not $_.complet }).Count
+    Write-Host " $($out.Count) au-dessus du seuil$(if ($partiels) { ", $partiels mesure(s) partiellement" })"
+    return $out
+}
+
 # ---------------------------------------------------------------- outils
 #
 # Une machine de developpement porte des choses qu'aucun installateur
@@ -833,15 +949,28 @@ function Get-Nombre {
 function Get-Somme {
     param($Elements, [string]$Propriete)
     if (-not $Elements) { return 0 }
-    # Sous Set-StrictMode, lire une propriete absente est deja une erreur : on
-    # verifie qu'elle existe avant, plutot que de compter sur $null.
-    $avecValeur = @($Elements | Where-Object {
-        $_ -and $_.PSObject.Properties[$Propriete] -and $_.$Propriete
-    })
-    if ($avecValeur.Count -eq 0) { return 0 }
-    $mesure = $avecValeur | Measure-Object -Property $Propriete -Sum
-    if (-not $mesure -or $null -eq $mesure.Sum) { return 0 }
-    return $mesure.Sum
+    # Les elements du projet sont des dictionnaires ordonnes, pas des objets :
+    # PSObject.Properties n'y voit rien et Measure-Object non plus. La somme
+    # rendait donc 0, en silence, partout ou on l'appelait — la taille des
+    # applications et celle des dossiers de configuration n'ont jamais ete
+    # affichees. Trouve en ajoutant un troisieme appel qui rendait 0 lui aussi.
+    $total = [double]0
+    $vu = $false
+    foreach ($e in @($Elements)) {
+        if ($null -eq $e) { continue }
+        $v = $null
+        if ($e -is [System.Collections.IDictionary]) {
+            if ($e.Contains($Propriete)) { $v = $e[$Propriete] }
+        }
+        # Sous Set-StrictMode, lire une propriete absente est deja une erreur :
+        # on verifie qu'elle existe avant, plutot que de compter sur $null.
+        elseif ($e.PSObject.Properties[$Propriete]) { $v = $e.$Propriete }
+        if ($null -eq $v -or $v -eq '') { continue }
+        $n = [double]0
+        if ([double]::TryParse([string]$v, [ref]$n)) { $total += $n; $vu = $true }
+    }
+    if (-not $vu) { return 0 }
+    return $total
 }
 
 # ---------------------------------------------------------------- exclusions

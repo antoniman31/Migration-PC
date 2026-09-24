@@ -30,6 +30,14 @@
     Ne releve pas les chaines d'outils : SDK Android, WSL, scoop, Chocolatey,
     paquets globaux npm et pip.
 
+.PARAMETER SansGrosDossiers
+    Ne cherche pas les gros dossiers du profil et des disques. C'est l'etape la
+    plus longue du scan : elle lit des tailles, pas des fichiers, mais elle
+    parcourt beaucoup.
+
+.PARAMETER SeuilGo
+    A partir de quelle taille un dossier est signale. 1 Go par defaut.
+
 .PARAMETER ToutInclure
     Conserve aussi les entrees habituellement filtrees (redistribuables Visual C++,
     mises a jour, composants systeme). Produit une liste beaucoup plus longue.
@@ -58,6 +66,8 @@ param(
     [switch]$SansVariables,
     [switch]$SansConfigs,
     [switch]$SansOutils,
+    [switch]$SansGrosDossiers,
+    [double]$SeuilGo = 1,
     [switch]$ToutInclure
 )
 
@@ -105,6 +115,17 @@ $materiel = Invoke-Detecteur -Nom 'materiel' -Bloc { Read-Materiel }
 # n'enregistre : ni le registre, ni winget, ni le Store n'en savent rien. On ne
 # les copie pas — elles pesent des dizaines de Go et se retelechargent — on
 # emporte la liste et la commande qui remet chaque chose en place.
+# Le projet ne detectait aucun fichier personnel : l'onglet « Donnees » est une
+# liste ecrite a la main, et ce qui n'y figure pas n'est rappele par rien. Un
+# logiciel oublie se reinstalle ; un dossier de photos oublie ne revient pas.
+# On ne copie rien : on mesure, et la page dira ce qui est deja reclame.
+$dossiers = @()
+if (-not $SansGrosDossiers) {
+    $dossiers = @(Invoke-Detecteur -Nom 'gros dossiers' -Bloc {
+        Read-GrosDossiers -SeuilMo ([math]::Max(1, $SeuilGo * 1024))
+    })
+}
+
 $outils = @()
 if (-not $SansOutils) {
     $outils += @(Invoke-Detecteur -Nom 'SDK Android'      -Bloc { Read-SdkAndroid })
@@ -135,6 +156,7 @@ $inventaire = [ordered]@{
     configs   = @($configs)
     materiel  = $materiel
     outils    = @($outils)
+    dossiers  = @($dossiers)
 }
 
 $json = $inventaire | ConvertTo-Json -Depth 6
@@ -156,6 +178,12 @@ if ($totalGo) {
 if (@($configs).Count) {
     $mo = Get-Somme $configs 'tailleMo'
     Write-Host "$(@($configs).Count) dossiers de configuration reperes$(if ($mo) { " ($([math]::Round($mo,0)) Mo)" })."
+}
+if (@($dossiers).Count) {
+    $mo = Get-Somme $dossiers 'tailleMo'
+    $poids = if ($mo -ge 1024) { "$([math]::Round($mo / 1024, 1)) Go" } else { "$([math]::Round($mo, 0)) Mo" }
+    Write-Host "$(@($dossiers).Count) gros dossier(s) reperes$(if ($mo) { " ($poids au total)" })."
+    Write-Host "  La page dira lesquels sont deja reclames par la checklist."
 }
 if (@($outils).Count) {
     $familles = @($outils | Group-Object -Property { $_.famille } | Sort-Object Name)

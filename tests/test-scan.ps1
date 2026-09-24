@@ -141,6 +141,60 @@ ok 'sans code, rien'                 (@($pil | Where-Object { $_.nom -eq 'Sans c
 ok 'le probleme est nomme'           (@($pil | Where-Object { $_.nom -match 'Ethernet' })[0].probleme) 'aucun pilote installe'
 ok 'liste vide, rien'                (@(Format-Pilotes -Peripheriques @())).Count 0
 
+"--- additionner des dictionnaires ---"
+# Les elements du projet sont des dictionnaires ordonnes, pas des objets :
+# PSObject.Properties n y voit rien et Measure-Object non plus. La somme rendait
+# donc 0 en silence, et la taille des applications comme celle des dossiers de
+# configuration n ont jamais ete affichees.
+$dicos = @([ordered]@{ nom = 'a'; tailleMo = 10 }, [ordered]@{ nom = 'b'; tailleMo = 5 })
+ok 'somme sur des dictionnaires' (Get-Somme $dicos 'tailleMo') 15
+$objets = @([pscustomobject]@{ tailleMo = 10 }, [pscustomobject]@{ tailleMo = 5 })
+ok 'somme sur des objets'        (Get-Somme $objets 'tailleMo') 15
+ok 'propriete absente vaut 0'    (Get-Somme $dicos 'nexistepas') 0
+ok 'melange de presents et absents' (Get-Somme @([ordered]@{ t = 3 }, [ordered]@{ u = 9 }) 't') 3
+ok 'valeur vide ignoree'         (Get-Somme @([ordered]@{ t = '' }, [ordered]@{ t = 4 }) 't') 4
+ok 'valeur non numerique ignoree' (Get-Somme @([ordered]@{ t = 'beaucoup' }, [ordered]@{ t = 2 }) 't') 2
+ok 'rien vaut 0'                 (Get-Somme @() 't') 0
+
+"--- les gros dossiers qu on oublie ---"
+# Le projet ne detectait aucun fichier personnel. Un logiciel oublie se
+# reinstalle ; un dossier de photos oublie ne revient pas.
+$bacG = Join-Path ([System.IO.Path]::GetTempPath()) ("mpc-gros-" + (Get-Random))
+foreach ($d in @('Projets\sous', 'Photos', 'Petit', 'Windows', 'AppData')) {
+    New-Item -ItemType Directory -Path (Join-Path $bacG $d) -Force | Out-Null
+}
+try {
+    Set-Content -LiteralPath (Join-Path $bacG 'Projets\sous\a.bin') -Value ('x' * 3MB) -NoNewline
+    Set-Content -LiteralPath (Join-Path $bacG 'Photos\b.bin')        -Value ('x' * 2MB) -NoNewline
+    Set-Content -LiteralPath (Join-Path $bacG 'Petit\c.bin')         -Value 'rien'
+    Set-Content -LiteralPath (Join-Path $bacG 'Windows\gros.bin')    -Value ('x' * 9MB) -NoNewline
+    Set-Content -LiteralPath (Join-Path $bacG 'AppData\gros.bin')    -Value ('x' * 9MB) -NoNewline
+
+    $g = @(Measure-DossiersEnfants -Racine $bacG -SeuilMo 1 -Modele '%USERPROFILE%')
+    $noms = @($g | ForEach-Object { $_.nom })
+    ok 'les gros dossiers sont vus'   ($noms -contains 'Projets') $true
+    ok 'la taille compte le sous-dossier' ([math]::Round(@($g | Where-Object { $_.nom -eq 'Projets' })[0].tailleMo, 0)) 3
+    ok 'les petits sont laisses'      ($noms -contains 'Petit') $false
+    # Windows et AppData sont geres par Windows : les signaler noierait le reste.
+    ok 'Windows est ecarte'           ($noms -contains 'Windows') $false
+    ok 'AppData aussi'                ($noms -contains 'AppData') $false
+    # Le modele permettra de retrouver le dossier sous un autre nom
+    # d utilisateur, comme pour les configurations.
+    ok 'le modele est variabilise'    (@($g | Where-Object { $_.nom -eq 'Photos' })[0].modele) '%USERPROFILE%\Photos'
+    ok 'une racine de disque n en a pas' `
+        (@(Measure-DossiersEnfants -Racine $bacG -SeuilMo 1)[0].modele) ''
+
+    # Un disque de plusieurs teraoctets ne se parcourt pas pendant qu on attend
+    # devant l ecran : mieux vaut une mesure partielle annoncee comme telle.
+    $court = @(Measure-DossiersEnfants -Racine $bacG -SeuilMo 0.0001 -BudgetSecondes 0)
+    ok 'le budget arrete le parcours' $court.Count 1
+    ok 'et la mesure se dit partielle' $court[0].complet $false
+
+    ok 'une racine absente ne rend rien' (@(Measure-DossiersEnfants -Racine (Join-Path $bacG 'nexistepas')).Count) 0
+} finally {
+    Remove-Item $bacG -Recurse -Force -ErrorAction SilentlyContinue
+}
+
 "--- les chaines d outils que rien n enregistre ---"
 # Ni le registre, ni winget, ni le Store ne savent quoi que ce soit du SDK
 # Android, de WSL, de scoop ou des paquets globaux de npm. On ne les copie pas,

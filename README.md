@@ -151,12 +151,30 @@ communes à toute réinstallation Windows, aucun script n'est nécessaire.
 | Steam, Epic, GOG, Xbox | Les jeux installés, sur tous les disques |
 | Variables d'environnement | Les variables personnalisées de l'utilisateur |
 | SDK Android, WSL, scoop, Chocolatey, npm, pip | Les chaînes d'outils qu'aucun installateur n'enregistre |
+| Profil et disques fixes | Les gros dossiers que la checklist ne réclame pas |
 
 Une entrée vue par plusieurs sources est fusionnée : le nom vient du registre,
 l'identifiant winget de winget, la taille sur disque de celle qui la connaît, et rien
 n'apparaît deux fois. Chaque application est classée par catégorie selon des mots-clés,
 avec une priorité et une durée estimée — tout cela reste modifiable à la main dans le
 JSON.
+
+**Les gros dossiers qu'on oublie.** Le projet ne détectait aucun fichier personnel :
+l'onglet Données est une liste de chemins écrite à la main, et ce qui n'y figure pas
+n'est rappelé par rien. Un logiciel oublié se réinstalle ; un dossier de photos oublié ne
+revient pas. Le scan mesure donc les dossiers du profil et de chaque disque fixe, un
+niveau sous la racine, et signale ceux qui dépassent un seuil — 1 Go par défaut,
+réglable avec `-SeuilGo`.
+
+Le partage des rôles est net : **le script mesure, la page décide.** Elle seule connaît
+la checklist, donc elle seule peut dire qu'un dossier est déjà réclamé — et ceux-là
+n'apparaissent pas, la ligne existante les couvre. Ne remonte que ce que personne n'avait
+listé.
+
+Un disque de plusieurs téraoctets ne se parcourt pas pendant qu'on attend devant l'écran :
+la mesure a un budget de temps, et un dossier mesuré partiellement le dit au lieu de se
+faire passer pour complet. Les points de jonction ne sont pas suivis — ils bouclent — et
+ce que Windows gère lui-même est écarté.
 
 **Les chaînes d'outils ne sont pas copiées, elles sont listées.** Une machine de
 développement porte des choses qu'aucun installateur n'enregistre : le SDK Android, les

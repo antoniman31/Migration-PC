@@ -152,6 +152,48 @@ ok('mais comble ce qui manquait',await pg.evaluate(()=>CONFIG.ssd),'Un SSD');
 await pg.evaluate(()=>{CONFIG={};saveConfig();construireConfig();
   appliquerProfil(PROFIL_DEFAUT,false);});
 
+console.log('\n--- les gros dossiers qu\'on oublie ---');
+// Le projet ne détectait aucun fichier personnel : l'onglet Données est une
+// liste écrite à la main, et ce qui n'y figure pas n'est rappelé par rien.
+// Le script mesure, la page décide : elle seule connaît la checklist.
+await pg.evaluate(()=>{appliquerProfil(PROFIL_DEFAUT,false);});
+await pg.evaluate(()=>traiterDonnees({
+  type:'inventaire-migration-pc',machine:{},
+  apps:[{nom:'7-Zip',cat:'system',source:'registre'}],
+  variables:{},configs:[],materiel:{},outils:[],
+  dossiers:[
+    {nom:'Projets',chemin:'D:\\Projets',tailleMo:82000,complet:true},
+    // Déjà réclamés par la checklist : ils ne doivent pas doubler.
+    {nom:'Documents',chemin:'C:\\Users\\a\\Documents',tailleMo:3000,complet:true},
+    {nom:'Pictures',chemin:'C:\\Users\\a\\Pictures',tailleMo:5200,complet:true},
+    {nom:'Downloads',chemin:'C:\\Users\\a\\Downloads',tailleMo:9000,complet:true},
+    // Mesure interrompue par le budget : elle ne doit pas se faire passer
+    // pour une mesure complète.
+    {nom:'Jeux',chemin:'E:\\Jeux',tailleMo:140000,complet:false},
+    {chemin:'   '},null]},''));
+await pg.waitForTimeout(400);
+const gros=await pg.evaluate(()=>DATA_SAVES.filter(d=>String(d.id).indexOf('gros')===0));
+ok('seuls les dossiers hors liste remontent',gros.map(d=>d.n).join(','),'Projets,Jeux');
+// « %USERPROFILE%\Documents, Pictures, Videos » désigne trois dossiers : sans
+// les séparer, la comparaison portait sur la chaîne entière et n'en
+// reconnaissait aucun.
+ok('un champ à plusieurs chemins les couvre tous',
+  gros.some(d=>/Pictures|Documents|Downloads/.test(d.n)),false);
+ok('la taille est dite',(gros[0].note||'').indexOf('Go')>=0,true);
+ok('une mesure partielle le dit',
+  (gros[1].note||'').indexOf('mesure partielle')>=0,true);
+ok('les entrées vides ne comptent pas',
+  (await pg.textContent('#profil-sous')).indexOf('2 gros dossiers hors liste')>=0,true);
+ok('et ils sont cochables comme le reste',
+  await pg.evaluate(()=>{
+    const av=Object.keys(S.checked).length;
+    toggle('gros1','Projets');
+    const ap=Object.keys(S.checked).length;
+    toggle('gros1','Projets');
+    return ap-av;}),1);
+await pg.evaluate(()=>{appliquerProfil(PROFIL_DEFAUT,false);});
+await pg.waitForTimeout(300);
+
 console.log('\n--- les chaînes d\'outils ---');
 // Ni le registre, ni winget, ni le Store ne savent quoi que ce soit du SDK
 // Android, de WSL ou des paquets globaux de npm : ils n'apparaissaient nulle

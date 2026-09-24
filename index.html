@@ -2437,8 +2437,14 @@ function inventaireVersProfil(inv){
   // détectée remplace la ligne écrite d'avance plutôt que de doubler.
   const reperes=configsVersDonnees(inv.configs);
   donnees=donnees.filter(function(d){
-    return !reperes.some(function(r){return memeDossier(d.p,r.p);});
+    return !reperes.some(function(r){return recouvre(d.p,r.p);});
   }).concat(reperes);
+  // Et les gros dossiers que personne n'a pensé à lister. Ils arrivent après,
+  // donc ils se comparent à tout ce qui précède, lignes détectées comprises.
+  const oublies=grosDossiersVersDonnees(inv.dossiers,
+    donnees.map(function(d){return d.p;}));
+  donnees=donnees.concat(oublies);
+  if(oublies.length)desc.push(oublies.length+' gros dossier'+(oublies.length>1?'s':'')+' hors liste');
   return {
     meta:{version:1,nom:'Migration PC — inventaire importé',soustitre:desc.join(' · ')},
     cats:cats,
@@ -2455,6 +2461,38 @@ function inventaireVersProfil(inv){
 // l'onglet « Données ». Les clés et les trousseaux passent en priorité haute
 // et portent l'avertissement qui va avec : ce sont des secrets, pas des
 // réglages.
+// Les gros dossiers releves sur le disque. Le script mesure, la page decide :
+// elle seule connait la checklist, donc elle seule peut dire lequel de ces
+// dossiers est deja reclame. Un dossier deja reclame n'est pas ajoute — la
+// ligne existante le couvre — et seuls les autres apparaissent, parce que ce
+// sont eux qu'on oublie.
+function grosDossiersVersDonnees(dossiers,dejaReclames){
+  if(!Array.isArray(dossiers)||!dossiers.length)return [];
+  const reclames=Array.isArray(dejaReclames)?dejaReclames:[];
+  const out=[];
+  dossiers.forEach(function(d,i){
+    if(!d||typeof d!=='object')return;
+    const chemin=String(d.chemin==null?'':d.chemin).trim();
+    if(!chemin)return;
+    if(reclames.some(function(p){return recouvre(p,chemin);}))return;
+    const bouts=[];
+    const mo=Number(d.tailleMo);
+    if(isFinite(mo)&&mo>0)bouts.push(fmtMo(mo));
+    // Une mesure interrompue par le budget de temps ne doit pas se faire
+    // passer pour une mesure complete : le dossier est plus gros que dit.
+    if(d.complet===false)bouts.push('mesure partielle, au moins cette taille');
+    bouts.push('repéré sur le disque, absent de la liste');
+    out.push({
+      id:'gros'+(i+1),
+      n:String(d.nom||chemin),
+      pr:'med',
+      p:chemin,
+      note:bouts.join(' · ')
+    });
+  });
+  return out;
+}
+
 function configsVersDonnees(configs){
   if(!Array.isArray(configs)||!configs.length)return [];
   const sensible=/clé|cle |ssh|gpg|mot de passe|trousseau/i;
@@ -2481,6 +2519,28 @@ function configsVersDonnees(configs){
 // désignent le même dossier. On compare la fin du chemin, pas son début : le
 // début est justement ce qui diffère d'une machine à l'autre. Deux segments,
 // parce qu'un seul confondrait tous les dossiers nommés « User ».
+// Un champ « chemin » de l'onglet Donnees peut en porter plusieurs, separes
+// par une virgule ou par « et » : « %USERPROFILE%\Documents, Pictures, Videos »
+// en designe trois. Sans les separer, la comparaison portait sur la chaine
+// entiere et ne reconnaissait aucun des trois — le scan reproposait donc des
+// dossiers deja reclames. verifier-sauvegardes.ps1 applique la meme regle.
+function decouperChemins(p){
+  const brut=String(p==null?'':p);
+  if(!brut.trim())return [];
+  const morceaux=brut.split(/\s+et\s+|,\s*/);
+  const out=[];
+  morceaux.forEach(function(m){
+    const t=m.trim();
+    if(t)out.push(t);
+  });
+  return out;
+}
+
+// Vrai si l'une des deux listes de chemins recouvre l'autre.
+function recouvre(declare,chemin){
+  return decouperChemins(declare).some(function(d){return memeDossier(d,chemin);});
+}
+
 function memeDossier(a,b){
   const bouts=function(x){
     return String(x||'').toLowerCase().replace(/\//g,'\\')
