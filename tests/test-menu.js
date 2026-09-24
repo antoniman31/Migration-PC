@@ -55,6 +55,21 @@ ok('un clic ailleurs referme',await pg.isVisible('#hdr-menu-liste'),false);
 await pg.click('#menu-btn');await pg.waitForTimeout(150);
 await pg.click('#menu-btn');await pg.waitForTimeout(200);
 ok('le bouton lui-meme referme',await pg.isVisible('#hdr-menu-liste'),false);
+// Le clavier doit en sortir comme la souris : tabuler hors du menu le laissait
+// ouvert par-dessus la page, le focus deja ailleurs.
+await pg.evaluate(()=>document.getElementById('menu-btn').focus());
+await pg.keyboard.press('Enter');await pg.waitForTimeout(200);
+for(let i=0;i<6;i++)await pg.keyboard.press('Tab');
+await pg.waitForTimeout(200);
+ok('sortir au clavier referme aussi',await pg.isVisible('#hdr-menu-liste'),false);
+ok('et le focus a bien quitte le menu',
+  await pg.evaluate(()=>!document.getElementById('hdr-menu-liste').contains(document.activeElement)),true);
+// Mais tabuler DANS le menu ne doit pas le fermer sous les doigts.
+await pg.evaluate(()=>document.getElementById('menu-btn').focus());
+await pg.keyboard.press('Enter');await pg.waitForTimeout(200);
+await pg.keyboard.press('Tab');await pg.waitForTimeout(150);
+ok('tabuler d\'un item a l\'autre le garde ouvert',await pg.isVisible('#hdr-menu-liste'),true);
+await pg.keyboard.press('Escape');await pg.waitForTimeout(150);
 
 console.log('\n--- les actions agissent vraiment ---');
 await pg.click('#menu-btn');await pg.waitForTimeout(150);

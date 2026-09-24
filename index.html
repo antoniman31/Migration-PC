@@ -131,6 +131,10 @@ h1{font-size:18px;font-weight:600;color:var(--tx);letter-spacing:-.3px}
 .h-item{display:inline-flex;align-items:center;gap:3px}
 .h-ck{color:var(--bok-tx);font-weight:600}
 .h-sep{color:var(--tx3);margin:0 2px}
+/* L'état de la sauvegarde, à droite de la barre : discret quand tout va bien,
+   visible quand le navigateur refuse d'enregistrer. */
+.save-state{margin-left:auto;flex-shrink:0;color:var(--tx3);font-variant-numeric:tabular-nums}
+.save-state.save-ko{color:var(--bh-tx);font-weight:600}
 
 /* TABS */
 .tabs{display:flex;border-bottom:.5px solid var(--brd);padding:0 20px;background:var(--bg);overflow-x:auto}
@@ -712,6 +716,7 @@ body.guide-actif .day-est{display:none}
 <div class="history-bar">
   <span class="h-label">Récent :</span>
   <span id="history-items" style="color:var(--tx3);font-style:italic">aucune action</span>
+  <span class="save-state" id="save-state" role="status"></span>
 </div>
 
 <main>
@@ -956,7 +961,7 @@ const PROFIL_DEFAUT = {
   "npc": [
     {
       "id": "n13",
-      "o": 1,
+      "o": 3,
       "n": "Entrer dans le BIOS/UEFI",
       "src": "Touche Suppr ou F2 au démarrage",
       "p": "high",
@@ -965,7 +970,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n14",
-      "o": 2,
+      "o": 4,
       "n": "Mettre à jour le BIOS si nécessaire",
       "src": "Site du fabricant de la carte mère",
       "p": "med",
@@ -982,7 +987,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n15",
-      "o": 3,
+      "o": 5,
       "n": "Activer TPM 2.0 et Secure Boot",
       "src": "BIOS — Sécurité / Avancé",
       "p": "high",
@@ -998,7 +1003,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n16",
-      "o": 4,
+      "o": 6,
       "n": "Désactiver le CSM",
       "src": "BIOS — Démarrage",
       "p": "high",
@@ -1014,7 +1019,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n7",
-      "o": 5,
+      "o": 7,
       "n": "Activer le profil XMP / EXPO de la RAM",
       "src": "BIOS — réglages mémoire",
       "p": "high",
@@ -1030,7 +1035,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n17",
-      "o": 6,
+      "o": 8,
       "n": "Activer Resizable BAR",
       "src": "BIOS — Avancé / PCIe",
       "p": "med",
@@ -1046,7 +1051,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n18",
-      "o": 7,
+      "o": 9,
       "n": "Activer la virtualisation du processeur",
       "src": "BIOS — Avancé / CPU",
       "p": "med",
@@ -1062,7 +1067,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n19",
-      "o": 8,
+      "o": 10,
       "n": "Régler l'ordre de démarrage et l'heure",
       "src": "BIOS — Démarrage",
       "p": "med",
@@ -1078,7 +1083,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n20",
-      "o": 9,
+      "o": 11,
       "n": "Régler la courbe des ventilateurs",
       "src": "BIOS — Monitoring / Fan control",
       "p": "ok",
@@ -1094,7 +1099,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n21",
-      "o": 10,
+      "o": 12,
       "n": "Revérifier les réglages après redémarrage",
       "src": "BIOS",
       "p": "high",
@@ -1109,7 +1114,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n37",
-      "o": 11,
+      "o": 1,
       "n": "Télécharger les pilotes sur une clé USB",
       "src": "Site du fabricant de la carte mère",
       "p": "high",
@@ -1122,7 +1127,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n36",
-      "o": 12,
+      "o": 13,
       "n": "POINT DE NON-RETOUR — dernier contrôle avant d'effacer",
       "src": "Sur cette machine, maintenant",
       "p": "high",
@@ -1131,14 +1136,15 @@ const PROFIL_DEFAUT = {
         "reinstall"
       ],
       "dep": [
-        "n21"
+        "n21",
+        "n22"
       ],
       "d": "Une fois le disque effacé, cette machine n'est plus une source : ce qui n'a pas été copié n'existe plus nulle part. Reprendre point par point avant de lancer l'installation. Les sauvegardes sont-elles faites ET relues depuis la copie, pas depuis l'original ? Les licences sont-elles désactivées ? Les codes 2FA sont-ils sortis et l'authentificateur transféré ? La clé BitLocker est-elle notée ailleurs ? Le pilote réseau est-il sur la clé USB, au cas où Windows n'ait pas de réseau au premier démarrage ?",
       "warn": "C'est la dernière étape réversible. Après, il n'y a plus de retour en arrière."
     },
     {
       "id": "n22",
-      "o": 13,
+      "o": 2,
       "n": "Préparer la clé d'installation Windows",
       "src": "Media Creation Tool ou Rufus",
       "p": "high",
@@ -2094,8 +2100,55 @@ function loadState(){
   try{const r=localStorage.getItem(CLE_ETAT);if(r){const d=JSON.parse(r);if(d&&typeof d==='object'){S.checked=d.checked||{};S.notes=d.notes||{};S.dates=d.dates||{};S.lastSave=d.lastSave||null;S.lic=d.lic||{};S.env=d.env||{};}}}catch(e){console.error(e);}
   updateSaveLabel();
 }
-function saveState(){S.lastSave=Date.now();try{localStorage.setItem(CLE_ETAT,JSON.stringify(S));}catch(e){console.error(e);}updateSaveLabel();}
-function updateSaveLabel(){}
+// Une sauvegarde qui echoue en silence est pire qu'une sauvegarde absente :
+// on continue a travailler en croyant que c'est garde, et tout part au
+// rechargement. Le stockage du navigateur a un quota, il peut etre plein ou
+// refuse (navigation privee, site bloque) : on le dit.
+let stockageEnPanne=false;
+function saveState(){
+  S.lastSave=Date.now();
+  try{
+    localStorage.setItem(CLE_ETAT,JSON.stringify(S));
+    if(stockageEnPanne){
+      stockageEnPanne=false;
+      informer('Sauvegarde rétablie : la progression est de nouveau enregistrée.');
+    }
+  }catch(e){
+    console.error(e);
+    S.lastSave=null;
+    if(!stockageEnPanne){
+      stockageEnPanne=true;
+      // Une seule fois, sinon chaque case cochee reaffiche le meme message.
+      signalerPanne('Sauvegarde',new Error(
+        "le navigateur refuse d'enregistrer (stockage plein ou bloqué). "
+        +"Votre travail reste à l'écran mais sera perdu au rechargement : "
+        +"exportez-le avec « Sauvegarder »."));
+    }
+  }
+  updateSaveLabel();
+}
+// Cette fonction existait, vide, depuis le premier commit : S.lastSave etait
+// calcule a chaque ecriture et n'apparaissait nulle part.
+function updateSaveLabel(){
+  const el=document.getElementById('save-state');
+  if(!el)return;
+  if(stockageEnPanne){
+    el.textContent='⚠ non enregistré';
+    el.className='save-state save-ko';
+    el.title="Le navigateur refuse d'enregistrer. Exportez votre progression.";
+    return;
+  }
+  if(!S.lastSave){
+    el.textContent='';el.className='save-state';el.title='';return;
+  }
+  el.textContent='✓ enregistré '+fmtHeure(S.lastSave);
+  el.className='save-state';
+  el.title='Dans ce navigateur, pour ce fichier. L\'export JSON est le seul transfert fiable.';
+}
+function fmtHeure(ts){
+  const d=new Date(ts);
+  return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+}
 
 // ═══ THEME ═══
 function applyTheme(){document.documentElement.setAttribute('data-theme',isDark?'dark':'light');document.getElementById('theme-ico').textContent=isDark?'☀️':'🌙';document.getElementById('theme-lbl').textContent=isDark?'Clair':'Sombre';}
@@ -3103,6 +3156,18 @@ function depuisMenu(fn){
 document.addEventListener('click',function(e){
   if(!menuOuvert())return;
   if(e.target.closest&&e.target.closest('.hdr-menu'))return;
+  fermerMenu();
+});
+// Le clavier doit pouvoir en sortir comme la souris : sans ça, tabuler hors du
+// menu le laissait ouvert par-dessus la page, le focus déjà ailleurs.
+// focusout porte le futur porteur du focus dans relatedTarget.
+document.addEventListener('focusout',function(e){
+  if(!menuOuvert())return;
+  const vers=e.relatedTarget;
+  // Le focus part vraiment (fenêtre quittée) : on laisse le menu, il n'occulte
+  // rien tant que la page n'a pas la main.
+  if(!vers)return;
+  if(vers.closest&&vers.closest('.hdr-menu'))return;
   fermerMenu();
 });
 

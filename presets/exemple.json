@@ -119,7 +119,7 @@
   "npc": [
     {
       "id": "n13",
-      "o": 1,
+      "o": 3,
       "n": "Entrer dans le BIOS/UEFI",
       "src": "Touche Suppr ou F2 au démarrage",
       "p": "high",
@@ -128,7 +128,7 @@
     },
     {
       "id": "n14",
-      "o": 2,
+      "o": 4,
       "n": "Mettre à jour le BIOS si nécessaire",
       "src": "Site du fabricant de la carte mère",
       "p": "med",
@@ -145,7 +145,7 @@
     },
     {
       "id": "n15",
-      "o": 3,
+      "o": 5,
       "n": "Activer TPM 2.0 et Secure Boot",
       "src": "BIOS — Sécurité / Avancé",
       "p": "high",
@@ -161,7 +161,7 @@
     },
     {
       "id": "n16",
-      "o": 4,
+      "o": 6,
       "n": "Désactiver le CSM",
       "src": "BIOS — Démarrage",
       "p": "high",
@@ -177,7 +177,7 @@
     },
     {
       "id": "n7",
-      "o": 5,
+      "o": 7,
       "n": "Activer le profil XMP / EXPO de la RAM",
       "src": "BIOS — réglages mémoire",
       "p": "high",
@@ -193,7 +193,7 @@
     },
     {
       "id": "n17",
-      "o": 6,
+      "o": 8,
       "n": "Activer Resizable BAR",
       "src": "BIOS — Avancé / PCIe",
       "p": "med",
@@ -209,7 +209,7 @@
     },
     {
       "id": "n18",
-      "o": 7,
+      "o": 9,
       "n": "Activer la virtualisation du processeur",
       "src": "BIOS — Avancé / CPU",
       "p": "med",
@@ -225,7 +225,7 @@
     },
     {
       "id": "n19",
-      "o": 8,
+      "o": 10,
       "n": "Régler l'ordre de démarrage et l'heure",
       "src": "BIOS — Démarrage",
       "p": "med",
@@ -241,7 +241,7 @@
     },
     {
       "id": "n20",
-      "o": 9,
+      "o": 11,
       "n": "Régler la courbe des ventilateurs",
       "src": "BIOS — Monitoring / Fan control",
       "p": "ok",
@@ -257,7 +257,7 @@
     },
     {
       "id": "n21",
-      "o": 10,
+      "o": 12,
       "n": "Revérifier les réglages après redémarrage",
       "src": "BIOS",
       "p": "high",
@@ -272,7 +272,7 @@
     },
     {
       "id": "n37",
-      "o": 11,
+      "o": 1,
       "n": "Télécharger les pilotes sur une clé USB",
       "src": "Site du fabricant de la carte mère",
       "p": "high",
@@ -285,7 +285,7 @@
     },
     {
       "id": "n36",
-      "o": 12,
+      "o": 13,
       "n": "POINT DE NON-RETOUR — dernier contrôle avant d'effacer",
       "src": "Sur cette machine, maintenant",
       "p": "high",
@@ -294,14 +294,15 @@
         "reinstall"
       ],
       "dep": [
-        "n21"
+        "n21",
+        "n22"
       ],
       "d": "Une fois le disque effacé, cette machine n'est plus une source : ce qui n'a pas été copié n'existe plus nulle part. Reprendre point par point avant de lancer l'installation. Les sauvegardes sont-elles faites ET relues depuis la copie, pas depuis l'original ? Les licences sont-elles désactivées ? Les codes 2FA sont-ils sortis et l'authentificateur transféré ? La clé BitLocker est-elle notée ailleurs ? Le pilote réseau est-il sur la clé USB, au cas où Windows n'ait pas de réseau au premier démarrage ?",
       "warn": "C'est la dernière étape réversible. Après, il n'y a plus de retour en arrière."
     },
     {
       "id": "n22",
-      "o": 13,
+      "o": 2,
       "n": "Préparer la clé d'installation Windows",
       "src": "Media Creation Tool ou Rufus",
       "p": "high",

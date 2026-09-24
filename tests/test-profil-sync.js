@@ -89,6 +89,34 @@ const ordreIncoherent=[];
 });
 ok("l'ordre des étapes respecte les prérequis",ordreIncoherent.length===0,ordreIncoherent.join(', '));
 
+// Le contenu, pas seulement la structure. « Préparer la clé » se trouvait apres
+// le POINT DE NON-RETOUR : on validait le dernier controle avant d'effacer,
+// puis on preparait la cle sans laquelle on n'installe rien.
+(function(){
+  const npc=fichier.npc||[];
+  const par=function(motif){return npc.filter(function(e){return motif.test(e.n);})[0];};
+  const nonRetour=par(/NON-RETOUR/);
+  const cle=par(/Préparer la clé/);
+  const installer=par(/^Installer Windows/);
+  const pilotes=par(/Télécharger les pilotes/);
+  const bios=par(/Entrer dans le BIOS/);
+  if(!nonRetour||!cle||!installer){
+    ok('les étapes de préparation sont identifiables',false,'introuvables');
+    return;
+  }
+  ok('la clé est prête avant le point de non-retour',cle.o<nonRetour.o,true);
+  ok('le point de non-retour est le dernier avant l\'installation',
+    nonRetour.o<installer.o&&!npc.some(function(e){
+      return e.o>nonRetour.o&&e.o<installer.o;}),true);
+  ok('le point de non-retour dépend de la clé',
+    (nonRetour.dep||[]).indexOf(cle.id)>=0,true);
+  if(pilotes&&bios){
+    // Les pilotes se telechargent depuis le Windows qu'on va remplacer, donc
+    // avant d'entrer dans le BIOS, pas au milieu de ses reglages.
+    ok('les pilotes se récupèrent avant d\'entrer dans le BIOS',pilotes.o<bios.o,true);
+  }
+})();
+
 const numeros=(fichier.npc||[]).map(function(e){return e.o;});
 ok('numéros d\'étape uniques',new Set(numeros).size===numeros.length);
 

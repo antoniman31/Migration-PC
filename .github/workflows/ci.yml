@@ -114,6 +114,9 @@ jobs:
       - name: Profil hostile — aucune injection
         run: node tests/test-profil-hostile.js
 
+      - name: Sauvegarde — aucun échec silencieux
+        run: node tests/test-sauvegarde.js
+
   publier:
     name: Publier sur Pages
     needs: verifier

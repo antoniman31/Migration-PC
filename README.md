@@ -283,6 +283,13 @@ winget restant ou du fichier `winget import`, et impression globale ou par ongle
 ce qui sort suit le scénario choisi et ses intitulés : un fichier qui dirait autre chose
 que l'écran serait pire que pas de fichier.
 
+**Si l'enregistrement échoue** — le stockage du navigateur a un quota, et il peut
+être refusé en navigation privée ou sur un site bloqué. La barre « Récent » porte à
+droite l'état de la sauvegarde : l'heure du dernier enregistrement, ou un avertissement.
+Quand le navigateur refuse, un panneau le dit et renvoie vers « Sauvegarder », plutôt
+que de laisser croire que le travail est gardé — il resterait à l'écran et partirait au
+rechargement.
+
 **En cas de problème** — chaque onglet est rendu séparément. Si l'un échoue, les autres
 s'affichent quand même et un bandeau nomme l'onglet fautif et l'erreur, au lieu de
 laisser une page à moitié vide sans explication.
@@ -486,13 +493,14 @@ npm run test:scenarios            # migration ou réinstallation
 npm run test:reinit               # remises à zéro et leur annulation
 npm run test:menu                 # menu « Plus » de la barre du haut
 npm run test:hostile              # profil piégé : aucune injection
+npm run test:sauvegarde           # aucun échec d'enregistrement silencieux
 ```
 
 `npm test` ne lance que ce qui tourne partout sans rien installer. Les suites
 navigateur demandent Chromium (`npm install` le fournit via Playwright), les suites
 PowerShell demandent `pwsh`.
 
-Dix-neuf suites, dans l'ordre où la CI les lance.
+Vingt suites, dans l'ordre où la CI les lance.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
@@ -559,9 +567,14 @@ catégorie, identifiant winget, adresse de raccourci, intitulés, descriptions, 
 puis clique tout ce qui est cliquable dans les deux cas et en mode guidé. Il échoue si
 une seule charge s'exécute.
 
+`tests/test-sauvegarde.js` fait refuser l'écriture par le stockage et vérifie que la
+page le dit : l'indicateur passe à « non enregistré », un panneau explique quoi faire,
+l'alarme ne se répète pas à chaque case, et tout revient à la normale quand
+l'enregistrement remarche.
+
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les dix-neuf suites à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les vingt suites à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 
@@ -633,10 +646,13 @@ connus de winget.
 identifiants ; `7zip.7zip` donne « 7zip » et non « 7-Zip ». Passer par `scan-pc.ps1`
 donne des noms corrects, puisqu'il lit le registre.
 
-**La déduplication est approximative.** Elle compare les noms en ignorant la version et
-les mentions entre parenthèses, ce qui rapproche correctement `Mozilla Firefox (x64 fr)`
-du registre et `Mozilla Firefox` de winget, mais fusionne aussi deux versions majeures
-d'un même logiciel — Python 3.12 et 3.13 donnent une seule ligne.
+**La déduplication est approximative.** Elle compare les noms en ignorant la version,
+les numéros de mise à jour et les mentions entre parenthèses, ce qui rapproche
+correctement `Mozilla Firefox (x64 fr)` du registre et `Mozilla Firefox` de winget, ou
+`Java 8 Update 401` et `Java 8 Update 411`. Elle fusionne en revanche deux versions
+majeures d'un même logiciel — Python 3.12 et 3.13 donnent une seule ligne. La
+ponctuation qui porte le nom est transcrite plutôt qu'effacée, sinon `Notepad++` et
+`Notepad` donneraient la même clé et l'un des deux disparaîtrait de l'inventaire.
 
 **Le classement par catégorie est indicatif**, fondé sur des mots-clés. Un logiciel peu
 connu atterrit dans « Utilitaires Système ». Les catégories se corrigent dans le JSON.

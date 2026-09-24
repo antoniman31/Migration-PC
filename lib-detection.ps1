@@ -120,6 +120,18 @@ function Get-Cle {
     # Effet de bord assume : deux versions majeures d'un meme logiciel (Python 3.12
     # et 3.13) fusionnent en une seule ligne de checklist.
     $n = $n -replace '\bversion\b|\bv?\d+(\.\d+)+\b', ''
+    # Les numeros sans point echappaient a la ligne precedente : « Java 8 Update
+    # 401 » et « Java 8 Update 411 » donnaient deux lignes pour un seul logiciel.
+    $n = $n -replace '\b(update|build|release|rev|patch|sp)\s*\d+\b', ''
+    # Tout ce qui suit un tiret isole est un suffixe de version ou d'edition
+    # (« 7-Zip 23.01 - fr-FR ») ; le tiret colle a une lettre est garde, sinon
+    # « 7-Zip » perdrait la moitie de son nom.
+    $n = $n -replace '\s+-\s+.*$', ''
+    # La ponctuation porte parfois le nom : « Notepad++ » et « Notepad » sont
+    # deux logiciels. On la transcrit au lieu de l'effacer, sinon les deux
+    # fusionnent et l'un des deux disparait de l'inventaire.
+    $n = $n -replace '\+', 'p'
+    $n = $n -replace '#', 'd'
     $n = $n -replace '[^a-z0-9]', ''
     return $n
 }
