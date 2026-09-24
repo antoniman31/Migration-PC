@@ -55,7 +55,7 @@ try {
     $apps = @($inv.apps)
     ok 'le registre a ete lu'        ($apps.Count -gt 0) $true
     ok 'le systeme est nomme'        ($inv.machine.os -like 'Microsoft Windows*' -or $inv.machine.os -like 'Windows*') $true
-    ok 'la machine est nommee'       ([string]::IsNullOrWhiteSpace($inv.machine.nom)) $false
+    ok 'la machine est nommee'       (-not [string]::IsNullOrWhiteSpace($inv.machine.nom)) $true
 
     "`n--- l encodage, la ou il se voit vraiment ---"
     # Un UTF-8 relu comme de l'ANSI laisse ces marques. Sous Windows
@@ -104,20 +104,26 @@ try {
     $v = Get-Content -LiteralPath $verif -Raw -Encoding UTF8 | ConvertFrom-Json
     ok 'elle porte son type'         $v.type 'verification-migration-pc'
     ok 'aucune exception non geree'  ((Get-Content -LiteralPath $jv -Raw) -match 'Exception|At line:') $false
-    # Le profil d'exemple decrit 18 applications : trouvees ou absentes, elles
-    # doivent toutes etre rapportees, sans quoi une a disparu en chemin.
+    # Le script verifie deux onglets, « Nouveau PC » et « Apps » : ce sont les
+    # seuls qui designent des logiciels installables. Trouve ou absent, chaque
+    # element doit etre rapporte, sans quoi un a disparu en chemin.
     $profil = Get-Content -LiteralPath (Join-Path $racine 'presets\exemple.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-    ok 'chaque application est rapportee' (@($v.trouves).Count + @($v.absents).Count) (@($profil.apps).Count)
+    $verifiables = @($profil.npc).Count + @($profil.apps).Count
+    ok 'chaque element verifiable est rapporte' (@($v.trouves).Count + @($v.absents).Count) $verifiables
 
     "`n--- le lanceur demarre et rend la main ---"
     # Sans -Console il ouvrirait une fenetre : sur une machine d integration,
     # personne ne la fermerait. En mode texte et sans rien a lire sur l'entree,
     # il doit afficher son menu puis sortir — pas tourner en rond.
     $jl = Join-Path $bac 'lanceur.txt'
+    # Une entree vide, sous forme de vrai fichier : « NUL » est resolu comme un
+    # chemin relatif par Start-Process, qui refuse alors la commande entiere.
+    $rien = Join-Path $bac 'rien.txt'
+    Set-Content -LiteralPath $rien -Value '' -NoNewline
     $exe = (Get-Process -Id $PID).Path
     $p = Start-Process -FilePath $exe `
         -ArgumentList @('-NoProfile', '-File', ('"' + (Join-Path $racine 'migration-pc.ps1') + '"'), '-Console') `
-        -RedirectStandardOutput $jl -RedirectStandardInput 'NUL' -NoNewWindow -PassThru
+        -RedirectStandardOutput $jl -RedirectStandardInput $rien -NoNewWindow -PassThru
     $fini = $p.WaitForExit(60000)
     if (-not $fini) { $p.Kill() }
     ok 'il ne reste pas bloque'      $fini $true
