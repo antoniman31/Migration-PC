@@ -55,5 +55,27 @@ const ids=new Set(tous.map(e=>e.id));
 const ordreInconnu=(fichier.ordre||[]).filter(function(id){return !ids.has(id);});
 ok("l'ordre conseillé ne cite que des éléments existants",ordreInconnu.length===0,ordreInconnu.join(', '));
 
+// Les fichiers dont les tests dependent doivent etre versionnes. Une regle de
+// .gitignore trop large en a deja avale un : tout passait en local, et la CI
+// echouait sur un fichier absent du depot. Ce controle le dit avant le push.
+const {execFileSync}=require('child_process');
+const requis=['tests/inventaire-exemple.json','tests/inventaire-etendu.json',
+  'tests/winget-export-exemple.json','presets/exemple.json','index.html',
+  'scan-pc.ps1','manifest.json','sw.js'];
+requis.forEach(function(f){
+  const chemin=path.join(racine,f);
+  if(!fs.existsSync(chemin)){ok('fichier requis présent : '+f,false,'absent du disque');return;}
+  let ignore=false;
+  try{
+    execFileSync('git',['check-ignore','-q',f],{cwd:racine,stdio:'ignore'});
+    ignore=true;                       // code 0 : le fichier est ignoré
+  }catch(e){
+    // code 1 : non ignoré, ce qu'on veut. Tout autre code (pas de dépôt git,
+    // git absent) ne doit pas faire échouer la suite.
+    if(e.status!==1)return;
+  }
+  ok('versionné (non ignoré) : '+f,!ignore,'exclu par .gitignore');
+});
+
 console.log(ko?'\n'+ko+' TEST(S) EN ECHEC':'\nPROFIL SYNCHRONISE ET COHERENT');
 process.exit(ko?1:0);

@@ -1,0 +1,19 @@
+{
+  "type": "inventaire-migration-pc",
+  "version": 1,
+  "genere": "2026-09-24T09:15:00.000+02:00",
+  "machine": { "os": "Windows 11 Pro 24H2", "nom": "PC-ANCIEN" },
+  "apps": [
+    { "nom": "7-Zip", "editeur": "Igor Pavlov", "version": "24.08", "source": "registre, winget", "winget": "7zip.7zip", "cat": "system", "priorite": "med", "duree": 5, "tailleGo": 0.02 },
+    { "nom": "Cyberpunk 2077", "editeur": "Steam", "version": "", "source": "Steam", "winget": "", "cat": "jeux", "priorite": "ok", "duree": 15, "tailleGo": 74.5 },
+    { "nom": "Fortnite", "editeur": "Epic Games", "version": "31.2", "source": "Epic Games", "winget": "", "cat": "jeux", "priorite": "ok", "duree": 15, "tailleGo": 30 },
+    { "nom": "The Witcher 3", "editeur": "GOG", "version": "4.04", "source": "GOG", "winget": "", "cat": "jeux", "priorite": "ok", "duree": 15, "tailleGo": 52.1 },
+    { "nom": "Forza Horizon 5", "editeur": "Xbox", "version": "1.0", "source": "Xbox", "winget": "", "cat": "jeux", "priorite": "ok", "duree": 15, "tailleGo": null },
+    { "nom": "Visual Studio Code", "editeur": "Microsoft", "version": "1.99", "source": "winget", "winget": "Microsoft.VisualStudioCode", "cat": "dev", "priorite": "med", "duree": 5, "tailleGo": 0.4 }
+  ],
+  "variables": {
+    "JAVA_HOME": "C:\\Program Files\\Java\\jdk-21",
+    "ANDROID_HOME": "C:\\Users\\moi\\AppData\\Local\\Android\\Sdk",
+    "PATH (utilisateur)": "C:\\Users\\moi\\bin;C:\\outils"
+  }
+}

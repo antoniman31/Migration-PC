@@ -1,9 +1,13 @@
-# Fichiers personnels — ne jamais publier
-profil-*.json
-inventaire-pc.json
-inventaire-*.json
-!tests/inventaire-exemple.json
-progression-*.json
+# Fichiers personnels — ne jamais publier.
+# Ancrés à la racine : c'est là que le scanner et la page les déposent.
+# Sans la barre oblique initiale, la règle s'applique aussi à tests/, et un
+# fichier de test finit ignoré sans que rien ne le signale avant la CI.
+/profil-*.json
+/inventaire-*.json
+/progression-*.json
+/winget-*.json
+/winget-*.ps1
+/migration-pc.txt
 
 # Node
 node_modules/
