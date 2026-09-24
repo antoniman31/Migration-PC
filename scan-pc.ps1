@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Inventorie les logiciels installes sur un PC Windows et produit un fichier JSON
     importable dans la checklist de migration (index.html).
@@ -132,7 +132,8 @@ if (@($configs).Count) {
     Write-Host "$(@($configs).Count) dossiers de configuration reperes$(if ($mo) { " ($([math]::Round($mo,0)) Mo)" })."
 }
 if (@($variables).Count) {
-    Write-Host "$(@($variables).Count) variable(s) d'environnement relevee(s)."
+    $nombreVariables = @($variables).Count
+    Write-Host ('{0} variable(s) d environnement relevee(s).' -f $nombreVariables)
 }
 Write-Host "Fichier ecrit : $chemin"
 Write-Host ""
