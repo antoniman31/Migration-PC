@@ -21,6 +21,7 @@ Les scripts sont facultatifs.
   - [Inventorier l'ancien PC](#inventorier-lancien-pc)
   - [Vérifier le nouveau PC](#vérifier-le-nouveau-pc)
   - [Vérifier les sauvegardes](#vérifier-les-sauvegardes)
+- [Migration ou réinstallation](#migration-ou-réinstallation)
 - [La checklist](#la-checklist)
   - [Mode guidé](#mode-guidé)
   - [Accessibilité](#accessibilité)
@@ -36,7 +37,8 @@ Les scripts sont facultatifs.
 
 Réinstaller un PC, c'est trois problèmes : se souvenir de ce qui était installé, le
 réinstaller dans le bon ordre, et ne pas oublier de sauvegarder ce qui n'existe qu'en
-local. Ce projet couvre les trois.
+local. Ce projet couvre les trois, dans **deux situations** : passer sur une autre
+machine, ou repartir propre sur celle qu'on a déjà.
 
 ```
 Ancien PC                              Nouveau PC
@@ -175,6 +177,28 @@ conformes. `-ToleranceParCent` règle l'écart de taille toléré, 2 % par défa
 | `-Destination <chemin>` | Le dossier de sauvegarde à comparer (obligatoire) |
 | `-Profil <chemin>` | Le profil à vérifier (par défaut `profil-local.json`, puis l'exemple) |
 | `-ToleranceParCent <n>` | Écart de taille toléré avant signalement |
+
+## Migration ou réinstallation
+
+Les deux situations partagent l'essentiel — pilotes, applications, sauvegardes — et un
+sélecteur en haut de page filtre le reste. Un élément sans mention vaut pour les deux
+cas, ce qui est la majorité.
+
+Ce qui change en **migration** : le montage est neuf, donc on vérifie le sens des
+ventilateurs, et on peut effacer le disque de l'ancienne machine puisqu'on s'en sépare.
+
+Ce qui change en **réinstallation** : le BIOS est déjà réglé, donc ses étapes se lisent
+« vérifier que » au lieu d'« activer » — un réglage saute parfois après une mise à jour
+du BIOS. Surtout, deux étapes apparaissent, qui n'ont de sens que là. D'abord
+**télécharger les pilotes sur une clé USB avant de formater** : si Windows ne reconnaît
+pas la carte réseau au premier démarrage, il n'y a pas d'autre machine sous la main pour
+aller les chercher. Ensuite un **point de non-retour**, juste avant de lancer
+l'installation, qui récapitule ce qui doit être fait *et vérifié* — parce qu'une fois le
+disque effacé, cette machine n'est plus une source.
+
+Le choix est mémorisé, et une case cochée dans un mode reste cochée dans l'autre : le
+filtre change ce que vous regardez, pas ce que vous avez fait. Le total affiché suit le
+mode, donc il bouge quand vous basculez.
 
 ## La checklist
 
@@ -343,6 +367,11 @@ numéro d'étape · `post: true` classe l'étape dans les vérifications d'aprè
 La section `quitter` est facultative : un profil qui ne la déclare pas affiche quatre
 onglets, comme avant.
 
+`cas` limite un élément à une situation : `["migration"]` ou `["reinstall"]`. Sans ce
+champ, il vaut pour les deux. `alt` fournit un libellé et une description de
+remplacement en réinstallation — `{ "n": "Vérifier que...", "d": "..." }` — ce qui évite
+de dupliquer une étape et ses dépendances pour changer un verbe.
+
 `dep` accepte deux formes. Une **chaîne** est un libellé affiché tel quel, sans
 vérification possible — c'est le format d'origine, toujours accepté. Un **tableau
 d'identifiants** décrit un vrai lien et débloque trois choses : le badge nomme les
@@ -388,13 +417,14 @@ npm run test:mobile               # ergonomie tactile
 npm run test:a11y                 # accessibilité et réversibilité
 npm run test:guide                # mode guidé
 npm run test:quitter              # onglet « Avant de quitter »
+npm run test:scenarios            # migration ou réinstallation
 ```
 
 `npm test` ne lance que ce qui tourne partout sans rien installer. Les suites
 navigateur demandent Chromium (`npm install` le fournit via Playwright), les suites
 PowerShell demandent `pwsh`.
 
-Quinze suites, dans l'ordre où la CI les lance.
+Seize suites, dans l'ordre où la CI les lance.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
@@ -446,7 +476,7 @@ tactile et de clavier que la vue liste.
 
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les quinze suites à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les seize suites à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 

@@ -329,6 +329,28 @@ body.compact .item{padding:5px 0}
 /* ── V6 : compact masque dep ── */
 body.compact .b-dep{display:none}
 
+/* ═══ Sélecteur de scénario ═══
+   Migrer vers une autre machine ou réinstaller celle qu'on a partagent
+   l'essentiel ; seuls quelques éléments diffèrent. Le sélecteur filtre plutôt
+   que de dupliquer la liste. */
+.scen{display:flex;align-items:center;gap:10px;padding:10px 20px;
+  border-bottom:.5px solid var(--brd);background:var(--bg2);flex-wrap:wrap}
+.scen-label{font-size:12px;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--tx2);font-weight:600}
+.scen-btns{display:flex;gap:8px;flex-wrap:wrap}
+.scen-btn{padding:6px 13px;font-size:12px;border:.5px solid var(--brd2);
+  border-radius:8px;background:var(--bg);color:var(--tx);cursor:pointer;min-height:34px}
+.scen-btn:hover{background:var(--bg3)}
+.scen-btn.active{background:var(--accl);border-color:var(--accb);
+  color:var(--acc-fort);font-weight:600}
+.scen-note{font-size:11px;color:var(--tx2);margin-left:auto}
+@media (max-width:560px){
+  .scen{gap:8px}
+  .scen-btn{font-size:12px;min-width:44px}
+  .scen-note{margin-left:0;width:100%}
+}
+@media print{.scen{display:none!important}}
+
 /* ═══ Confirmation de vérification ═══
    verifier-pc.ps1 propose, on dispose. Le rapprochement par nom peut se
    tromper : la liste est montrée avant de cocher quoi que ce soit. */
@@ -608,6 +630,16 @@ body.guide-actif .day-est{display:none}
 </div>
 
 <main>
+<div class="scen" role="group" aria-label="Situation">
+  <span class="scen-label">Situation</span>
+  <div class="scen-btns">
+    <button class="scen-btn active" type="button" id="sc-tout" aria-pressed="true" onclick="changerScenario('tout')">Tout afficher</button>
+    <button class="scen-btn" type="button" id="sc-migration" aria-pressed="false" onclick="changerScenario('migration')" title="Passer sur une autre machine">↗ Migration</button>
+    <button class="scen-btn" type="button" id="sc-reinstall" aria-pressed="false" onclick="changerScenario('reinstall')" title="Repartir propre sur la machine actuelle">↻ Réinstallation</button>
+  </div>
+  <span class="scen-note" id="scenario-note" aria-live="polite"></span>
+</div>
+
 <section class="guide" id="guide" aria-live="polite"></section>
 
 <div class="tabs" role="tablist" aria-label="Sections de la checklist">
@@ -830,6 +862,9 @@ const PROFIL_DEFAUT = {
       "p": "Outil du fabricant du SSD, ou chiffrement puis formatage",
       "note": "Seulement si la machine est vendue ou donnée. Un formatage ordinaire laisse les données récupérables ; sur un SSD, un Secure Erase du fabricant est plus fiable qu'un écrasement.",
       "pr": "ok",
+      "cas": [
+        "migration"
+      ],
       "warn": "À ne faire qu'après avoir vérifié les sauvegardes et désactivé les licences."
     }
   ],
@@ -850,6 +885,10 @@ const PROFIL_DEFAUT = {
       "src": "Site du fabricant de la carte mère",
       "p": "med",
       "t": 15,
+      "alt": {
+        "n": "Mettre à jour le BIOS si nécessaire",
+        "d": "Occasion commode si une version corrige un problème qui vous concerne. Sinon, ne rien toucher : les réglages seraient remis par défaut."
+      },
       "dep": [
         "n13"
       ],
@@ -863,6 +902,10 @@ const PROFIL_DEFAUT = {
       "src": "BIOS — Sécurité / Avancé",
       "p": "high",
       "t": 5,
+      "alt": {
+        "n": "Vérifier que TPM 2.0 et Secure Boot sont actifs",
+        "d": "Ils l'étaient déjà, mais une mise à jour du BIOS ou une pile morte remet les réglages par défaut. Un contrôle de trente secondes évite une installation qui refuse de démarrer."
+      },
       "dep": [
         "n13"
       ],
@@ -875,6 +918,10 @@ const PROFIL_DEFAUT = {
       "src": "BIOS — Démarrage",
       "p": "high",
       "t": 3,
+      "alt": {
+        "n": "Vérifier que le CSM est toujours désactivé",
+        "d": "S'il s'est réactivé, Secure Boot retombe et le disque ne sera pas vu en UEFI."
+      },
       "dep": [
         "n15"
       ],
@@ -887,6 +934,10 @@ const PROFIL_DEFAUT = {
       "src": "BIOS — réglages mémoire",
       "p": "high",
       "t": 5,
+      "alt": {
+        "n": "Vérifier le profil XMP / EXPO",
+        "d": "Contrôler dans le Gestionnaire des tâches, onglet Performance, que la mémoire tourne bien à sa fréquence annoncée."
+      },
       "dep": [
         "n13"
       ],
@@ -899,6 +950,10 @@ const PROFIL_DEFAUT = {
       "src": "BIOS — Avancé / PCIe",
       "p": "med",
       "t": 3,
+      "alt": {
+        "n": "Vérifier Resizable BAR",
+        "d": "Se désactive parfois après une mise à jour du BIOS ou un changement de carte graphique."
+      },
       "dep": [
         "n16"
       ],
@@ -911,6 +966,10 @@ const PROFIL_DEFAUT = {
       "src": "BIOS — Avancé / CPU",
       "p": "med",
       "t": 3,
+      "alt": {
+        "n": "Vérifier la virtualisation du processeur",
+        "d": "Nécessaire si vous comptez réinstaller WSL, Docker ou un émulateur."
+      },
       "dep": [
         "n13"
       ],
@@ -923,6 +982,10 @@ const PROFIL_DEFAUT = {
       "src": "BIOS — Démarrage",
       "p": "med",
       "t": 3,
+      "alt": {
+        "n": "Vérifier l'ordre de démarrage et l'heure",
+        "d": "La clé d'installation doit passer avant le SSD, sinon la machine redémarre sur le système qu'on veut remplacer."
+      },
       "dep": [
         "n13"
       ],
@@ -935,6 +998,10 @@ const PROFIL_DEFAUT = {
       "src": "BIOS — Monitoring / Fan control",
       "p": "ok",
       "t": 10,
+      "alt": {
+        "n": "Vérifier les courbes de ventilateurs",
+        "d": "Elles sont conservées par le BIOS, mais autant s'en assurer avant de repartir."
+      },
       "dep": [
         "n13"
       ],
@@ -956,8 +1023,37 @@ const PROFIL_DEFAUT = {
       "d": "Enregistrer, sortir, puis revenir dans le BIOS pour contrôler que TPM, Secure Boot, XMP et Resizable BAR sont bien actifs. Il arrive qu'un réglage ne tienne pas au premier enregistrement."
     },
     {
-      "id": "n22",
+      "id": "n37",
       "o": 11,
+      "n": "Télécharger les pilotes sur une clé USB",
+      "src": "Site du fabricant de la carte mère",
+      "p": "high",
+      "t": 15,
+      "cas": [
+        "reinstall"
+      ],
+      "d": "Au minimum le pilote réseau, idéalement le chipset aussi. Si Windows ne reconnaît pas la carte réseau au premier démarrage, il n'y a pas d'autre machine sous la main pour aller le chercher — contrairement à une migration, où l'ancien PC est encore là.",
+      "warn": "À faire avant de formater. Après, il est trop tard pour télécharger quoi que ce soit."
+    },
+    {
+      "id": "n36",
+      "o": 12,
+      "n": "POINT DE NON-RETOUR — dernier contrôle avant d'effacer",
+      "src": "Sur cette machine, maintenant",
+      "p": "high",
+      "t": 15,
+      "cas": [
+        "reinstall"
+      ],
+      "dep": [
+        "n21"
+      ],
+      "d": "Une fois le disque effacé, cette machine n'est plus une source : ce qui n'a pas été copié n'existe plus nulle part. Reprendre point par point avant de lancer l'installation. Les sauvegardes sont-elles faites ET relues depuis la copie, pas depuis l'original ? Les licences sont-elles désactivées ? Les codes 2FA sont-ils sortis et l'authentificateur transféré ? La clé BitLocker est-elle notée ailleurs ? Le pilote réseau est-il sur la clé USB, au cas où Windows n'ait pas de réseau au premier démarrage ?",
+      "warn": "C'est la dernière étape réversible. Après, il n'y a plus de retour en arrière."
+    },
+    {
+      "id": "n22",
+      "o": 13,
       "n": "Préparer la clé d'installation Windows",
       "src": "Media Creation Tool ou Rufus",
       "p": "high",
@@ -966,7 +1062,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n23",
-      "o": 12,
+      "o": 14,
       "n": "Installer Windows",
       "src": "Clé USB",
       "p": "high",
@@ -980,7 +1076,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n24",
-      "o": 13,
+      "o": 15,
       "n": "Choisir le type de compte",
       "src": "Assistant de première configuration",
       "p": "med",
@@ -992,7 +1088,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n1",
-      "o": 14,
+      "o": 16,
       "n": "Windows Update — tous les correctifs",
       "src": "Paramètres → Windows Update",
       "p": "high",
@@ -1004,7 +1100,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n6",
-      "o": 15,
+      "o": 17,
       "n": "Vérifier l'activation de Windows",
       "src": "Paramètres → Système → Activation",
       "p": "high",
@@ -1016,7 +1112,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n25",
-      "o": 16,
+      "o": 18,
       "n": "Noter la clé de récupération BitLocker",
       "src": "Paramètres → Confidentialité → Chiffrement",
       "p": "high",
@@ -1029,7 +1125,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n26",
-      "o": 17,
+      "o": 19,
       "n": "Retirer les applications préinstallées",
       "src": "Paramètres → Applications",
       "p": "med",
@@ -1041,7 +1137,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n27",
-      "o": 18,
+      "o": 20,
       "n": "Passer les paramètres de confidentialité",
       "src": "Paramètres → Confidentialité et sécurité",
       "p": "med",
@@ -1053,11 +1149,15 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n2",
-      "o": 19,
+      "o": 21,
       "n": "Pilote chipset de la carte mère",
       "src": "Site du fabricant de la carte mère",
       "p": "high",
       "t": 10,
+      "alt": {
+        "n": "Réinstaller le pilote chipset",
+        "d": "Même sur la même carte mère : une installation propre repart d'un pilote générique."
+      },
       "dep": [
         "n1"
       ],
@@ -1066,7 +1166,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n3",
-      "o": 20,
+      "o": 22,
       "n": "Pilote réseau (Ethernet / Wi-Fi)",
       "src": "Site du fabricant de la carte mère",
       "p": "high",
@@ -1078,7 +1178,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n4",
-      "o": 21,
+      "o": 23,
       "n": "Pilote audio",
       "src": "Site du fabricant de la carte mère",
       "p": "med",
@@ -1090,7 +1190,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n5",
-      "o": 22,
+      "o": 24,
       "n": "Pilote de carte graphique",
       "src": "nvidia.com / amd.com / intel.com",
       "p": "high",
@@ -1103,7 +1203,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n8",
-      "o": 23,
+      "o": 25,
       "n": "Vérifier les températures au repos",
       "src": "HWiNFO64",
       "p": "med",
@@ -1116,17 +1216,20 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n9",
-      "o": 24,
+      "o": 26,
       "n": "Vérifier le sens des ventilateurs",
       "src": "Vérification physique",
       "p": "med",
       "t": 10,
       "post": true,
+      "cas": [
+        "migration"
+      ],
       "d": "L'air doit entrer par l'avant et le bas, sortir par l'arrière et le haut. Les modèles à flux inversé se montent dans l'autre sens que d'habitude."
     },
     {
       "id": "n10",
-      "o": 25,
+      "o": 27,
       "n": "Benchmark du SSD",
       "src": "CrystalDiskMark",
       "p": "ok",
@@ -1136,7 +1239,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n11",
-      "o": 26,
+      "o": 28,
       "n": "Configurer les écrans (résolution + Hz)",
       "src": "Paramètres → Système → Affichage",
       "p": "med",
@@ -1149,7 +1252,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n28",
-      "o": 27,
+      "o": 29,
       "n": "Mettre en place une sauvegarde",
       "src": "Historique des fichiers, OneDrive ou autre",
       "p": "high",
@@ -1159,7 +1262,7 @@ const PROFIL_DEFAUT = {
     },
     {
       "id": "n12",
-      "o": 28,
+      "o": 30,
       "n": "Créer un point de restauration",
       "src": "Créer un point de restauration",
       "p": "med",
@@ -1576,6 +1679,66 @@ const CLE_PROFIL='mpc_profil_v1', CLE_ETAT='mpc_state_v1', CLE_THEME='mpc_theme'
 
 let CATS={}, NPC_DATA=[], APPS_DATA=[], DATA_SAVES=[], PWA_DATA=[], QUITTER_DATA=[], INSTALL_ORDER=[], SEARCH_QUERIES={};
 
+// ═══ SCÉNARIO ═══
+// La même checklist sert à deux situations qui partagent l'essentiel : migrer
+// vers une autre machine, ou réinstaller proprement celle qu'on a. Ce qui
+// diffère tient en quelques éléments, marqués par `cas`. Sans mention, un
+// élément vaut pour les deux — c'est le cas des pilotes, des applications et
+// des sauvegardes, donc de la grande majorité.
+//
+// Différence de fond entre les deux : en migration, l'ancienne machine reste
+// disponible pour récupérer un fichier oublié. En réinstallation, une fois le
+// disque effacé, il n'y a plus de source. D'où le point de non-retour.
+const SCENARIOS={
+  tout:{libelle:'Tout afficher',court:'Tout'},
+  migration:{libelle:'Migration vers un autre PC',court:'Migration'},
+  reinstall:{libelle:'Réinstallation sur cette machine',court:'Réinstallation'}
+};
+const CLE_SCENARIO='mpc_scenario_v1';
+let scenario='tout';
+
+function visibleDansScenario(e){
+  if(scenario==='tout')return true;
+  if(!e||!Array.isArray(e.cas)||!e.cas.length)return true;   // vaut pour les deux
+  return e.cas.indexOf(scenario)>=0;
+}
+
+// Un élément peut porter un libellé différent selon le scénario : « Activer
+// Secure Boot » en migration, « Vérifier que Secure Boot est toujours actif »
+// en réinstallation. Sans cela il faudrait dupliquer l'étape et ses liens.
+function libelleDe(e){
+  if(scenario==='reinstall'&&e&&e.alt&&e.alt.n)return e.alt.n;
+  return e?e.n:'';
+}
+function descDe(e){
+  if(scenario==='reinstall'&&e&&e.alt&&e.alt.d)return e.alt.d;
+  return e?(e.d||''):'';
+}
+
+function changerScenario(cle){
+  if(!SCENARIOS[cle])return;
+  scenario=cle;
+  try{localStorage.setItem(CLE_SCENARIO,cle);}catch(e){}
+  majSelecteurScenario();
+  curCat='all';
+  renderAll();updateGlobal();
+}
+
+function majSelecteurScenario(){
+  Object.keys(SCENARIOS).forEach(function(k){
+    const b=document.getElementById('sc-'+k);
+    if(!b)return;
+    b.classList.toggle('active',k===scenario);
+    b.setAttribute('aria-pressed',k===scenario?'true':'false');
+  });
+  const n=document.getElementById('scenario-note');
+  if(n){
+    const compte=itemsVisibles().length;
+    const total=tousLesItems().length;
+    n.textContent=(compte<total)?compte+' des '+total+' éléments concernent ce cas':'';
+  }
+}
+
 // La liste des onglets vivait en sept exemplaires dans le fichier. En ajouter
 // un obligeait à les retrouver tous, et en oublier un ne se voyait pas.
 const ONGLETS=['quitter','npc','apps','data','pwa'];
@@ -1585,6 +1748,15 @@ function donneesDe(cle){
 }
 function tousLesItems(){
   return ONGLETS.reduce(function(acc,c){return acc.concat(donneesDe(c));},[]);
+}
+// Ce que le scénario courant laisse voir. Tout ce qui compte — progression,
+// totaux, durées, recherche, mode guidé — passe par là, sinon la page annonce
+// un total qui ne correspond pas à ce qu'elle affiche.
+function visiblesDe(cle){
+  return donneesDe(cle).filter(visibleDansScenario);
+}
+function itemsVisibles(){
+  return tousLesItems().filter(visibleDansScenario);
 }
 let PROFIL_NOM='', PROFIL_SOUS='';
 
@@ -1613,6 +1785,7 @@ function appliquerProfil(p,memoriser){
   if(memoriser){try{localStorage.setItem(CLE_PROFIL,JSON.stringify(p));}catch(e){console.error(e);}}
   majEnteteProfil();
   construireFiltresCats();
+  majSelecteurScenario();
   curCat='all';
   renderAll();updateGlobal();
 }
@@ -1902,7 +2075,7 @@ function updateSessionDisplay(){const e=Math.floor((Date.now()-session.start)/10
 
 // ═══ CONFETTI ═══
 function checkTabComplete(){
-  const tabs={};ONGLETS.forEach(function(c){tabs[c]=donneesDe(c);});
+  const tabs={};ONGLETS.forEach(function(c){tabs[c]=visiblesDe(c);});
   Object.keys(tabs).forEach(function(tab){
     const data=tabs[tab];
     const done=data.filter(function(x){return S.checked[x.id];}).length;
@@ -1941,7 +2114,7 @@ function renderNPC(){
   const cont=document.getElementById('list-npc');
   // L'intitulé suit le profil : un profil de scan n'a pas le même matériel qu'un autre.
   let html='<div class="sec-hdr first">🖥️ Mise en route — suivre la numérotation</div>';
-  const sorted=NPC_DATA.slice().sort(function(a,b){return a.o-b.o;});
+  const sorted=visiblesDe('npc').slice().sort(function(a,b){return a.o-b.o;});
   var postStarted=false;
   sorted.forEach(function(item){
     if(item.post&&!postStarted){
@@ -1957,9 +2130,9 @@ function renderNPC(){
     html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="toggle(\''+item.id+'\',\''+esc(item.n).replace(/'/g,"\\'")+'\')">'
       +mkChkbox()
       +'<div class="item-body">'
-        +'<div class="item-name-row"><span class="b-num">'+item.o+'</span><span class="item-name">'+esc(item.n)+'</span>'+dt+mkNoteBtn(item.id)+'</div>'
+        +'<div class="item-name-row"><span class="b-num">'+item.o+'</span><span class="item-name">'+esc(libelleDe(item))+'</span>'+dt+mkNoteBtn(item.id)+'</div>'
         +'<div class="item-badges"><span class="badge b-src">'+esc(item.src)+'</span>'+tBadge+pBadge+depBadge+'</div>'
-        +'<div class="item-desc">'+esc(item.d)+'</div>'
+        +'<div class="item-desc">'+esc(descDe(item))+'</div>'
         +warn
         +mkNoteArea(item.id)
       +'</div>'
@@ -1967,7 +2140,7 @@ function renderNPC(){
     +'</div>';
   });
   cont.innerHTML=html;
-  updateSecProg('npc',NPC_DATA);
+  updateSecProg('npc',visiblesDe('npc'));
 }
 
 // ═══ RENDER APPS ═══
@@ -1977,7 +2150,7 @@ function toggleNoWinget(){noWinget=!noWinget;document.getElementById('btn-no-win
 function renderApps(){
   const q=(document.getElementById('apps-search').value||'').toLowerCase();
   const sort=document.getElementById('apps-sort').value;
-  let items=APPS_DATA.filter(function(a){
+  let items=visiblesDe('apps').filter(function(a){
     const catOk=curCat==='all'||a.c===curCat;
     const qOk=!q||a.n.toLowerCase().indexOf(q)>=0||(a.w&&a.w.toLowerCase().indexOf(q)>=0);
     const wOk=!noWinget||!a.w;
@@ -1985,7 +2158,7 @@ function renderApps(){
   });
   document.getElementById('apps-empty').style.display=items.length===0?'block':'none';
   const cont=document.getElementById('list-apps');
-  if(!items.length){cont.innerHTML='';updateSecProg('apps',APPS_DATA);return;}
+  if(!items.length){cont.innerHTML='';updateSecProg('apps',visiblesDe('apps'));return;}
   let html='';
   if(sort==='cat'){
     const grouped={};
@@ -2025,7 +2198,7 @@ function renderApps(){
     });
   }
   cont.innerHTML=html;
-  updateSecProg('apps',APPS_DATA);
+  updateSecProg('apps',visiblesDe('apps'));
 }
 
 function mkAppItem(a){
@@ -2079,7 +2252,7 @@ function renderQuitter(){
 
 function renderParPriorite(onglet,donnees,labels){
   const groups={high:[],med:[],ok:[]};
-  donnees.forEach(function(s){(groups[s.pr]||groups.ok).push(s);});
+  donnees.filter(visibleDansScenario).forEach(function(s){(groups[s.pr]||groups.ok).push(s);});
   let html='';let first=true;
   ['high','med','ok'].forEach(function(pr){
     const grp=groups[pr];if(!grp.length)return;
@@ -2106,7 +2279,7 @@ function renderParPriorite(onglet,donnees,labels){
     first=false;
   });
   document.getElementById('list-'+onglet).innerHTML=html;
-  updateSecProg(onglet,donnees);
+  updateSecProg(onglet,donnees.filter(visibleDansScenario));
 }
 function checkAllPriorite(onglet,pr,evt){
   evt.stopPropagation();
@@ -2120,10 +2293,11 @@ function checkAllPriorite(onglet,pr,evt){
 
 // ═══ RENDER PWA ═══
 function renderPWA(){
-  const dn=PWA_DATA.filter(function(p){return S.checked[p.id];}).length;
-  const allDone=dn===PWA_DATA.length;
+  const pwaVues=visiblesDe('pwa');
+  const dn=pwaVues.filter(function(p){return S.checked[p.id];}).length;
+  const allDone=dn===pwaVues.length;
   let html='<div class="sec-hdr first">🌍 Raccourcis Chrome existants — sync Google automatique<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+PWA_DATA.length+'</span><button class="chk-all" onclick="checkAllPWA(event)">'+(allDone?'Décocher tout':'Tout cocher')+'</button></div></div>';
-  PWA_DATA.forEach(function(p){
+  pwaVues.forEach(function(p){
     const ck=!!S.checked[p.id];
     const dt=ck&&S.dates[p.id]?'<span class="item-date">✓ '+fmtDate(S.dates[p.id])+'</span>':'';
     html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="toggle(\''+p.id+'\',\''+esc(p.n).replace(/'/g,"\\'")+'\')">'
@@ -2138,7 +2312,7 @@ function renderPWA(){
     +'</div>';
   });
   document.getElementById('list-pwa').innerHTML=html;
-  updateSecProg('pwa',PWA_DATA);
+  updateSecProg('pwa',pwaVues);
 }
 function checkAllPWA(evt){
   evt.stopPropagation();
@@ -2155,11 +2329,11 @@ function globalSearch(){
   const res=document.getElementById('gsearch-results');
   if(!q){cnt.style.display='none';res.classList.remove('active');res.innerHTML='';return;}
   const sections=[
-    {label:'🚪 Avant de quitter',items:QUITTER_DATA.filter(function(x){return x.n.toLowerCase().indexOf(q)>=0||(x.p||'').toLowerCase().indexOf(q)>=0||(x.note||'').toLowerCase().indexOf(q)>=0;})},
-    {label:'🖥️ Nouveau PC',items:NPC_DATA.filter(function(x){return x.n.toLowerCase().indexOf(q)>=0||x.d.toLowerCase().indexOf(q)>=0;})},
-    {label:'📦 Apps',items:APPS_DATA.filter(function(x){return x.n.toLowerCase().indexOf(q)>=0||(x.w&&x.w.toLowerCase().indexOf(q)>=0)||x.d.toLowerCase().indexOf(q)>=0;})},
-    {label:'💾 Données',items:DATA_SAVES.filter(function(x){return x.n.toLowerCase().indexOf(q)>=0||x.p.toLowerCase().indexOf(q)>=0;})},
-    {label:'🌍 PWA',items:PWA_DATA.filter(function(x){return x.n.toLowerCase().indexOf(q)>=0;})}
+    {label:'🚪 Avant de quitter',items:visiblesDe('quitter').filter(function(x){return libelleDe(x).toLowerCase().indexOf(q)>=0||(x.p||'').toLowerCase().indexOf(q)>=0||(x.note||'').toLowerCase().indexOf(q)>=0;})},
+    {label:'🖥️ Nouveau PC',items:visiblesDe('npc').filter(function(x){return libelleDe(x).toLowerCase().indexOf(q)>=0||descDe(x).toLowerCase().indexOf(q)>=0;})},
+    {label:'📦 Apps',items:visiblesDe('apps').filter(function(x){return libelleDe(x).toLowerCase().indexOf(q)>=0||(x.w&&x.w.toLowerCase().indexOf(q)>=0)||descDe(x).toLowerCase().indexOf(q)>=0;})},
+    {label:'💾 Données',items:visiblesDe('data').filter(function(x){return libelleDe(x).toLowerCase().indexOf(q)>=0||x.p.toLowerCase().indexOf(q)>=0;})},
+    {label:'🌍 PWA',items:visiblesDe('pwa').filter(function(x){return libelleDe(x).toLowerCase().indexOf(q)>=0;})}
   ];
   const total=sections.reduce(function(s,x){return s+x.items.length;},0);
   cnt.style.display='';document.getElementById('gsearch-n').textContent=total;
@@ -2170,7 +2344,7 @@ function globalSearch(){
     html+='<div class="gsr-tab">'+sec.label+' ('+sec.items.length+')</div>';
     sec.items.forEach(function(item){
       const ck=!!S.checked[item.id];
-      const name=item.n;
+      const name=libelleDe(item);
       html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="toggle(\''+item.id+'\',\''+esc(name).replace(/'/g,"\\'")+'\');globalSearch()">'
         +mkChkbox()
         +'<div class="item-body"><div class="item-name-row"><span class="item-name">'+esc(name)+'</span></div>'
@@ -2195,11 +2369,11 @@ function updateSecProg(sec,data){
 }
 
 function updateGlobal(){
-  const all=tousLesItems();
+  const all=itemsVisibles();
   const done=all.filter(function(x){return S.checked[x.id];}).length;
   const total=all.length;
   const pct=total?Math.round(done/total*100):0;
-  const remMins=NPC_DATA.concat(APPS_DATA).filter(function(x){return !S.checked[x.id];}).reduce(function(s,x){return s+(x.t||0);},0);
+  const remMins=visiblesDe('npc').concat(visiblesDe('apps')).filter(function(x){return !S.checked[x.id];}).reduce(function(s,x){return s+(x.t||0);},0);
   document.getElementById('gp-pct').textContent=pct+'%';
   document.getElementById('gp-done').textContent=done;
   document.getElementById('gp-total').textContent=total;
@@ -2210,7 +2384,7 @@ function updateGlobal(){
 }
 
 function updateDayEst(){
-  const secs=[{label:'🖥️ Nouveau PC',data:NPC_DATA,tab:'npc'},{label:'📦 Apps',data:APPS_DATA,tab:'apps'}];
+  const secs=[{label:'🖥️ Nouveau PC',data:visiblesDe('npc'),tab:'npc'},{label:'📦 Apps',data:visiblesDe('apps'),tab:'apps'}];
   let totalRem=0;
   document.getElementById('day-cards').innerHTML=secs.map(function(s){
     const rem=s.data.filter(function(x){return !S.checked[x.id];}).reduce(function(a,x){return a+(x.t||0);},0);
@@ -2226,7 +2400,7 @@ function updateDayEst(){
 }
 
 function updateTitle(){
-  const all=tousLesItems();
+  const all=itemsVisibles();
   const done=all.filter(function(x){return S.checked[x.id];}).length;
   document.title='('+done+'/'+all.length+') '+(PROFIL_NOM||'Migration PC');
 }
@@ -2354,11 +2528,11 @@ function fileGuide(){
   const sections=[
     // L'ancien PC d'abord : ces actions ne se rattrapent pas une fois la
     // machine formatée.
-    ['Avant de quitter',QUITTER_DATA],
-    ['Nouveau PC',NPC_DATA.slice().sort(function(a,b){return (a.o||0)-(b.o||0);})],
-    ['Apps',APPS_DATA],
-    ['Données',DATA_SAVES],
-    ['PWA',PWA_DATA]
+    ['Avant de quitter',visiblesDe('quitter')],
+    ['Nouveau PC',visiblesDe('npc').slice().sort(function(a,b){return (a.o||0)-(b.o||0);})],
+    ['Apps',visiblesDe('apps')],
+    ['Données',visiblesDe('data')],
+    ['PWA',visiblesDe('pwa')]
   ];
   const file=[];
   sections.forEach(function(paire){
@@ -2504,7 +2678,7 @@ function viderIndex(){_index=null;}
 
 function nomDe(id){
   const e=indexParId()[id];
-  return e?e.n:id;
+  return e?libelleDe(e):id;
 }
 
 // Les identifiants seulement : une chaîne ne décrit aucun lien vérifiable.
@@ -2516,7 +2690,11 @@ function depsDe(item){
 
 // Ce qui manque avant de pouvoir cocher cet élément.
 function depsManquantes(item){
-  return depsDe(item).filter(function(id){return !S.checked[id];});
+  return depsDe(item).filter(function(id){
+    const d=indexParId()[id];
+    if(d&&!visibleDansScenario(d))return false;   // hors scénario : sans objet
+    return !S.checked[id];
+  });
 }
 
 function mkDepBadge(dep){
@@ -2832,6 +3010,10 @@ window.addEventListener('DOMContentLoaded',function(){
     if(e.target.classList.contains('env-input')){saveEnv(e.target.dataset.var,e.target.value);}
   });
   document.addEventListener('keydown',clavierGlobal);
+  try{
+    const sc=localStorage.getItem(CLE_SCENARIO);
+    if(sc&&SCENARIOS[sc])scenario=sc;
+  }catch(e){}
   // Le profil mémorisé prime sur celui d'exemple. appliquerProfil déclenche le rendu.
   const memorise=chargerProfilMemorise();
   try{appliquerProfil(memorise||PROFIL_DEFAUT,false);}
@@ -2889,10 +3071,10 @@ function saveEnv(varname,val){
 // ═══ V6 : BOUTON SUIVANT ═══
 function updateNextBtns(){
   var tabs=[
-    {id:'quitter',data:QUITTER_DATA,btnId:'next-quitter-btn',cntId:'next-quitter-count'},
-    {id:'npc',data:NPC_DATA,btnId:'next-npc-btn',cntId:'next-npc-count'},
-    {id:'apps',data:APPS_DATA,btnId:'next-apps-btn',cntId:'next-apps-count'},
-    {id:'data',data:DATA_SAVES,btnId:'next-data-btn',cntId:'next-data-count'},
+    {id:'quitter',data:visiblesDe('quitter'),btnId:'next-quitter-btn',cntId:'next-quitter-count'},
+    {id:'npc',data:visiblesDe('npc'),btnId:'next-npc-btn',cntId:'next-npc-count'},
+    {id:'apps',data:visiblesDe('apps'),btnId:'next-apps-btn',cntId:'next-apps-count'},
+    {id:'data',data:visiblesDe('data'),btnId:'next-data-btn',cntId:'next-data-count'},
   ];
   tabs.forEach(function(t){
     var btn=document.getElementById(t.btnId);

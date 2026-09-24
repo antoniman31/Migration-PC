@@ -14,7 +14,8 @@
     "sync": "node scripts-sync.js",
     "test:guide": "node tests/test-guide.js",
     "test:verification": "node tests/test-verification-pc.js",
-    "test:quitter": "node tests/test-quitter.js"
+    "test:quitter": "node tests/test-quitter.js",
+    "test:scenarios": "node tests/test-scenarios.js"
   },
   "devDependencies": {
     "playwright": "^1.63.0"

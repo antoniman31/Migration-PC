@@ -110,6 +110,9 @@
       "p": "Outil du fabricant du SSD, ou chiffrement puis formatage",
       "note": "Seulement si la machine est vendue ou donnée. Un formatage ordinaire laisse les données récupérables ; sur un SSD, un Secure Erase du fabricant est plus fiable qu'un écrasement.",
       "pr": "ok",
+      "cas": [
+        "migration"
+      ],
       "warn": "À ne faire qu'après avoir vérifié les sauvegardes et désactivé les licences."
     }
   ],
@@ -130,6 +133,10 @@
       "src": "Site du fabricant de la carte mère",
       "p": "med",
       "t": 15,
+      "alt": {
+        "n": "Mettre à jour le BIOS si nécessaire",
+        "d": "Occasion commode si une version corrige un problème qui vous concerne. Sinon, ne rien toucher : les réglages seraient remis par défaut."
+      },
       "dep": [
         "n13"
       ],
@@ -143,6 +150,10 @@
       "src": "BIOS — Sécurité / Avancé",
       "p": "high",
       "t": 5,
+      "alt": {
+        "n": "Vérifier que TPM 2.0 et Secure Boot sont actifs",
+        "d": "Ils l'étaient déjà, mais une mise à jour du BIOS ou une pile morte remet les réglages par défaut. Un contrôle de trente secondes évite une installation qui refuse de démarrer."
+      },
       "dep": [
         "n13"
       ],
@@ -155,6 +166,10 @@
       "src": "BIOS — Démarrage",
       "p": "high",
       "t": 3,
+      "alt": {
+        "n": "Vérifier que le CSM est toujours désactivé",
+        "d": "S'il s'est réactivé, Secure Boot retombe et le disque ne sera pas vu en UEFI."
+      },
       "dep": [
         "n15"
       ],
@@ -167,6 +182,10 @@
       "src": "BIOS — réglages mémoire",
       "p": "high",
       "t": 5,
+      "alt": {
+        "n": "Vérifier le profil XMP / EXPO",
+        "d": "Contrôler dans le Gestionnaire des tâches, onglet Performance, que la mémoire tourne bien à sa fréquence annoncée."
+      },
       "dep": [
         "n13"
       ],
@@ -179,6 +198,10 @@
       "src": "BIOS — Avancé / PCIe",
       "p": "med",
       "t": 3,
+      "alt": {
+        "n": "Vérifier Resizable BAR",
+        "d": "Se désactive parfois après une mise à jour du BIOS ou un changement de carte graphique."
+      },
       "dep": [
         "n16"
       ],
@@ -191,6 +214,10 @@
       "src": "BIOS — Avancé / CPU",
       "p": "med",
       "t": 3,
+      "alt": {
+        "n": "Vérifier la virtualisation du processeur",
+        "d": "Nécessaire si vous comptez réinstaller WSL, Docker ou un émulateur."
+      },
       "dep": [
         "n13"
       ],
@@ -203,6 +230,10 @@
       "src": "BIOS — Démarrage",
       "p": "med",
       "t": 3,
+      "alt": {
+        "n": "Vérifier l'ordre de démarrage et l'heure",
+        "d": "La clé d'installation doit passer avant le SSD, sinon la machine redémarre sur le système qu'on veut remplacer."
+      },
       "dep": [
         "n13"
       ],
@@ -215,6 +246,10 @@
       "src": "BIOS — Monitoring / Fan control",
       "p": "ok",
       "t": 10,
+      "alt": {
+        "n": "Vérifier les courbes de ventilateurs",
+        "d": "Elles sont conservées par le BIOS, mais autant s'en assurer avant de repartir."
+      },
       "dep": [
         "n13"
       ],
@@ -236,8 +271,37 @@
       "d": "Enregistrer, sortir, puis revenir dans le BIOS pour contrôler que TPM, Secure Boot, XMP et Resizable BAR sont bien actifs. Il arrive qu'un réglage ne tienne pas au premier enregistrement."
     },
     {
-      "id": "n22",
+      "id": "n37",
       "o": 11,
+      "n": "Télécharger les pilotes sur une clé USB",
+      "src": "Site du fabricant de la carte mère",
+      "p": "high",
+      "t": 15,
+      "cas": [
+        "reinstall"
+      ],
+      "d": "Au minimum le pilote réseau, idéalement le chipset aussi. Si Windows ne reconnaît pas la carte réseau au premier démarrage, il n'y a pas d'autre machine sous la main pour aller le chercher — contrairement à une migration, où l'ancien PC est encore là.",
+      "warn": "À faire avant de formater. Après, il est trop tard pour télécharger quoi que ce soit."
+    },
+    {
+      "id": "n36",
+      "o": 12,
+      "n": "POINT DE NON-RETOUR — dernier contrôle avant d'effacer",
+      "src": "Sur cette machine, maintenant",
+      "p": "high",
+      "t": 15,
+      "cas": [
+        "reinstall"
+      ],
+      "dep": [
+        "n21"
+      ],
+      "d": "Une fois le disque effacé, cette machine n'est plus une source : ce qui n'a pas été copié n'existe plus nulle part. Reprendre point par point avant de lancer l'installation. Les sauvegardes sont-elles faites ET relues depuis la copie, pas depuis l'original ? Les licences sont-elles désactivées ? Les codes 2FA sont-ils sortis et l'authentificateur transféré ? La clé BitLocker est-elle notée ailleurs ? Le pilote réseau est-il sur la clé USB, au cas où Windows n'ait pas de réseau au premier démarrage ?",
+      "warn": "C'est la dernière étape réversible. Après, il n'y a plus de retour en arrière."
+    },
+    {
+      "id": "n22",
+      "o": 13,
       "n": "Préparer la clé d'installation Windows",
       "src": "Media Creation Tool ou Rufus",
       "p": "high",
@@ -246,7 +310,7 @@
     },
     {
       "id": "n23",
-      "o": 12,
+      "o": 14,
       "n": "Installer Windows",
       "src": "Clé USB",
       "p": "high",
@@ -260,7 +324,7 @@
     },
     {
       "id": "n24",
-      "o": 13,
+      "o": 15,
       "n": "Choisir le type de compte",
       "src": "Assistant de première configuration",
       "p": "med",
@@ -272,7 +336,7 @@
     },
     {
       "id": "n1",
-      "o": 14,
+      "o": 16,
       "n": "Windows Update — tous les correctifs",
       "src": "Paramètres → Windows Update",
       "p": "high",
@@ -284,7 +348,7 @@
     },
     {
       "id": "n6",
-      "o": 15,
+      "o": 17,
       "n": "Vérifier l'activation de Windows",
       "src": "Paramètres → Système → Activation",
       "p": "high",
@@ -296,7 +360,7 @@
     },
     {
       "id": "n25",
-      "o": 16,
+      "o": 18,
       "n": "Noter la clé de récupération BitLocker",
       "src": "Paramètres → Confidentialité → Chiffrement",
       "p": "high",
@@ -309,7 +373,7 @@
     },
     {
       "id": "n26",
-      "o": 17,
+      "o": 19,
       "n": "Retirer les applications préinstallées",
       "src": "Paramètres → Applications",
       "p": "med",
@@ -321,7 +385,7 @@
     },
     {
       "id": "n27",
-      "o": 18,
+      "o": 20,
       "n": "Passer les paramètres de confidentialité",
       "src": "Paramètres → Confidentialité et sécurité",
       "p": "med",
@@ -333,11 +397,15 @@
     },
     {
       "id": "n2",
-      "o": 19,
+      "o": 21,
       "n": "Pilote chipset de la carte mère",
       "src": "Site du fabricant de la carte mère",
       "p": "high",
       "t": 10,
+      "alt": {
+        "n": "Réinstaller le pilote chipset",
+        "d": "Même sur la même carte mère : une installation propre repart d'un pilote générique."
+      },
       "dep": [
         "n1"
       ],
@@ -346,7 +414,7 @@
     },
     {
       "id": "n3",
-      "o": 20,
+      "o": 22,
       "n": "Pilote réseau (Ethernet / Wi-Fi)",
       "src": "Site du fabricant de la carte mère",
       "p": "high",
@@ -358,7 +426,7 @@
     },
     {
       "id": "n4",
-      "o": 21,
+      "o": 23,
       "n": "Pilote audio",
       "src": "Site du fabricant de la carte mère",
       "p": "med",
@@ -370,7 +438,7 @@
     },
     {
       "id": "n5",
-      "o": 22,
+      "o": 24,
       "n": "Pilote de carte graphique",
       "src": "nvidia.com / amd.com / intel.com",
       "p": "high",
@@ -383,7 +451,7 @@
     },
     {
       "id": "n8",
-      "o": 23,
+      "o": 25,
       "n": "Vérifier les températures au repos",
       "src": "HWiNFO64",
       "p": "med",
@@ -396,17 +464,20 @@
     },
     {
       "id": "n9",
-      "o": 24,
+      "o": 26,
       "n": "Vérifier le sens des ventilateurs",
       "src": "Vérification physique",
       "p": "med",
       "t": 10,
       "post": true,
+      "cas": [
+        "migration"
+      ],
       "d": "L'air doit entrer par l'avant et le bas, sortir par l'arrière et le haut. Les modèles à flux inversé se montent dans l'autre sens que d'habitude."
     },
     {
       "id": "n10",
-      "o": 25,
+      "o": 27,
       "n": "Benchmark du SSD",
       "src": "CrystalDiskMark",
       "p": "ok",
@@ -416,7 +487,7 @@
     },
     {
       "id": "n11",
-      "o": 26,
+      "o": 28,
       "n": "Configurer les écrans (résolution + Hz)",
       "src": "Paramètres → Système → Affichage",
       "p": "med",
@@ -429,7 +500,7 @@
     },
     {
       "id": "n28",
-      "o": 27,
+      "o": 29,
       "n": "Mettre en place une sauvegarde",
       "src": "Historique des fichiers, OneDrive ou autre",
       "p": "high",
@@ -439,7 +510,7 @@
     },
     {
       "id": "n12",
-      "o": 28,
+      "o": 30,
       "n": "Créer un point de restauration",
       "src": "Créer un point de restauration",
       "p": "med",

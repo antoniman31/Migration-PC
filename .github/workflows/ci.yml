@@ -102,6 +102,9 @@ jobs:
       - name: Onglet « Avant de quitter »
         run: node tests/test-quitter.js
 
+      - name: Migration ou réinstallation
+        run: node tests/test-scenarios.js
+
   publier:
     name: Publier sur Pages
     needs: verifier
