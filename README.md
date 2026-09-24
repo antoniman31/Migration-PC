@@ -21,7 +21,7 @@ Les scripts sont facultatifs.
   - [Inventorier l'ancien PC](#inventorier-lancien-pc)
   - [Vérifier le nouveau PC](#vérifier-le-nouveau-pc)
   - [Vérifier les sauvegardes](#vérifier-les-sauvegardes)
-- [Migration ou réinstallation](#migration-ou-réinstallation)
+- [Migration, réinstallation, ou juste ses affaires](#migration-réinstallation-ou-juste-ses-affaires)
   - [Installer Windows sans rester devant](#installer-windows-sans-rester-devant)
 - [La checklist](#la-checklist)
   - [La barre du haut](#la-barre-du-haut)
@@ -181,11 +181,11 @@ conformes. `-ToleranceParCent` règle l'écart de taille toléré, 2 % par défa
 | `-Profil <chemin>` | Le profil à vérifier (par défaut `profil-local.json`, puis l'exemple) |
 | `-ToleranceParCent <n>` | Écart de taille toléré avant signalement |
 
-## Migration ou réinstallation
+## Migration, réinstallation, ou juste ses affaires
 
-Les deux situations partagent l'essentiel — pilotes, applications, sauvegardes — et un
-sélecteur en haut de page filtre le reste. Un élément sans mention vaut pour les deux
-cas, ce qui est la majorité.
+Trois cas, un sélecteur en haut de page. Les deux premiers partagent l'essentiel —
+pilotes, applications, sauvegardes — et un élément sans mention vaut pour les deux, ce
+qui est la majorité.
 
 Ce qui change en **migration** : le montage est neuf, donc on vérifie le sens des
 ventilateurs, et on peut effacer le disque de l'ancienne machine puisqu'on s'en sépare.
@@ -204,6 +204,18 @@ Le filtre vaut partout, pas seulement dans les listes : les compteurs, les bouto
 l'export texte s'y tiennent. Cocher en masse n'atteint jamais un élément qu'on n'a pas
 sous les yeux, et un intitulé alternatif s'affiche sur les cinq onglets, pas seulement
 dans « Nouveau PC ».
+
+**Juste mes affaires** fonctionne à l'envers des deux autres. Eux partent de tout et
+retirent le peu qui ne les concerne pas ; celui-ci part de rien et ne garde que ce qu'on
+lui nomme : les onglets Apps, Données et PWA en entier, plus les étapes marquées
+`pilote` dans le profil. Ni BIOS, ni installation de Windows, ni vérifications
+matérielles. C'est la vue des soirs où l'on réinstalle ses logiciels et rapatrie ses
+dossiers sur une machine déjà en route. Sans cette inversion, les réglages BIOS — qui ne
+portent aucune mention, justement parce qu'ils valent pour les deux premiers cas — s'y
+retrouveraient aussi.
+
+Un onglet que le cas choisi vide entièrement ne reste pas muet : il dit dans quel cas on
+est, et combien d'éléments il compte dans les autres.
 
 Le choix est mémorisé, et une case cochée dans un mode reste cochée dans l'autre : le
 filtre change ce que vous regardez, pas ce que vous avez fait. Le total affiché suit le
@@ -430,7 +442,10 @@ La section `quitter` est facultative : un profil qui ne la déclare pas affiche 
 onglets, comme avant.
 
 `cas` limite un élément à une situation : `["migration"]` ou `["reinstall"]`. Sans ce
-champ, il vaut pour les deux. `alt` fournit un libellé et une description de
+champ, il vaut pour les deux. `pilote: true` marque une étape de l'onglet Nouveau PC
+comme relevant des pilotes : c'est la seule chose que le cas « juste mes affaires »
+garde de cet onglet. Un profil qui n'en marque aucune y verra l'onglet vide, avec un
+message qui le dit. `alt` fournit un libellé et une description de
 remplacement en réinstallation — `{ "n": "Vérifier que...", "d": "..." }` — ce qui évite
 de dupliquer une étape et ses dépendances pour changer un verbe.
 

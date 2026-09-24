@@ -281,7 +281,8 @@
         "reinstall"
       ],
       "d": "Au minimum le pilote réseau, idéalement le chipset aussi. Si Windows ne reconnaît pas la carte réseau au premier démarrage, il n'y a pas d'autre machine sous la main pour aller le chercher — contrairement à une migration, où l'ancien PC est encore là.",
-      "warn": "À faire avant de formater. Après, il est trop tard pour télécharger quoi que ce soit."
+      "warn": "À faire avant de formater. Après, il est trop tard pour télécharger quoi que ce soit.",
+      "pilote": true
     },
     {
       "id": "n36",
@@ -411,7 +412,8 @@
         "n1"
       ],
       "d": "Gère l'USB, le SATA, le NVMe et la gestion d'énergie. À installer avant les autres pilotes.",
-      "warn": "Télécharger uniquement sur le site officiel du fabricant."
+      "warn": "Télécharger uniquement sur le site officiel du fabricant.",
+      "pilote": true
     },
     {
       "id": "n3",
@@ -423,7 +425,8 @@
       "dep": [
         "n2"
       ],
-      "d": "À récupérer sur une clé USB AVANT la migration si le nouveau PC n'a pas de réseau au premier démarrage : sans lui, impossible de télécharger quoi que ce soit."
+      "d": "À récupérer sur une clé USB AVANT la migration si le nouveau PC n'a pas de réseau au premier démarrage : sans lui, impossible de télécharger quoi que ce soit.",
+      "pilote": true
     },
     {
       "id": "n4",
@@ -435,7 +438,8 @@
       "dep": [
         "n2"
       ],
-      "d": "Windows installe un pilote générique ; celui du fabricant débloque les sorties et les effets spécifiques."
+      "d": "Windows installe un pilote générique ; celui du fabricant débloque les sorties et les effets spécifiques.",
+      "pilote": true
     },
     {
       "id": "n5",
@@ -448,7 +452,8 @@
         "n2"
       ],
       "d": "Pilote officiel du GPU. Choisir la branche Game Ready ou Studio selon l'usage.",
-      "warn": "Télécharger uniquement sur le site du fabricant — beaucoup de faux sites de pilotes."
+      "warn": "Télécharger uniquement sur le site du fabricant — beaucoup de faux sites de pilotes.",
+      "pilote": true
     },
     {
       "id": "n8",

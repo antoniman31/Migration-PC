@@ -405,6 +405,7 @@ body.compact .b-dep{display:none}
 .scen-btn.active{background:var(--accl);border-color:var(--accb);
   color:var(--acc-fort);font-weight:600}
 .scen-note{font-size:11px;color:var(--tx2);margin-left:auto}
+.onglet-vide{padding:28px 20px;text-align:center;color:var(--tx2);font-size:13px;line-height:1.7}
 @media (max-width:560px){
   .scen{gap:8px}
   .scen-btn{font-size:12px;min-width:44px}
@@ -726,6 +727,7 @@ body.guide-actif .day-est{display:none}
     <button class="scen-btn active" type="button" id="sc-tout" aria-pressed="true" onclick="changerScenario('tout')">Tout afficher</button>
     <button class="scen-btn" type="button" id="sc-migration" aria-pressed="false" onclick="changerScenario('migration')" title="Passer sur une autre machine">↗ Migration</button>
     <button class="scen-btn" type="button" id="sc-reinstall" aria-pressed="false" onclick="changerScenario('reinstall')" title="Repartir propre sur la machine actuelle">↻ Réinstallation</button>
+    <button class="scen-btn" type="button" id="sc-affaires" aria-pressed="false" onclick="changerScenario('affaires')" title="Pilotes, logiciels et documents seulement — ni BIOS ni installation de Windows">📦 Mes affaires</button>
   </div>
   <span class="scen-note" id="scenario-note" aria-live="polite"></span>
 </div>
@@ -1123,7 +1125,8 @@ const PROFIL_DEFAUT = {
         "reinstall"
       ],
       "d": "Au minimum le pilote réseau, idéalement le chipset aussi. Si Windows ne reconnaît pas la carte réseau au premier démarrage, il n'y a pas d'autre machine sous la main pour aller le chercher — contrairement à une migration, où l'ancien PC est encore là.",
-      "warn": "À faire avant de formater. Après, il est trop tard pour télécharger quoi que ce soit."
+      "warn": "À faire avant de formater. Après, il est trop tard pour télécharger quoi que ce soit.",
+      "pilote": true
     },
     {
       "id": "n36",
@@ -1253,7 +1256,8 @@ const PROFIL_DEFAUT = {
         "n1"
       ],
       "d": "Gère l'USB, le SATA, le NVMe et la gestion d'énergie. À installer avant les autres pilotes.",
-      "warn": "Télécharger uniquement sur le site officiel du fabricant."
+      "warn": "Télécharger uniquement sur le site officiel du fabricant.",
+      "pilote": true
     },
     {
       "id": "n3",
@@ -1265,7 +1269,8 @@ const PROFIL_DEFAUT = {
       "dep": [
         "n2"
       ],
-      "d": "À récupérer sur une clé USB AVANT la migration si le nouveau PC n'a pas de réseau au premier démarrage : sans lui, impossible de télécharger quoi que ce soit."
+      "d": "À récupérer sur une clé USB AVANT la migration si le nouveau PC n'a pas de réseau au premier démarrage : sans lui, impossible de télécharger quoi que ce soit.",
+      "pilote": true
     },
     {
       "id": "n4",
@@ -1277,7 +1282,8 @@ const PROFIL_DEFAUT = {
       "dep": [
         "n2"
       ],
-      "d": "Windows installe un pilote générique ; celui du fabricant débloque les sorties et les effets spécifiques."
+      "d": "Windows installe un pilote générique ; celui du fabricant débloque les sorties et les effets spécifiques.",
+      "pilote": true
     },
     {
       "id": "n5",
@@ -1290,7 +1296,8 @@ const PROFIL_DEFAUT = {
         "n2"
       ],
       "d": "Pilote officiel du GPU. Choisir la branche Game Ready ou Studio selon l'usage.",
-      "warn": "Télécharger uniquement sur le site du fabricant — beaucoup de faux sites de pilotes."
+      "warn": "Télécharger uniquement sur le site du fabricant — beaucoup de faux sites de pilotes.",
+      "pilote": true
     },
     {
       "id": "n8",
@@ -1780,18 +1787,61 @@ let CATS={}, NPC_DATA=[], APPS_DATA=[], DATA_SAVES=[], PWA_DATA=[], QUITTER_DATA
 // Différence de fond entre les deux : en migration, l'ancienne machine reste
 // disponible pour récupérer un fichier oublié. En réinstallation, une fois le
 // disque effacé, il n'y a plus de source. D'où le point de non-retour.
+//
+// Le troisième cas ne marche pas comme les deux autres. « Migration » et
+// « réinstallation » partent de tout et retirent le peu qui ne les concerne
+// pas ; « mes affaires » part de rien et ne garde que ce qu'on lui nomme :
+// les onglets Apps, Données et PWA, plus les étapes marquées « pilote ». Sans
+// cette inversion, les réglages BIOS — qui ne portent aucune mention parce
+// qu'ils valent pour les deux premiers cas — s'y retrouveraient aussi.
 const SCENARIOS={
   tout:{libelle:'Tout afficher',court:'Tout'},
   migration:{libelle:'Migration vers un autre PC',court:'Migration'},
-  reinstall:{libelle:'Réinstallation sur cette machine',court:'Réinstallation'}
+  reinstall:{libelle:'Réinstallation sur cette machine',court:'Réinstallation'},
+  affaires:{libelle:'Juste mes logiciels et mes documents',court:'Mes affaires',
+            exclusif:true,onglets:['apps','data','pwa']}
 };
 const CLE_SCENARIO='mpc_scenario_v1';
 let scenario='tout';
 
 function visibleDansScenario(e){
   if(scenario==='tout')return true;
-  if(!e||!Array.isArray(e.cas)||!e.cas.length)return true;   // vaut pour les deux
-  return e.cas.indexOf(scenario)>=0;
+  if(!e)return true;
+  const sc=SCENARIOS[scenario]||{};
+  const cas=Array.isArray(e.cas)?e.cas:[];
+  if(cas.indexOf(scenario)>=0)return true;          // nommé explicitement
+  if(sc.exclusif){
+    // Un cas exclusif ne garde que ce qu'il réclame : ses onglets en entier,
+    // et ailleurs les seules étapes marquées « pilote ».
+    if(sc.onglets&&sc.onglets.indexOf(ongletDe(e.id))>=0)return true;
+    return !!e.pilote;
+  }
+  return cas.length===0;                            // sans mention : les deux
+}
+
+// ONGLET_DE ne se remplit qu'au passage du mode guidé : on retrouve l'onglet
+// d'un élément à la demande, sans dépendre de l'ordre des rendus.
+// Un onglet que le cas choisi vide entierement n'affichait rien du tout : ni
+// liste, ni explication. On dit ce qui se passe et comment en sortir.
+function messageOngletVide(cle){
+  const sc=SCENARIOS[scenario]||{};
+  const total=donneesDe(cle).length;
+  if(!total){
+    return '<div class="onglet-vide">Le profil chargé ne décrit rien dans « '
+      +esc(NOM_ONGLET[cle])+' ».</div>';
+  }
+  return '<div class="onglet-vide">Rien à faire ici dans le cas « '
+    +esc(sc.court||sc.libelle||scenario)+' ».<br>'
+    +'Cet onglet compte '+total+' élément'+(total>1?'s':'')
+    +' dans les autres cas — le sélecteur est en haut de page.</div>';
+}
+
+function ongletDe(id){
+  for(let i=0;i<ONGLETS.length;i++){
+    const liste=donneesDe(ONGLETS[i]);
+    for(let j=0;j<liste.length;j++){if(liste[j].id===id)return ONGLETS[i];}
+  }
+  return '';
 }
 
 // Un élément peut porter un libellé différent selon le scénario : « Activer
@@ -2297,7 +2347,12 @@ function renderNPC(){
   const cont=document.getElementById('list-npc');
   // L'intitulé suit le profil : un profil de scan n'a pas le même matériel qu'un autre.
   let html='<div class="sec-hdr first">🖥️ Mise en route — suivre la numérotation</div>';
-  const sorted=visiblesDe('npc').slice().sort(function(a,b){return a.o-b.o;});
+  const vues=visiblesDe('npc');
+  if(!vues.length){
+    cont.innerHTML=messageOngletVide('npc');
+    updateSecProg('npc',vues);return;
+  }
+  const sorted=vues.slice().sort(function(a,b){return a.o-b.o;});
   var postStarted=false;
   sorted.forEach(function(item){
     if(item.post&&!postStarted){
@@ -2340,9 +2395,16 @@ function renderApps(){
     const wOk=!noWinget||!a.w;
     return catOk&&qOk&&wOk;
   });
-  document.getElementById('apps-empty').style.display=items.length===0?'block':'none';
+  // « Aucune app trouvée » vaut pour une recherche infructueuse ; quand c'est
+  // le cas choisi qui vide l'onglet, on le dit autrement.
+  const videParCas=visiblesDe('apps').length===0;
+  document.getElementById('apps-empty').style.display=
+    (items.length===0&&!videParCas)?'block':'none';
   const cont=document.getElementById('list-apps');
-  if(!items.length){cont.innerHTML='';updateSecProg('apps',visiblesDe('apps'));return;}
+  if(!items.length){
+    cont.innerHTML=videParCas?messageOngletVide('apps'):'';
+    updateSecProg('apps',visiblesDe('apps'));return;
+  }
   let html='';
   if(sort==='cat'){
     const grouped={};
@@ -2463,7 +2525,7 @@ function renderParPriorite(onglet,donnees,labels){
     });
     first=false;
   });
-  document.getElementById('list-'+onglet).innerHTML=html;
+  document.getElementById('list-'+onglet).innerHTML=html||messageOngletVide(onglet);
   updateSecProg(onglet,donnees.filter(visibleDansScenario));
 }
 // Cocher ce qu'on ne voit pas, c'est marquer faite une tâche qu'on n'a pas
@@ -2498,7 +2560,7 @@ function renderPWA(){
       +mkDirectLink(p.u)
     +'</div>';
   });
-  document.getElementById('list-pwa').innerHTML=html;
+  document.getElementById('list-pwa').innerHTML=pwaVues.length?html:messageOngletVide('pwa');
   updateSecProg('pwa',pwaVues);
 }
 function checkAllPWA(evt){

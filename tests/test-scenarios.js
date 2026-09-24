@@ -212,6 +212,46 @@ const pwa=await pg.evaluate(()=>{
 ok('le dénominateur suit le filtre',pwa.entete.split('/')[1],pwa.attendu);
 ok('« Tout cocher » ne touche pas la PWA masquée',pwa.coche,false);
 
+console.log('\n--- le troisieme cas : juste mes affaires ---');
+// Celui-ci marche a l'envers des deux autres : il part de rien et ne garde que
+// ce qu'il reclame. Sans cette inversion, les reglages BIOS — qui ne portent
+// aucune mention — s'y retrouveraient aussi.
+await pg.click('#sc-affaires');await pg.waitForTimeout(350);
+const pilotes=P.npc.filter(e=>e.pilote).length;
+const attendu=pilotes+P.apps.length+P.data.length+P.pwa.length;
+ok('bouton actif',await pg.getAttribute('#sc-affaires','aria-pressed'),'true');
+ok('le total ne compte que les affaires',await pg.textContent('#gp-total'),String(attendu));
+ok('le profil declare bien des pilotes',pilotes>0,true);
+const npcVus=await pg.evaluate(()=>
+  [...document.querySelectorAll('#list-npc .item-name')].map(x=>x.textContent));
+ok('l\'onglet Nouveau PC ne garde que les pilotes',npcVus.length,pilotes);
+ok('et ce sont bien eux',npcVus.every(n=>/ilote/.test(n)),true);
+ok('aucun reglage BIOS',npcVus.some(n=>/BIOS|Secure Boot|CSM|XMP|EXPO/.test(n)),false);
+ok('ni l\'installation de Windows',npcVus.some(n=>/Installer Windows|NON-RETOUR/.test(n)),false);
+ok('les applications sont toutes la',
+  (await pg.$$('#list-apps .item')).length,P.apps.length);
+ok('les donnees aussi',(await pg.$$('#list-data .item')).length,P.data.length);
+ok('les PWA aussi',(await pg.$$('#list-pwa .item')).length,P.pwa.length);
+
+console.log('\n--- un onglet vide dit pourquoi ---');
+const vide=await pg.textContent('#list-quitter');
+ok('« Avant de quitter » n\'est pas muet',vide.trim().length>0,true);
+ok('il nomme le cas en cours',vide.indexOf('Mes affaires')>=0,true);
+ok('et dit combien d\'elements existent ailleurs',
+  vide.indexOf(String(P.quitter.length)+' élément')>=0,true);
+ok('le mode guidé compte comme le filtre',await pg.evaluate(()=>{
+  basculerGuide();
+  const t=document.querySelector('.guide-etape').textContent;
+  basculerGuide();return t;}),'Tâche 1 sur '+attendu);
+
+console.log('\n--- les trois autres cas n\'ont pas bouge ---');
+for(const [cle,att] of [['tout',tous.length],['migration',vis('migration')],
+                        ['reinstall',vis('reinstall')]]){
+  await pg.click('#sc-'+cle);await pg.waitForTimeout(250);
+  ok('« '+cle+' » compte toujours pareil',await pg.textContent('#gp-total'),String(att));
+}
+await pg.click('#sc-tout');await pg.waitForTimeout(250);
+
 await b.close();
 console.log(ko?'\n'+ko+' EN ECHEC':'\nSCENARIOS OPERATIONNELS');
 process.exit(ko?1:0);
