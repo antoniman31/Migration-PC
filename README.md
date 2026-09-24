@@ -1,10 +1,13 @@
 # Migration PC — checklist de réinstallation
 
-Checklist HTML pour réinstaller un PC Windows sans rien oublier : un script inventorie
-les logiciels de l'ancienne machine, la page les affiche en liste à cocher.
+Checklist HTML pour réinstaller un PC Windows sans rien oublier. Des scripts PowerShell
+inventorient l'ancienne machine, constatent ce qui est déjà en place sur la nouvelle et
+vérifient que les sauvegardes ont bien été copiées ; la page orchestre le tout en liste
+à cocher, avec un mode guidé pour le jour de l'installation.
 
-Fichier unique, aucune dépendance, aucun serveur. Fonctionne depuis une clé USB sur un
-PC fraîchement installé, sans réseau.
+`index.html` se suffit à lui-même : aucune dépendance, aucun serveur, aucune étape de
+construction. Il s'ouvre depuis une clé USB sur un PC fraîchement installé, sans réseau.
+Les scripts sont facultatifs.
 
 ![La checklist, onglet Apps](captures/checklist.png)
 
@@ -14,12 +17,18 @@ PC fraîchement installé, sans réseau.
 
 - [À quoi ça sert](#à-quoi-ça-sert)
 - [Démarrage rapide](#démarrage-rapide)
-- [Le scanner](#le-scanner)
+- **Les trois scripts**
+  - [Inventorier l'ancien PC](#inventorier-lancien-pc)
+  - [Vérifier le nouveau PC](#vérifier-le-nouveau-pc)
+  - [Vérifier les sauvegardes](#vérifier-les-sauvegardes)
 - [La checklist](#la-checklist)
+  - [Mode guidé](#mode-guidé)
+  - [Accessibilité](#accessibilité)
 - [Formats de fichiers](#formats-de-fichiers)
 - [Écrire son propre profil](#écrire-son-propre-profil)
 - [Vie privée](#vie-privée)
 - [Tests](#tests)
+  - [Intégration continue](#intégration-continue)
 - [Déploiement](#déploiement)
 - [Limites connues](#limites-connues)
 
@@ -48,21 +57,40 @@ quel, et vous pouvez écrire le vôtre.
 
 ## Démarrage rapide
 
-**Avec un inventaire de l'ancien PC** — sur l'ancienne machine :
+**Le plus court** : ouvrez `index.html` et cochez. Le profil d'exemple couvre les étapes
+communes à toute réinstallation Windows, aucun script n'est nécessaire.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scan-pc.ps1
-```
+**Le parcours complet**, dans l'ordre :
 
-Copiez `inventaire-pc.json` et `index.html` sur une clé USB. Sur le nouveau PC, ouvrez
-`index.html`, cliquez sur **📥 Importer**, choisissez le JSON.
+1. Sur l'**ancien PC**, inventoriez ce qui est installé.
 
-**Sans scan** : ouvrez `index.html` et cochez. Le profil d'exemple couvre les étapes
-communes à toute réinstallation Windows.
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\scan-pc.ps1
+   ```
 
-## Le scanner
+2. Faites vos sauvegardes, puis vérifiez-les.
 
-`scan-pc.ps1` interroge quatre sources et fusionne les résultats :
+   ```powershell
+   .\verifier-sauvegardes.ps1 -Destination D:\sauvegarde-migration
+   ```
+
+3. Copiez le dossier du projet et les deux JSON produits sur une clé USB.
+
+4. Sur le **nouveau PC**, ouvrez `index.html` et importez `inventaire-pc.json`. Passez en
+   **🎯 Mode guidé** et suivez les tâches une par une.
+
+5. Après une série d'installations, constatez ce qui est déjà en place plutôt que de
+   cocher à la main.
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\verifier-pc.ps1
+   ```
+
+   Importez `verification-pc.json` : la page propose, vous validez.
+
+## Inventorier l'ancien PC
+
+`scan-pc.ps1` interroge plusieurs sources et fusionne les résultats :
 
 | Source | Ce qu'elle apporte |
 |---|---|
@@ -114,7 +142,14 @@ validation** : un rapprochement par nom peut confondre deux logiciels voisins, e
 case cochée à tort fait sauter une installation.
 
 Par défaut, seuls les identifiants winget sont retenus : moins de correspondances,
-aucune fausse. `-NomsApproximatifs` élargit la recherche aux noms.
+aucune fausse.
+
+| Option | Effet |
+|---|---|
+| `-Profil <chemin>` | Le profil à vérifier (par défaut `profil-local.json`, puis l'exemple) |
+| `-Sortie <chemin>` | Change le fichier produit (défaut : `verification-pc.json`) |
+| `-NomsApproximatifs` | Élargit la recherche aux noms, avec un risque de faux positif |
+| `-SansJeux` | Ignore les bibliothèques de jeux |
 
 ## Vérifier les sauvegardes
 
@@ -155,13 +190,13 @@ priorité, durée ou ordre conseillé, filtre sur les apps sans winget. La mise 
 s'adapte aux écrans étroits : cibles tactiles agrandies, textes relevés, champs à 16 px
 pour éviter le zoom automatique d'iOS.
 
-**Installation sur l'appareil** — depuis la version en ligne, la page s'installe comme
-une application et s'ouvre ensuite sans réseau. Le service worker ne met en cache que le
+**S'installer comme une application** — depuis la version en ligne, la page s'installe
+et s'ouvre ensuite sans réseau. Le service worker ne met en cache que le
 squelette ; la progression vit dans le stockage local et n'est jamais affectée. Ouverte
 en `file://` depuis une clé USB, la page ignore simplement cette partie : elle est déjà
 autonome.
 
-**Installation** — le badge winget copie la commande d'installation en un clic, un
+**Réinstaller** — le badge winget copie la commande d'installation en un clic, un
 bouton par catégorie copie le script de toute la section. Deux exports pour réinstaller :
 **⬇️ Script restant** produit un `.ps1` limité aux apps non cochées, et
 **⬇️ winget .json** le format officiel de `winget import`, à préférer — il saute ce qui
@@ -176,14 +211,6 @@ calculée depuis les durées, chronomètre de session, historique des dernières
 notes libres sur chaque élément, champs dédiés aux clés de licence et aux variables
 d'environnement.
 
-**Mode guidé** — pour le moment où l'on est debout devant la machine. Une tâche à la
-fois, dans l'ordre des dépendances, avec seulement ce qui sert alors : la commande
-winget prête à copier et l'avertissement s'il y en a un. Filtres, badges, durées et
-recherche disparaissent — ils appartiennent à la préparation. Un bouton fait l'aller et
-le retour, la vue liste reste le défaut et la progression est la même des deux côtés.
-
-![Le mode guidé](captures/mode-guide.png)
-
 **Sortie** — export de la progression, du profil, du script winget complet ou partiel,
 de la checklist en texte, et impression globale ou par onglet.
 
@@ -195,6 +222,19 @@ laisser une page à moitié vide sans explication.
 travail. Ces actions ne demandent pas de confirmation — on clique « oui » par réflexe —
 mais s'annulent après coup depuis un bandeau, qui restaure aussi bien les cases que le
 profil remplacé.
+
+### Mode guidé
+
+Pour le moment où l'on est debout devant la machine. Une tâche à la fois, dans l'ordre
+des dépendances, avec seulement ce qui sert alors : la commande winget prête à copier et
+l'avertissement s'il y en a un. Filtres, badges, durées et recherche disparaissent — ils
+appartiennent à la préparation.
+
+« C'est fait » coche et avance. « Passer » remet la tâche en fin de file sans la cocher.
+Un bouton fait l'aller et le retour avec la vue liste, qui reste le défaut ; la
+progression est la même des deux côtés.
+
+![Le mode guidé](captures/mode-guide.png)
 
 ### Accessibilité
 
@@ -214,14 +254,12 @@ sont coupées, confettis compris.
 
 ## Formats de fichiers
 
-Le bouton **Importer** accepte six formats et les reconnaît tout seul.
+Le bouton **Importer** accepte cinq formats et les reconnaît tout seul, sans que vous
+ayez à dire lequel.
 
 **Vérification de PC** — produite par `verifier-pc.ps1`, reconnue à son champ `type`.
 Seul format qui ne s'applique pas directement : la page affiche la liste et attend
 confirmation.
-
-**Rapport de sauvegardes** — produit par `verifier-sauvegardes.ps1`. C'est une
-progression ordinaire enrichie du détail de la comparaison.
 
 **Export winget** — le fichier produit par `winget export -o apps.json` sur n'importe
 quel PC, sans rien installer de ce projet. Il ne contient que des identifiants, donc les
@@ -251,7 +289,9 @@ du dépôt winget.
 et celui que produit le bouton 🧩.
 
 **Progression** — les cases cochées, les notes et les dates, sans les listes. C'est ce
-que produit le bouton 💾.
+que produit le bouton 💾, et aussi le rapport de `verifier-sauvegardes.ps1`, qui est une
+progression enrichie du détail de la comparaison : importé, il coche les éléments
+vérifiés conformes.
 
 Importer un export winget, un inventaire ou un profil remplace les listes mais conserve
 la progression. Importer une progression fait l'inverse.
@@ -316,14 +356,19 @@ JSON est le seul transfert fiable.
 
 ```bash
 npm install                       # une seule fois
-npm test                          # profil, checklist et formats winget
-npm run test:scan                 # scanner (nécessite PowerShell)
+npm test                          # les cinq suites sans navigateur, en 2 s
+npm run test:scan                 # les trois suites PowerShell
 npm run test:navigateur           # rendu réel dans Chromium
+npm run test:verification         # import d'une vérification de PC
 npm run test:pwa                  # installabilité et fonctionnement hors ligne
 npm run test:mobile               # ergonomie tactile
 npm run test:a11y                 # accessibilité et réversibilité
 npm run test:guide                # mode guidé
 ```
+
+`npm test` ne lance que ce qui tourne partout sans rien installer. Les suites
+navigateur demandent Chromium (`npm install` le fournit via Playwright), les suites
+PowerShell demandent `pwsh`.
 
 Quatorze suites, dans l'ordre où la CI les lance.
 
@@ -381,9 +426,8 @@ tactile et de clavier que la vue liste.
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 
-Pour que ce garde-fou serve, le dépôt doit être réglé sur **Settings → Pages → Source :
-GitHub Actions**. Sur « Deploy from a branch », GitHub publierait la branche en parallèle
-et court-circuiterait les tests.
+Ce garde-fou suppose que Pages publie par le workflow et non par la branche — voir
+[Déploiement](#déploiement).
 
 ## Déploiement
 
@@ -396,7 +440,10 @@ Migration-PC/
 ├── verifier-sauvegardes.ps1      # compare les dossiers copiés
 ├── manifest.json, sw.js, icons/  # installation et fonctionnement hors ligne
 ├── presets/exemple.json          # profil d'exemple, aussi embarqué dans index.html
+├── scripts-sync.js               # recopie le profil d'exemple dans index.html
+├── captures/                     # images du README
 ├── tests/                        # suites Node, PowerShell et navigateur
+├── package.json                  # scripts de test uniquement
 └── .github/workflows/ci.yml      # tests, puis publication si tout est vert
 ```
 
@@ -406,22 +453,36 @@ dossier, pas un fichier isolé.
 `package.json` ne sert qu'aux tests : `index.html` n'a aucune dépendance et n'a jamais
 besoin d'être construit.
 
-Les fichiers personnels (`profil-*.json`, `inventaire-*.json`, `progression-*.json`)
-sont exclus par `.gitignore` : gardez le vôtre en local, hors du dépôt.
+Les fichiers personnels sont exclus par `.gitignore`, à la racine seulement :
+`profil-*.json`, `inventaire-*.json`, `progression-*.json`, `winget-*.json` et
+`winget-*.ps1`. Gardez les vôtres en local, hors du dépôt — les fichiers d'exemple de
+`tests/` et `presets/` ne sont pas concernés.
 
-Le dépôt est publiable tel quel sur GitHub Pages : **Settings → Pages → Deploy from a
-branch → `main` → `/ (root)`**.
+Le dépôt se publie sur GitHub Pages par le workflow, pas par la branche : réglez
+**Settings → Pages → Source : GitHub Actions**. Sur « Deploy from a branch », GitHub
+publierait la branche en parallèle et un push dont les tests échouent partirait quand
+même en ligne.
 
 ```bash
 git clone https://github.com/antoniman31/Migration-PC.git
+cd Migration-PC
+npm install && npm test
 ```
 
 URL publiée : `https://antoniman31.github.io/Migration-PC`
 
 ## Limites connues
 
-Le scanner est **Windows uniquement** et demande PowerShell 5.1 ou supérieur. S'il
-refuse de démarrer, lancez-le avec `-ExecutionPolicy Bypass`.
+Les trois scripts sont **Windows uniquement** et demandent PowerShell 5.1 ou supérieur.
+S'ils refusent de démarrer, lancez-les avec `-ExecutionPolicy Bypass`. Ils ont besoin de
+`lib-detection.ps1` à côté d'eux.
+
+**La détection n'a pas encore été exécutée sur une machine Windows réelle.** Le
+classement, la fusion entre sources, le parsing de la sortie winget et le rapprochement
+avec le profil sont couverts par des tests sur données simulées, et
+`verifier-sauvegardes.ps1` est réellement exécuté par sa suite. Mais la lecture du
+registre, des paquets du Store et des bibliothèques de jeux demande Windows : ce code
+est relu, pas éprouvé. Si un résultat vous paraît faux, c'est probablement là.
 
 **Tous les logiciels n'ont pas d'identifiant winget.** Ceux détectés par le registre
 seul sortent sans commande d'installation : la checklist les affiche avec un lien de

@@ -66,9 +66,6 @@ jobs:
       - name: Dépendances entre éléments
         run: node tests/test-dependances.js
 
-      - name: Import d'une vérification de PC
-        run: node tests/test-verification-pc.js
-
       # pwsh est preinstalle sur les runners ubuntu-latest.
       - name: Scanner — classement, fusion, parsing
         run: pwsh -File tests/test-scan.ps1
@@ -84,6 +81,9 @@ jobs:
 
       - name: Checklist — rendu navigateur
         run: node tests/test-navigateur.js
+
+      - name: Import d'une vérification de PC
+        run: node tests/test-verification-pc.js
 
       - name: Installabilité et fonctionnement hors ligne
         run: node tests/test-pwa.js
