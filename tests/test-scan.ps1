@@ -1,4 +1,4 @@
-# Tests de la detection partagee. Depuis que les trois scripts s'appuient sur
+﻿# Tests de la detection partagee. Depuis que les trois scripts s'appuient sur
 # lib-detection.ps1, il suffit de la charger : elle ne fait rien d'elle-meme.
 #   pwsh -File tests/test-scan.ps1
 $ToutInclure = $false

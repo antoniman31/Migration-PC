@@ -1,4 +1,4 @@
-# Execute reellement verifier-sauvegardes.ps1 sur une arborescence construite
+﻿# Execute reellement verifier-sauvegardes.ps1 sur une arborescence construite
 # pour l'occasion. Contrairement aux autres scripts du projet, celui-ci ne
 # touche ni au registre ni aux paquets : il ne fait que lire des fichiers, donc
 # il tourne vraiment ici, et ce test constate son comportement au lieu de le

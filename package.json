@@ -7,7 +7,7 @@
   "scripts": {
     "test": "node tests/test-profil-sync.js && node tests/test-checklist.js && node tests/test-winget.js && node tests/test-inventaire-etendu.js && node tests/test-dependances.js",
     "test:navigateur": "node tests/test-navigateur.js",
-    "test:scan": "pwsh -File tests/test-scan.ps1 && pwsh -File tests/test-verification.ps1 && pwsh -File tests/test-sauvegardes.ps1 && pwsh -File tests/test-lanceur.ps1",
+    "test:scan": "pwsh -File tests/test-scan.ps1 && pwsh -File tests/test-verification.ps1 && pwsh -File tests/test-sauvegardes.ps1 && pwsh -File tests/test-lanceur.ps1 && pwsh -File tests/test-powershell-compatibility.ps1",
     "test:pwa": "node tests/test-pwa.js",
     "test:mobile": "node tests/test-mobile.js",
     "test:a11y": "node tests/test-accessibilite.js",

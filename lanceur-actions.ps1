@@ -1,4 +1,4 @@
-# Ce que le lanceur sait faire, et ce dont chaque action a besoin.
+﻿# Ce que le lanceur sait faire, et ce dont chaque action a besoin.
 #
 # Separe de l'interface pour une raison pratique : cette partie se teste
 # partout, l'interface graphique seulement sur Windows. Une action mal decrite

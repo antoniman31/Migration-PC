@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Compare les dossiers a sauvegarder avec leur copie, et dit ce qui manque.
 

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Constate ce qui est deja installe sur le NOUVEAU PC et propose de cocher
     les taches correspondantes dans la checklist.

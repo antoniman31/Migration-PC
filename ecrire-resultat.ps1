@@ -1,4 +1,4 @@
-# Fonction commune aux deux scripts de scan : poser le resultat a cote de
+﻿# Fonction commune aux deux scripts de scan : poser le resultat a cote de
 # index.html et ouvrir la page dessus.
 #
 # Pourquoi un .js et pas seulement le .json : une page ouverte depuis une cle

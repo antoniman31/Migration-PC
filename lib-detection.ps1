@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Logique de detection partagee par les scripts du projet.
 
@@ -22,8 +22,16 @@
 
 # Valeurs par defaut quand l'appelant ne les fournit pas : le fichier reste
 # chargeable seul, par exemple depuis une suite de tests.
-if ($null -eq $script:ToutInclure) { $script:ToutInclure = $false }
-if ($null -eq $script:resultats)   { $script:resultats   = @{} }
+#
+# Sous Set-StrictMode, LIRE une variable jamais definie est deja une erreur :
+# la ligne censee fournir le defaut etait donc celle qui echouait. On teste
+# l'existence sans lire la valeur.
+if (-not (Get-Variable -Name 'ToutInclure' -Scope Script -ErrorAction SilentlyContinue)) {
+    $script:ToutInclure = $false
+}
+if (-not (Get-Variable -Name 'resultats' -Scope Script -ErrorAction SilentlyContinue)) {
+    $script:resultats = @{}
+}
 
 # ---------------------------------------------------------------- filtrage
 

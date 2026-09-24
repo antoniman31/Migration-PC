@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Le point d'entree : une fenetre qui demande ce qu'on veut faire, et lance
     le script correspondant.

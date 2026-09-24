@@ -569,7 +569,7 @@ Données. `tests/test-profil-hostile.js` rejoue un profil piégé à chaque publ
 ```bash
 npm install                       # une seule fois
 npm test                          # les cinq suites sans navigateur, en 2 s
-npm run test:scan                 # les quatre suites PowerShell
+npm run test:scan                 # les cinq suites PowerShell
 npm run test:navigateur           # rendu réel dans Chromium
 npm run test:verification         # import d'une vérification de PC
 npm run test:pwa                  # installabilité et fonctionnement hors ligne
@@ -591,7 +591,7 @@ npm run test:outils               # scripts proposés et chargement automatique
 navigateur demandent Chromium (`npm install` le fournit via Playwright), les suites
 PowerShell demandent `pwsh`.
 
-Vingt-quatre suites, dans l'ordre où la CI les lance.
+Vingt-cinq suites, dans l'ordre où la CI les lance.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
@@ -689,9 +689,16 @@ n'est pas testée ici : `System.Windows.Forms` n'existe pas hors de Windows Desk
 pourquoi la liste des actions vit dans `lanceur-actions.ps1`, séparée de l'affichage :
 c'est elle qui décide de tout, et elle se teste partout.
 
+`tests/test-powershell-compatibility.ps1` garde un piège fermé : Windows PowerShell 5.1 —
+celui livré avec Windows, et celui qu'on obtient par double-clic — lit un `.ps1` sans
+marqueur d'encodage comme de l'ANSI et non de l'UTF-8. « Clés SSH » y devient
+« ClÃ©s SSH », et ce texte part dans le JSON de l'inventaire, donc dans la page. Le test
+vérifie que chaque script porte le marqueur, que tous parsent, et que les noms accentués
+de la table des configurations arrivent intacts.
+
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les vingt-quatre suites à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les vingt-cinq suites à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 

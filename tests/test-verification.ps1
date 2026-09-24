@@ -1,4 +1,4 @@
-# Tests du rapprochement entre ce qui est detecte et ce que le profil decrit.
+﻿# Tests du rapprochement entre ce qui est detecte et ce que le profil decrit.
 # La detection elle-meme (registre, Store, lanceurs) n'existe pas hors Windows :
 # on simule ses resultats et on verifie ce que le script en fait.
 #   pwsh -File tests/test-verification.ps1

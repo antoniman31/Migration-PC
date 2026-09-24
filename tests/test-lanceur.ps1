@@ -1,4 +1,4 @@
-# Le lanceur : ce qu'il propose, et ce qu'il fait quand un fichier manque.
+﻿# Le lanceur : ce qu'il propose, et ce qu'il fait quand un fichier manque.
 #
 # L'interface graphique elle-meme ne se teste pas ici — System.Windows.Forms
 # n'existe pas hors de Windows Desktop. C'est pourquoi la liste des actions et
