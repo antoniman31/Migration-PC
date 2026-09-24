@@ -110,16 +110,47 @@ ok('le sous-titre le dit',
 ok('et les intitulés en profitent aussitôt',
   (await nomsNpc()).some(n=>/^Pilote chipset.*B850-A$/.test(n)),true);
 
-console.log('\n--- une saisie à la main n\'est pas écrasée ---');
-// Ce que la personne a écrit est peut-être plus précis que ce que Windows
-// rapporte : c'est elle qui a raison.
+console.log('\n--- qui a raison sur le matériel ---');
+// Un inventaire vient presque toujours de l'ANCIEN PC : c'est tout l'intérêt
+// du scan. Il n'a donc pas à écraser une configuration saisie pour le neuf,
+// sinon les intitulés des pilotes porteraient la carte mère qu'on abandonne.
 await pg.evaluate(()=>{CONFIG={cm:'Ma carte à moi'};saveConfig();construireConfig();});
 await pg.evaluate(()=>traiterDonnees({
   type:'inventaire-migration-pc',machine:{},apps:[{nom:'A',cat:'x',source:'y'}],
   variables:{},configs:[],materiel:{cm:'ASUSTeK autre chose',gpu:'RTX 4060'}},''));
 await pg.waitForTimeout(400);
-ok('la valeur saisie reste',await pg.evaluate(()=>CONFIG.cm),'Ma carte à moi');
-ok('mais un champ vide se remplit',await pg.evaluate(()=>CONFIG.gpu),'RTX 4060');
+ok('un inventaire ne corrige pas la saisie',await pg.evaluate(()=>CONFIG.cm),'Ma carte à moi');
+ok('mais remplit les champs vides',await pg.evaluate(()=>CONFIG.gpu),'RTX 4060');
+
+console.log('\n--- la configuration voyage avec le profil ---');
+// Sans cela, tout le bénéfice disparaissait au transfert : sur le PC neuf les
+// intitulés redevenaient génériques et les recherches visaient dans le vide.
+const profil=await pg.evaluate(()=>profilCourant());
+ok('le profil exporté porte le matériel',
+  profil.materiel&&profil.materiel.cm,'Ma carte à moi');
+ok('les cinq clés voyagent',
+  profil.materiel&&profil.materiel.gpu,'RTX 4060');
+
+console.log('\n--- seule la vérification constate la machine qu'+"'"+'on équipe ---');
+// verifier-pc.ps1 tourne sur le PC neuf : lui seul sait de quelle machine il
+// parle, donc lui seul écrase. Un profil rapporté de l'+"'"+'ancien PC, non.'
+await pg.evaluate(()=>traiterDonnees({
+  type:'verification-migration-pc',machine:{},trouves:[],
+  materiel:{cm:'MSI MAG B650 TOMAHAWK'}},''));
+await pg.waitForTimeout(350);
+ok('la machine constatée gagne',await pg.evaluate(()=>CONFIG.cm),'MSI MAG B650 TOMAHAWK');
+// Et les intitulés suivent tout de suite, sans attendre un autre rendu.
+ok('les intitulés se rafraîchissent aussitôt',
+  (await nomsNpc()).some(n=>/^Pilote chipset.*TOMAHAWK$/.test(n)),true);
+await pg.evaluate(p=>traiterDonnees(p,''),
+  {meta:{nom:'Ancien'},cats:{},npc:[],apps:[{id:'z',n:'Z',c:'x',src:'s',d:'d'}],
+   data:[],pwa:[],quitter:[],materiel:{cm:'ASUSTeK ancien',ssd:'Un SSD'}});
+await pg.waitForTimeout(350);
+ok('un profil n\'écrase pas la machine constatée',
+  await pg.evaluate(()=>CONFIG.cm),'MSI MAG B650 TOMAHAWK');
+ok('mais comble ce qui manquait',await pg.evaluate(()=>CONFIG.ssd),'Un SSD');
+await pg.evaluate(()=>{CONFIG={};saveConfig();construireConfig();
+  appliquerProfil(PROFIL_DEFAUT,false);});
 
 console.log('\n--- les périphériques sans pilote ---');
 await pg.evaluate(()=>traiterDonnees({

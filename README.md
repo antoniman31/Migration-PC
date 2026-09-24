@@ -365,6 +365,16 @@ la machine, il n'y a pas de raison de recopier une étiquette de carton. Une val
 saisie n'est jamais écrasée — elle est peut-être plus précise que ce que Windows
 rapporte, et c'est la personne qui a raison.
 
+Une seule exception, et elle a une raison : la vérification de `verifier-pc.ps1` tourne
+sur le PC qu'on équipe, donc elle seule sait de quelle machine elle parle, et elle seule
+corrige une valeur. Un inventaire vient presque toujours de l'**ancien** PC — c'est tout
+l'intérêt du scan — et un profil décrit peut-être une troisième machine : ceux-là ne
+comblent que les cases vides. Sinon, sur le PC neuf, les intitulés des pilotes
+porteraient le modèle de la carte mère qu'on vient d'abandonner.
+
+La configuration voyage avec le profil exporté, dans un champ `materiel`. Sans cela tout
+le bénéfice disparaissait au moment du transfert, c'est-à-dire exactement là où il sert.
+
 **⋯ Plus → Ma configuration** ouvre les mêmes cinq champs à remplir à la main : carte
 mère, processeur, carte graphique, mémoire, SSD. Ce qu'on y écrit fait deux choses. Les intitulés des pilotes
 portent le modèle — « Pilote chipset — ASUS B850-A » — là où ils disaient « de la carte
@@ -523,6 +533,7 @@ data   // { id, n, p, note, pr, lic?, env? }
 pwa    // { id, n, u, d }
 ordre  // [ id, ... ] — l'ordre d'installation conseillé
 requetes // { "Nom de l'app": "requête de recherche" }
+materiel // { cm, cpu, gpu, ram, ssd } — facultatif, le bloc « Ma configuration »
 ```
 
 `p` et `pr` valent `high`, `med` ou `ok` · `t` est une durée en minutes · `o` est le

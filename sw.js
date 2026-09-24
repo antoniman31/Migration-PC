@@ -18,7 +18,7 @@
 // tests/test-pwa.js. Sans cela un appareil ayant deja installe la page
 // garderait l'ancien service worker, et la correction ne lui parviendrait pas.
 // Ne pas modifier a la main : lancer `npm run sync`.
-const CACHE = "migration-pc-934e2fae89f1";
+const CACHE = "migration-pc-a8f45d18f36f";
 const SQUELETTE = [
   "./",
   "./index.html",

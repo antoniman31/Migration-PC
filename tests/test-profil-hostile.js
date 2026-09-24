@@ -108,6 +108,25 @@ await pg.waitForTimeout(400);
 ok('aucun code n\'a été exécuté',execute,[]);
 ok('et rien n\'a planté au passage',errs.length?errs[0]:'aucune erreur','aucune erreur');
 
+console.log('\n--- le matériel d\'un profil reçu ---');
+// Ce champ finit dans les intitulés des pilotes et dans les boutons de
+// recherche : c'est un chemin d'injection de plus, et il accepte n'importe
+// quel JSON.
+await pg.evaluate(()=>{CONFIG={};saveConfig();construireConfig();});
+await pg.evaluate(()=>traiterDonnees({
+  meta:{nom:'H'},cats:{},npc:[],apps:[{id:'z',n:'Z',c:'x',src:'s',d:'d'}],
+  data:[],pwa:[],quitter:[],
+  materiel:{cm:"x' onclick='window.__inject=1' data-a='",
+            gpu:'<img src=x onerror=window.__inject=2>',
+            ram:{objet:1},ssd:['tableau'],cpu:'Un vrai processeur'}},''));
+await pg.waitForTimeout(400);
+ok('un objet n\'est pas recopié en [object Object]',
+  await pg.evaluate(()=>CONFIG.ram||'(vide)'),'(vide)');
+ok('un tableau non plus',await pg.evaluate(()=>CONFIG.ssd||'(vide)'),'(vide)');
+ok('une chaîne honnête passe',await pg.evaluate(()=>CONFIG.cpu),'Un vrai processeur');
+ok('et rien ne s\'exécute',await pg.evaluate(()=>window.__inject===undefined),true);
+await pg.evaluate(()=>{CONFIG={};saveConfig();construireConfig();});
+
 console.log('\n--- un profil honnête marche toujours ---');
 await pg.evaluate(()=>{
   changerScenario('tout');

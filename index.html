@@ -2286,9 +2286,13 @@ function chargerProfilMemorise(){
 
 // Le profil chargé, reconstruit depuis les listes en mémoire.
 function profilCourant(){
-  return {meta:{version:1,nom:PROFIL_NOM,soustitre:PROFIL_SOUS},cats:CATS,
+  const p={meta:{version:1,nom:PROFIL_NOM,soustitre:PROFIL_SOUS},cats:CATS,
     npc:NPC_DATA,apps:APPS_DATA,data:DATA_SAVES,pwa:PWA_DATA,quitter:QUITTER_DATA,
     ordre:INSTALL_ORDER,requetes:SEARCH_QUERIES};
+  // La configuration vivait seulement dans ce navigateur : elle ne suivait pas
+  // le profil, donc les intitulés redevenaient génériques sur l'autre machine.
+  if(Object.keys(CONFIG).length)p.materiel=Object.assign({},CONFIG);
+  return p;
 }
 
 function exportProfil(){
@@ -2303,16 +2307,40 @@ const CAT_PAR_DEFAUT='system';
 // plutôt que de les faire recopier à la main depuis une étiquette de carton.
 // Une saisie existante n'est jamais écrasée — elle est peut-être plus précise
 // que ce que Windows rapporte, et c'est la personne qui a raison.
-function appliquerMateriel(materiel){
+//
+// `constate` dit une chose et une seule : ce fichier décrit-il la machine
+// qu'on équipe ? Seule la vérification de `verifier-pc.ps1` peut l'affirmer,
+// puisqu'elle tourne sur le PC neuf. Elle seule écrase donc une valeur.
+//
+// Tout le reste ne remplit que les cases vides, parce qu'un inventaire comme
+// un profil décrit peut-être une AUTRE machine : celui qu'on rapporte de
+// l'ancien PC porte l'ancienne carte mère. Sinon, sur le PC neuf, les
+// intitulés des pilotes porteraient le modèle de la machine qu'on vient de
+// quitter et les recherches viseraient le mauvais support — exactement là où
+// la configuration sert le plus.
+function appliquerMateriel(materiel,constate){
   if(!materiel||typeof materiel!=='object')return 0;
   let repris=0;
   COMPOSANTS.forEach(function(c){
     const v=materiel[c.cle];
-    if(!v||CONFIG[c.cle])return;
-    CONFIG[c.cle]=String(v).trim();
+    // Un profil reçu peut porter n'importe quoi : un objet devenait
+    // « [object Object] » dans le champ, affiché tel quel dans les intitulés.
+    if(typeof v!=='string'&&typeof v!=='number')return;
+    const nouvelle=String(v).trim().slice(0,120);
+    if(!nouvelle)return;
+    if(CONFIG[c.cle]===nouvelle)return;
+    if(CONFIG[c.cle]&&!constate)return;
+    CONFIG[c.cle]=nouvelle;
     repris++;
   });
-  if(repris){saveConfig();construireConfig();}
+  if(repris){
+    saveConfig();
+    construireConfig();
+    // Les intitulés portent le modèle : sans nouveau rendu, ils restaient
+    // génériques jusqu'au prochain clic. L'inventaire s'en sortait parce
+    // qu'appliquerProfil redessine juste après ; la vérification, non.
+    proteger('Configuration',function(){renderAll();updateGlobal();});
+  }
   return repris;
 }
 
@@ -2326,7 +2354,7 @@ function inventaireVersProfil(inv){
     if(!S.env[v])S.env[v]=String(inv.variables[v]);
   });
   if(vars.length)saveState();
-  const reprisMateriel=appliquerMateriel(inv.materiel);
+  const reprisMateriel=appliquerMateriel(inv.materiel,false);
   const cats={};
   const out=[];
   apps.forEach(function(a,i){
@@ -2474,7 +2502,7 @@ function traiterDonnees(d,provenance){
       // étaient toutes indisponibles. Le dire calmement plutôt que d'ouvrir un
       // panneau rouge — le cas se produit justement sur un PC neuf.
       if(!Array.isArray(d.apps)||!d.apps.length){
-        const repris=appliquerMateriel(d.materiel);
+        const repris=appliquerMateriel(d.materiel,false);
         informer('Scan reçu, mais aucune application détectée.'
           +(repris?' Le matériel a été repris ('+repris+' composant'+(repris>1?'s':'')+').':'')
           +' Sur une machine neuve c\'est normal ; sinon, relancez avec -ToutInclure.');
@@ -2488,6 +2516,7 @@ function traiterDonnees(d,provenance){
     if(profilValide(d)){
       memoriserAnnulation('Profil importé.'+suffixe,true);
       appliquerProfil(d,true);
+      appliquerMateriel(d.materiel,false);
       dire('Profil importé : '+(NPC_DATA.length+APPS_DATA.length+DATA_SAVES.length+PWA_DATA.length)+' éléments.');
       return true;
     }
@@ -3184,7 +3213,7 @@ function afficherVerification(d){
   verifEnCours=d;
   const bloc=document.getElementById('verif');
   if(!bloc)return;
-  appliquerMateriel(d.materiel);
+  appliquerMateriel(d.materiel,true);
   const pilotes=mkPilotesManquants(d);
   const index=indexParId();
   // On ne propose que ce qui existe dans le profil chargé et n'est pas déjà coché.

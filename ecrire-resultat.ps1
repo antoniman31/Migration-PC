@@ -25,9 +25,20 @@ function Write-ResultatPourSite {
     }
 
     $cible = Join-Path $DossierScript 'resultat-scan.js'
-    $json = $Donnees | ConvertTo-Json -Depth 8 -Compress
-    # Une ligne, un objet pose sur window : la page le lit comme une donnee.
-    Set-Content -LiteralPath $cible -Value "window.MIGRATION_PC_SCAN=$json;" -Encoding UTF8
+    # Ce depot est un confort, pas le resultat : le JSON est deja ecrit. Une
+    # cle protegee en ecriture, un disque plein ou un antivirus ne doivent pas
+    # faire finir en rouge un scan qui a reussi.
+    try {
+        $json = $Donnees | ConvertTo-Json -Depth 8 -Compress
+        # Une ligne, un objet pose sur window : la page le lit comme une donnee.
+        Set-Content -LiteralPath $cible -Value "window.MIGRATION_PC_SCAN=$json;" -Encoding UTF8 -ErrorAction Stop
+    } catch {
+        Write-Host ""
+        Write-Host "Impossible de poser le resultat a cote de la page :" -ForegroundColor Yellow
+        Write-Host ("  " + $_.Exception.Message) -ForegroundColor Yellow
+        Write-Host "Le fichier JSON est ecrit : importez-le a la main depuis le site."
+        return
+    }
 
     Write-Host ""
     Write-Host "Resultat pose a cote de la page." -ForegroundColor Green
