@@ -23,7 +23,11 @@ await pg.goto('file://'+path.join(racine,'index.html'),{waitUntil:'networkidle'}
 await pg.evaluate(()=>{try{localStorage.setItem('mpc_debut_v1','1');}catch(e){}});
 const proposes=await pg.evaluate(()=>OUTILS.map(o=>o.f));
 proposes.forEach(f=>ok('« '+f+' » est dans le dépôt',fs.existsSync(path.join(racine,f)),true));
-ok('les deux lanceurs y sont',proposes.filter(f=>/\.bat$/.test(f)).length,2);
+// Le compte changera encore : ce qui doit tenir, c'est qu'un lanceur a
+// double-cliquer soit propose, et qu'il vienne en premier.
+ok('des lanceurs a double-cliquer sont proposes',
+  proposes.filter(f=>/\.bat$/.test(f)).length>=2,true);
+ok('le point d\'entree vient en tete',/\.bat$/.test(proposes[0]),true);
 ok('la bibliothèque partagée aussi',proposes.indexOf('lib-detection.ps1')>=0,true);
 
 console.log('\n--- le bloc s\'ouvre depuis le menu ---');
@@ -38,6 +42,15 @@ ok('chaque lien télécharge au lieu d\'afficher',await pg.evaluate(()=>
 ok('les liens sont relatifs, donc valables depuis une clé',await pg.evaluate(()=>
   [...document.querySelectorAll('.outils-item a')]
     .every(a=>!/^https?:/.test(a.getAttribute('href')))),true);
+// « Migration PC.bat » porte un espace : un href non encode casse chez
+// certains navigateurs, et le nom propose au telechargement doit rester lisible.
+ok('un nom avec espace reste téléchargeable',await pg.evaluate(()=>{
+  const a=[...document.querySelectorAll('.outils-item a')]
+    .find(x=>/Migration/.test(x.getAttribute('download')||''));
+  if(!a)return 'lien absent';
+  // L'attribut href tel qu'ecrit, et l'URL que le navigateur en deduit.
+  return a.href.indexOf('Migration%20PC.bat')>=0?'encodée':'brute : '+a.href.slice(-24);
+}),'encodée');
 ok('le lien vers le dépôt s\'ouvre à part',await pg.evaluate(()=>{
   const a=document.querySelector('.outils-note a');
   return !!(a&&a.target==='_blank'&&(a.rel||'').indexOf('noopener')>=0);}),true);

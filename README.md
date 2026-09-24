@@ -63,7 +63,17 @@ quel, et vous pouvez écrire le vôtre.
 
 ## Le parcours en deux double-clics
 
-Posez le dossier entier sur une clé USB. Sur l'ancien PC, double-cliquez
+Posez le dossier entier sur une clé USB et double-cliquez **`Migration PC.bat`**. Une
+fenêtre demande sur quelle machine vous êtes — la seule question à laquelle personne ne
+peut répondre à votre place — et lance le bon script. Elle n'ajoute aucune capacité :
+elle appelle les mêmes scripts, qu'on peut toujours lancer à la main. Une action dont il
+manque un fichier reste affichée, grisée, avec la raison : plus utile qu'une action
+absente dont on ignore pourquoi.
+
+Sans interface graphique — PowerShell 7 sans Windows Desktop, session distante — elle
+bascule sur un menu texte qui propose exactement les mêmes choix. `-Console` le force.
+
+Si vous préférez sauter la fenêtre : sur l'ancien PC, double-cliquez
 **`1-scanner-ce-pc.bat`** : il inventorie la machine, écrit son résultat à côté de la
 page et l'ouvre. La checklist s'affiche **déjà remplie de vos logiciels** — rien à
 importer. Vous ajustez, vous exportez votre profil sur la clé.
@@ -559,7 +569,7 @@ Données. `tests/test-profil-hostile.js` rejoue un profil piégé à chaque publ
 ```bash
 npm install                       # une seule fois
 npm test                          # les cinq suites sans navigateur, en 2 s
-npm run test:scan                 # les trois suites PowerShell
+npm run test:scan                 # les quatre suites PowerShell
 npm run test:navigateur           # rendu réel dans Chromium
 npm run test:verification         # import d'une vérification de PC
 npm run test:pwa                  # installabilité et fonctionnement hors ligne
@@ -581,7 +591,7 @@ npm run test:outils               # scripts proposés et chargement automatique
 navigateur demandent Chromium (`npm install` le fournit via Playwright), les suites
 PowerShell demandent `pwsh`.
 
-Vingt-trois suites, dans l'ordre où la CI les lance.
+Vingt-quatre suites, dans l'ordre où la CI les lance.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
@@ -671,9 +681,17 @@ données, qu'un rechargement n'écrase pas le travail fait depuis, et qu'une cl�
 fichier ou avec un fichier abîmé s'ouvre normalement. Il contrôle aussi que chaque
 fichier proposé au téléchargement existe réellement dans le dépôt.
 
+`tests/test-lanceur.ps1` couvre ce que le lanceur propose et ce qu'il vérifie avant : que
+chaque action mène à un fichier qui existe, qu'un dossier incomplet grise les actions
+concernées en nommant ce qui manque, et que les `.bat` portent bien des fins de ligne
+Windows — en fins de ligne Unix, ils ne s'exécutent pas. L'interface graphique elle-même
+n'est pas testée ici : `System.Windows.Forms` n'existe pas hors de Windows Desktop. C'est
+pourquoi la liste des actions vit dans `lanceur-actions.ps1`, séparée de l'affichage :
+c'est elle qui décide de tout, et elle se teste partout.
+
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les vingt-trois suites à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les vingt-quatre suites à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 

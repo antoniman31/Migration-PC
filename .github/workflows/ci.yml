@@ -79,6 +79,9 @@ jobs:
       - name: Vérification des sauvegardes — exécution réelle
         run: pwsh -File tests/test-sauvegardes.ps1
 
+      - name: Lanceur — actions et fichiers
+        run: pwsh -File tests/test-lanceur.ps1
+
       - name: Checklist — rendu navigateur
         run: node tests/test-navigateur.js
 

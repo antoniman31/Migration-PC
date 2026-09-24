@@ -3566,6 +3566,8 @@ function remiseAZero(){
 // en ligne — mais rien ne pointait vers eux. Les messages d'erreur parlaient
 // d'« un inventaire de scan-pc.ps1 » sans jamais dire où le trouver.
 const OUTILS=[
+  {f:'Migration PC.bat',n:'▶ Par où commencer',
+   d:'Ouvre une fenêtre qui demande sur quelle machine vous êtes, et lance le bon script. Si vous ne prenez qu\'un fichier, prenez celui-là.'},
   {f:'1-scanner-ce-pc.bat',n:'1 · Inventorier l\'ancien PC',
    d:'À double-cliquer sur la machine que vous quittez. Liste ce qui est installé et remplit cette page toute seule.'},
   {f:'2-verifier-ce-pc.bat',n:'2 · Vérifier le nouveau PC',
@@ -3575,7 +3577,9 @@ const OUTILS=[
   {f:'scan-pc.ps1',n:'scan-pc.ps1',d:'Le script appelé par le premier bouton.'},
   {f:'verifier-pc.ps1',n:'verifier-pc.ps1',d:'Le script appelé par le second.'},
   {f:'lib-detection.ps1',n:'lib-detection.ps1',
-   d:'La détection partagée. Sans ce fichier à côté, les trois scripts s\'arrêtent.'}
+   d:'La détection partagée. Sans ce fichier à côté, les trois scripts s\'arrêtent.'},
+  {f:'migration-pc.ps1',n:'migration-pc.ps1',d:'Le lanceur appelé par le premier bouton.'},
+  {f:'lanceur-actions.ps1',n:'lanceur-actions.ps1',d:'Ce que le lanceur propose, et ce qu\'il vérifie avant.'}
 ];
 
 function construireOutils(){
