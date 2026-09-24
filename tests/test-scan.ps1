@@ -3,6 +3,7 @@
 #   pwsh -File tests/test-scan.ps1
 $ToutInclure = $false
 $resultats = @{}
+$racineScan = Split-Path $PSScriptRoot -Parent
 . "$PSScriptRoot/../lib-detection.ps1"
 $script:ko=0
 function ok($l,$a,$b){ if($a -eq $b){"  ok   $l -> $a"} else {"  FAIL $l -> $a (attendu $b)";$script:ko++} }
@@ -240,6 +241,50 @@ ok 'version sans Available' $b.version '4.2.3'
 ok 'categorie Blender'      $b.cat 'media'
 $m = $resultats[(Get-Cle -Nom 'Un logiciel maison')]
 ok 'id ARP rejete'          $m.winget ''
+
+"--- le fichier depose a cote de la page ---"
+# Le nom de la variable globale est ecrit dans ecrire-resultat.ps1 d un cote et
+# lu dans index.html de l autre. Rien ne verifiait que les deux parlent de la
+# meme chose : renommer l un des deux aurait casse le remplissage automatique
+# sans faire tomber un seul test.
+. (Join-Path $racineScan 'ecrire-resultat.ps1')
+$bacEcr = Join-Path ([System.IO.Path]::GetTempPath()) ("mpc-ecr-" + (Get-Random))
+New-Item -ItemType Directory -Path $bacEcr -Force | Out-Null
+try {
+    Set-Content -LiteralPath (Join-Path $bacEcr 'index.html') -Value '<html></html>'
+    $faux = [ordered]@{ type='inventaire-migration-pc'; version=1
+                        machine=[ordered]@{ os='Windows 11'; nom='PC' }
+                        apps=@([ordered]@{ nom='Clés SSH'; cat='system' }) }
+    Write-ResultatPourSite -Donnees $faux -DossierScript $bacEcr -NePasOuvrir *> $null
+    $depose = Join-Path $bacEcr 'resultat-scan.js'
+    ok 'le fichier est depose'      (Test-Path -LiteralPath $depose) $true
+    $contenu = Get-Content -LiteralPath $depose -Raw
+    ok 'il pose la variable attendue' ($contenu.TrimStart([char]0xFEFF).StartsWith('window.MIGRATION_PC_SCAN=')) $true
+    ok 'et se termine par un point-virgule' ($contenu.TrimEnd().EndsWith(';')) $true
+    # La page lit cette variable-la : les deux cotes doivent s accorder.
+    $page = Get-Content -LiteralPath (Join-Path $racineScan 'index.html') -Raw
+    ok 'la page lit cette variable'  ($page -match 'window\.MIGRATION_PC_SCAN') $true
+    # Le JSON doit se relire, accents compris.
+    $json = $contenu.Substring($contenu.IndexOf('=') + 1).TrimEnd()
+    $json = $json.Substring(0, $json.Length - 1)
+    $relu = $json | ConvertFrom-Json
+    ok 'le JSON se relit'            $relu.type 'inventaire-migration-pc'
+    ok 'les accents survivent'       $relu.apps[0].nom 'Clés SSH'
+
+    # Une cle protegee en ecriture ne doit pas faire finir en rouge un scan
+    # reussi : le JSON est deja ecrit, ce depot n est qu un confort.
+    $verrou = Join-Path $bacEcr 'verrou'
+    New-Item -ItemType Directory -Path $verrou -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $verrou 'index.html') -Value '<html></html>'
+    # On occupe le nom du fichier par un DOSSIER : l ecriture echouera a coup sur.
+    New-Item -ItemType Directory -Path (Join-Path $verrou 'resultat-scan.js') -Force | Out-Null
+    $aPlante = $false
+    try { Write-ResultatPourSite -Donnees $faux -DossierScript $verrou -NePasOuvrir *> $null }
+    catch { $aPlante = $true }
+    ok 'une ecriture impossible ne fait pas tomber le scan' $aPlante $false
+} finally {
+    Remove-Item $bacEcr -Recurse -Force -ErrorAction SilentlyContinue
+}
 
 "--- JSON produit ---"
 $inv=[ordered]@{type='inventaire-migration-pc';version=1;genere=(Get-Date).ToString('o');

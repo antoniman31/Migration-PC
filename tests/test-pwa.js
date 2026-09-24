@@ -97,6 +97,16 @@ const empreinte=crypto.createHash('sha256')
   .digest('hex').slice(0,12);
 const sw=fs.readFileSync(path.join(racine,'sw.js'),'utf8');
 const nomCache=(sw.match(/const CACHE = "([^"]+)";/)||[])[1];
+// Le squelette est mis en cache fichier par fichier, avec un .catch qui avale
+// l'echec : une entree qui pointe dans le vide ne se signale nulle part, elle
+// prive seulement la page de ce fichier hors ligne.
+const squelette=(sw.match(/const SQUELETTE\s*=\s*\[([\s\S]*?)\]/)||[,''])[1]
+  .split(',').map(t=>t.trim().replace(/^["']|["']$/g,'')).filter(Boolean);
+ok('le squelette est lisible',squelette.length>1,true);
+for(const f of squelette){
+  if(f==='./')continue;
+  ok('en cache : '+f,fs.existsSync(path.join(racine,f)),true);
+}
 ok('le cache porte l\'empreinte d\'index.html',nomCache,'migration-pc-'+empreinte);
 if(nomCache!=='migration-pc-'+empreinte)
   console.log('   → lancer `npm run sync` pour le remettre à jour');
