@@ -83,10 +83,16 @@ foreach ($c in $configs) {
         continue
     }
 
+    $exclure = @()
+    if ($c.Contains('exclure') -and $c.exclure) { $exclure = @($c.exclure) }
+
     try {
         $source = Get-Item -LiteralPath $c.chemin -Force -ErrorAction Stop
         $null = New-Item -ItemType Directory -Path $cible -Force
-        if ($source.PSIsContainer) {
+        if (-not $source.PSIsContainer) {
+            Copy-Item -LiteralPath $c.chemin -Destination $cible -Force -ErrorAction Stop
+        }
+        elseif ($exclure.Count -eq 0) {
             # Le CONTENU dans le dossier nomme, pas le dossier sous son nom
             # d'origine : l'index designe « Cles SSH », et la restauration ira
             # chercher ce nom-la. Copy-Item -Destination <dossier> aurait cree
@@ -94,8 +100,22 @@ foreach ($c in $configs) {
             foreach ($item in @(Get-ChildItem -LiteralPath $c.chemin -Force)) {
                 Copy-Item -LiteralPath $item.FullName -Destination $cible -Recurse -Force -ErrorAction Stop
             }
-        } else {
-            Copy-Item -LiteralPath $c.chemin -Destination $cible -Force -ErrorAction Stop
+        }
+        else {
+            # Copy-Item -Recurse ne sait rien laisser derriere lui : des qu'une
+            # regle exclut quelque chose, on recopie fichier par fichier, sur la
+            # meme liste que celle qui a servi a annoncer la taille. Plus lent,
+            # mais c'est le prix pour ne pas emporter dix Go de caches.
+            $racine = $source.FullName.TrimEnd('\', '/')
+            foreach ($f in @(Get-FichiersRetenus -Racine $c.chemin -Exclure $exclure)) {
+                $rel = $f.FullName.Substring($racine.Length).TrimStart('\', '/')
+                $vers = Join-Path $cible $rel
+                $parent = Split-Path $vers -Parent
+                if ($parent -and -not (Test-Path -LiteralPath $parent)) {
+                    $null = New-Item -ItemType Directory -Path $parent -Force
+                }
+                Copy-Item -LiteralPath $f.FullName -Destination $vers -Force -ErrorAction Stop
+            }
         }
         Write-Host ("  copie   {0,-28} {1,10}" -f $c.nom, $taille) -ForegroundColor Green
         $copies++
@@ -108,6 +128,10 @@ foreach ($c in $configs) {
             modele   = if ($c.Contains('modele')) { $c.modele } else { '' }
             dossier  = $sousDossier
             quoi     = $c.quoi
+            # Ce qui a ete laisse derriere : sans cette trace, une copie
+            # partielle ressemblerait a une copie complete qui aurait perdu
+            # des fichiers en route.
+            exclu    = $exclure
             tailleMo = $c.tailleMo
         }
     } catch {

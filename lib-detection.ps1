@@ -531,8 +531,28 @@ $ConfigsConnues = @(
     @{ cle='gimp';             nom='GIMP';                    chemins=@('%APPDATA%\GIMP');                                quoi='Brosses, greffons, préférences.' }
     @{ cle='blender';          nom='Blender';                 chemins=@('%APPDATA%\Blender Foundation\Blender');          quoi='Préférences, greffons, thèmes.' }
     @{ cle='unityhub';         nom='Unity';                   chemins=@('%APPDATA%\Unity','%APPDATA%\UnityHub');          quoi='Licences et réglages de l''éditeur.' }
-    @{ cle='androidstudio';    nom='Android Studio';          chemins=@('%APPDATA%\Google');                              quoi='Réglages de l''IDE. Les SDK se retéléchargent.' }
+    @{ cle='androidstudio';    nom='Android Studio';          chemins=@('%APPDATA%\Google\AndroidStudio*');               quoi='Réglages de l''IDE : raccourcis, style de code, greffons. Le dossier porte la version, et les caches vivent ailleurs.' }
     @{ cle='intellijidea';     nom='JetBrains';               chemins=@('%APPDATA%\JetBrains');                           quoi='Réglages communs aux IDE JetBrains.' }
+    # Le fichier le plus coûteux à perdre de toute la table, et le plus petit.
+    # Un debug.keystore ne se régénère pas à l'identique : les clés Maps,
+    # Firebase et Sign-In liées à son SHA-1 cessent de fonctionner, et chaque
+    # app déjà posée sur un appareil de test doit être désinstallée avant de
+    # pouvoir être réinstallée. Les clés ADB évitent que chaque téléphone
+    # redemande « Autoriser le débogage USB ».
+    @{ cle=$null;              nom='Signature Android et clés ADB'; chemins=@('%USERPROFILE%\.android');
+       exclure=@('avd', 'cache', 'build-cache', 'temp', 'breakpad');
+       quoi='debug.keystore et les clés ADB. Le keystore ne se régénère pas : les clés Maps, Firebase et Sign-In cesseraient de marcher. Les émulateurs sont comptés à part.' }
+    # Volumineux et facultatif, donc à part : chacun décide si recréer ses
+    # appareils virtuels coûte plus cher que la place qu'ils prennent.
+    @{ cle=$null;              nom='Émulateurs Android (AVD)'; chemins=@('%USERPROFILE%\.android\avd');
+       quoi='Les appareils virtuels et leurs données de test. Plusieurs Go par émulateur : à emporter seulement si les recréer coûte plus cher que la place.' }
+    # gradle.properties pèse deux kilo-octets et porte les réglages mémoire,
+    # parfois les identifiants de signature. Le dossier caches à côté pèse des
+    # Go et se régénère tout seul.
+    @{ cle=$null;              nom='Gradle';                  chemins=@('%USERPROFILE%\.gradle');
+       exclure=@('caches', 'daemon', 'native', 'wrapper', 'build-cache-1', 'workers', 'jdks', 'notifications', '.tmp', 'kotlin-profile');
+       quoi='gradle.properties : réglages mémoire et parfois identifiants de signature. Les caches, eux, se régénèrent.' }
+    @{ cle=$null;              nom='Maven';                   chemins=@('%USERPROFILE%\.m2\settings.xml');               quoi='Dépôts, miroirs et identifiants. Le dossier repository se retélécharge.' }
     @{ cle='docker';           nom='Docker Desktop';          chemins=@('%APPDATA%\Docker','%USERPROFILE%\.docker');      quoi='Réglages. Les images se retéléchargent.' }
     @{ cle='steam';            nom='Steam — sauvegardes';     chemins=@('%PROGRAMFILES(X86)%\Steam\userdata');            quoi='Sauvegardes des jeux hors cloud, et configurations de manettes.' }
     @{ cle='vortex';           nom='Vortex';                  chemins=@('%APPDATA%\Vortex');                              quoi='Profils de mods.' }
@@ -615,13 +635,92 @@ function Get-Somme {
     return $mesure.Sum
 }
 
+# ---------------------------------------------------------------- exclusions
+#
+# La table copiait des dossiers entiers, sans exception possible. Telle quelle,
+# une entree « .gradle » embarquait dix Go de caches regenerables pour deux
+# kilo-octets de reglages, et une entree « .android » embarquait les emulateurs
+# avec le fichier de signature. Une regle peut maintenant nommer ce qu'elle
+# laisse derriere elle.
+#
+# Les motifs sont relatifs a la racine de l'entree, avec les jokers habituels.
+# « caches » exclut le dossier et tout ce qu'il contient ; « *.log » exclut les
+# fichiers correspondants.
+function Test-CheminExclu {
+    param([string]$Relatif, [string[]]$Motifs)
+    if (-not $Motifs -or [string]::IsNullOrWhiteSpace($Relatif)) { return $false }
+    $r = ($Relatif -replace '/', '\\').Trim('\\')
+    foreach ($m in $Motifs) {
+        if ([string]::IsNullOrWhiteSpace($m)) { continue }
+        $p = ($m -replace '/', '\\').Trim('\\')
+        # -like est insensible a la casse, comme les chemins de Windows.
+        if ($r -like $p) { return $true }
+        if ($r -like "$p\*") { return $true }
+    }
+    return $false
+}
+
+# Les fichiers d'un dossier, moins ce que la regle ecarte. Sert a la fois a
+# annoncer une taille honnete et a copier : les deux doivent voir la meme
+# chose, sinon le script annonce 2 Mo et en ecrit 10 Go.
+function Get-FichiersRetenus {
+    param([string]$Racine, [string[]]$Exclure)
+    if (-not (Test-Path -LiteralPath $Racine)) { return @() }
+    $item = Get-Item -LiteralPath $Racine -Force -ErrorAction SilentlyContinue
+    if (-not $item) { return @() }
+    if (-not $item.PSIsContainer) { return @($item) }
+    $base = $item.FullName.TrimEnd('\', '/')
+    # -ErrorAction SilentlyContinue : un sous-dossier protege ne doit pas
+    # arreter le parcours, il fausse seulement son propre compte.
+    return @(Get-ChildItem -LiteralPath $Racine -Recurse -File -Force -ErrorAction SilentlyContinue |
+        Where-Object {
+            $rel = $_.FullName.Substring($base.Length)
+            -not (Test-CheminExclu -Relatif $rel -Motifs $Exclure)
+        })
+}
+
+# Un chemin de la table peut porter un joker : Android Studio et les IDE
+# JetBrains rangent leurs reglages dans un dossier qui porte leur version.
+# On rend le chemin reel ET le modele correspondant, puisque c'est le modele
+# qui permettra de restaurer sous un autre nom d'utilisateur.
+function Expand-CheminModele {
+    param([string]$Modele)
+    if ([string]::IsNullOrWhiteSpace($Modele)) { return @() }
+    if ($Modele -notlike '*`**') {
+        $c = [Environment]::ExpandEnvironmentVariables($Modele)
+        if ($c -like '*%*') { return @() }
+        if (-not (Test-Path -LiteralPath $c)) { return @() }
+        return @([ordered]@{ chemin = $c; modele = $Modele })
+    }
+    $motif = [Environment]::ExpandEnvironmentVariables($Modele)
+    if ($motif -like '*%*') { return @() }
+    # Tout ce qui precede le premier segment a joker est fixe : c'est lui qui
+    # permet de reconstruire le modele de chaque resultat.
+    $segments = $Modele -split '\\'
+    $i = 0
+    while ($i -lt $segments.Count -and $segments[$i] -notlike '*`**') { $i++ }
+    if ($i -eq 0) { return @() }
+    $prefixeModele = ($segments[0..($i - 1)] -join '\')
+    $prefixe = [Environment]::ExpandEnvironmentVariables($prefixeModele).TrimEnd('\', '/')
+    if ($prefixe -like '*%*') { return @() }
+    $out = @()
+    foreach ($m in @(Get-Item -Path $motif -Force -ErrorAction SilentlyContinue)) {
+        $reste = $m.FullName.Substring($prefixe.Length).Trim('\', '/')
+        $out += [ordered]@{ chemin = $m.FullName; modele = ($prefixeModele.TrimEnd('\') + '\' + $reste) }
+    }
+    return $out
+}
+
 function Get-TailleDossier {
-    param([string]$Chemin)
+    param([string]$Chemin, [string[]]$Exclure)
     try {
         if (-not (Test-Path -LiteralPath $Chemin)) { return $null }
         $item = Get-Item -LiteralPath $Chemin -Force -ErrorAction Stop
         if (-not $item.PSIsContainer) { return [math]::Round($item.Length / 1MB, 2) }
-        $somme = Get-Somme (Get-ChildItem -LiteralPath $Chemin -Recurse -File -Force -ErrorAction SilentlyContinue) 'Length'
+        # La taille annoncee doit etre celle de ce qui sera copie, exclusions
+        # comprises : annoncer 10 Go pour en ecrire 2 Mo se remarquerait, mais
+        # l'inverse se remarquerait au pire moment.
+        $somme = Get-Somme (Get-FichiersRetenus -Racine $Chemin -Exclure $Exclure) 'Length'
         if (-not $somme) { return 0 }
         return [math]::Round($somme / 1MB, 2)
     } catch { return $null }
@@ -635,22 +734,25 @@ function Read-Configs {
         # Une regle rattachee a un logiciel ne s'applique que s'il est installe :
         # sinon on proposerait d'emporter les restes d'un logiciel desinstalle.
         if ($regle.cle -and ($ClesInstallees -notcontains $regle.cle)) { continue }
+        $exclure = @()
+        if ($regle.Contains('exclure') -and $regle.exclure) { $exclure = @($regle.exclure) }
         foreach ($brut in $regle.chemins) {
-            $chemin = [Environment]::ExpandEnvironmentVariables($brut)
-            # Un chemin non resolu garde ses %...% : inutile d'aller plus loin.
-            if ($chemin -like '*%*') { continue }
-            if (-not (Test-Path -LiteralPath $chemin)) { continue }
-            $trouves += [ordered]@{
-                nom      = $regle.nom
-                chemin   = $chemin
-                # Le chemin AVANT expansion : « %APPDATA%\Code\User » vaut sur
-                # n'importe quelle machine, « C:\Users\antoni\... » seulement
-                # sur celle-ci. C'est lui qui permet de restaurer sous un autre
-                # nom d'utilisateur.
-                modele   = $brut
-                quoi     = $regle.quoi
-                tailleMo = Get-TailleDossier -Chemin $chemin
-                logiciel = $regle.cle
+            # Expand-CheminModele rend le chemin reel ET le modele : le chemin
+            # AVANT expansion, « %APPDATA%\Code\User », vaut sur n'importe
+            # quelle machine la ou « C:\Users\antoni\... » ne vaut que sur
+            # celle-ci. C'est lui qui permet de restaurer sous un autre nom
+            # d'utilisateur. Un joker peut rendre plusieurs resultats.
+            foreach ($r in @(Expand-CheminModele -Modele $brut)) {
+                $trouves += [ordered]@{
+                    nom      = $regle.nom
+                    chemin   = $r.chemin
+                    modele   = $r.modele
+                    quoi     = $regle.quoi
+                    # Ce que la regle laisse derriere elle, relatif a sa racine.
+                    exclure  = $exclure
+                    tailleMo = Get-TailleDossier -Chemin $r.chemin -Exclure $exclure
+                    logiciel = $regle.cle
+                }
             }
         }
     }

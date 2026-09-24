@@ -10,6 +10,9 @@
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $racine = Split-Path $PSScriptRoot -Parent
+$ToutInclure = $false
+$resultats = @{}
+. (Join-Path $racine 'lib-detection.ps1')
 
 $script:ko = 0
 function ok($libelle, $obtenu, $attendu) {
@@ -90,6 +93,64 @@ try {
     # Sans ca, l'operation serait irreversible : c'est la condition pour qu'un
     # script qui ecrase soit acceptable.
     ok 'et reste lisible'             (Get-Content -LiteralPath (Join-Path $misDeCote[0].FullName 'id_ed25519') -Raw).Trim() 'CLE DU NOUVEAU PC'
+
+    "`n--- ce qu une regle laisse derriere elle ---"
+    # La table copiait des dossiers entiers : une entree « .gradle » emportait
+    # dix Go de caches regenerables pour deux kilo-octets de reglages. On
+    # construit ici le meme cas en petit, et on lance le vrai script.
+    $g = Join-Path $T 'profil\.gradle'
+    New-Item -ItemType Directory -Path (Join-Path $g 'caches\modules-2\files') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $g 'daemon\8.7') -Force | Out-Null
+    New-Item -ItemType Directory -Path (Join-Path $g 'init.d') -Force | Out-Null
+    Set-Content -Path (Join-Path $g 'gradle.properties') -Value 'org.gradle.jvmargs=-Xmx4g'
+    Set-Content -Path (Join-Path $g 'init.d\perso.gradle') -Value '// mon init'
+    # Assez gros pour que les tailles se distinguent : une assertion qui compare
+    # 0 a 0 ne prouve rien.
+    Set-Content -Path (Join-Path $g 'init.d\gros-utile.gradle') -Value ('u' * 400KB) -NoNewline
+    Set-Content -Path (Join-Path $g 'caches\modules-2\files\gros.bin') -Value ('x' * 4MB) -NoNewline
+    Set-Content -Path (Join-Path $g 'daemon\8.7\daemon.log') -Value ('l' * 1MB) -NoNewline
+
+    $destG = Join-Path $T 'cle\avec-exclusions'
+    & (Join-Path $racine 'sauvegarder-configs.ps1') -Destination $destG *> $null
+    $idxG = Get-Content -LiteralPath (Join-Path $destG 'index-configs.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    $eG = @($idxG.entrees | Where-Object { $_.nom -eq 'Gradle' })
+    ok 'l entree Gradle est reperee'  $eG.Count 1
+    $copieG = Join-Path $destG $eG[0].dossier
+    ok 'les reglages sont copies'     (Test-Path -LiteralPath (Join-Path $copieG 'gradle.properties')) $true
+    ok 'un sous-dossier utile aussi'  (Test-Path -LiteralPath (Join-Path $copieG 'init.d\perso.gradle')) $true
+    ok 'les caches sont laisses'      (Test-Path -LiteralPath (Join-Path $copieG 'caches')) $false
+    ok 'le daemon aussi'              (Test-Path -LiteralPath (Join-Path $copieG 'daemon')) $false
+    # La taille annoncee doit etre celle de ce qui part, pas celle du dossier :
+    # annoncer 10 Go pour en ecrire 2 Mo se remarquerait, l inverse se
+    # remarquerait au pire moment.
+    $octetsCopies = (Get-ChildItem -LiteralPath $copieG -Recurse -File -Force | Measure-Object -Property Length -Sum).Sum
+    ok 'la taille annoncee est celle du copie' `
+        ([math]::Round($eG[0].tailleMo, 1)) ([math]::Round($octetsCopies / 1MB, 1))
+    # Et elle est bien plus petite que le dossier d origine, sinon la
+    # comparaison ci-dessus pourrait etre juste sans que rien ne soit exclu.
+    $octetsSource = (Get-ChildItem -LiteralPath $g -Recurse -File -Force | Measure-Object -Property Length -Sum).Sum
+    ok 'et bien plus petite que la source' (($octetsCopies * 4) -lt $octetsSource) $true
+    ok 'l index dit ce qui a ete ecarte' (@($eG[0].exclu) -contains 'caches') $true
+
+    # Et la restauration repose exactement ce qui a ete emporte, sans inventer.
+    Remove-Item -LiteralPath $g -Recurse -Force
+    & (Join-Path $racine 'restaurer-configs.ps1') -Source $destG *> $null
+    ok 'les reglages reviennent'      (Get-Content -LiteralPath (Join-Path $g 'gradle.properties') -Raw).Trim() 'org.gradle.jvmargs=-Xmx4g'
+    ok 'les caches ne reviennent pas' (Test-Path -LiteralPath (Join-Path $g 'caches')) $false
+    Remove-Item -LiteralPath $g -Recurse -Force
+
+    "`n--- un dossier dont le nom porte une version ---"
+    # Android Studio et les IDE JetBrains rangent leurs reglages dans un dossier
+    # qui porte leur version : sans joker, la table ne trouvait rien.
+    $as = Join-Path $T 'appdata\Google\AndroidStudio2024.2'
+    New-Item -ItemType Directory -Path $as -Force | Out-Null
+    Set-Content -Path (Join-Path $as 'keymap.xml') -Value '<raccourcis/>'
+    $resolus = @(Expand-CheminModele -Modele '%APPDATA%\Google\AndroidStudio*')
+    ok 'le joker trouve le dossier'   $resolus.Count 1
+    # Le modele reconstruit est ce qui permettra de restaurer ailleurs : s il
+    # gardait le joker, la restauration ne saurait pas ou reposer le dossier.
+    ok 'et reconstruit un modele sans joker' $resolus[0].modele '%APPDATA%\Google\AndroidStudio2024.2'
+    Remove-Item -LiteralPath $as -Recurse -Force
 
     "`n--- le nouveau PC n a pas le meme nom d utilisateur ---"
     # C'est le cas normal d'une migration, pas un cas tordu. L'index gardait

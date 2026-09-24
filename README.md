@@ -887,6 +887,28 @@ neuve, sous un profil que personne n'utilise, et l'annonçait en vert. Un index 
 par une version antérieure n'a pas ce champ : il se restaure encore, sur le chemin
 d'origine.
 
+**Une règle peut laisser des choses derrière elle.** La table copiait des dossiers
+entiers, sans exception possible : une entrée `.gradle` aurait emporté dix Go de caches
+régénérables pour deux kilo-octets de réglages. Chaque règle peut maintenant nommer ce
+qu'elle écarte, et la taille annoncée est celle de ce qui part réellement — annoncer
+10 Go pour en écrire 2 Mo se remarquerait, l'inverse se remarquerait au pire moment.
+
+Un chemin peut aussi porter un joker, parce qu'Android Studio et les IDE JetBrains
+rangent leurs réglages dans un dossier qui porte leur version. Le modèle enregistré dans
+l'index, lui, est reconstruit sans joker : c'est lui qui permettra de restaurer ailleurs.
+
+**Android : le plus petit fichier de la table est le plus coûteux à perdre.**
+`%USERPROFILE%\.android\debug.keystore` fait quelques kilo-octets et ne se régénère pas à
+l'identique. Sans lui, tous vos builds de debug changent de signature : les clés Maps,
+Firebase et Sign-In liées à son SHA-1 cessent de fonctionner, et chaque application déjà
+posée sur un appareil de test doit être désinstallée avant de pouvoir être réinstallée.
+Les clés ADB du même dossier évitent que chaque téléphone redemande l'autorisation de
+débogage. Les émulateurs, eux, sont comptés à part : plusieurs Go chacun, à emporter
+seulement si les recréer coûte plus cher que la place.
+
+Le SDK Android n'est pas copié et ne doit pas l'être : vingt à soixante Go qui se
+retéléchargent, là où la liste des paquets installés tient en une commande.
+
 **Les dossiers de configuration sont repérés, pas devinés.** Le scanner connaît une
 table d'emplacements — celui de VS Code, de Notepad++, de Firefox, d'OBS, d'une trentaine
 de logiciels courants — et ne retient que ceux qui existent réellement, pour un logiciel
