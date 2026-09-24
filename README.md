@@ -600,7 +600,7 @@ Données. `tests/test-profil-hostile.js` rejoue un profil piégé à chaque publ
 ```bash
 npm install                       # une seule fois
 npm test                          # les cinq suites sans navigateur, en 2 s
-npm run test:scan                 # les six suites PowerShell
+npm run test:scan                 # les sept suites PowerShell
 npm run test:navigateur           # rendu réel dans Chromium
 npm run test:verification         # import d'une vérification de PC
 npm run test:pwa                  # installabilité et fonctionnement hors ligne
@@ -622,7 +622,30 @@ npm run test:outils               # scripts proposés et chargement automatique
 navigateur demandent Chromium (`npm install` le fournit via Playwright), les suites
 PowerShell demandent `pwsh`.
 
-Vingt-six suites, dans l'ordre où la CI les lance.
+Vingt-sept suites, dans l'ordre où la CI les lance.
+
+### Ce que seul un vrai Windows peut dire
+
+Les suites PowerShell tournent sur Linux, contre des données écrites à la main : elles
+vérifient un raisonnement, jamais Windows. Le registre, `Get-AppxPackage`, WMI et
+l'encodage d'une console réelle n'y sont jamais exercés — et c'est pourtant là que ces
+scripts vont tourner.
+
+La CI les rejoue donc aussi sur un runner `windows-latest`, deux fois : sous PowerShell 7,
+puis sous **Windows PowerShell 5.1**, celui qui est livré avec Windows et celui qu'on
+obtient en double-cliquant sur un `.bat`. C'est la version que les gens exécutent
+vraiment, et elle n'avait jamais rien exécuté.
+
+`tests/test-windows-reel.ps1` va plus loin : il lance le scan pour de vrai, sur la vraie
+machine. Un runner n'est pas un PC de bureau — on ne sait pas ce qui y est installé —
+donc il vérifie la **forme** de ce qui sort et les erreurs qui ne doivent jamais
+apparaître : le registre a répondu, WMI aussi, aucun nom n'est abîmé par l'encodage,
+aucune exception n'a échappé aux garde-fous, aucun composant Windows n'est présenté
+comme un jeu Xbox, aucun certificat n'est recopié à la place d'un éditeur. Hors Windows,
+ce fichier s'arrête en le disant plutôt que de prétendre avoir vérifié quoi que ce soit.
+
+Ce que même ça ne teste pas : votre carte mère, vos pilotes, Steam, Epic, GOG, et
+l'interface graphique du lanceur. Un runner est un Windows Server nu.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :

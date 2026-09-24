@@ -25,10 +25,21 @@ $null = New-Item -ItemType Directory -Path (Join-Path $T 'cle') -Force
 Set-Content -Path (Join-Path $T 'profil\.ssh\id_ed25519') -Value 'CLE ORIGINALE'
 Set-Content -Path (Join-Path $T 'profil\.ssh\known_hosts') -Value 'hotes connus'
 
-$avant = @{ APPDATA = $env:APPDATA; USERPROFILE = $env:USERPROFILE; LOCALAPPDATA = $env:LOCALAPPDATA }
+# Toutes les racines que la table des configurations sait lire sont deviees
+# vers le bac a sable. Sur une vraie machine Windows, en laisser une seule au
+# dehors suffirait : le script irait chercher un dossier reel, le copierait, et
+# la restauration voudrait le reposer a sa place. Un test n'ecrit pas ailleurs
+# que chez lui. %PROGRAMDATA% et %PROGRAMFILES(X86)% comptent : deux entrees de
+# la table les utilisent.
+$avant = @{
+    APPDATA = $env:APPDATA; USERPROFILE = $env:USERPROFILE; LOCALAPPDATA = $env:LOCALAPPDATA
+    PROGRAMDATA = $env:ProgramData; PROGRAMFILESX86 = ${env:ProgramFiles(x86)}
+}
 $env:USERPROFILE  = Join-Path $T 'profil'
 $env:APPDATA      = Join-Path $T 'appdata'
 $env:LOCALAPPDATA = Join-Path $T 'local'
+$env:ProgramData  = Join-Path $T 'programdata'
+${env:ProgramFiles(x86)} = Join-Path $T 'programfiles86'
 $dest = Join-Path $T 'cle\configs'
 
 try {
@@ -135,7 +146,8 @@ try {
 }
 finally {
     $env:APPDATA = $avant.APPDATA; $env:USERPROFILE = $avant.USERPROFILE
-    $env:LOCALAPPDATA = $avant.LOCALAPPDATA
+    $env:LOCALAPPDATA = $avant.LOCALAPPDATA; $env:ProgramData = $avant.PROGRAMDATA
+    ${env:ProgramFiles(x86)} = $avant.PROGRAMFILESX86
     Remove-Item -LiteralPath $T -Recurse -Force -ErrorAction SilentlyContinue
 }
 

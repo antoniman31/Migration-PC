@@ -135,6 +135,100 @@ jobs:
       - name: Scripts et chargement automatique
         run: node tests/test-outils.js
 
+  # Tout le job ci-dessus tourne sur Linux, contre des donnees fabriquees a la
+  # main : cela verifie le raisonnement, jamais Windows. Le registre,
+  # Get-AppxPackage, WMI et l'encodage d'une console reelle n'y sont jamais
+  # exerces — et c'est pourtant la que ces scripts vont tourner.
+  #
+  # Les suites restent sur Linux : elles repondent en quelques secondes et
+  # attrapent les regressions de logique. Celui-ci ajoute la realite.
+  #
+  # `continue-on-error` le temps de le stabiliser : un job neuf qui bloquerait
+  # la publication du site serait pire que pas de job. A retirer des qu'il est
+  # vert deux fois de suite — sinon il ne sert qu'a decorer.
+  verifier-windows:
+    name: Tests sur Windows
+    runs-on: windows-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+
+      # PowerShell 7, la meme version que sur le runner Linux : ce qui change
+      # ici, c'est le systeme dessous, pas l'interpreteur.
+      - name: Scanner — PowerShell 7
+        shell: pwsh
+        run: pwsh -File tests/test-scan.ps1
+
+      - name: Vérification du PC — PowerShell 7
+        shell: pwsh
+        run: pwsh -File tests/test-verification.ps1
+
+      - name: Vérification des sauvegardes — PowerShell 7
+        shell: pwsh
+        run: pwsh -File tests/test-sauvegardes.ps1
+
+      - name: Lanceur — PowerShell 7
+        shell: pwsh
+        run: pwsh -File tests/test-lanceur.ps1
+
+      - name: Configurations — PowerShell 7
+        shell: pwsh
+        run: pwsh -File tests/test-configs-aller-retour.ps1
+
+      - name: Marqueurs d'encodage — PowerShell 7
+        shell: pwsh
+        run: pwsh -File tests/test-powershell-compatibility.ps1
+
+      # Windows PowerShell 5.1 : celui qui est livre avec Windows, et celui
+      # qu'on obtient en double-cliquant sur un .bat. C'est la version que les
+      # gens executent vraiment, et elle n'avait jamais rien execute.
+      - name: Scanner — Windows PowerShell 5.1
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/test-scan.ps1
+
+      - name: Vérification du PC — Windows PowerShell 5.1
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/test-verification.ps1
+
+      - name: Vérification des sauvegardes — Windows PowerShell 5.1
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/test-sauvegardes.ps1
+
+      - name: Lanceur — Windows PowerShell 5.1
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/test-lanceur.ps1
+
+      - name: Configurations — Windows PowerShell 5.1
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/test-configs-aller-retour.ps1
+
+      # Le vrai scan de la vraie machine : registre, paquets APPX, WMI. C'est
+      # la seule etape du projet qui exerce la detection Windows telle qu'elle
+      # tournera chez quelqu'un.
+      - name: Le scan sur la vraie machine — PowerShell 7
+        shell: pwsh
+        run: pwsh -File tests/test-windows-reel.ps1
+
+      - name: Le scan sur la vraie machine — Windows PowerShell 5.1
+        shell: powershell
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/test-windows-reel.ps1
+
+      # Un scan laisse resultat-scan.js a cote de la page. Le test le retire,
+      # mais si une etape a echoue avant son nettoyage, on veut le savoir ici
+      # plutot que de le decouvrir dans un artefact publie.
+      - name: Rien ne traine apres le passage
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path resultat-scan.js) {
+            Write-Host "resultat-scan.js est reste dans le depot" -ForegroundColor Red
+            exit 1
+          }
+          $sale = git status --porcelain
+          if ($sale) { Write-Host "le depot a ete modifie :`n$sale" -ForegroundColor Red; exit 1 }
+          Write-Host "depot propre"
+
   publier:
     name: Publier sur Pages
     needs: verifier
