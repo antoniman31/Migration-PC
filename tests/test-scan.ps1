@@ -141,6 +141,59 @@ ok 'sans code, rien'                 (@($pil | Where-Object { $_.nom -eq 'Sans c
 ok 'le probleme est nomme'           (@($pil | Where-Object { $_.nom -match 'Ethernet' })[0].probleme) 'aucun pilote installe'
 ok 'liste vide, rien'                (@(Format-Pilotes -Peripheriques @())).Count 0
 
+"--- les logiciels portables, qu aucune source ne voit ---"
+# Un .exe dezippe dans un dossier n a aucune entree de desinstallation, aucun
+# identifiant winget, rien dans le Store. Ce releve est une liste de suspects,
+# pas un inventaire : tout l enjeu est de limiter le bruit.
+$bacP = Join-Path ([System.IO.Path]::GetTempPath()) ("mpc-port-" + (Get-Random))
+try {
+    foreach ($d in @('Outils\ffmpeg', 'Outils\sumatrapdf', 'Jeux\node_modules\x',
+                     'Collection', 'Telechargements\truc-setup', 'Projets\build',
+                     'Outils\7-Zip')) {
+        New-Item -ItemType Directory -Path (Join-Path $bacP $d) -Force | Out-Null
+    }
+    Set-Content -LiteralPath (Join-Path $bacP 'Outils\ffmpeg\ffmpeg.exe') -Value 'x'
+    Set-Content -LiteralPath (Join-Path $bacP 'Outils\sumatrapdf\SumatraPDF.exe') -Value 'x'
+    # Un installateur accompagne le logiciel sans etre le logiciel.
+    Set-Content -LiteralPath (Join-Path $bacP 'Outils\sumatrapdf\uninstall.exe') -Value 'x'
+    Set-Content -LiteralPath (Join-Path $bacP 'Jeux\node_modules\x\bidule.exe') -Value 'x'
+    Set-Content -LiteralPath (Join-Path $bacP 'Telechargements\truc-setup\setup.exe') -Value 'x'
+    Set-Content -LiteralPath (Join-Path $bacP 'Projets\build\monprog.exe') -Value 'x'
+    Set-Content -LiteralPath (Join-Path $bacP 'Outils\7-Zip\7zFM.exe') -Value 'x'
+    # Beaucoup d executables au meme endroit : une collection, pas une application.
+    1..6 | ForEach-Object { Set-Content -LiteralPath (Join-Path $bacP "Collection\app$_.exe") -Value 'x' }
+
+    $pt = @(Format-Portables -Racine $bacP -Modele '%USERPROFILE%')
+    $noms = @($pt | ForEach-Object { $_.nom })
+    ok 'les trois candidats sont vus' $pt.Count 3
+    ok 'ffmpeg en fait partie'        ($noms -contains 'ffmpeg') $true
+    ok 'SumatraPDF aussi'             ($noms -contains 'sumatrapdf') $true
+    ok 'et 7-Zip, faute de savoir'    ($noms -contains '7-Zip') $true
+    # Ce qui doit rester dehors, sinon la liste devient illisible.
+    ok 'une collection est ecartee'   ($noms -contains 'Collection') $false
+    ok 'node_modules aussi'           ($noms -contains 'x') $false
+    ok 'un dossier de build aussi'    ($noms -contains 'build') $false
+    ok 'un dossier d installateur aussi' ($noms -contains 'truc-setup') $false
+    # L installateur qui accompagne le logiciel ne doit pas empecher de le voir.
+    $sum = @($pt | Where-Object { $_.nom -eq 'sumatrapdf' })[0]
+    ok 'l installateur n est pas compte' ($sum.exes -contains 'uninstall.exe') $false
+    ok 'mais le logiciel si'          ($sum.exes -contains 'SumatraPDF.exe') $true
+    ok 'le modele est variabilise'    (@($pt | Where-Object { $_.nom -eq 'ffmpeg' })[0].modele) '%USERPROFILE%\Outils\ffmpeg'
+
+    # Deja vu par le registre : le reproposer sous un autre nom serait doubler.
+    # Deja vu par le registre : le reproposer serait doubler. C est ce qui fait
+    # passer 7-Zip de « candidat » a « deja connu », sans toucher aux autres.
+    $pt2 = @(Format-Portables -Racine $bacP -ClesInstallees @((Get-Cle -Nom '7-Zip')))
+    $noms2 = @($pt2 | ForEach-Object { $_.nom })
+    ok 'un logiciel deja installe est ecarte' ($noms2 -contains '7-Zip') $false
+    ok 'et les autres restent'        $pt2.Count 2
+
+    ok 'une racine absente ne rend rien' (@(Format-Portables -Racine (Join-Path $bacP 'nexistepas')).Count) 0
+    ok 'un budget nul arrete tout'    (@(Format-Portables -Racine $bacP -BudgetSecondes 0).Count) 0
+} finally {
+    Remove-Item $bacP -Recurse -Force -ErrorAction SilentlyContinue
+}
+
 "--- les cles de signature, qui ne se recreent pas ---"
 # Un keystore de release perdu oblige a passer par la procedure de
 # reinitialisation de cle chez l editeur. Il pese quelques kilo-octets et vit

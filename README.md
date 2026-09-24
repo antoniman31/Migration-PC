@@ -152,13 +152,27 @@ communes à toute réinstallation Windows, aucun script n'est nécessaire.
 | VS Code, Chrome, Edge, Brave, Firefox | Les extensions installées |
 | Variables d'environnement | Les variables personnalisées de l'utilisateur |
 | SDK Android, WSL, scoop, Chocolatey, npm, pip | Les chaînes d'outils qu'aucun installateur n'enregistre |
-| Profil et disques fixes | Les gros dossiers que la checklist ne réclame pas, et les clés de signature |
+| Profil et disques fixes | Les gros dossiers que la checklist ne réclame pas, les clés de signature, les logiciels portables |
 
 Une entrée vue par plusieurs sources est fusionnée : le nom vient du registre,
 l'identifiant winget de winget, la taille sur disque de celle qui la connaît, et rien
 n'apparaît deux fois. Chaque application est classée par catégorie selon des mots-clés,
 avec une priorité et une durée estimée — tout cela reste modifiable à la main dans le
 JSON.
+
+**Le portable, annoncé pour ce qu'il est.** Un logiciel posé sans installateur — un `.exe`
+dézippé dans un dossier — n'a aucune entrée de désinstallation, aucun identifiant winget,
+rien dans le Store : aucune source du scan ne le voit. Il part donc avec le disque.
+
+Ce relevé-là **n'est pas un inventaire et ne prétend pas l'être** : rien ne permet de
+distinguer à coup sûr un logiciel portable d'un dossier qui contient un exécutable. La
+page le dit en toutes lettres sur chaque ligne, plutôt que de présenter une supposition
+comme un constat. Ce qu'on peut faire, c'est limiter le bruit : les installateurs et les
+mises à jour ne comptent pas comme des logiciels, un dossier qui contient beaucoup
+d'exécutables est une collection et pas une application, `node_modules`, les dossiers de
+construction et les bibliothèques de jeux sont écartés, et ce que le registre a déjà vu
+n'est pas reproposé. Ils vont dans l'onglet Données, pas dans Apps : un portable se
+copie, il ne se réinstalle pas.
 
 **Les clés qui ne se recréent pas.** Un keystore de release Android perdu oblige à passer
 par la procédure de réinitialisation de clé chez l'éditeur, et les applications déjà

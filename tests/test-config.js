@@ -152,6 +152,31 @@ ok('mais comble ce qui manquait',await pg.evaluate(()=>CONFIG.ssd),'Un SSD');
 await pg.evaluate(()=>{CONFIG={};saveConfig();construireConfig();
   appliquerProfil(PROFIL_DEFAUT,false);});
 
+console.log('\n--- les logiciels portables ---');
+// Le mot « ressemble » compte : rien ne permet de distinguer à coup sûr un
+// logiciel posé sans installateur d'un dossier qui contient un .exe. La page
+// doit le dire, au lieu de présenter une supposition comme un constat.
+await pg.evaluate(()=>{appliquerProfil(PROFIL_DEFAUT,false);});
+await pg.evaluate(()=>traiterDonnees({
+  type:'inventaire-migration-pc',machine:{},
+  apps:[{nom:'A',cat:'system',source:'registre'}],
+  variables:{},configs:[],materiel:{},outils:[],dossiers:[],precieux:[],
+  portables:[{nom:'ffmpeg',chemin:'D:\\Outils\\ffmpeg',exes:['ffmpeg.exe','ffplay.exe']},
+             {nom:'SumatraPDF',chemin:'D:\\Outils\\sumatra',exes:['SumatraPDF.exe']},
+             {chemin:'  '},null]},''));
+await pg.waitForTimeout(400);
+const ports=await pg.evaluate(()=>DATA_SAVES.filter(d=>String(d.id).indexOf('port')===0));
+ok('les deux candidats remontent',ports.length,2);
+ok('les entrées vides ne comptent pas',
+  (await pg.textContent('#profil-sous')).indexOf('2 portables à relire')>=0,true);
+ok('les exécutables sont nommés',(ports[0].note||'').indexOf('ffmpeg.exe')>=0,true);
+// C'est une copie, pas une réinstallation : rien ne les remettra en place.
+ok('on dit que ça se copie',(ports[0].note||'').indexOf('à copier')>=0,true);
+ok('et que c\'est une supposition',
+  (ports[0].warn||'').indexOf('Supposition')>=0,true);
+await pg.evaluate(()=>{appliquerProfil(PROFIL_DEFAUT,false);});
+await pg.waitForTimeout(300);
+
 console.log('\n--- les clés de signature ---');
 // Quelques kilo-octets, et les seuls fichiers de la liste qu'aucune
 // réinstallation ne rattrape : un keystore de release perdu oblige à passer

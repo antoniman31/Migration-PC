@@ -899,6 +899,130 @@ function Read-FichiersPrecieux {
     return $out
 }
 
+# ---------------------------------------------------------------- portable
+#
+# Un logiciel pose sans installateur — un .exe dezippe dans un dossier — n'a
+# aucune entree de desinstallation, aucun identifiant winget, rien dans le
+# Store. Aucune des sources du scan ne le voit. Il part donc avec le disque,
+# et il ne revient pas.
+#
+# Ce qui suit n'est PAS un inventaire, et ne pretend pas l'etre : c'est une
+# liste de suspects a relire. On ne sait pas distinguer a coup sur un logiciel
+# portable d'un dossier qui contient un .exe. On limite donc le bruit autant
+# que possible, et on annonce ce que c'est.
+
+# Ce qui accompagne un logiciel sans etre le logiciel.
+$script:ExesIgnorables = @(
+    'setup', 'install', 'installer', 'uninstall', 'uninst', 'unins000',
+    'update', 'updater', 'crashpad_handler', 'crashreporter', 'vcredist',
+    'helper', 'elevate', 'launcher-installer', 'repair', 'maintenanceservice',
+    'dotnetfx', 'wixstub', 'notification_helper', 'squirrel'
+)
+
+function Test-ExeIgnorable {
+    param([string]$Nom)
+    if ([string]::IsNullOrWhiteSpace($Nom)) { return $true }
+    $base = [System.IO.Path]::GetFileNameWithoutExtension($Nom).ToLowerInvariant()
+    foreach ($i in $script:ExesIgnorables) {
+        if ($base -eq $i) { return $true }
+        if ($base -like "$i*") { return $true }
+    }
+    return $false
+}
+
+# Les dossiers ou chercher n'ont rien a voir avec ceux ou chercher des cles :
+# ici on evite en plus tout ce qui appartient a un logiciel deja installe.
+$script:DossiersNonPortables = @(
+    'Windows', 'Program Files', 'Program Files (x86)', 'ProgramData', 'AppData',
+    '$Recycle.Bin', 'System Volume Information', 'Recovery', 'PerfLogs',
+    'node_modules', '.git', '.gradle', '.m2', 'caches', 'cache', 'venv', '.venv',
+    'site-packages', 'build', 'dist', 'obj', 'target', 'vendor', 'Sdk',
+    'steamapps', 'WindowsApps', 'XboxGames', 'EA Games', 'Origin Games',
+    'Temp', 'tmp', '.vscode', '.android', 'OneDriveTemp'
+)
+
+function Test-DossierNonPortable {
+    param([string]$Chemin)
+    if ([string]::IsNullOrWhiteSpace($Chemin)) { return $false }
+    foreach ($b in (($Chemin -replace '/', '\') -split '\\')) {
+        foreach ($n in $script:DossiersNonPortables) {
+            if ($b -eq $n) { return $true }
+        }
+    }
+    return $false
+}
+
+# Un dossier ressemble a un logiciel portable quand il contient peu
+# d'executables et qu'aucun n'est un installateur. Beaucoup d'executables au
+# meme endroit, c'est une collection ou un dossier systeme, pas une
+# application : on ne le propose pas.
+function Format-Portables {
+    param(
+        [string]$Racine,
+        [int]$Profondeur = 3,
+        [int]$MaxExes = 4,
+        [string[]]$ClesInstallees = @(),
+        [string]$Modele = '',
+        [double]$BudgetSecondes = 30
+    )
+    $out = @()
+    if ([string]::IsNullOrWhiteSpace($Racine) -or -not (Test-Path -LiteralPath $Racine)) { return $out }
+    $chrono = [System.Diagnostics.Stopwatch]::StartNew()
+    $base = (Get-Item -LiteralPath $Racine -Force -ErrorAction SilentlyContinue)
+    if (-not $base) { return $out }
+    $prefixe = $base.FullName.TrimEnd('\', '/')
+
+    $aVoir = New-Object System.Collections.Queue
+    $aVoir.Enqueue(@{ chemin = $prefixe; niveau = 0 })
+    while ($aVoir.Count -gt 0) {
+        if ($chrono.Elapsed.TotalSeconds -gt $BudgetSecondes) { break }
+        $courant = $aVoir.Dequeue()
+        $enfants = @(Get-ChildItem -LiteralPath $courant.chemin -Directory -Force -ErrorAction SilentlyContinue)
+        foreach ($d in $enfants) {
+            if (Test-DossierNonPortable -Chemin $d.Name) { continue }
+            if ($d.Attributes -band [IO.FileAttributes]::ReparsePoint) { continue }
+            if ($courant.niveau + 1 -lt $Profondeur) {
+                $aVoir.Enqueue(@{ chemin = $d.FullName; niveau = $courant.niveau + 1 })
+            }
+            $exes = @(Get-ChildItem -LiteralPath $d.FullName -File -Force -ErrorAction SilentlyContinue |
+                      Where-Object { $_.Extension -eq '.exe' })
+            if (-not $exes.Count) { continue }
+            $utiles = @($exes | Where-Object { -not (Test-ExeIgnorable -Nom $_.Name) })
+            if (-not $utiles.Count) { continue }
+            if ($utiles.Count -gt $MaxExes) { continue }
+            # Deja installe par ailleurs : le registre l'a vu, inutile de le
+            # proposer une seconde fois sous un autre nom.
+            $cle = Get-Cle -Nom $d.Name
+            if ($cle -and ($ClesInstallees -contains $cle)) { continue }
+            $rel = ($d.FullName.Substring($prefixe.Length) -replace '/', '\').TrimStart('\')
+            $out += [ordered]@{
+                nom    = $d.Name
+                chemin = $d.FullName
+                modele = if ($Modele) { ($Modele.TrimEnd('\', '/') + '\' + $rel) } else { '' }
+                exes   = @($utiles | ForEach-Object { $_.Name })
+            }
+        }
+    }
+    return $out
+}
+
+function Read-Portables {
+    param([double]$BudgetSecondes = 60)
+    Write-Host "  logiciels portables..." -NoNewline
+    $racines = @(Get-RacinesAExplorer)
+    if (-not $racines.Count) { Write-Host " aucune racine, ignore" -ForegroundColor Yellow; return @() }
+    $cles = @($resultats.Keys)
+    $part = $BudgetSecondes / $racines.Count
+    $out = @()
+    foreach ($r in $racines) {
+        $out += @(Format-Portables -Racine $r.chemin -ClesInstallees $cles `
+                    -Modele $r.modele -BudgetSecondes $part)
+    }
+    if (-not $out.Count) { Write-Host " aucun repere" -ForegroundColor Yellow; return @() }
+    Write-Host " $($out.Count) a relire"
+    return $out
+}
+
 # ---------------------------------------------------------------- outils
 #
 # Une machine de developpement porte des choses qu'aucun installateur

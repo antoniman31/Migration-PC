@@ -133,8 +133,14 @@ if (-not $SansGrosDossiers) {
 # reinitialisation de cle de Google pour continuer a publier. Quelques
 # kilo-octets, la ou son proprietaire l'a mis.
 $precieux = @()
+$portables = @()
 if (-not $SansGrosDossiers) {
     $precieux = @(Invoke-Detecteur -Nom 'cles de signature' -Bloc { Read-FichiersPrecieux })
+    # Un logiciel pose sans installateur n'a aucune entree de desinstallation,
+    # aucun identifiant winget, rien dans le Store : aucune source ne le voit.
+    # Ce releve est une liste de suspects a relire, pas un inventaire, et la
+    # page le dit.
+    $portables = @(Invoke-Detecteur -Nom 'logiciels portables' -Bloc { Read-Portables })
 }
 
 $outils = @()
@@ -170,6 +176,7 @@ $inventaire = [ordered]@{
     outils    = @($outils)
     dossiers  = @($dossiers)
     precieux  = @($precieux)
+    portables = @($portables)
 }
 
 $json = $inventaire | ConvertTo-Json -Depth 6
@@ -191,6 +198,10 @@ if ($totalGo) {
 if (@($configs).Count) {
     $mo = Get-Somme $configs 'tailleMo'
     Write-Host "$(@($configs).Count) dossiers de configuration reperes$(if ($mo) { " ($([math]::Round($mo,0)) Mo)" })."
+}
+if (@($portables).Count) {
+    Write-Host "$(@($portables).Count) dossier(s) qui ressemblent a des logiciels portables."
+    Write-Host "  A relire : rien ne permet de les distinguer a coup sur d un dossier avec un .exe."
 }
 if (@($precieux).Count) {
     Write-Host "$(@($precieux).Count) cle(s) de signature trouvee(s)." -ForegroundColor Yellow

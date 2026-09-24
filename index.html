@@ -2457,10 +2457,13 @@ function inventaireVersProfil(inv){
   donnees=donnees.concat(oublies);
   // Les clés de signature passent devant : quelques kilo-octets, mais les
   // seuls fichiers de la liste qu'aucune réinstallation ne rattrape.
+  const suspects=portablesVersDonnees(inv.portables,donnees.map(function(d){return d.p;}));
+  donnees=donnees.concat(suspects);
   const cles=precieuxVersDonnees(inv.precieux,donnees.map(function(d){return d.p;}));
   donnees=cles.concat(donnees);
   if(oublies.length)desc.push(oublies.length+' gros dossier'+(oublies.length>1?'s':'')+' hors liste');
   if(cles.length)desc.push(cles.length+' clé'+(cles.length>1?'s':'')+' de signature');
+  if(suspects.length)desc.push(suspects.length+' portable'+(suspects.length>1?'s':'')+' à relire');
   return {
     meta:{version:1,nom:'Migration PC — inventaire importé',soustitre:desc.join(' · ')},
     cats:cats,
@@ -2533,6 +2536,38 @@ function precieuxVersDonnees(precieux,dejaReclames){
       p:chemin,
       note:bouts.join(' · '),
       warn:'Ne se recrée pas. Perdu, il faut passer par la procédure de réinitialisation de clé de l\'éditeur, et les applications déjà installées ne peuvent plus être mises à jour.'
+    });
+  });
+  return out;
+}
+
+// Les dossiers qui RESSEMBLENT a des logiciels portables. Le mot compte :
+// rien ne permet de distinguer a coup sur un logiciel pose sans installateur
+// d'un dossier qui contient un .exe. On le dit, plutot que de presenter une
+// supposition comme un constat — c'est la regle du projet partout ailleurs.
+//
+// Ils ne se reinstallent pas : ils se copient. Leur place est donc ici, avec
+// les dossiers a emporter, et non parmi les applications.
+function portablesVersDonnees(portables,dejaReclames){
+  if(!Array.isArray(portables)||!portables.length)return [];
+  const reclames=Array.isArray(dejaReclames)?dejaReclames:[];
+  const out=[];
+  portables.forEach(function(p,i){
+    if(!p||typeof p!=='object')return;
+    const chemin=String(p.chemin==null?'':p.chemin).trim();
+    if(!chemin)return;
+    if(reclames.some(function(q){return recouvre(q,chemin);}))return;
+    const exes=Array.isArray(p.exes)?p.exes.filter(function(e){return e;}):[];
+    const bouts=[];
+    if(exes.length)bouts.push(exes.slice(0,3).join(', '));
+    bouts.push('aucun installateur ne le connaît : à copier, pas à réinstaller');
+    out.push({
+      id:'port'+(i+1),
+      n:String(p.nom||chemin),
+      pr:'med',
+      p:chemin,
+      note:bouts.join(' · '),
+      warn:'Supposition, pas un constat : ce dossier contient un exécutable, ce qui ne prouve pas que ce soit un logiciel portable. À relire.'
     });
   });
   return out;
