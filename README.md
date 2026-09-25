@@ -11,6 +11,23 @@ Les scripts sont facultatifs.
 
 ![La checklist, onglet Apps](captures/checklist.png)
 
+## En trois lignes
+
+1. Sur le **PC que vous quittez** : double-cliquez `Migration PC.bat`, choisissez
+   « Cet ordinateur est l'ANCIEN ». La page s'ouvre déjà remplie de vos logiciels.
+2. Exportez votre profil sur la clé, et emportez la clé.
+3. Sur le **PC neuf** : rouvrez `index.html` depuis la clé, importez le profil,
+   et suivez la liste.
+
+Un seul fichier à lancer : `Migration PC.bat`. Tout le reste est rangé dans
+`scripts/` — c'est là pour être lu, pas pour être lancé à la main.
+
+> Windows affiche un avertissement SmartScreen sur un `.bat` téléchargé depuis
+> Internet : « Informations complémentaires » puis « Exécuter quand même ».
+> Aucune astuce ne l'évite sans certificat de signature payant. Les fichiers sont
+> lisibles dans le Bloc-notes — ouvrez-les avant de les lancer si vous voulez
+> vérifier ce qu'ils font.
+
 ---
 
 ## Sommaire
@@ -82,14 +99,19 @@ projet qu'aucun test ne pouvait exercer — `System.Windows.Forms` ne se pilote 
 machine d'intégration sans écran — alors que le menu texte, lui, est lancé et vérifié à
 chaque publication. Moins de code, et plus rien qui échappe aux tests.
 
-Si vous préférez sauter le menu : sur l'ancien PC, double-cliquez
-**`1-scanner-ce-pc.bat`** : il inventorie la machine, écrit son résultat à côté de la
-page et l'ouvre. La checklist s'affiche **déjà remplie de vos logiciels** — rien à
-importer. Vous ajustez, vous exportez votre profil sur la clé.
+Il y a eu deux raccourcis numérotés à côté du menu, `1-scanner-ce-pc.bat` et
+`2-verifier-ce-pc.bat`. Ils sont partis : trois fichiers `.bat` qui se ressemblent,
+dans un dossier qui en comptait vingt et un, désorientaient plus qu'ils n'aidaient.
+Le menu fait les deux, et il dit lequel choisir.
 
-Sur le nouveau PC, double-cliquez **`2-verifier-ce-pc.bat`** : il regarde ce qui est
-déjà installé et rouvre la page, qui vous propose de cocher ce qu'elle a reconnu. La clé
-a fait le transport.
+Sur l'ancien PC, l'option « Cet ordinateur est l'ANCIEN » inventorie la machine,
+écrit son résultat à côté de la page et l'ouvre. La checklist s'affiche **déjà
+remplie de vos logiciels** — rien à importer. Vous ajustez, vous exportez votre
+profil sur la clé.
+
+Sur le nouveau PC, l'option « Cet ordinateur est le NOUVEAU » regarde ce qui est
+déjà installé et rouvre la page, qui vous propose de cocher ce qu'elle a reconnu.
+La clé a fait le transport.
 
 Le `.bat` existe pour une seule raison : Windows refuse d'exécuter un `.ps1` par
 double-clic. Il appelle le script en contournant ce blocage pour ce seul lancement, et
@@ -118,13 +140,13 @@ communes à toute réinstallation Windows, aucun script n'est nécessaire.
 1. Sur l'**ancien PC**, inventoriez ce qui est installé.
 
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\scan-pc.ps1
+   powershell -ExecutionPolicy Bypass -File .\scripts\scan-pc.ps1
    ```
 
 2. Faites vos sauvegardes, puis vérifiez-les.
 
    ```powershell
-   .\verifier-sauvegardes.ps1 -Destination D:\sauvegarde-migration
+   .\scripts\verifier-sauvegardes.ps1 -Destination D:\sauvegarde-migration
    ```
 
 3. Copiez le dossier du projet et les deux JSON produits sur une clé USB.
@@ -136,7 +158,7 @@ communes à toute réinstallation Windows, aucun script n'est nécessaire.
    cocher à la main.
 
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\verifier-pc.ps1
+   powershell -ExecutionPolicy Bypass -File .\scripts\verifier-pc.ps1
    ```
 
    Importez `verification-pc.json` : la page propose, vous validez.
@@ -264,7 +286,7 @@ Installer dix applications puis cocher dix cases à la main est du travail inuti
 la machine fraîchement installée :
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\verifier-pc.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\verifier-pc.ps1
 ```
 
 Le script détecte ce qui est déjà présent, le rapproche des éléments du profil et écrit
@@ -289,7 +311,7 @@ L'onglet Données liste des chemins et on coche en confiance. Ce script compare 
 côtés :
 
 ```powershell
-.\verifier-sauvegardes.ps1 -Destination D:\sauvegarde-migration
+.\scripts\verifier-sauvegardes.ps1 -Destination D:\sauvegarde-migration
 ```
 
 Pour chaque élément qui désigne un vrai dossier, il compte les fichiers et mesure la
@@ -900,26 +922,24 @@ Ce garde-fou suppose que Pages publie par le workflow et non par la branche — 
 
 ```
 Migration-PC/
+│   # Les deux seuls fichiers qu'on ouvre
+├── Migration PC.bat              # le menu : il demande quoi faire et lance le reste
 ├── index.html                    # la checklist (tout est dedans)
 │
-│   # Par où commencer, en double-cliquant
-├── Migration PC.bat              # ouvre le menu qui demande quoi faire
-├── 1-scanner-ce-pc.bat           # raccourci : inventorier, sans passer par le menu
-├── 2-verifier-ce-pc.bat          # raccourci : vérifier le nouveau PC
-│
-│   # Ce que ces raccourcis appellent
-├── migration-pc.ps1              # le lanceur : le menu qui aiguille
-├── lanceur-actions.ps1           # ce qu'il propose et ce qu'il vérifie avant
-├── lib-detection.ps1             # détection partagée par tous les scripts
-├── ecrire-resultat.ps1           # pose le résultat à côté de la page et l'ouvre
-├── scan-pc.ps1                   # inventorie l'ancien PC
-├── verifier-pc.ps1               # constate ce qui est déjà sur le nouveau
-├── sauvegarder-configs.ps1       # emporte les dossiers de réglages
-├── restaurer-configs.ps1         # les repose — le seul script qui écrit chez vous
-├── verifier-sauvegardes.ps1      # compare les dossiers copiés
+│   # Ce que le menu appelle — à lire, pas à lancer à la main
+├── scripts/migration-pc.ps1      # le menu qui aiguille
+├── scripts/lanceur-actions.ps1   # ce qu'il propose et ce qu'il vérifie avant
+├── scripts/lib-detection.ps1     # détection partagée par tous les scripts
+├── scripts/ecrire-resultat.ps1   # pose le résultat à côté de la page et l'ouvre
+├── scripts/scan-pc.ps1           # inventorie l'ancien PC
+├── scripts/verifier-pc.ps1       # constate ce qui est déjà sur le nouveau
+├── scripts/sauvegarder-configs.ps1   # emporte les dossiers de réglages
+├── scripts/restaurer-configs.ps1     # les repose — le seul qui écrit chez vous
+├── scripts/verifier-sauvegardes.ps1  # compare les dossiers copiés
 │
 ├── manifest.json, sw.js, icons/  # installation et fonctionnement hors ligne
-├── presets/exemple.json          # profil d'exemple, aussi embarqué dans index.html
+├── presets/exemple.json          # la checklist livrée, aussi embarquée dans index.html
+├── presets/demonstration.json    # l'exemple garni, chargé à la demande
 ├── scripts-sync.js               # recopie le profil et le nom de cache du sw
 ├── captures/                     # images du README
 ├── tests/                        # suites Node, PowerShell et navigateur

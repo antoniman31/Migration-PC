@@ -9,6 +9,16 @@ const fs=require('fs'),path=require('path');
 const HTML='file://'+path.join(__dirname,'..','index.html');
 const lancement={args:['--no-sandbox']};
 if(process.env.CHROME)lancement.executablePath=process.env.CHROME;
+
+// Le profil livré ne contient aucune application : celles d'une autre machine
+// feraient croire à l'arrivant que c'est sa liste. Les suites qui exercent
+// l'onglet Apps chargent donc la démonstration, comme le ferait quelqu'un qui
+// clique « Voir un exemple garni ».
+async function chargerExemple(pg){
+  await pg.evaluate(()=>{chargerDemo();});
+  await pg.waitForTimeout(250);
+}
+
 (async()=>{
 const b=await chromium.launch(lancement);
 const pg=await (await b.newContext({viewport:{width:1200,height:900},deviceScaleFactor:2})).newPage();
@@ -17,6 +27,12 @@ const dialogues=[];pg.on('dialog',d=>{dialogues.push(d.type());d.accept();});
 await pg.goto(HTML,{waitUntil:'networkidle'});
 let ko=0;const ok=(l,a,c)=>{const p=(c===undefined?!!a:a===c);console.log((p?'  ok  ':' FAIL ')+l+' → '+JSON.stringify(a)+(p?'':' (attendu '+JSON.stringify(c)+')'));if(!p)ko++;};
 const fichier=fs.readFileSync(path.join(__dirname,'verification-exemple.json'));
+
+// La vérification rapproche ce qui est installé sur la machine neuve des
+// éléments du profil chargé. Sans applications dans le profil, il n'y a rien
+// à rapprocher : on charge la démonstration, comme quelqu'un qui aurait
+// d'abord scanné son ancien PC.
+await chargerExemple(pg);
 
 console.log('--- import : rien n\'est coché sans validation ---');
 await pg.setInputFiles('#json-file',{name:'v.json',mimeType:'application/json',buffer:fichier});

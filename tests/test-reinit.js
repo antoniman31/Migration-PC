@@ -11,6 +11,22 @@ const HTML='file://'+path.join(racine,'index.html');
 const lancement={args:['--no-sandbox']};
 if(process.env.CHROME)lancement.executablePath=process.env.CHROME;
 
+
+// Depuis la refonte, la situation et le theme sont derriere « Réglages ».
+// Ces deux aides reproduisent le chemin qu'un utilisateur emprunte, plutôt
+// que d'affaiblir les assertions qui suivent.
+async function ouvrirReglages(pg){
+  if(await pg.isVisible('#hdr-menu-liste'))return;
+  await pg.click('#menu-btn');
+  await pg.waitForSelector('#hdr-menu-liste',{state:'visible'});
+}
+async function ouvrirSituation(pg){
+  if(await pg.isVisible('#scen'))return;
+  await ouvrirReglages(pg);
+  await pg.click('#scen-btn');
+  await pg.waitForSelector('#scen',{state:'visible'});
+}
+
 (async()=>{
 const b=await chromium.launch(lancement);
 const pg=await (await b.newContext({viewport:{width:1200,height:900}})).newPage();
@@ -59,7 +75,7 @@ ok('« Fermer » referme aussi',await pg.isVisible('#reglages'),false);
 
 console.log('\n--- tout decocher ---');
 const n=await prepare();
-await pg.click('#sc-reinstall');await pg.waitForTimeout(250);
+await ouvrirSituation(pg);await pg.click('#sc-reinstall');await pg.waitForTimeout(250);
 await ouvrirPanneau();
 await pg.click('#reglages .reglages-item:not(.reglages-danger) button');
 await pg.waitForTimeout(300);
@@ -88,7 +104,7 @@ await pg.evaluate(()=>{
   p.meta={nom:'Profil importé',soustitre:'test'};
   appliquerProfil(p,true);
 });
-await pg.click('#sc-migration');await pg.waitForTimeout(250);
+await ouvrirSituation(pg);await pg.click('#sc-migration');await pg.waitForTimeout(250);
 ok('le profil importe est en memoire',
   await pg.evaluate(()=>!!localStorage.getItem(CLE_PROFIL)),true);
 await ouvrirPanneau();

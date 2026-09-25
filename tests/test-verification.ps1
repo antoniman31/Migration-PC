@@ -4,7 +4,7 @@
 #   pwsh -File tests/test-verification.ps1
 $ToutInclure = $false
 $resultats = @{}
-. "$PSScriptRoot/../lib-detection.ps1"
+. "$PSScriptRoot/../scripts/lib-detection.ps1"
 
 $script:ko = 0
 function ok($l, $a, $b) {

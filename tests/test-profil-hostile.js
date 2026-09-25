@@ -18,6 +18,24 @@ const HTML='file://'+path.join(racine,'index.html');
 const lancement={args:['--no-sandbox']};
 if(process.env.CHROME)lancement.executablePath=process.env.CHROME;
 
+
+// Le detail d'une application (description, commande, avertissement) s'ouvre
+// au clic. Ces assertions le deplient d'abord au lieu de chercher dans une
+// ligne repliee ce qui n'y est plus.
+async function deplierApps(pg){
+  await pg.evaluate(()=>{APPS_DATA.forEach(a=>{lignesOuvertes[a.id]=true;});renderApps();});
+}
+
+
+// Le profil livré ne contient aucune application : celles d'une autre machine
+// feraient croire à l'arrivant que c'est sa liste. Les suites qui exercent
+// l'onglet Apps chargent donc la démonstration, comme le ferait quelqu'un qui
+// clique « Voir un exemple garni ».
+async function chargerExemple(pg){
+  await pg.evaluate(()=>{chargerDemo();});
+  await pg.waitForTimeout(250);
+}
+
 (async()=>{
 const b=await chromium.launch(lancement);
 const pg=await (await b.newContext()).newPage();
@@ -128,17 +146,21 @@ ok('et rien ne s\'exécute',await pg.evaluate(()=>window.__inject===undefined),t
 await pg.evaluate(()=>{CONFIG={};saveConfig();construireConfig();});
 
 console.log('\n--- un profil honnête marche toujours ---');
+// La démonstration plutôt que le profil livré : ce qu'on vérifie ici est que
+// les listes se remplissent et que les catégories accentuées s'affichent, et
+// le profil livré n'a plus d'applications à rendre.
 await pg.evaluate(()=>{
   changerScenario('tout');
-  appliquerProfil(PROFIL_DEFAUT,false);
+  appliquerProfil(PROFIL_DEMO,false);
 });
 await pg.waitForTimeout(300);
 ok('les listes se remplissent',
-  await pg.evaluate(()=>document.querySelectorAll('#list-apps .item').length>0),true);
+  await pg.evaluate(()=>document.querySelectorAll('#list-apps .lg-l').length>0),true);
 ok('les catégories accentuées s\'affichent correctement',
   await pg.evaluate(()=>{
     const h=document.querySelector('#list-apps .sec-hdr');
     return h?h.textContent.indexOf('&')<0:false;}),true);
+await deplierApps(pg);
 ok('le badge winget copie toujours',
   await pg.evaluate(()=>!!document.querySelector('.b-winget')),true);
 

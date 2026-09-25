@@ -10,6 +10,40 @@ const racine=path.join(__dirname,'..');
 const HTML='file://'+path.join(racine,'index.html');
 const lancement={args:['--no-sandbox']};
 if(process.env.CHROME)lancement.executablePath=process.env.CHROME;
+
+// Depuis la refonte, la situation et le theme sont derriere « Réglages ».
+// Ces deux aides reproduisent le chemin qu'un utilisateur emprunte, plutôt
+// que d'affaiblir les assertions qui suivent.
+async function ouvrirReglages(pg){
+  if(await pg.isVisible('#hdr-menu-liste'))return;
+  await pg.click('#menu-btn');
+  await pg.waitForSelector('#hdr-menu-liste',{state:'visible'});
+}
+async function ouvrirSituation(pg){
+  if(await pg.isVisible('#scen'))return;
+  await ouvrirReglages(pg);
+  await pg.click('#scen-btn');
+  await pg.waitForSelector('#scen',{state:'visible'});
+}
+
+
+// Le detail d'une application (description, commande, avertissement) s'ouvre
+// au clic. Ces assertions le deplient d'abord au lieu de chercher dans une
+// ligne repliee ce qui n'y est plus.
+async function deplierApps(pg){
+  await pg.evaluate(()=>{APPS_DATA.forEach(a=>{lignesOuvertes[a.id]=true;});renderApps();});
+}
+
+
+// Le profil livré ne contient aucune application : celles d'une autre machine
+// feraient croire à l'arrivant que c'est sa liste. Les suites qui exercent
+// l'onglet Apps chargent donc la démonstration, comme le ferait quelqu'un qui
+// clique « Voir un exemple garni ».
+async function chargerExemple(pg){
+  await pg.evaluate(()=>{chargerDemo();});
+  await pg.waitForTimeout(250);
+}
+
 (async()=>{
 const b=await chromium.launch(lancement);
 const pg=await (await b.newContext({viewport:{width:1200,height:900},deviceScaleFactor:2})).newPage();
@@ -17,16 +51,27 @@ pg.on('pageerror',e=>console.log('ERREUR JS:',e.message));
 await pg.goto(HTML,{waitUntil:'networkidle'});
 let ko=0;const ok=(l,a,c)=>{const p=(c===undefined?!!a:a===c);console.log((p?'  ok  ':' FAIL ')+l+' → '+JSON.stringify(a)+(p?'':' (attendu '+JSON.stringify(c)+')'));if(!p)ko++;};
 const P=JSON.parse(fs.readFileSync(path.join(racine,'presets','exemple.json'),'utf8'));
+// Le profil livré ne porte ni applications ni raccourcis web : ce sont ceux
+// d'une autre machine, et ils feraient croire à l'arrivant que c'est sa liste.
+// Les sections qui ont besoin des cinq onglets garnis chargent celui-ci, et
+// comptent alors sur lui.
+const DEMO=JSON.parse(fs.readFileSync(path.join(racine,'presets','demonstration.json'),'utf8'));
 const tous=[...P.quitter,...P.npc,...P.apps,...P.data,...P.pwa];
 const vis=sc=>tous.filter(e=>!e.cas||e.cas.includes(sc)).length;
+// Les mêmes comptes, sur la démonstration : les dernières sections tournent
+// avec elle chargée.
+const tousDemo=[...DEMO.quitter,...DEMO.npc,...DEMO.apps,...DEMO.data,...DEMO.pwa];
+const visDemo=sc=>tousDemo.filter(e=>!e.cas||e.cas.includes(sc)).length;
 
 console.log('--- au départ : tout ---');
-ok('sélecteur présent',await pg.isVisible('.scen'),true);
+ok('sélecteur replié au départ',await pg.isVisible('.scen'),false);
+await ouvrirSituation(pg);
+ok('sélecteur atteignable depuis Réglages',await pg.isVisible('.scen'),true);
 ok('« Tout » actif',await pg.getAttribute('#sc-tout','aria-pressed'),'true');
 ok('total complet',await pg.textContent('#gp-total'),String(tous.length));
 
 console.log('\n--- migration ---');
-await pg.click('#sc-migration');await pg.waitForTimeout(300);
+await ouvrirSituation(pg);await pg.click('#sc-migration');await pg.waitForTimeout(300);
 ok('bouton actif',await pg.getAttribute('#sc-migration','aria-pressed'),'true');
 ok('total filtré',await pg.textContent('#gp-total'),String(vis('migration')));
 const npcM=(await pg.$$('#list-npc .item')).length;
@@ -37,7 +82,7 @@ ok('le sens des ventilateurs est là',txtM.indexOf('sens des ventilateurs')>=0,t
 ok('libellé « Activer TPM »',txtM.indexOf('Activer TPM 2.0')>=0,true);
 
 console.log('\n--- réinstallation ---');
-await pg.click('#sc-reinstall');await pg.waitForTimeout(300);
+await ouvrirSituation(pg);await pg.click('#sc-reinstall');await pg.waitForTimeout(300);
 ok('total filtré',await pg.textContent('#gp-total'),String(vis('reinstall')));
 const txtR=await pg.textContent('#list-npc');
 ok('point de non-retour visible',txtR.indexOf('NON-RETOUR')>=0,true);
@@ -51,15 +96,15 @@ ok('effacement sécurisé masqué',q.indexOf('Effacer le disque')<0,true);
 ok('désactivation Adobe conservée',q.indexOf('Adobe')>=0,true);
 
 console.log('\n--- la progression survit au changement de mode ---');
-await pg.click('#sc-tout');await pg.waitForTimeout(250);
+await ouvrirSituation(pg);await pg.click('#sc-tout');await pg.waitForTimeout(250);
 await pg.evaluate(()=>{switchTab('npc');});
 await pg.waitForTimeout(200);
 await pg.evaluate(()=>{const e=NPC_DATA.find(x=>x.cas&&x.cas[0]==='migration');S.checked[e.id]=true;saveState();renderAll();updateGlobal();});
 const avant=await pg.evaluate(()=>Object.keys(S.checked).length);
-await pg.click('#sc-reinstall');await pg.waitForTimeout(250);
+await ouvrirSituation(pg);await pg.click('#sc-reinstall');await pg.waitForTimeout(250);
 ok('la case cochée reste en mémoire',await pg.evaluate(()=>Object.keys(S.checked).length),avant);
 ok('mais ne compte plus',await pg.textContent('#gp-done'),'0');
-await pg.click('#sc-migration');await pg.waitForTimeout(250);
+await ouvrirSituation(pg);await pg.click('#sc-migration');await pg.waitForTimeout(250);
 ok('elle recompte au retour',await pg.textContent('#gp-done'),'1');
 
 console.log('\n--- mémorisation, recherche, guide ---');
@@ -69,7 +114,7 @@ await pg.fill('#gsearch-input','non-retour');
 await pg.waitForTimeout(300);
 ok('la recherche respecte le filtre',(await pg.textContent('#gsearch-results')).indexOf('NON-RETOUR')<0,true);
 await pg.fill('#gsearch-input','');
-await pg.click('#sc-reinstall');await pg.waitForTimeout(250);
+await ouvrirSituation(pg);await pg.click('#sc-reinstall');await pg.waitForTimeout(250);
 await pg.fill('#gsearch-input','non-retour');await pg.waitForTimeout(300);
 ok('et le trouve dans l\'autre mode',(await pg.textContent('#gsearch-results')).indexOf('NON-RETOUR')>=0,true);
 await pg.fill('#gsearch-input','');
@@ -115,6 +160,9 @@ ok('et le badge ne la cite plus',
 ok('mais garde le prérequis encore visible',
   !!sonde.enReinstall,true);
 
+// Les cinq onglets doivent etre garnis pour qu'on puisse poser un libelle
+// alternatif sur chacun : le profil livre n'a ni applications ni raccourcis.
+await chargerExemple(pg);
 console.log('\n--- les libelles alternatifs, sur les cinq onglets ---');
 // Le profil d'exemple ne pose des « alt » que sur « Nouveau PC ». Le rendu des
 // quatre autres onglets a donc pu ignorer libelleDe() sans qu'aucun test ne le
@@ -131,10 +179,13 @@ const parOnglet=await pg.evaluate(()=>{
   viderIndex();
   changerScenario('reinstall');
   Object.keys(cibles).forEach(k=>{
+    if(k==='apps'){APPS_DATA.forEach(a=>{lignesOuvertes[a.id]=true;});renderApps();}
     const l=document.getElementById('list-'+k);
     const t=l?l.textContent:'';
     resultat[k]={nom:t.indexOf('LIBELLE-'+k.toUpperCase())>=0,
-      // Seuls npc, apps et pwa affichent une description dans la liste.
+      // Seuls npc, apps et pwa affichent une description. Dans « apps » elle
+      // vit dans le detail depliable : on l'ouvre au lieu de la chercher dans
+      // la ligne repliee, ou elle n'a plus sa place.
       desc:t.indexOf('DESCRIPTION-'+k.toUpperCase())>=0};
   });
   // Le libelle memorise dans l'historique doit suivre lui aussi. On clique la
@@ -216,14 +267,14 @@ console.log('\n--- le troisieme cas : juste mes affaires ---');
 // Celui-ci marche a l'envers des deux autres : il part de rien et ne garde que
 // ce qu'il reclame. Sans cette inversion, les reglages BIOS — qui ne portent
 // aucune mention — s'y retrouveraient aussi.
-await pg.click('#sc-affaires');await pg.waitForTimeout(350);
+await ouvrirSituation(pg);await pg.click('#sc-affaires');await pg.waitForTimeout(350);
 // Un element qui nomme ses cas et ne nomme pas celui-ci se reclame d'une autre
 // situation : ce qu'il dit de lui-meme passe avant l'onglet ou il se trouve.
 const pourAffaires=e=>!Array.isArray(e.cas)||!e.cas.length||e.cas.indexOf('affaires')>=0;
-const pilotes=P.npc.filter(e=>e.pilote&&pourAffaires(e)).length;
-const dataAff=P.data.filter(pourAffaires).length;
-const appsAff=P.apps.filter(pourAffaires).length;
-const pwaAff=P.pwa.filter(pourAffaires).length;
+const pilotes=DEMO.npc.filter(e=>e.pilote&&pourAffaires(e)).length;
+const dataAff=DEMO.data.filter(pourAffaires).length;
+const appsAff=DEMO.apps.filter(pourAffaires).length;
+const pwaAff=DEMO.pwa.filter(pourAffaires).length;
 const attendu=pilotes+appsAff+dataAff+pwaAff;
 ok('bouton actif',await pg.getAttribute('#sc-affaires','aria-pressed'),'true');
 ok('le total ne compte que les affaires',await pg.textContent('#gp-total'),String(attendu));
@@ -235,14 +286,14 @@ ok('et ce sont bien eux',npcVus.every(n=>/ilote/.test(n)),true);
 ok('aucun reglage BIOS',npcVus.some(n=>/BIOS|Secure Boot|CSM|XMP|EXPO/.test(n)),false);
 ok('ni l\'installation de Windows',npcVus.some(n=>/Installer Windows|NON-RETOUR/.test(n)),false);
 ok('les applications sont toutes la',
-  (await pg.$$('#list-apps .item')).length,appsAff);
-ok('les donnees aussi',(await pg.$$('#list-data .item')).length,dataAff);
+  (await pg.$$('#list-apps .lg-l')).length,appsAff);
+ok('les donnees aussi',(await pg.$$('#list-data .lg-l')).length,dataAff);
 ok('les PWA aussi',(await pg.$$('#list-pwa .item')).length,pwaAff);
 
 // Un onglet garde en entier ne ramene pas pour autant ce qui appartient a un
 // autre cas : « synchroniser les deux PC » se declare second:, il n'a rien a
 // faire ici, meme dans un onglet qu'on garde.
-const dAutresCas=P.data.filter(e=>Array.isArray(e.cas)&&e.cas.length&&e.cas.indexOf('affaires')<0);
+const dAutresCas=DEMO.data.filter(e=>Array.isArray(e.cas)&&e.cas.length&&e.cas.indexOf('affaires')<0);
 ok('le profil declare bien des elements d\'un autre cas',dAutresCas.length>0,true);
 const nomsData=await pg.evaluate(()=>
   [...document.querySelectorAll('#list-data .item-name')].map(x=>x.textContent));
@@ -253,19 +304,19 @@ const vide=await pg.textContent('#list-quitter');
 ok('« Avant de quitter » n\'est pas muet',vide.trim().length>0,true);
 ok('il nomme le cas en cours',vide.indexOf('Mes affaires')>=0,true);
 ok('et dit combien d\'elements existent ailleurs',
-  vide.indexOf(String(P.quitter.length)+' élément')>=0,true);
+  vide.indexOf(String(DEMO.quitter.length)+' élément')>=0,true);
 ok('le mode guidé compte comme le filtre',await pg.evaluate(()=>{
   basculerGuide();
   const t=document.querySelector('.guide-etape').textContent;
   basculerGuide();return t;}),'Tâche 1 sur '+attendu);
 
 console.log('\n--- les trois autres cas n\'ont pas bouge ---');
-for(const [cle,att] of [['tout',tous.length],['migration',vis('migration')],
-                        ['reinstall',vis('reinstall')]]){
+for(const [cle,att] of [['tout',tousDemo.length],['migration',visDemo('migration')],
+                        ['reinstall',visDemo('reinstall')]]){
   await pg.click('#sc-'+cle);await pg.waitForTimeout(250);
   ok('« '+cle+' » compte toujours pareil',await pg.textContent('#gp-total'),String(att));
 }
-await pg.click('#sc-tout');await pg.waitForTimeout(250);
+await ouvrirSituation(pg);await pg.click('#sc-tout');await pg.waitForTimeout(250);
 
 await b.close();
 console.log(ko?'\n'+ko+' EN ECHEC':'\nSCENARIOS OPERATIONNELS');

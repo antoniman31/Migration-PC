@@ -14,6 +14,14 @@ const HTML='file://'+path.join(racine,'index.html');
 const lancement={args:['--no-sandbox']};
 if(process.env.CHROME)lancement.executablePath=process.env.CHROME;
 
+
+// Le detail d'une application (description, commande, avertissement) s'ouvre
+// au clic. Ces assertions le deplient d'abord au lieu de chercher dans une
+// ligne repliee ce qui n'y est plus.
+async function deplierApps(pg){
+  await pg.evaluate(()=>{APPS_DATA.forEach(a=>{lignesOuvertes[a.id]=true;});renderApps();});
+}
+
 (async()=>{
 const b=await chromium.launch(lancement);
 const ctx=await b.newContext({viewport:{width:1400,height:900}});
@@ -66,8 +74,11 @@ ok('ni un composant non renseigné',apres.some(n=>/Benchmark du SSD —/.test(n)
 const lien=await lienDe('chipset');
 ok('la recherche vise le constructeur',lien.indexOf('ASUS ROG STRIX B850-A support pilotes')>=0,true);
 ok('et pas la phrase entière',lien.indexOf('Pilote chipset de la carte')<0,true);
-ok('une étape sans composant garde sa recherche',
-  (await lienDe('Windows Update')).indexOf('download')>=0,true);
+// Une etape qui n'est ni un telechargement ni un composant n'a rien a
+// chercher : « download Windows Update official » ne mene nulle part, et un
+// bouton qui deçoit a chaque clic coute plus que son absence.
+ok('une étape sans composant n\'a pas de bouton',
+  await lienDe('Windows Update'),null);
 
 console.log('\n--- ça tient, et ça s\'efface ---');
 await pg.reload({waitUntil:'networkidle'});
@@ -288,6 +299,7 @@ ok('ils ont leur catégorie à eux',
   await pg.evaluate(()=>!!CATS.outils),true);
 // La commande est recopiee telle quelle : deviner celle d'un paquet scoop ou
 // du SDK servirait un ordre faux qui a l'air vrai.
+await deplierApps(pg);
 ok('la commande est celle du scanner',await pg.evaluate(()=>{
   const b=[...document.querySelectorAll('#list-apps .b-winget')]
     .find(x=>x.textContent.indexOf('sdkmanager')>=0);
@@ -324,6 +336,11 @@ console.log('\n--- un scan qui ne trouve rien n\'est pas une panne ---');
 // C'est justement le cas d'une machine fraîchement installée : le scan tourne,
 // ne trouve presque rien, et ouvrir la page sur un panneau rouge serait faux.
 await pg.evaluate(()=>{CONFIG={};saveConfig();construireConfig();});
+// On charge une liste garnie pour avoir quelque chose a preserver : ce qu'on
+// verifie ici est qu'un inventaire vide n'efface pas ce qui est deja la.
+await pg.evaluate(()=>{chargerDemo();});
+await pg.waitForTimeout(250);
+const appsAvant=await pg.evaluate(()=>APPS_DATA.length);
 const vide=await pg.evaluate(()=>traiterDonnees({
   type:'inventaire-migration-pc',machine:{nom:'NEUF'},apps:[],variables:{},configs:[],
   materiel:{cm:'ASUS B850-A'}},''));
@@ -333,8 +350,8 @@ ok('aucun panneau d\'erreur',await pg.isVisible('#panne'),false);
 ok('on le dit calmement',
   (await pg.textContent('#annul-txt')).indexOf('aucune application détectée')>=0,true);
 ok('le matériel est repris quand même',await pg.evaluate(()=>CONFIG.cm),'ASUS B850-A');
-ok('et le profil d\'exemple reste en place',
-  await pg.evaluate(()=>APPS_DATA.length>0),true);
+ok('et la liste en place n\'est pas effacée',
+  await pg.evaluate(()=>APPS_DATA.length),appsAvant);
 
 console.log('\n--- une vérification sans pilote en défaut ---');
 await pg.evaluate(()=>traiterDonnees({

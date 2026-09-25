@@ -4,7 +4,7 @@
 $ToutInclure = $false
 $resultats = @{}
 $racineScan = Split-Path $PSScriptRoot -Parent
-. "$PSScriptRoot/../lib-detection.ps1"
+. "$PSScriptRoot/../scripts/lib-detection.ps1"
 $script:ko=0
 function ok($l,$a,$b){ if($a -eq $b){"  ok   $l -> $a"} else {"  FAIL $l -> $a (attendu $b)";$script:ko++} }
 

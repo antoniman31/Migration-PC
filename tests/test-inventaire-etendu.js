@@ -53,6 +53,8 @@ console.log('\n--- rendu ---');
 G('appliquerProfil')(p,true);
 ok('apps rendues',G('APPS_DATA').length,6);
 ok('taille visible dans la liste',els['list-apps'].innerHTML.indexOf('75 Go')>=0,true);
+// Les champs de variables vivent dans le detail depliable.
+G('DATA_SAVES').forEach(d=>{G('lignesOuvertes')[d.id]=true;});G('renderData')();
 ok('champ JAVA_HOME rendu',els['list-data'].innerHTML.indexOf('JAVA_HOME')>=0,true);
 ok('valeur pré-remplie rendue',els['list-data'].innerHTML.indexOf('jdk-21')>=0,true);
 

@@ -16,7 +16,17 @@ function Write-ResultatPourSite {
         [switch] $NePasOuvrir
     )
 
+    # Les scripts vivent dans scripts\ et la page a la racine : on la cherche
+    # a cote d'abord — un dossier decompresse a plat reste possible — puis un
+    # cran au-dessus.
     $page = Join-Path $DossierScript 'index.html'
+    if (-not (Test-Path -LiteralPath $page)) {
+        $parent = Split-Path $DossierScript -Parent
+        if ($parent) {
+            $candidat = Join-Path $parent 'index.html'
+            if (Test-Path -LiteralPath $candidat) { $page = $candidat; $DossierScript = $parent }
+        }
+    }
     if (-not (Test-Path -LiteralPath $page)) {
         Write-Host ""
         Write-Host "index.html n'est pas a cote de ce script : le fichier JSON est ecrit," -ForegroundColor Yellow

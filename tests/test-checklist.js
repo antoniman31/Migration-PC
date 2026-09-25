@@ -60,8 +60,14 @@ eq('données',G('DATA_SAVES').length,DEF.data.length);
 eq('pwa',G('PWA_DATA').length,DEF.pwa.length);
 eq('titre du profil',G('PROFIL_NOM'),DEF.meta.nom);
 eq('entête rendue',els['profil-titre'].textContent,DEF.meta.nom);
-eq('filtres générés',els['cat-filters'].innerHTML.split('<button').length-1,Object.keys(DEF.cats).length+1);
-eq('liste apps rendue',els['list-apps'].innerHTML.length>500,true);
+eq('filtres générés',els['cat-filters'].innerHTML.split('<label').length-1,Object.keys(DEF.cats).length);
+// Le profil livré n'a pas d'applications : l'onglet affiche ce qu'il faut
+// faire pour le remplir, pas la liste de quelqu'un d'autre.
+eq('l\'onglet Apps invite au scan',
+  els['list-apps'].innerHTML.indexOf('se remplit avec le scan')>=0,true);
+G('appliquerProfil')(G('PROFIL_DEMO'),true);
+eq('liste apps rendue avec la démonstration',els['list-apps'].innerHTML.length>500,true);
+G('appliquerProfil')(DEF,true);
 eq('liste npc rendue',els['list-npc'].innerHTML.length>500,true);
 // Somme de toutes les sections du profil, y compris celles ajoutées depuis.
 const SECTIONS=['quitter','npc','apps','data','pwa'];
@@ -69,10 +75,14 @@ const TOT=SECTIONS.reduce(function(n,s){return n+((DEF[s]||[]).length);},0);
 eq('total global',String(els['gp-total'].textContent),String(TOT));
 
 console.log('\n--- cocher une tâche ---');
+// « a1 » est une application : le profil livré n'en a aucune, elles vivent
+// dans la démonstration qu'on charge en connaissance de cause.
+const DEMO=JSON.parse(fs.readFileSync(path.join(racine,'presets','demonstration.json'),'utf8'));
+G('appliquerProfil')(DEMO,true);
 G('toggle')('a1','7-Zip');
-eq('case enregistrée',G('S').checked[DEF.apps[0].id],true);
+eq('case enregistrée',G('S').checked[DEMO.apps[0].id],true);
 eq('compteur global',String(els['gp-done'].textContent),'1');
-eq('persisté en localStorage',JSON.parse(store['mpc_state_v1']).checked[DEF.apps[0].id],true);
+eq('persisté en localStorage',JSON.parse(store['mpc_state_v1']).checked[DEMO.apps[0].id],true);
 
 console.log('\n--- import d\'un inventaire ---');
 const inv={type:'inventaire-migration-pc',version:1,genere:'2026-09-24T10:00:00Z',
@@ -91,7 +101,7 @@ eq('profil appliqué',G('APPS_DATA').length,3);
 eq('profil mémorisé',JSON.parse(store['mpc_profil_v1']).apps.length,3);
 eq('entête mise à jour',els['profil-titre'].textContent,'Migration PC — inventaire importé');
 eq('catégories déduites',Object.keys(G('CATS')).length,3);
-eq('progression conservée',G('S').checked[DEF.apps[0].id],true);
+eq('progression conservée',G('S').checked[DEMO.apps[0].id],true);
 
 console.log('\n--- exports ---');
 // eq(true,true) ne verifiait rien : on regarde ce qui sort.
@@ -137,6 +147,9 @@ if(fs.existsSync(fInv)){
   G('appliquerProfil')(pr,true);
   eq('apps importees',G('APPS_DATA').length,reel.apps.length);
   eq('liste rendue',els['list-apps'].innerHTML.length>200,true);
+  // La commande vit dans le detail, qu'on deplie : la ligne repliee ne
+  // montre plus l'identifiant winget, qui ne dit rien a personne.
+  G('APPS_DATA').forEach(a=>{G('lignesOuvertes')[a.id]=true;});G('renderApps')();
   eq('badge winget present',els['list-apps'].innerHTML.indexOf('7zip.7zip')>=0,true);
   eq('app sans winget toleree',G('APPS_DATA').filter(a=>!a.w).length,1);
   eq('categories deduites',Object.keys(G('CATS')).length>=2,true);

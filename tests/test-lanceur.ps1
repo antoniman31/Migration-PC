@@ -9,7 +9,11 @@
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
-$racine = Split-Path $PSScriptRoot -Parent
+$depot = Split-Path $PSScriptRoot -Parent
+# Les scripts sont ranges dans scripts\ : a la racine il ne reste que le
+# fichier a double-cliquer et la page. Un inconnu qui ouvre le dossier ne
+# doit pas avoir a deviner lequel des vingt fichiers lancer.
+$racine = Join-Path $depot 'scripts'
 . (Join-Path $racine 'lanceur-actions.ps1')
 
 $script:ko = 0
@@ -95,12 +99,15 @@ ok 'les deux demandent un dossier'   (@($emporter.dossier, $remettre.dossier) -c
 ok 'remettre previent sur l ordre'   ((@($remettre.suite) -join ' ') -match 'APR[EÈ]S avoir install[eé]') $true
 
 "`n--- les fichiers du lanceur ---"
-foreach ($f in @('migration-pc.ps1', 'lanceur-actions.ps1', 'Migration PC.bat')) {
+foreach ($f in @('migration-pc.ps1', 'lanceur-actions.ps1')) {
     ok "« $f » existe" (Test-Path -LiteralPath (Join-Path $racine $f)) $true
 }
 # Un .bat en fins de ligne Unix ne s'execute pas correctement sous Windows.
-foreach ($f in @('Migration PC.bat', '1-scanner-ce-pc.bat', '2-verifier-ce-pc.bat')) {
-    $brut = [System.IO.File]::ReadAllText((Join-Path $racine $f))
+# Les deux raccourcis numerotes sont partis : trois fichiers qui se
+# ressemblent desorientaient plus qu'un seul point d'entree.
+foreach ($f in @('Migration PC.bat')) {
+    # Il reste a la racine : c'est le seul fichier qu'on double-clique.
+    $brut = [System.IO.File]::ReadAllText((Join-Path $depot $f))
     ok "« $f » en fins de ligne Windows" ($brut -match "`r`n") $true
     ok "« $f » contourne le blocage d execution" ($brut -match 'ExecutionPolicy Bypass') $true
 }
