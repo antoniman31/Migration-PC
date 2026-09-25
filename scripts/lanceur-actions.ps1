@@ -108,8 +108,10 @@ function Get-ActionsMigration {
             id      = 'checklist'
             titre   = "Ouvrir la checklist"
             detail  = "La page seule, sans rien scanner."
-            fichier = 'index.html'
-            requis  = @('index.html')
+            # La page est a la racine du dossier, les scripts dans scripts\ :
+            # on la designe depuis la ou ils vivent.
+            fichier = '..\index.html'
+            requis  = @('..\index.html')
             duree   = "immediat"
             suite   = @(
                 "Au premier lancement, deux questions adaptent la liste à votre cas.",

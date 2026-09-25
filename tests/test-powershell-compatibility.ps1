@@ -43,7 +43,7 @@ ok 'tous parsent'               ($neParsePas -join ' | ') ''
 "`n--- le texte accentue survit ---"
 # La table des configurations porte des noms accentues qui finissent dans le
 # JSON, puis dans la page. C'est la que l'encodage se voit vraiment.
-. (Join-Path $racine 'lib-detection.ps1')
+. (Join-Path $racine 'scripts/lib-detection.ps1')
 $avecAccent = @($ConfigsConnues | Where-Object { $_.nom -match '[^\x00-\x7F]' })
 ok 'des noms accentues existent'  ($avecAccent.Count -gt 0) $true
 # Mojibake : la marque d'un UTF-8 relu comme de l'ANSI.

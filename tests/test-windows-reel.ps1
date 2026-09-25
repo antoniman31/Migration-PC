@@ -46,7 +46,7 @@ try {
     "--- le scan, pour de vrai ---"
     $sortie = Join-Path $bac 'inventaire.json'
     $journal = Join-Path $bac 'scan.txt'
-    & (Join-Path $racine 'scan-pc.ps1') -Sortie $sortie -PasDOuverture *> $journal
+    & (Join-Path $racine 'scripts/scan-pc.ps1') -Sortie $sortie -PasDOuverture *> $journal
     ok 'le scan va au bout'          (Test-Path -LiteralPath $sortie) $true
     $inv = Get-Content -LiteralPath $sortie -Raw -Encoding UTF8 | ConvertFrom-Json
     ok 'il porte son type'           $inv.type 'inventaire-migration-pc'
@@ -99,7 +99,7 @@ try {
     "`n--- la verification du PC, pour de vrai ---"
     $verif = Join-Path $bac 'verification.json'
     $jv = Join-Path $bac 'verif.txt'
-    & (Join-Path $racine 'verifier-pc.ps1') -Sortie $verif -PasDOuverture *> $jv
+    & (Join-Path $racine 'scripts/verifier-pc.ps1') -Sortie $verif -PasDOuverture *> $jv
     ok 'elle va au bout'             (Test-Path -LiteralPath $verif) $true
     $v = Get-Content -LiteralPath $verif -Raw -Encoding UTF8 | ConvertFrom-Json
     ok 'elle porte son type'         $v.type 'verification-migration-pc'
@@ -121,7 +121,7 @@ try {
     Set-Content -LiteralPath $rien -Value '' -NoNewline
     $exe = (Get-Process -Id $PID).Path
     $p = Start-Process -FilePath $exe `
-        -ArgumentList @('-NoProfile', '-File', ('"' + (Join-Path $racine 'migration-pc.ps1') + '"')) `
+        -ArgumentList @('-NoProfile', '-File', ('"' + (Join-Path $racine 'scripts/migration-pc.ps1') + '"')) `
         -RedirectStandardOutput $jl -RedirectStandardInput $rien -NoNewWindow -PassThru
     $fini = $p.WaitForExit(60000)
     if (-not $fini) { $p.Kill() }

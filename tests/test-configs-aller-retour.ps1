@@ -12,7 +12,7 @@ Set-StrictMode -Version Latest
 $racine = Split-Path $PSScriptRoot -Parent
 $ToutInclure = $false
 $resultats = @{}
-. (Join-Path $racine 'lib-detection.ps1')
+. (Join-Path $racine 'scripts/lib-detection.ps1')
 
 $script:ko = 0
 function ok($libelle, $obtenu, $attendu) {
@@ -49,10 +49,10 @@ try {
     "--- la sauvegarde ---"
     # -Simuler doit tout montrer sans rien ecrire : c'est la premiere chose
     # qu'on conseille de faire, elle doit etre inoffensive.
-    & (Join-Path $racine 'sauvegarder-configs.ps1') -Destination $dest -Simuler *> $null
+    & (Join-Path $racine 'scripts/sauvegarder-configs.ps1') -Destination $dest -Simuler *> $null
     ok 'la simulation n ecrit rien'   (Test-Path -LiteralPath $dest) $false
 
-    & (Join-Path $racine 'sauvegarder-configs.ps1') -Destination $dest *> $null
+    & (Join-Path $racine 'scripts/sauvegarder-configs.ps1') -Destination $dest *> $null
     $index = Join-Path $dest 'index-configs.json'
     ok 'un index est ecrit'           (Test-Path -LiteralPath $index) $true
     $lu = Get-Content -LiteralPath $index -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -68,10 +68,10 @@ try {
 
     "`n--- la restauration sur une machine vierge ---"
     Remove-Item -LiteralPath (Join-Path $T 'profil\.ssh') -Recurse -Force
-    & (Join-Path $racine 'restaurer-configs.ps1') -Source $dest -Simuler *> $null
+    & (Join-Path $racine 'scripts/restaurer-configs.ps1') -Source $dest -Simuler *> $null
     ok 'la simulation ne restaure rien' (Test-Path -LiteralPath (Join-Path $T 'profil\.ssh')) $false
 
-    & (Join-Path $racine 'restaurer-configs.ps1') -Source $dest *> $null
+    & (Join-Path $racine 'scripts/restaurer-configs.ps1') -Source $dest *> $null
     ok 'le dossier est revenu'        (Test-Path -LiteralPath (Join-Path $T 'profil\.ssh')) $true
     ok 'avec son contenu'             (Get-Content -LiteralPath (Join-Path $T 'profil\.ssh\id_ed25519') -Raw -Encoding UTF8).Trim() 'CLE ORIGINALE'
     ok 'et le second fichier'         (Test-Path -LiteralPath (Join-Path $T 'profil\.ssh\known_hosts')) $true
@@ -80,12 +80,12 @@ try {
 
     "`n--- le refus d ecraser ---"
     Set-Content -Path (Join-Path $T 'profil\.ssh\id_ed25519') -Value 'CLE DU NOUVEAU PC'
-    & (Join-Path $racine 'restaurer-configs.ps1') -Source $dest *> $null
+    & (Join-Path $racine 'scripts/restaurer-configs.ps1') -Source $dest *> $null
     # Sans -Remplacer, rien ne doit bouger : c'est tout l'interet du defaut.
     ok 'le fichier en place est intact' (Get-Content -LiteralPath (Join-Path $T 'profil\.ssh\id_ed25519') -Raw -Encoding UTF8).Trim() 'CLE DU NOUVEAU PC'
 
     "`n--- -Remplacer garde une porte de sortie ---"
-    & (Join-Path $racine 'restaurer-configs.ps1') -Source $dest -Remplacer *> $null
+    & (Join-Path $racine 'scripts/restaurer-configs.ps1') -Source $dest -Remplacer *> $null
     ok 'la sauvegarde a ete posee'    (Get-Content -LiteralPath (Join-Path $T 'profil\.ssh\id_ed25519') -Raw -Encoding UTF8).Trim() 'CLE ORIGINALE'
     $misDeCote = @(Get-ChildItem -LiteralPath (Join-Path $T 'profil') -Force -Directory |
                    Where-Object { $_.Name -like '.ssh.avant-migration-*' })
@@ -111,7 +111,7 @@ try {
     Set-Content -Path (Join-Path $g 'daemon\8.7\daemon.log') -Value ('l' * 1MB) -NoNewline
 
     $destG = Join-Path $T 'cle\avec-exclusions'
-    & (Join-Path $racine 'sauvegarder-configs.ps1') -Destination $destG *> $null
+    & (Join-Path $racine 'scripts/sauvegarder-configs.ps1') -Destination $destG *> $null
     $idxG = Get-Content -LiteralPath (Join-Path $destG 'index-configs.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     $eG = @($idxG.entrees | Where-Object { $_.nom -eq 'Gradle' })
     ok 'l entree Gradle est reperee'  $eG.Count 1
@@ -134,7 +134,7 @@ try {
 
     # Et la restauration repose exactement ce qui a ete emporte, sans inventer.
     Remove-Item -LiteralPath $g -Recurse -Force
-    & (Join-Path $racine 'restaurer-configs.ps1') -Source $destG *> $null
+    & (Join-Path $racine 'scripts/restaurer-configs.ps1') -Source $destG *> $null
     ok 'les reglages reviennent'      (Get-Content -LiteralPath (Join-Path $g 'gradle.properties') -Raw -Encoding UTF8).Trim() 'org.gradle.jvmargs=-Xmx4g'
     ok 'les caches ne reviennent pas' (Test-Path -LiteralPath (Join-Path $g 'caches')) $false
     Remove-Item -LiteralPath $g -Recurse -Force
@@ -164,7 +164,7 @@ try {
     $avantCote = @(Get-ChildItem -LiteralPath $ancienProfil -Filter '.ssh.avant-migration-*' -Force -ErrorAction SilentlyContinue).Count
     $env:USERPROFILE = $neuf
     try {
-        & (Join-Path $racine 'restaurer-configs.ps1') -Source $dest *> $null
+        & (Join-Path $racine 'scripts/restaurer-configs.ps1') -Source $dest *> $null
         ok 'les cles arrivent chez le nouvel utilisateur' `
             (Test-Path -LiteralPath (Join-Path $neuf '.ssh\id_ed25519')) $true
         ok 'avec le bon contenu' `
@@ -189,7 +189,7 @@ try {
         entrees = @([ordered]@{ nom = 'Truc'; origine = $cible; dossier = 'Truc'; quoi = ''; tailleMo = 0 })
     }
     Set-Content -LiteralPath (Join-Path $vieux 'index-configs.json') -Value ($vieilIndex | ConvertTo-Json -Depth 6) -Encoding UTF8
-    & (Join-Path $racine 'restaurer-configs.ps1') -Source $vieux *> $null
+    & (Join-Path $racine 'scripts/restaurer-configs.ps1') -Source $vieux *> $null
     ok 'un index sans modele se restaure encore' `
         (Get-Content -LiteralPath (Join-Path $cible 'reglages.txt') -Raw -Encoding UTF8).Trim() 'ANCIEN FORMAT'
 
@@ -197,12 +197,12 @@ try {
     $vide = Join-Path $T 'pas-un-dossier-de-sauvegarde'
     $null = New-Item -ItemType Directory -Path $vide -Force
     $code = 0
-    try { & (Join-Path $racine 'restaurer-configs.ps1') -Source $vide *> $null } catch { $code = 1 }
+    try { & (Join-Path $racine 'scripts/restaurer-configs.ps1') -Source $vide *> $null } catch { $code = 1 }
     # Un dossier sans index n'a pas ete produit par nous : on ne devine pas.
     ok 'un dossier sans index est refuse' ($code -eq 1 -or $LASTEXITCODE -ne 0) $true
 
     $code = 0
-    try { & (Join-Path $racine 'restaurer-configs.ps1') -Source (Join-Path $T 'nexiste-pas') *> $null } catch { $code = 1 }
+    try { & (Join-Path $racine 'scripts/restaurer-configs.ps1') -Source (Join-Path $T 'nexiste-pas') *> $null } catch { $code = 1 }
     ok 'une source absente est refusee'   ($code -eq 1 -or $LASTEXITCODE -ne 0) $true
 }
 finally {

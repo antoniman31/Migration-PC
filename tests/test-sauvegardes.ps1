@@ -61,7 +61,7 @@ try {
     $fSortie = Join-Path $base 'rapport.json'
 
     # --- execution ----------------------------------------------------
-    & (Join-Path $racine 'verifier-sauvegardes.ps1') -Destination $dst -Profil $fProfil -Sortie $fSortie | Out-Null
+    & (Join-Path $racine 'scripts/verifier-sauvegardes.ps1') -Destination $dst -Profil $fProfil -Sortie $fSortie | Out-Null
     $r = Get-Content $fSortie -Raw -Encoding UTF8 | ConvertFrom-Json
 
     "--- rapport produit ---"
@@ -103,7 +103,7 @@ try {
 
     "--- tolerance reglable ---"
     $f2 = Join-Path $base 'rapport2.json'
-    & (Join-Path $racine 'verifier-sauvegardes.ps1') -Destination $dst -Profil $fProfil -Sortie $f2 -ToleranceParCent 90 | Out-Null
+    & (Join-Path $racine 'scripts/verifier-sauvegardes.ps1') -Destination $dst -Profil $fProfil -Sortie $f2 -ToleranceParCent 90 | Out-Null
     $r2 = Get-Content $f2 -Raw -Encoding UTF8 | ConvertFrom-Json
     $etat2 = @{}
     foreach ($e in $r2.elements) { $etat2[$e.id] = $e.etat }
@@ -124,7 +124,7 @@ try {
     }
     Set-Content -Path $fTrou -Value ($troue | ConvertTo-Json -Depth 6) -Encoding UTF8
     $fr = Join-Path $base 'rapport-troue.json'
-    & (Join-Path $racine 'verifier-sauvegardes.ps1') -Destination $dst -Profil $fTrou -Sortie $fr | Out-Null
+    & (Join-Path $racine 'scripts/verifier-sauvegardes.ps1') -Destination $dst -Profil $fTrou -Sortie $fr | Out-Null
     $rt = Get-Content $fr -Raw -Encoding UTF8 | ConvertFrom-Json
     ok 'les trois elements sont rapportes' @($rt.elements).Count 3
     $sansChemin = $rt.elements | Where-Object { $_.id -eq 't1' }
@@ -136,7 +136,7 @@ try {
     "--- destination introuvable ---"
     $code = 0
     try {
-        & (Join-Path $racine 'verifier-sauvegardes.ps1') -Destination (Join-Path $base 'nexistepas') -Profil $fProfil -Sortie (Join-Path $base 'r3.json') 2>$null | Out-Null
+        & (Join-Path $racine 'scripts/verifier-sauvegardes.ps1') -Destination (Join-Path $base 'nexistepas') -Profil $fProfil -Sortie (Join-Path $base 'r3.json') 2>$null | Out-Null
     } catch { $code = 1 }
     ok 'echoue proprement' ($code -eq 1 -or $LASTEXITCODE -ne 0) $true
 

@@ -29,22 +29,29 @@ proposes.forEach(f=>ok('« '+f+' » est dans le dépôt',fs.existsSync(path.join
 // ecrire-resultat.ps1 manquait à la liste, et comme les deux scanners
 // sautaient l'étape en silence, la page ne se remplissait jamais toute seule
 // pour qui avait téléchargé fichier par fichier, sans qu'aucun message le dise.
-const surDisque=fs.readdirSync(racine).filter(f=>/\.(ps1|bat)$/i.test(f)).sort();
+// Les scripts sont ranges dans scripts\ ; seul le fichier a double-cliquer
+// reste a la racine. On balaie les deux.
+const surDisque=[
+  ...fs.readdirSync(racine).filter(f=>/\.(ps1|bat)$/i.test(f)),
+  ...fs.readdirSync(path.join(racine,'scripts')).filter(f=>/\.(ps1|bat)$/i.test(f)).map(f=>'scripts/'+f)
+].sort();
 ok('des scripts existent sur le disque',surDisque.length>0,true);
 ok('aucun script publié n\'est absent de la liste',
   surDisque.filter(f=>proposes.indexOf(f)<0).join(', '),'');
 
 // Et quand le fichier manque quand même, ça doit se dire.
-for(const f of ['scan-pc.ps1','verifier-pc.ps1']){
+for(const f of ['scripts/scan-pc.ps1','scripts/verifier-pc.ps1']){
   ok(f+' signale son absence',
     /ecrire-resultat\.ps1 n'est pas a cote/.test(fs.readFileSync(path.join(racine,f),'utf8')),true);
 }
 // Le compte changera encore : ce qui doit tenir, c'est qu'un lanceur a
 // double-cliquer soit propose, et qu'il vienne en premier.
-ok('des lanceurs a double-cliquer sont proposes',
-  proposes.filter(f=>/\.bat$/.test(f)).length>=2,true);
+// Un seul lanceur desormais : trois fichiers qui se ressemblaient
+// desorientaient plus qu'un point d'entree unique.
+ok('un lanceur a double-cliquer est propose',
+  proposes.filter(f=>/\.bat$/.test(f)).length,1);
 ok('le point d\'entree vient en tete',/\.bat$/.test(proposes[0]),true);
-ok('la bibliothèque partagée aussi',proposes.indexOf('lib-detection.ps1')>=0,true);
+ok('la bibliothèque partagée aussi',proposes.indexOf('scripts/lib-detection.ps1')>=0,true);
 
 console.log('\n--- le bloc s\'ouvre depuis le menu ---');
 ok('fermé au départ',await pg.isVisible('#outils'),false);
