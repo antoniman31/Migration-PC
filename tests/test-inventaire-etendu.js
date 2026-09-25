@@ -204,5 +204,42 @@ console.log('\n--- comparaison de chemins ---');
   ok('entrées vides ignorées',p3.data.filter(function(d){return /^Licence : /.test(d.n);}).length,0);
 }
 
+// ── Les quatre contrôles de la machine neuve ──
+{
+  console.log('\n--- contrôles de la machine neuve ---');
+  const mk=G('mkControles');
+  const att={nom:'Vitesse de la mémoire',etat:'attention',
+    constat:'La mémoire tourne à 4800 MHz alors qu\'elle sait faire 6000 MHz.',
+    quoi:'Le profil XMP n\'est pas activé dans le BIOS.'};
+  const bon={nom:'TRIM du SSD',etat:'ok',constat:'TRIM est actif.',quoi:'Rien à faire.'};
+  const inc={nom:'Secure Boot et TPM',etat:'inconnu',constat:'Secure Boot : indéterminé',
+    quoi:'Relance ce script en tant qu\'administrateur.'};
+
+  ok('sans contrôle, rien',mk({}),'');
+  ok('liste vide, rien',mk({controles:[]}),'');
+  // Quatre « tout va bien » noieraient le seul point qui compte.
+  ok('que du vert, rien',mk({controles:[bon,Object.assign({},bon,{nom:'X'})]}),'');
+
+  const h=mk({controles:[att,bon,inc]});
+  ok('un point à regarder annoncé',/1 point à regarder/.test(h),true);
+  ok('le conforme est tu',/TRIM du SSD/.test(h),false);
+  ok('le problème est montré',/Vitesse de la mémoire/.test(h),true);
+  ok('son constat aussi',/4800 MHz/.test(h),true);
+  ok('et le remède',/XMP/.test(h),true);
+  ok('l\'indéterminé est montré',/Secure Boot et TPM/.test(h),true);
+
+  // Deux problèmes : le pluriel doit suivre.
+  const h2=mk({controles:[att,Object.assign({},att,{nom:'Usure des disques'})]});
+  ok('deux points au pluriel',/2 points à regarder/.test(h2),true);
+  // Rien que des indéterminés : ce n'est pas un problème, c'est une question.
+  const h3=mk({controles:[inc]});
+  ok('que des indéterminés',/Contrôles à confirmer/.test(h3),true);
+
+  // Le HTML doit être échappé : un constat vient d'un fichier importé.
+  const h4=mk({controles:[{nom:'<img src=x onerror=alert(1)>',etat:'attention',constat:'x',quoi:'y'}]});
+  ok('le nom est échappé',/<img/.test(h4),false);
+  ok('mais bien affiché',/&lt;img/.test(h4),true);
+}
+
 console.log(ko?'\n'+ko+' EN ECHEC':'\nSCANNER ETENDU OPERATIONNEL');
 process.exit(ko?1:0);

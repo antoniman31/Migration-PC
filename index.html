@@ -3526,6 +3526,37 @@ function mkPilotesManquants(d){
     +'</div>'+lignes+'</div>';
 }
 
+// Quatre contrôles qui ne concernent que la machine neuve. Aucun ne se voit à
+// l'œil nu, et les quatre se découvrent une fois le délai de retour passé :
+// la mémoire bridée faute d'XMP, TRIM coupé, Secure Boot ou le TPM éteints, et
+// surtout un SSD « neuf » dont le compteur d'heures dit le contraire.
+//
+// On n'affiche que ce qui demande une action ou reste indéterminé. Répéter
+// quatre « tout va bien » noierait le seul point qui compte le jour où il y en
+// a un.
+function mkControles(d){
+  const liste=Array.isArray(d&&d.controles)?d.controles:[];
+  if(!liste.length)return '';
+  const aVoir=liste.filter(function(c){return c&&(c.etat==='attention'||c.etat==='inconnu');});
+  if(!aVoir.length)return '';
+  const soucis=aVoir.filter(function(c){return c.etat==='attention';}).length;
+  const lignes=aVoir.map(function(c){
+    const marque=c.etat==='attention'?'⚠️':'❔';
+    return '<div class="pil-item"><div class="pil-txt">'
+      +'<div class="pil-nom">'+marque+' '+esc(String(c.nom||''))+'</div>'
+      +'<div class="pil-quoi">'+esc(String(c.constat||''))+'</div>'
+      +'<div class="pil-quoi">'+esc(String(c.quoi||''))+'</div>'
+      +'</div></div>';
+  }).join('');
+  const titre=soucis
+    ?soucis+' point'+(soucis>1?'s':'')+' à regarder sur cette machine'
+    :'Contrôles à confirmer';
+  return '<div class="pilotes"><div class="pil-titre">🔧 '+esc(titre)+'</div>'
+    +'<div class="pil-sous">Ces réglages ne se voient pas à l\'usage. '
+    +'Le moment de les corriger, c\'est maintenant — pas après le délai de retour.</div>'
+    +lignes+'</div>';
+}
+
 function estVerification(d){
   return !!(d&&d.type==='verification-migration-pc'&&Array.isArray(d.trouves));
 }
@@ -3538,7 +3569,7 @@ function afficherVerification(d){
   const bloc=document.getElementById('verif');
   if(!bloc)return;
   appliquerMateriel(d.materiel,true);
-  const pilotes=mkPilotesManquants(d);
+  const pilotes=mkControles(d)+mkPilotesManquants(d);
   const index=indexParId();
   // On ne propose que ce qui existe dans le profil chargé et n'est pas déjà coché.
   const proposables=d.trouves.filter(function(t){return index[t.id]&&!S.checked[t.id];});

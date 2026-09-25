@@ -224,6 +224,12 @@ if ($donnees.PSObject.Properties['meta'] -and $donnees.meta.PSObject.Properties[
 $materiel = Invoke-Detecteur -Nom 'materiel' -Bloc { Read-Materiel }
 $pilotes  = @(Invoke-Detecteur -Nom 'pilotes' -Bloc { Read-PilotesManquants })
 
+# Quatre questions qu'on ne pense a poser qu'une fois le delai de retour passe.
+# Elles ne concernent que la machine neuve, d'ou leur place ici et pas dans
+# scan-pc.ps1 : la memoire tourne-t-elle a sa vitesse, TRIM est-il actif,
+# Secure Boot et le TPM sont-ils la, et le disque a-t-il deja servi.
+$controles = @(Invoke-Detecteur -Nom 'controles' -Bloc { Read-Controles })
+
 $verification = [ordered]@{
     type    = 'verification-migration-pc'
     version = 1
@@ -239,6 +245,7 @@ $verification = [ordered]@{
     trouves  = @($trouves)
     materiel = $materiel
     pilotes  = @($pilotes)
+    controles = @($controles)
     absents = @($absents)
 }
 
@@ -274,6 +281,15 @@ if (@($pilotes).Count) {
         Write-Host ("  - {0} ({1})" -f $p.nom, $p.probleme)
     }
     Write-Host "  Le site vous indiquera ou chercher, a partir du materiel detecte."
+}
+$aRegarder = @($controles | Where-Object { $_.etat -eq 'attention' })
+if ($aRegarder.Count) {
+    Write-Host ""
+    Write-Host "$($aRegarder.Count) point(s) a regarder sur cette machine :" -ForegroundColor Yellow
+    foreach ($c in $aRegarder) {
+        Write-Host ("  - {0} : {1}" -f $c.nom, $c.constat)
+        Write-Host ("    {0}" -f $c.quoi)
+    }
 }
 Write-Host "Fichier ecrit : $chemin"
 Write-Host ""

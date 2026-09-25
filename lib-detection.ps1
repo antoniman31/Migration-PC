@@ -117,6 +117,7 @@ $CouverturesScan = [ordered]@{
     variables  = 'Read-Variables'
     materiel   = 'Read-Materiel'
     licences   = 'Read-Licences'
+    controles  = 'Read-Controles'
     outils     = 'Read-SdkAndroid, Read-Wsl, Read-GestionnairesPaquets, Read-OutilsLangages'
     extensions = 'Read-Extensions'
     dossiers   = 'Read-GrosDossiers'
@@ -582,7 +583,7 @@ function Read-Steam {
     $dossiers = @(Join-Path $racine 'steamapps')
     $vdf = Join-Path $racine 'steamapps\libraryfolders.vdf'
     if (Test-Path $vdf) {
-        foreach ($l in Get-Content $vdf -ErrorAction SilentlyContinue) {
+        foreach ($l in Get-Content $vdf -Encoding UTF8 -ErrorAction SilentlyContinue) {
             if ($l -match '"path"\s+"([^"]+)"') {
                 $p = $matches[1] -replace '\\\\', '\'
                 $sa = Join-Path $p 'steamapps'
@@ -594,7 +595,7 @@ function Read-Steam {
     $n = 0
     foreach ($d in $dossiers) {
         Get-ChildItem -Path $d -Filter 'appmanifest_*.acf' -ErrorAction SilentlyContinue | ForEach-Object {
-            $contenu = Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue
+            $contenu = Get-Content $_.FullName -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
             if ($contenu -match '"name"\s+"([^"]+)"') {
                 $nomJeu = $matches[1]
                 $taille = $null
@@ -624,7 +625,7 @@ function Read-Epic {
     $n = 0
     Get-ChildItem -Path $dossier -Filter '*.item' -ErrorAction SilentlyContinue | ForEach-Object {
         try {
-            $m = Get-Content $_.FullName -Raw -ErrorAction Stop | ConvertFrom-Json
+            $m = Get-Content $_.FullName -Raw -Encoding UTF8 -ErrorAction Stop | ConvertFrom-Json
             $nom = $m.DisplayName
             if ([string]::IsNullOrWhiteSpace($nom)) { return }
             # Les greffons et redistribuables partagent le dossier avec les jeux.
@@ -1920,6 +1921,219 @@ function Read-Materiel {
     }
     Write-Host " $(@($config.Keys).Count) composant(s)"
     return $config
+}
+
+# ---------------------------------------------------------------- controles
+#
+# Quatre questions a poser a une machine NEUVE, et a elle seule. Elles ne
+# disent pas ce qu'il faut reinstaller : elles disent si la machine qu'on vient
+# de recevoir est bien celle qu'on a payee, et si elle est correctement reglee.
+# Aucune ne se voit a l'oeil nu, et les quatre se decouvrent trop tard.
+#
+# Chaque controle rend le meme objet : un constat, un etat, et ce que ca change.
+# « inconnu » n'est pas un echec : beaucoup de ces informations demandent les
+# droits administrateur ou un materiel qui les declare. Dire « je ne sais pas »
+# vaut mieux que dire « tout va bien » sans avoir regarde.
+
+function New-Controle {
+    param([string]$Nom, [string]$Etat, [string]$Constat, [string]$Quoi)
+    return [ordered]@{ nom = $Nom; etat = $Etat; constat = $Constat; quoi = $Quoi }
+}
+
+# 1. La memoire tourne-t-elle a sa vitesse nominale ?
+#
+# Une barrette DDR5-6000 posee sur une carte mere sortie d'usine tourne a
+# 4800 : le profil XMP (Intel) ou EXPO (AMD) n'est pas active tant que personne
+# ne l'a active dans le BIOS. Rien ne le signale, la machine marche, et on perd
+# 10 a 15 % de performances pendant des annees. C'est l'erreur d'assemblage la
+# plus repandue, y compris chez des assembleurs professionnels.
+#
+# Win32_PhysicalMemory porte les deux chiffres : Speed est ce que la barrette
+# sait faire, ConfiguredClockSpeed ce qu'elle fait vraiment.
+function Format-ControleMemoire {
+    param($Barrettes)
+    $b = @($Barrettes | Where-Object { $_ })
+    if (-not $b.Count) {
+        return New-Controle -Nom 'Vitesse de la mémoire' -Etat 'inconnu' `
+            -Constat 'Aucune barrette ne se déclare.' `
+            -Quoi 'À vérifier dans le BIOS, ou avec un outil dédié.'
+    }
+    $nominale = 0
+    $reelle = 0
+    foreach ($m in $b) {
+        $ps = $m.PSObject.Properties['Speed']
+        $pc = $m.PSObject.Properties['ConfiguredClockSpeed']
+        if ($ps -and $ps.Value) { $v = [int]$ps.Value; if ($v -gt $nominale) { $nominale = $v } }
+        if ($pc -and $pc.Value) { $v = [int]$pc.Value; if ($v -gt $reelle)   { $reelle   = $v } }
+    }
+    if (-not $nominale -or -not $reelle) {
+        return New-Controle -Nom 'Vitesse de la mémoire' -Etat 'inconnu' `
+            -Constat 'Les barrettes ne déclarent pas leur vitesse.' `
+            -Quoi 'À vérifier dans le BIOS : cherche XMP (Intel) ou EXPO (AMD).'
+    }
+    if ($reelle -lt $nominale) {
+        return New-Controle -Nom 'Vitesse de la mémoire' -Etat 'attention' `
+            -Constat "La mémoire tourne à $reelle MHz alors qu'elle sait faire $nominale MHz." `
+            -Quoi "Le profil XMP (Intel) ou EXPO (AMD) n'est pas activé dans le BIOS. Rien ne le signale, la machine marche, et tu perds 10 à 15 % de performances. Une case à cocher dans le BIOS."
+    }
+    return New-Controle -Nom 'Vitesse de la mémoire' -Etat 'ok' `
+        -Constat "La mémoire tourne à $reelle MHz, sa vitesse nominale." `
+        -Quoi 'Rien à faire.'
+}
+
+# 2. TRIM est-il actif ?
+#
+# Sans TRIM, un SSD ralentit durablement au fil des ecritures. Windows l'active
+# seul dans l'immense majorite des cas ; il arrive qu'un utilitaire
+# d'« optimisation » le coupe. La valeur de registre vaut 0 quand TRIM est
+# actif, et son absence veut dire la meme chose : c'est le defaut de Windows.
+function Format-ControleTrim {
+    param($Valeur)
+    if ($null -eq $Valeur) {
+        return New-Controle -Nom 'TRIM du SSD' -Etat 'ok' `
+            -Constat 'TRIM est actif (réglage par défaut de Windows).' `
+            -Quoi 'Rien à faire.'
+    }
+    $n = 0
+    if (-not [int]::TryParse([string]$Valeur, [ref]$n)) {
+        return New-Controle -Nom 'TRIM du SSD' -Etat 'inconnu' `
+            -Constat 'Le réglage est illisible.' `
+            -Quoi 'À vérifier : fsutil behavior query DisableDeleteNotify'
+    }
+    if ($n -eq 0) {
+        return New-Controle -Nom 'TRIM du SSD' -Etat 'ok' `
+            -Constat 'TRIM est actif.' -Quoi 'Rien à faire.'
+    }
+    return New-Controle -Nom 'TRIM du SSD' -Etat 'attention' `
+        -Constat 'TRIM est désactivé.' `
+        -Quoi "Un SSD sans TRIM ralentit durablement au fil des écritures. À réactiver : fsutil behavior set DisableDeleteNotify 0"
+}
+
+# 3. Secure Boot et TPM.
+#
+# Les deux conditionnent Windows 11 et le chiffrement BitLocker. Une machine
+# livree en mode Legacy ou avec le TPM desactive dans le BIOS demarre tres bien
+# et se retrouve bloquee a la premiere mise a jour majeure.
+function Format-ControleDemarrage {
+    param($SecureBoot, $Tpm)
+    $bouts = @()
+    $souci = $false
+    $inconnu = $false
+
+    if ($null -eq $SecureBoot) { $bouts += 'Secure Boot : indéterminé'; $inconnu = $true }
+    elseif ($SecureBoot)       { $bouts += 'Secure Boot actif' }
+    else                       { $bouts += 'Secure Boot inactif'; $souci = $true }
+
+    if ($null -eq $Tpm) { $bouts += 'TPM : indéterminé'; $inconnu = $true }
+    else {
+        $pres = $false
+        $pp = $Tpm.PSObject.Properties['IsEnabled_InitialValue']
+        if ($pp -and $pp.Value) { $pres = $true }
+        $ver = ''
+        $pv = $Tpm.PSObject.Properties['SpecVersion']
+        if ($pv -and $pv.Value) { $ver = (([string]$pv.Value) -split ',')[0].Trim() }
+        if ($pres) { $bouts += ("TPM actif" + $(if ($ver) { " (version $ver)" } else { '' })) }
+        else       { $bouts += 'TPM présent mais inactif'; $souci = $true }
+    }
+
+    $etat = if ($souci) { 'attention' } elseif ($inconnu) { 'inconnu' } else { 'ok' }
+    $quoi = if ($souci) {
+        "Windows 11 et BitLocker en dépendent. Les deux s'activent dans le BIOS. Une machine livrée comme ça démarre très bien et se bloque à la première grosse mise à jour."
+    } elseif ($inconnu) {
+        "Relance ce script en tant qu'administrateur pour obtenir la réponse."
+    } else { 'Rien à faire.' }
+
+    return New-Controle -Nom 'Secure Boot et TPM' -Etat $etat -Constat ($bouts -join ' · ') -Quoi $quoi
+}
+
+# 4. Le disque est-il reellement neuf ?
+#
+# Le controle qui rapporte le plus. Un SSD annonce neuf avec 400 heures au
+# compteur ne l'est pas : c'est un disque de retour, de demonstration, ou
+# recupere. Le compteur d'heures d'allumage ne se remet pas a zero.
+#
+# Quelques heures sont normales : l'assemblage, les tests, l'installation de
+# Windows. Au-dela d'une journee cumulee, il y a une question a poser.
+function Format-ControleDisques {
+    param($Compteurs, [int]$SeuilHeures = 50)
+    $c = @($Compteurs | Where-Object { $_ })
+    if (-not $c.Count) {
+        return New-Controle -Nom 'Usure des disques' -Etat 'inconnu' `
+            -Constat "Les disques ne rendent pas leur compteur d'heures." `
+            -Quoi "Souvent parce que le script n'est pas lancé en administrateur. Sinon, le disque ne le déclare pas."
+    }
+    $suspects = @()
+    $vus = @()
+    foreach ($d in $c) {
+        $ph = $d.PSObject.Properties['PowerOnHours']
+        if (-not $ph -or $null -eq $ph.Value) { continue }
+        $h = [int]$ph.Value
+        $nom = 'disque'
+        $pn = $d.PSObject.Properties['DeviceId']
+        if ($pn -and $pn.Value) { $nom = "disque $($pn.Value)" }
+        $vus += "$nom : $h h"
+        if ($h -gt $SeuilHeures) { $suspects += "$nom ($h heures)" }
+    }
+    if (-not $vus.Count) {
+        return New-Controle -Nom 'Usure des disques' -Etat 'inconnu' `
+            -Constat "Aucun disque ne rend son compteur d'heures." `
+            -Quoi "Souvent parce que le script n'est pas lancé en administrateur."
+    }
+    if ($suspects.Count) {
+        return New-Controle -Nom 'Usure des disques' -Etat 'attention' `
+            -Constat ("Compteur élevé sur : " + ($suspects -join ', ') + ".") `
+            -Quoi "Sur une machine neuve, quelques heures sont normales : assemblage, tests, installation. Au-delà, le disque a déjà servi — retour, démonstration, ou récupéré. Le compteur ne se remet pas à zéro. Question à poser au vendeur maintenant, pas dans six mois."
+    }
+    return New-Controle -Nom 'Usure des disques' -Etat 'ok' `
+        -Constat (($vus -join ' · ') + ".") `
+        -Quoi "Compatible avec une machine neuve."
+}
+
+function Read-Controles {
+    Write-Host "  controles machine..." -NoNewline
+    $out = @()
+
+    $barrettes = try { Get-CimInstance Win32_PhysicalMemory -ErrorAction Stop } catch { $null }
+    $out += Format-ControleMemoire -Barrettes $barrettes
+
+    # Le registre plutot que fsutil : la sortie de fsutil est traduite, donc
+    # illisible de facon portable. La valeur, elle, ne l'est pas.
+    $trim = $null
+    try {
+        $k = Get-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -ErrorAction Stop
+        $pv = $k.PSObject.Properties['DisableDeleteNotify']
+        if ($pv) { $trim = $pv.Value }
+    } catch { }
+    $out += Format-ControleTrim -Valeur $trim
+
+    # Confirme-SecureBootUEFI jette sur une machine en BIOS Legacy et sans les
+    # droits administrateur : les deux cas rendent « indetermine », pas « non ».
+    $sb = $null
+    try { $sb = [bool](Confirm-SecureBootUEFI -ErrorAction Stop) } catch { $sb = $null }
+    $tpm = $null
+    try {
+        $tpm = Get-CimInstance -Namespace 'root\cimv2\security\microsofttpm' -ClassName Win32_Tpm -ErrorAction Stop |
+               Select-Object -First 1
+    } catch { $tpm = $null }
+    $out += Format-ControleDemarrage -SecureBoot $sb -Tpm $tpm
+
+    $compteurs = @()
+    try {
+        $compteurs = @(Get-PhysicalDisk -ErrorAction Stop | ForEach-Object {
+            $d = $_
+            $r = $null
+            try { $r = $d | Get-StorageReliabilityCounter -ErrorAction Stop } catch { }
+            if ($r) {
+                $r | Add-Member -NotePropertyName DeviceId -NotePropertyValue $d.FriendlyName -Force -PassThru
+            }
+        })
+    } catch { $compteurs = @() }
+    $out += Format-ControleDisques -Compteurs $compteurs
+
+    $soucis = @($out | Where-Object { $_.etat -eq 'attention' }).Count
+    if ($soucis) { Write-Host " $soucis point(s) a regarder" -ForegroundColor Yellow }
+    else { Write-Host " $($out.Count) controle(s)" }
+    return $out
 }
 
 # ---------------------------------------------------------------- licences

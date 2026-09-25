@@ -593,11 +593,11 @@ try {
     Write-ResultatPourSite -Donnees $faux -DossierScript $bacEcr -NePasOuvrir *> $null
     $depose = Join-Path $bacEcr 'resultat-scan.js'
     ok 'le fichier est depose'      (Test-Path -LiteralPath $depose) $true
-    $contenu = Get-Content -LiteralPath $depose -Raw
+    $contenu = Get-Content -LiteralPath $depose -Raw -Encoding UTF8
     ok 'il pose la variable attendue' ($contenu.TrimStart([char]0xFEFF).StartsWith('window.MIGRATION_PC_SCAN=')) $true
     ok 'et se termine par un point-virgule' ($contenu.TrimEnd().EndsWith(';')) $true
     # La page lit cette variable-la : les deux cotes doivent s accorder.
-    $page = Get-Content -LiteralPath (Join-Path $racineScan 'index.html') -Raw
+    $page = Get-Content -LiteralPath (Join-Path $racineScan 'index.html') -Raw -Encoding UTF8
     ok 'la page lit cette variable'  ($page -match 'window\.MIGRATION_PC_SCAN') $true
     # Le JSON doit se relire, accents compris.
     $json = $contenu.Substring($contenu.IndexOf('=') + 1).TrimEnd()
@@ -626,7 +626,7 @@ $inv=[ordered]@{type='inventaire-migration-pc';version=1;genere=(Get-Date).ToStr
   machine=[ordered]@{os='Windows 11 Pro';nom='TEST'};apps=@($resultats.Values | Sort-Object {$_.nom})}
 $j=$inv | ConvertTo-Json -Depth 6
 Set-Content -Path (Join-Path ([System.IO.Path]::GetTempPath()) "inv-test.json") -Value $j -Encoding UTF8
-$relu = Get-Content (Join-Path ([System.IO.Path]::GetTempPath()) "inv-test.json") -Raw | ConvertFrom-Json
+$relu = Get-Content (Join-Path ([System.IO.Path]::GetTempPath()) "inv-test.json") -Raw -Encoding UTF8 | ConvertFrom-Json
 ok 'type'                   $relu.type 'inventaire-migration-pc'
 ok 'apps serialisees'       $relu.apps.Count 4
 ok 'champs presents'        ($null -ne $relu.apps[0].nom -and $null -ne $relu.apps[0].cat) $true
@@ -660,7 +660,7 @@ New-Item -ItemType Directory -Path $dossierEpic -Force | Out-Null
 $script:resultats = @{}
 $lus = 0
 Get-ChildItem -Path $dossierEpic -Filter '*.item' | ForEach-Object {
-    $m = Get-Content $_.FullName -Raw | ConvertFrom-Json
+    $m = Get-Content $_.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
     if ([string]::IsNullOrWhiteSpace($m.DisplayName)) { return }
     if ($m.PSObject.Properties['AppCategories'] -and $m.AppCategories -and
         ($m.AppCategories -notcontains 'games')) { return }
@@ -724,7 +724,7 @@ ok 'sans point refuse'      (Test-IdWingetInstallable -Id 'Firefox') $false
 ok 'vide refuse'            (Test-IdWingetInstallable -Id '') $false
 
 "--- winget : lecture de l'export ---"
-$exp = Read-ExportWinget -Json (Get-Content -LiteralPath "$PSScriptRoot/winget-export-exemple.json" -Raw)
+$exp = Read-ExportWinget -Json (Get-Content -LiteralPath "$PSScriptRoot/winget-export-exemple.json" -Raw -Encoding UTF8)
 # Le fichier d'exemple contient 8 entrees dont un doublon de 7zip : la lecture
 # ne deduplique pas, c'est Merge-IdsWinget qui s'en charge.
 ok 'export lu'              (Get-Nombre $exp) 8
@@ -815,6 +815,55 @@ ok 'canal vide'              $vide[0].canal ''
 ok 'liste vide sans erreur'  (Get-Nombre (Format-Licences -Produits @())) 0
 ok 'null sans erreur'        (Get-Nombre (Format-Licences -Produits $null)) 0
 ok 'licences declarees'      ($CouverturesScan.Contains('licences')) $true
+
+"--- controles de la machine neuve ---"
+function Obj($h){ $o = New-Object PSObject; foreach($k in $h.Keys){ $o | Add-Member -NotePropertyName $k -NotePropertyValue $h[$k] }; return $o }
+
+# 1. XMP : l'erreur d'assemblage la plus repandue, et la plus silencieuse.
+$lente = Format-ControleMemoire -Barrettes @((Obj @{ Speed=6000; ConfiguredClockSpeed=4800 }))
+ok 'XMP non active detecte'  $lente.etat 'attention'
+ok 'les deux chiffres sont dits' ($lente.constat -like '*4800*' -and $lente.constat -like '*6000*') $true
+ok 'XMP nomme dans le remede' ($lente.quoi -like '*XMP*') $true
+$bonne = Format-ControleMemoire -Barrettes @((Obj @{ Speed=6000; ConfiguredClockSpeed=6000 }))
+ok 'memoire a sa vitesse'    $bonne.etat 'ok'
+# Une barrette plus lente que l'autre ne doit pas masquer la plus rapide.
+$mix = Format-ControleMemoire -Barrettes @((Obj @{ Speed=6000; ConfiguredClockSpeed=6000 }), (Obj @{ Speed=6000; ConfiguredClockSpeed=6000 }))
+ok 'deux barrettes conformes' $mix.etat 'ok'
+ok 'sans barrette, inconnu'  (Format-ControleMemoire -Barrettes @()).etat 'inconnu'
+ok 'sans vitesse, inconnu'   (Format-ControleMemoire -Barrettes @((Obj @{ Capacity=8 }))).etat 'inconnu'
+
+# 2. TRIM.
+ok 'TRIM absent = actif'     (Format-ControleTrim -Valeur $null).etat 'ok'
+ok 'TRIM a 0 = actif'        (Format-ControleTrim -Valeur 0).etat 'ok'
+ok 'TRIM a 1 = coupe'        (Format-ControleTrim -Valeur 1).etat 'attention'
+ok 'la commande est donnee'  ((Format-ControleTrim -Valeur 1).quoi -like '*fsutil*') $true
+ok 'valeur illisible'        (Format-ControleTrim -Valeur 'oui').etat 'inconnu'
+
+# 3. Secure Boot et TPM.
+$tpmOn  = Obj @{ IsEnabled_InitialValue=$true; SpecVersion='2.0, 0, 1.38' }
+$tpmOff = Obj @{ IsEnabled_InitialValue=$false; SpecVersion='2.0, 0, 1.38' }
+$bon = Format-ControleDemarrage -SecureBoot $true -Tpm $tpmOn
+ok 'Secure Boot + TPM ok'    $bon.etat 'ok'
+ok 'la version du TPM est dite' ($bon.constat -like '*2.0*') $true
+ok 'Secure Boot coupe'       (Format-ControleDemarrage -SecureBoot $false -Tpm $tpmOn).etat 'attention'
+ok 'TPM coupe'               (Format-ControleDemarrage -SecureBoot $true -Tpm $tpmOff).etat 'attention'
+# Sans les droits administrateur, les deux remontent $null : on dit « je ne
+# sais pas », jamais « tout va bien ».
+$ind = Format-ControleDemarrage -SecureBoot $null -Tpm $null
+ok 'indetermine, pas ok'     $ind.etat 'inconnu'
+ok 'et on dit quoi faire'    ($ind.quoi -like '*administrateur*') $true
+
+# 4. Le disque a-t-il deja servi ?
+$neuf  = Format-ControleDisques -Compteurs @((Obj @{ PowerOnHours=3;   DeviceId='Samsung 990' }))
+$use   = Format-ControleDisques -Compteurs @((Obj @{ PowerOnHours=412; DeviceId='Samsung 990' }))
+ok 'disque neuf'             $neuf.etat 'ok'
+ok 'disque deja servi'       $use.etat 'attention'
+ok 'le compteur est cite'    ($use.constat -like '*412*') $true
+ok 'le disque est nomme'     ($use.constat -like '*Samsung 990*') $true
+ok 'seuil reglable'          (Format-ControleDisques -Compteurs @((Obj @{ PowerOnHours=412; DeviceId='X' })) -SeuilHeures 500).etat 'ok'
+ok 'aucun compteur, inconnu' (Format-ControleDisques -Compteurs @()).etat 'inconnu'
+ok 'compteur absent, inconnu' (Format-ControleDisques -Compteurs @((Obj @{ DeviceId='X' }))).etat 'inconnu'
+ok 'controles declares'      ($CouverturesScan.Contains('controles')) $true
 
 
 if($script:ko){"`n$($script:ko) TEST(S) EN ECHEC"; exit 1} else {"`nTOUS LES TESTS POWERSHELL PASSENT"}

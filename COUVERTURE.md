@@ -26,6 +26,7 @@ couverture inconnue. Les noms de famille utilisés ici sont ceux de
 | `portables` | `Read-Portables` | — |
 | `web` | `Read-Registre` (applications web du navigateur) | — |
 | `licences` | `Read-Licences` | Windows et Office seulement, via `SoftwareLicensingProduct` |
+| `controles` | `Read-Controles` | Machine **neuve** uniquement (`verifier-pc.ps1`) : XMP, TRIM, Secure Boot/TPM, heures du SSD |
 
 ### Pourquoi `configs` n'est que partiel
 
@@ -87,6 +88,7 @@ Kozphy/installed-software-inventory.
 | `licences` | `SoftwareLicensingProduct` dit si la licence Windows ou Office est OEM — attachée à la carte mère, elle **ne suit pas** — ou Retail. Les licences qui ne suivent pas passent en tête de l'onglet Données. |
 | liens officiels | `URLInfoAbout` et `HelpLink` étaient déjà dans le registre et personne ne les lisait. La checklist ouvre le vrai site de l'éditeur au lieu de lancer une recherche. Ça ne demande aucun accès à Internet pendant le scan. |
 | `apps` | `winget export` remplace `winget list` comme source d'identifiants. Voir le commentaire de `Read-Winget` : un relevé à zéro identifiant n'est pas forcément un bug. |
+| `controles` | Quatre contrôles de la machine neuve, repris de ce que fait SPECS : la mémoire tourne-t-elle à sa vitesse nominale (XMP/EXPO non activé = 10 à 15 % de performances perdues en silence), TRIM actif, Secure Boot et TPM, et surtout le compteur d'heures du SSD — un disque « neuf » à 400 heures ne l'est pas. |
 
 ## Hors de portée
 

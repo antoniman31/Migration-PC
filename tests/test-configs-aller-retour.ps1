@@ -64,7 +64,7 @@ try {
     $copie = Join-Path $dest $ssh[0].dossier
     ok 'le dossier annonce existe'    (Test-Path -LiteralPath $copie) $true
     ok 'les deux fichiers sont copies' (@(Get-ChildItem -LiteralPath $copie -Force)).Count 2
-    ok 'le contenu est fidele'        (Get-Content -LiteralPath (Join-Path $copie 'id_ed25519') -Raw).Trim() 'CLE ORIGINALE'
+    ok 'le contenu est fidele'        (Get-Content -LiteralPath (Join-Path $copie 'id_ed25519') -Raw -Encoding UTF8).Trim() 'CLE ORIGINALE'
 
     "`n--- la restauration sur une machine vierge ---"
     Remove-Item -LiteralPath (Join-Path $T 'profil\.ssh') -Recurse -Force
@@ -73,7 +73,7 @@ try {
 
     & (Join-Path $racine 'restaurer-configs.ps1') -Source $dest *> $null
     ok 'le dossier est revenu'        (Test-Path -LiteralPath (Join-Path $T 'profil\.ssh')) $true
-    ok 'avec son contenu'             (Get-Content -LiteralPath (Join-Path $T 'profil\.ssh\id_ed25519') -Raw).Trim() 'CLE ORIGINALE'
+    ok 'avec son contenu'             (Get-Content -LiteralPath (Join-Path $T 'profil\.ssh\id_ed25519') -Raw -Encoding UTF8).Trim() 'CLE ORIGINALE'
     ok 'et le second fichier'         (Test-Path -LiteralPath (Join-Path $T 'profil\.ssh\known_hosts')) $true
     # Le piege : copier le dossier DANS le dossier, et obtenir .ssh\.ssh.
     ok 'pas de dossier imbrique'      (Test-Path -LiteralPath (Join-Path $T 'profil\.ssh\.ssh')) $false
@@ -82,17 +82,17 @@ try {
     Set-Content -Path (Join-Path $T 'profil\.ssh\id_ed25519') -Value 'CLE DU NOUVEAU PC'
     & (Join-Path $racine 'restaurer-configs.ps1') -Source $dest *> $null
     # Sans -Remplacer, rien ne doit bouger : c'est tout l'interet du defaut.
-    ok 'le fichier en place est intact' (Get-Content -LiteralPath (Join-Path $T 'profil\.ssh\id_ed25519') -Raw).Trim() 'CLE DU NOUVEAU PC'
+    ok 'le fichier en place est intact' (Get-Content -LiteralPath (Join-Path $T 'profil\.ssh\id_ed25519') -Raw -Encoding UTF8).Trim() 'CLE DU NOUVEAU PC'
 
     "`n--- -Remplacer garde une porte de sortie ---"
     & (Join-Path $racine 'restaurer-configs.ps1') -Source $dest -Remplacer *> $null
-    ok 'la sauvegarde a ete posee'    (Get-Content -LiteralPath (Join-Path $T 'profil\.ssh\id_ed25519') -Raw).Trim() 'CLE ORIGINALE'
+    ok 'la sauvegarde a ete posee'    (Get-Content -LiteralPath (Join-Path $T 'profil\.ssh\id_ed25519') -Raw -Encoding UTF8).Trim() 'CLE ORIGINALE'
     $misDeCote = @(Get-ChildItem -LiteralPath (Join-Path $T 'profil') -Force -Directory |
                    Where-Object { $_.Name -like '.ssh.avant-migration-*' })
     ok 'l ancien est mis de cote'     $misDeCote.Count 1
     # Sans ca, l'operation serait irreversible : c'est la condition pour qu'un
     # script qui ecrase soit acceptable.
-    ok 'et reste lisible'             (Get-Content -LiteralPath (Join-Path $misDeCote[0].FullName 'id_ed25519') -Raw).Trim() 'CLE DU NOUVEAU PC'
+    ok 'et reste lisible'             (Get-Content -LiteralPath (Join-Path $misDeCote[0].FullName 'id_ed25519') -Raw -Encoding UTF8).Trim() 'CLE DU NOUVEAU PC'
 
     "`n--- ce qu une regle laisse derriere elle ---"
     # La table copiait des dossiers entiers : une entree « .gradle » emportait
@@ -135,7 +135,7 @@ try {
     # Et la restauration repose exactement ce qui a ete emporte, sans inventer.
     Remove-Item -LiteralPath $g -Recurse -Force
     & (Join-Path $racine 'restaurer-configs.ps1') -Source $destG *> $null
-    ok 'les reglages reviennent'      (Get-Content -LiteralPath (Join-Path $g 'gradle.properties') -Raw).Trim() 'org.gradle.jvmargs=-Xmx4g'
+    ok 'les reglages reviennent'      (Get-Content -LiteralPath (Join-Path $g 'gradle.properties') -Raw -Encoding UTF8).Trim() 'org.gradle.jvmargs=-Xmx4g'
     ok 'les caches ne reviennent pas' (Test-Path -LiteralPath (Join-Path $g 'caches')) $false
     Remove-Item -LiteralPath $g -Recurse -Force
 
@@ -168,7 +168,7 @@ try {
         ok 'les cles arrivent chez le nouvel utilisateur' `
             (Test-Path -LiteralPath (Join-Path $neuf '.ssh\id_ed25519')) $true
         ok 'avec le bon contenu' `
-            (Get-Content -LiteralPath (Join-Path $neuf '.ssh\id_ed25519') -Raw).Trim() 'CLE ORIGINALE'
+            (Get-Content -LiteralPath (Join-Path $neuf '.ssh\id_ed25519') -Raw -Encoding UTF8).Trim() 'CLE ORIGINALE'
         # Et surtout : rien n'a ete ecrit sous le profil de l'ancienne machine.
         $apresCote = @(Get-ChildItem -LiteralPath $ancienProfil -Filter '.ssh.avant-migration-*' -Force -ErrorAction SilentlyContinue).Count
         ok 'l ancien profil n est pas touche' $apresCote $avantCote
@@ -191,7 +191,7 @@ try {
     Set-Content -LiteralPath (Join-Path $vieux 'index-configs.json') -Value ($vieilIndex | ConvertTo-Json -Depth 6) -Encoding UTF8
     & (Join-Path $racine 'restaurer-configs.ps1') -Source $vieux *> $null
     ok 'un index sans modele se restaure encore' `
-        (Get-Content -LiteralPath (Join-Path $cible 'reglages.txt') -Raw).Trim() 'ANCIEN FORMAT'
+        (Get-Content -LiteralPath (Join-Path $cible 'reglages.txt') -Raw -Encoding UTF8).Trim() 'ANCIEN FORMAT'
 
     "`n--- ce qu il refuse de faire ---"
     $vide = Join-Path $T 'pas-un-dossier-de-sauvegarde'
