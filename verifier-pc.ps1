@@ -242,7 +242,7 @@ $verification = [ordered]@{
     absents = @($absents)
 }
 
-Set-Content -Path $Sortie -Value ($verification | ConvertTo-Json -Depth 6) -Encoding UTF8
+Write-TexteUtf8 -Chemin ([System.IO.Path]::GetFullPath($Sortie)) -Contenu ($verification | ConvertTo-Json -Depth 6)
 
 # Sans ce fichier a cote, la page ne se remplit pas toute seule. C'est un
 # confort, pas le resultat — le JSON est ecrit dans tous les cas — mais son

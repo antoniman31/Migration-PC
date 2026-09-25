@@ -31,7 +31,7 @@ function Write-ResultatPourSite {
     try {
         $json = $Donnees | ConvertTo-Json -Depth 8 -Compress
         # Une ligne, un objet pose sur window : la page le lit comme une donnee.
-        Set-Content -LiteralPath $cible -Value "window.MIGRATION_PC_SCAN=$json;" -Encoding UTF8 -ErrorAction Stop
+        [System.IO.File]::WriteAllText(([System.IO.Path]::GetFullPath($cible)), "window.MIGRATION_PC_SCAN=$json;", (New-Object System.Text.UTF8Encoding $false))
     } catch {
         Write-Host ""
         Write-Host "Impossible de poser le resultat a cote de la page :" -ForegroundColor Yellow

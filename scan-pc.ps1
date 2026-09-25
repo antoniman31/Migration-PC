@@ -191,7 +191,7 @@ $inventaire = [ordered]@{
 }
 
 $json = $inventaire | ConvertTo-Json -Depth 6
-Set-Content -Path $Sortie -Value $json -Encoding UTF8
+Write-TexteUtf8 -Chemin ([System.IO.Path]::GetFullPath($Sortie)) -Contenu $json
 
 # Sans ce fichier a cote, la page ne se remplit pas toute seule. C'est un
 # confort, pas le resultat — le JSON est ecrit dans tous les cas — mais son

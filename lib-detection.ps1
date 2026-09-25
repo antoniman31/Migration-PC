@@ -44,6 +44,48 @@ $MotsExclus = @(
     'Microsoft Edge Update', 'Google Update', 'Mise a jour'
 )
 
+# Ce qui vient AVEC Windows et se reinstalle tout seul. Un premier scan sur une
+# vraie machine a rendu 271 entrees dont 52 de cette nature : extensions video
+# du Store, moteurs d'execution, packs de langue, composants du systeme. Les
+# lister n'aide personne — on ne les reinstalle pas, ils arrivent avec l'OS —
+# et elles noient les logiciels qu'on veut vraiment retrouver.
+#
+# Les motifs sont volontairement precis. « Extension » tout court aurait
+# emporte de vraies applications ; « Runtime » seul aurait emporte des moteurs
+# de jeu qu'on veut garder.
+$ComposantsWindows = @(
+    # Moteurs d'execution et cadres applicatifs
+    'WinAppRuntime', 'WindowsAppRuntime', 'VCLibs', 'UI.Xaml', 'Net Native',
+    '.NET Core Runtime', '.NET Runtime', 'Desktop Runtime', 'ASP.NET Core',
+    'Advertising SDK', 'Engagement Framework', 'D3DMappingLayers', 'GameInput',
+    # Extensions media du Store
+    'VideoExtension', 'ImageExtension', 'VideoExtensions', 'MediaExtensions',
+    'Extension video', 'Extension d''image', 'Extensions video', 'Extensions de support web',
+    'HEVCVideoExtension', 'AV1VideoExtension', 'VP9VideoExtension', 'WebpImageExtension',
+    'HEIFImageExtension', 'RawImageExtension', 'MPEG2VideoExtension', 'AVCEncoderVideoExtension',
+    # Langue, saisie, voix
+    'LanguageExperiencePack', 'Experience locale', 'Ink.Handwriting', 'Windows.Speech',
+    # Composants et services du systeme
+    'SecHealthUI', 'StorePurchaseApp', 'WidgetsPlatformRuntime', 'Windows.CrossDevice',
+    'Update Health Tools', 'GamingServices', 'Winget.Source', 'Winget.Fonts',
+    'DesktopAppInstaller', 'OfficePushNotificationUtility', 'Office.ActionsServer',
+    'PowerToys.SparseApp', 'ContextMenu', 'Hote de l', 'Experience du Microsoft Store',
+    'Windows.Photos', 'WindowsStore', 'Microsoft Store',
+    'compatibilite des applications', 'compatibilit', 'ApplicationCompatibility',
+    'Local AI Manager', 'aimgr', 'Assistance au jeu', 'Edge.GameAssist',
+    'Game Speech Window', 'XboxSpeechToText', 'MicrosoftFamily', 'Microsoft Family'
+)
+
+# Vrai si le nom designe un composant livre avec Windows.
+function Test-ComposantWindows {
+    param([string]$Nom)
+    if ([string]::IsNullOrWhiteSpace($Nom)) { return $false }
+    foreach ($m in $ComposantsWindows) {
+        if ($Nom -like "*$m*") { return $true }
+    }
+    return $false
+}
+
 function Test-Exclu {
     param([string]$Nom)
     if ($ToutInclure) { return $false }
@@ -51,6 +93,7 @@ function Test-Exclu {
     foreach ($mot in $MotsExclus) {
         if ($Nom -like "*$mot*") { return $true }
     }
+    if (Test-ComposantWindows -Nom $Nom) { return $true }
     return $false
 }
 
@@ -291,6 +334,28 @@ function Get-EditeurLisible {
     return $Brut.Trim()
 }
 
+# Un paquet du Store s'appelle « Editeur.NomDeLApp » : « Microsoft.Paint »,
+# « A-Volute.Nahimic », et parfois avec un prefixe numerique attribue par le
+# Store, « 5319275A.WhatsAppDesktop ». Seule la partie apres l'editeur est
+# lisible par un humain.
+#
+# L'ancienne version remplacait « Microsoft » par « Microsoft » suivi d'une
+# espace, et comme l'alternative sans point venait en premier, le point restait
+# orphelin : 59 entrees d'un vrai scan s'appelaient « Microsoft .Paint ».
+function Get-NomPaquetStore {
+    param([string]$Nom)
+    if ([string]::IsNullOrWhiteSpace($Nom)) { return '' }
+    $n = $Nom.Trim()
+    # On coupe au premier point : ce qui precede est l'editeur.
+    $i = $n.IndexOf('.')
+    if ($i -gt 0 -and $i -lt ($n.Length - 1)) { $n = $n.Substring($i + 1) }
+    $n = $n.Trim()
+    # Ce qui reste n'est parfois qu'un identifiant opaque — « 4297127D64EC6 ».
+    # L'afficher n'apprend rien a personne.
+    if ($n -match '^[0-9A-Fa-f]{8,}$') { return '' }
+    return $n
+}
+
 # --- source 3 : Microsoft Store ----------------------------------------
 function Read-Store {
     Write-Host "  Microsoft Store..." -NoNewline
@@ -299,10 +364,8 @@ function Read-Store {
         $paquets = Get-AppxPackage -ErrorAction Stop |
             Where-Object { -not $_.IsFramework -and $_.SignatureKind -ne 'System' }
         foreach ($p in $paquets) {
-            $nom = $p.Name
-            # Les noms de paquets sont des identifiants techniques : on retire
-            # le prefixe editeur pour obtenir quelque chose de lisible.
-            $lisible = ($nom -replace '^(Microsoft|Microsoft\.)', 'Microsoft ').Trim()
+            $lisible = Get-NomPaquetStore -Nom $p.Name
+            if ([string]::IsNullOrWhiteSpace($lisible)) { continue }
             Add-App -Nom $lisible -Editeur (Get-EditeurLisible $p.Publisher) -Version $p.Version `
                     -Source 'Microsoft Store' -Winget ''
             $n++
@@ -1412,6 +1475,18 @@ function Get-TotalAPrevoirMo {
         if (-not $couvert) { $total += $e.mo }
     }
     return [math]::Round($total, 1)
+}
+
+# Ecrire un fichier texte en UTF-8 SANS marqueur d'octets.
+#
+# Set-Content -Encoding UTF8 en pose un sous Windows PowerShell 5.1. La page le
+# tolere — le navigateur le retire en decodant — mais rien d'autre : un vrai
+# inventaire produit sur une machine a fait echouer un simple ConvertFrom-Json
+# hors PowerShell, et l'erreur ne parle que du marqueur, pas de la cause.
+# Un fichier d'echange doit pouvoir etre relu par autre chose que nous.
+function Write-TexteUtf8 {
+    param([string]$Chemin, [string]$Contenu)
+    [System.IO.File]::WriteAllText($Chemin, $Contenu, (New-Object System.Text.UTF8Encoding $false))
 }
 
 function Get-Somme {

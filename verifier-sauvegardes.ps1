@@ -292,7 +292,7 @@ $rapport = [ordered]@{
     state   = [ordered]@{ checked = $coches; notes = @{}; dates = $dates; lic = @{}; env = @{} }
 }
 
-Set-Content -Path $Sortie -Value ($rapport | ConvertTo-Json -Depth 8) -Encoding UTF8
+[System.IO.File]::WriteAllText(([System.IO.Path]::GetFullPath($Sortie)), ($rapport | ConvertTo-Json -Depth 8), (New-Object System.Text.UTF8Encoding $false))
 $chemin = (Resolve-Path $Sortie).Path
 
 Write-Host ""

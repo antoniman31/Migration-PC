@@ -2364,6 +2364,30 @@ function appliquerMateriel(materiel,constate){
 function inventaireVersProfil(inv){
   const apps=Array.isArray(inv.apps)?inv.apps:[];
   if(!apps.length)throw new Error('inventaire vide');
+
+  // Les applications web installées depuis Chrome ou Edge se signalent par un
+  // éditeur qui n'en est pas un : le registre y met un chemin de navigateur,
+  // « Google\\Chrome ». Un vrai éditeur ne s'appelle jamais comme ça.
+  //
+  // Elles atterrissaient dans Apps, où elles n'ont rien à faire : elles ne
+  // s'installent pas, elles se recréent depuis le site. Leur place est
+  // l'onglet PWA, qui existe pour ça et qui restait vide.
+  //
+  // On n'a pas leur adresse — le registre ne la donne pas — donc le lien
+  // manque et la page le dit au lieu d'inventer une URL.
+  const estAppliWeb=function(a){
+    const e=String(a&&a.editeur||'');
+    return /[\\/](Chrome|Edge|Brave|Chromium)\b/i.test(e);
+  };
+  const appsWeb=apps.filter(estAppliWeb);
+  const pwa=appsWeb.length
+    ?PROFIL_DEFAUT.pwa.concat(appsWeb.map(function(a,i){
+        return {id:'web'+(i+1),n:String(a.nom||('Application web '+(i+1))),
+          d:'Installée depuis le navigateur sur l\'ancien PC. À rouvrir depuis le '
+            +'site, puis « Installer » dans le menu du navigateur.'};
+      }))
+    :PROFIL_DEFAUT.pwa;
+
   // Le scanner relève les variables personnalisées : autant remplir les champs
   // prévus pour elles plutôt que de les faire recopier à la main.
   const vars=inv.variables&&typeof inv.variables==='object'?Object.keys(inv.variables):[];
@@ -2374,7 +2398,7 @@ function inventaireVersProfil(inv){
   const reprisMateriel=appliquerMateriel(inv.materiel,false);
   const cats={};
   const out=[];
-  apps.forEach(function(a,i){
+  apps.filter(function(a){return !estAppliWeb(a);}).forEach(function(a,i){
     const cat=a.cat||CAT_PAR_DEFAUT;
     if(!cats[cat])cats[cat]=LIBELLES_CATS[cat]||cat;
     const bouts=[];
@@ -2475,7 +2499,7 @@ function inventaireVersProfil(inv){
     npc:PROFIL_DEFAUT.npc,
     apps:out,
     data:donnees,
-    pwa:PROFIL_DEFAUT.pwa,
+    pwa:pwa,
     ordre:[],
     requetes:{}
   };
@@ -2695,7 +2719,17 @@ function traiterDonnees(d,provenance){
         return true;
       }
       const p=inventaireVersProfil(d);
-      memoriserAnnulation('Inventaire importé : '+p.apps.length+' applications. Les onglets Nouveau PC, Données et PWA restent ceux du profil d\'exemple.'+suffixe,true);
+      // Ce message disait « Nouveau PC, Données et PWA restent ceux du profil
+      // d'exemple ». C'est devenu faux : le scan alimente maintenant Données
+      // et PWA. Il dit donc ce qui a vraiment changé, en le comptant.
+      const dits=[p.apps.length+' applications'];
+      const ajoutsData=p.data.filter(function(e){
+        return /^(cfg|gros|cle|port)/.test(String(e.id));}).length;
+      if(ajoutsData)dits.push(ajoutsData+' entrée'+(ajoutsData>1?'s':'')+' dans Données');
+      const ajoutsPwa=p.pwa.filter(function(e){return /^web/.test(String(e.id));}).length;
+      if(ajoutsPwa)dits.push(ajoutsPwa+' application'+(ajoutsPwa>1?'s':'')+' web');
+      memoriserAnnulation('Inventaire importé : '+dits.join(', ')
+        +'. L\'onglet Nouveau PC reste celui du profil d\'exemple : il décrit la machine que vous n\'avez pas encore.'+suffixe,true);
       appliquerProfil(p,true);
       return true;
     }
@@ -3959,7 +3993,13 @@ function appliquerScanLocal(){
     return;
   }
   const quand=d.genere?(' du '+String(d.genere).slice(0,10)):'';
-  const machine=d.machine?(' sur '+String(d.machine).slice(0,40)):'';
+  // d.machine est un objet { os, nom } : le passer a String() affichait
+  // « sur [object Object] » dans le bandeau. C'est le nom de la machine qui
+  // dit quelque chose a quelqu'un.
+  const nomMachine=d.machine&&typeof d.machine==='object'
+    ?String(d.machine.nom||d.machine.os||'')
+    :String(d.machine||'');
+  const machine=nomMachine.trim()?(' sur '+nomMachine.trim().slice(0,40)):'';
   proteger('Scan local',function(){
     if(traiterDonnees(d,'fichier déposé par le scanner'+quand+machine)){
       try{localStorage.setItem(CLE_SCAN,empreinte);}catch(e){}
