@@ -90,7 +90,7 @@ try {
 
     "`n--- ce que la page recevra ---"
     ok 'le fichier est pose'         (Test-Path -LiteralPath $depose) $true
-    $js = Get-Content -LiteralPath $depose -Raw
+    $js = Get-Content -LiteralPath $depose -Raw -Encoding UTF8
     ok 'il pose la variable attendue' ($js.TrimStart([char]0xFEFF).StartsWith('window.MIGRATION_PC_SCAN=')) $true
     $json = $js.Substring($js.IndexOf('=') + 1).TrimEnd()
     $relu = $json.Substring(0, $json.Length - 1) | ConvertFrom-Json

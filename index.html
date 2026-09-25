@@ -2438,6 +2438,9 @@ function inventaireVersProfil(inv){
       c:cat,
       src:a.winget?'winget':(a.source||'Inconnu'),
       w:a.winget||undefined,
+      // Adresse officielle relevée dans le registre de l'ancien PC. Quand elle
+      // est là, la checklist ouvre le vrai site au lieu de lancer une recherche.
+      u:a.lien||undefined,
       p:a.priorite||'med',
       t:a.duree||5,
       d:bouts.join(' · ')||'Détecté sur l\'ancien PC.'
@@ -2511,9 +2514,15 @@ function inventaireVersProfil(inv){
   donnees=donnees.concat(suspects);
   const cles=precieuxVersDonnees(inv.precieux,donnees.map(function(d){return d.p;}));
   donnees=cles.concat(donnees);
+  // Les licences passent tout devant : une licence qui ne suit pas change ce
+  // qu'il faut acheter, donc elle doit se lire avant de commander la machine.
+  const lics=licencesVersDonnees(inv.licences);
+  if(lics.length)donnees=lics.concat(donnees);
   if(oublies.length)desc.push(oublies.length+' gros dossier'+(oublies.length>1?'s':'')+' hors liste');
   if(cles.length)desc.push(cles.length+' clé'+(cles.length>1?'s':'')+' de signature');
   if(suspects.length)desc.push(suspects.length+' portable'+(suspects.length>1?'s':'')+' à relire');
+  const licsOem=lics.filter(function(l){return l.pr==='high';}).length;
+  if(licsOem)desc.push(licsOem+' licence'+(licsOem>1?'s':'')+' qui ne suivra'+(licsOem>1?'ient':'')+' pas');
   // Ce que le scan a mesuré, pas ce que la checklist réclame par ailleurs :
   // les chemins écrits à la main n'ont pas de taille. Découvrir la clé pleine
   // au milieu de la copie coûte une soirée.
@@ -2624,6 +2633,45 @@ function portablesVersDonnees(portables,dejaReclames){
       note:bouts.join(' · '),
       warn:'Supposition, pas un constat : ce dossier contient un exécutable, ce qui ne prouve pas que ce soit un logiciel portable. À relire.'
     });
+  });
+  return out;
+}
+
+// Les licences relevées par WMI. Une seule chose compte ici et elle tient en
+// un mot : est-ce que la licence suit la machine ? Une Windows OEM est mariée
+// à la carte mère de l'ancien PC, elle ne suit pas ; une Retail suit. C'est
+// exactement ce qu'on découvre trop tard, une fois l'ancienne machine
+// démontée, et ça n'apparaissait nulle part dans la checklist.
+//
+// La clé partielle est les cinq derniers caractères, ce que Windows affiche
+// lui-même dans ses paramètres. Elle ne réinstalle rien et n'ouvre rien : on
+// l'affiche pour reconnaître la licence, pas pour s'en servir.
+function licencesVersDonnees(licences){
+  if(!Array.isArray(licences)||!licences.length)return [];
+  const out=[];
+  licences.forEach(function(l,i){
+    if(!l||typeof l!=='object')return;
+    const nom=String(l.nom||'').trim();
+    if(!nom)return;
+    const bouts=[];
+    if(l.canal)bouts.push('canal '+String(l.canal));
+    if(l.etat)bouts.push(String(l.etat));
+    if(l.clePartielle)bouts.push('se termine par '+String(l.clePartielle));
+    bouts.push('relevé par le scan');
+    const e={
+      id:'lic'+(i+1),
+      n:'Licence : '+nom,
+      // Le chemin, ici, c'est où l'utilisateur va vérifier lui-même.
+      p:'Paramètres → Système → Activation',
+      // Une licence qui ne suit pas est la seule qui demande une décision
+      // avant d'acheter la machine neuve.
+      pr:(l.suitLeMateriel===false)?'high':'med',
+      note:(l.quoi?String(l.quoi)+' · ':'')+bouts.join(' · '),
+      scan:'licences'
+    };
+    if(l.suitLeMateriel===false)
+      e.warn='Cette licence ne suivra pas sur la machine neuve : prévois-en une avant de démonter l\'ancienne.';
+    out.push(e);
   });
   return out;
 }
@@ -2831,10 +2879,17 @@ function ouvrirAdresse(u){
   if(a)window.open(a,'_blank','noopener,noreferrer');
 }
 
+// Volontairement sans base : « new URL(t, document.baseURI) » resolvait la
+// chaine vide en l'adresse de la page elle-meme, protocole https, donc
+// acceptee. Un item sans adresse recevait un bouton « Ouvrir » qui rechargeait
+// la checklist. Une adresse relative tombait dans le meme piege. On n'accepte
+// donc qu'une adresse absolue, et seulement dans les trois protocoles ou un
+// clic ne peut pas executer de code.
 function urlSure(u){
   const t=String(u==null?'':u).trim();
+  if(!t)return '';
   try{
-    const a=new URL(t,document.baseURI);
+    const a=new URL(t);
     if(a.protocol==='http:'||a.protocol==='https:'||a.protocol==='mailto:')return a.href;
   }catch(e){}
   return '';
@@ -3057,7 +3112,16 @@ function launchConfetti(){
 // ═══ RENDER ITEM HELPERS ═══
 // Purement visuelle : l'état accessible est porté par l'item, qui est la case.
 function mkChkbox(){return '<div class="chkbox" aria-hidden="true"><span class="chkbox-mark">✓</span></div>';}
-function mkLink(name,e){return '<div class="item-link"><a class="lnk-btn" href="'+esc(searchUrl(name,e))+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔍 Rechercher</a></div>';}
+// Une adresse relevée sur l'ancien PC vaut mieux qu'une recherche : elle mène
+// au site de l'éditeur, pas à une liste de résultats où le premier lien est
+// parfois un faux installateur. Sans adresse utilisable, on retombe sur la
+// recherche — c'est le cas de la majorité des logiciels, le registre n'oblige
+// personne à renseigner URLInfoAbout.
+function mkLink(name,e){
+  const u=urlSure(e&&e.u);
+  if(u)return '<div class="item-link"><a class="lnk-btn" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 Site officiel</a></div>';
+  return '<div class="item-link"><a class="lnk-btn" href="'+esc(searchUrl(name,e))+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔍 Rechercher</a></div>';
+}
 function mkDirectLink(url){
   const u=urlSure(url);
   // Pas d'adresse utilisable : plutot que d'offrir un bouton qui ne mene nulle
@@ -3462,6 +3526,37 @@ function mkPilotesManquants(d){
     +'</div>'+lignes+'</div>';
 }
 
+// Quatre contrôles qui ne concernent que la machine neuve. Aucun ne se voit à
+// l'œil nu, et les quatre se découvrent une fois le délai de retour passé :
+// la mémoire bridée faute d'XMP, TRIM coupé, Secure Boot ou le TPM éteints, et
+// surtout un SSD « neuf » dont le compteur d'heures dit le contraire.
+//
+// On n'affiche que ce qui demande une action ou reste indéterminé. Répéter
+// quatre « tout va bien » noierait le seul point qui compte le jour où il y en
+// a un.
+function mkControles(d){
+  const liste=Array.isArray(d&&d.controles)?d.controles:[];
+  if(!liste.length)return '';
+  const aVoir=liste.filter(function(c){return c&&(c.etat==='attention'||c.etat==='inconnu');});
+  if(!aVoir.length)return '';
+  const soucis=aVoir.filter(function(c){return c.etat==='attention';}).length;
+  const lignes=aVoir.map(function(c){
+    const marque=c.etat==='attention'?'⚠️':'❔';
+    return '<div class="pil-item"><div class="pil-txt">'
+      +'<div class="pil-nom">'+marque+' '+esc(String(c.nom||''))+'</div>'
+      +'<div class="pil-quoi">'+esc(String(c.constat||''))+'</div>'
+      +'<div class="pil-quoi">'+esc(String(c.quoi||''))+'</div>'
+      +'</div></div>';
+  }).join('');
+  const titre=soucis
+    ?soucis+' point'+(soucis>1?'s':'')+' à regarder sur cette machine'
+    :'Contrôles à confirmer';
+  return '<div class="pilotes"><div class="pil-titre">🔧 '+esc(titre)+'</div>'
+    +'<div class="pil-sous">Ces réglages ne se voient pas à l\'usage. '
+    +'Le moment de les corriger, c\'est maintenant — pas après le délai de retour.</div>'
+    +lignes+'</div>';
+}
+
 function estVerification(d){
   return !!(d&&d.type==='verification-migration-pc'&&Array.isArray(d.trouves));
 }
@@ -3474,7 +3569,7 @@ function afficherVerification(d){
   const bloc=document.getElementById('verif');
   if(!bloc)return;
   appliquerMateriel(d.materiel,true);
-  const pilotes=mkPilotesManquants(d);
+  const pilotes=mkControles(d)+mkPilotesManquants(d);
   const index=indexParId();
   // On ne propose que ce qui existe dans le profil chargé et n'est pas déjà coché.
   const proposables=d.trouves.filter(function(t){return index[t.id]&&!S.checked[t.id];});

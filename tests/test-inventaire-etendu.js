@@ -17,8 +17,8 @@ function blocJS(html){
 const js=blocJS(html);
 const store={};
 function mkEl(id){return{id,textContent:'',innerHTML:'',value:'',style:{},dataset:{},classList:{_s:new Set(),add(c){this._s.add(c)},remove(c){this._s.delete(c)},toggle(c,v){v?this._s.add(c):this._s.delete(c)},contains(c){return this._s.has(c)}},setAttribute(){},appendChild(){},removeChild(){},click(){},focus(){},querySelector:()=>null,querySelectorAll:()=>[],addEventListener(){},getContext:()=>null};}
-const els={};const document={documentElement:mkEl('h'),body:mkEl('b'),getElementById(i){return els[i]||(els[i]=mkEl(i))},querySelectorAll:()=>[],querySelector:()=>null,createElement:t=>mkEl(t),addEventListener(){},set title(v){},get title(){return''}};
-const ctx={document,console,window:{addEventListener(e,f){if(e==='DOMContentLoaded')ctx.__i=f},matchMedia:()=>({matches:false})},localStorage:{getItem:k=>store[k]??null,setItem:(k,v)=>{store[k]=String(v)},removeItem:k=>{delete store[k]}},setInterval:()=>0,clearInterval(){},setTimeout(){},alert(){},confirm:()=>true,Blob:function(){},URL:{createObjectURL:()=>'x'},FileReader:function(){},navigator:{clipboard:{writeText:()=>Promise.resolve()}}};
+const els={};const document={baseURI:'https://exemple.test/index.html',documentElement:mkEl('h'),body:mkEl('b'),getElementById(i){return els[i]||(els[i]=mkEl(i))},querySelectorAll:()=>[],querySelector:()=>null,createElement:t=>mkEl(t),addEventListener(){},set title(v){},get title(){return''}};
+const ctx={document,console,window:{addEventListener(e,f){if(e==='DOMContentLoaded')ctx.__i=f},matchMedia:()=>({matches:false})},localStorage:{getItem:k=>store[k]??null,setItem:(k,v)=>{store[k]=String(v)},removeItem:k=>{delete store[k]}},setInterval:()=>0,clearInterval(){},setTimeout(){},alert(){},confirm:()=>true,Blob:function(){},URL:Object.assign(URL,{createObjectURL:()=>'x'}),FileReader:function(){},navigator:{clipboard:{writeText:()=>Promise.resolve()}}};
 ctx.window.document=document;vm.createContext(ctx);vm.runInContext(js,ctx);ctx.__i();
 const G=e=>vm.runInContext(e,ctx);
 let ko=0;const ok=(l,a,b)=>{const p=a===b;console.log((p?'  ok  ':' FAIL ')+l+' → '+JSON.stringify(a)+(p?'':' (attendu '+JSON.stringify(b)+')'));if(!p)ko++;};
@@ -129,6 +129,116 @@ console.log('\n--- comparaison de chemins ---');
   ok('chemins sans rapport',m('%USERPROFILE%\\Documents','C:\\x\\Code\\User'),false);
   ok('chemin vide',m('','C:\\x'),false);
   ok('les deux vides',m('',''),false);
+}
+
+// ── L'adresse officielle relevée au registre remonte jusqu'à la checklist ──
+{
+  console.log('\n--- adresse officielle de l\'éditeur ---');
+  const inv={type:'inventaire-migration-pc',apps:[
+    {nom:'VLC',cat:'media',lien:'https://www.videolan.org/'},
+    {nom:'Truc sans site',cat:'media'},
+    {nom:'Truc mal renseigné',cat:'media',lien:'C:\\Program Files\\Truc'}
+  ]};
+  const p=G('inventaireVersProfil')(inv);
+  const parNom={};p.apps.forEach(function(a){parNom[a.n]=a;});
+  ok('adresse portée par l\'item',parNom['VLC'].u,'https://www.videolan.org/');
+  ok('sans adresse, champ absent',parNom['Truc sans site'].u,undefined);
+
+  // mkLink doit ouvrir le vrai site quand l'adresse tient, et retomber sur la
+  // recherche sinon — y compris quand le registre contient un chemin local.
+  const mkLink=G('mkLink');
+  ok('bouton site officiel',/Site officiel/.test(mkLink('VLC',parNom['VLC'])),true);
+  ok('adresse dans le href',/videolan\.org/.test(mkLink('VLC',parNom['VLC'])),true);
+  ok('sans adresse, recherche',/Rechercher/.test(mkLink('X',parNom['Truc sans site'])),true);
+  ok('chemin local, recherche',/Rechercher/.test(mkLink('X',parNom['Truc mal renseigné'])),true);
+  ok('javascript: refusé',/Rechercher/.test(mkLink('X',{u:'javascript:alert(1)'})),true);
+}
+
+// ── urlSure : le faux constructeur URL du harnais masquait deux defauts ──
+{
+  console.log('\n--- adresses sûres ---');
+  const u=G('urlSure');
+  ok('https accepté',u('https://a.example/x'),'https://a.example/x');
+  ok('mailto accepté',u('mailto:a@b.example'),'mailto:a@b.example');
+  // Résolue contre la page, la chaîne vide donnait l'adresse de la checklist :
+  // un bouton « Ouvrir » qui se contentait de la recharger.
+  ok('vide refusée',u(''),'');
+  ok('nulle refusée',u(null),'');
+  ok('relative refusée',u('page.html'),'');
+  ok('javascript: refusé',u('javascript:alert(1)'),'');
+  ok('file: refusé',u('file:///C:/x'),'');
+  // Et le bouton doit bien dire qu'il n'y a pas de lien.
+  ok('mkDirectLink sans adresse',/Pas de lien/.test(G('mkDirectLink')('')),true);
+  ok('mkDirectLink avec adresse',/a\.example/.test(G('mkDirectLink')('https://a.example')),true);
+}
+
+// ── Licences : une OEM ne suit pas la migration, la checklist doit le dire ──
+{
+  console.log('\n--- licences ---');
+  const inv={type:'inventaire-migration-pc',apps:[{nom:'VLC',cat:'media'}],licences:[
+    {nom:'Windows(R), Professional edition',canal:'OEM',etat:'active',clePartielle:'7X2QK',
+     suitLeMateriel:false,quoi:'Attachee a la carte mere de cet ordinateur.'},
+    {nom:'Office 16, Office16ProPlus',canal:'Retail',etat:'active',clePartielle:'9BQRT',
+     suitLeMateriel:true,quoi:'Achetee separement : transferable.'}
+  ]};
+  const p=G('inventaireVersProfil')(inv);
+  const lics=p.data.filter(function(d){return /^Licence : /.test(d.n);});
+  ok('deux licences en données',lics.length,2);
+  // Elles passent devant : c'est ce qui décide de l'achat de la machine.
+  ok('la licence est la première ligne',/^Licence : /.test(p.data[0].n),true);
+  const oem=lics.filter(function(l){return /Professional/.test(l.n);})[0];
+  const ret=lics.filter(function(l){return /Office/.test(l.n);})[0];
+  ok('OEM en priorité haute',oem.pr,'high');
+  ok('OEM porte un avertissement',/ne suivra pas/.test(oem.warn||''),true);
+  ok('Retail sans avertissement',ret.warn,undefined);
+  ok('Retail en priorité normale',ret.pr,'med');
+  ok('clé partielle affichée',/7X2QK/.test(oem.note),true);
+  ok('canal affiché',/OEM/.test(oem.note),true);
+  ok('couverture déclarée',oem.scan,'licences');
+  ok('le résumé compte les OEM',/1 licence qui ne suivra pas/.test(p.meta.soustitre||''),true);
+
+  // Sans licences relevées, rien ne doit apparaître ni planter.
+  const p2=G('inventaireVersProfil')({type:'inventaire-migration-pc',apps:[{nom:'VLC'}]});
+  ok('aucune licence, aucune ligne',p2.data.filter(function(d){return /^Licence : /.test(d.n);}).length,0);
+  const p3=G('inventaireVersProfil')({type:'inventaire-migration-pc',apps:[{nom:'VLC'}],licences:[{},{nom:'   '}]});
+  ok('entrées vides ignorées',p3.data.filter(function(d){return /^Licence : /.test(d.n);}).length,0);
+}
+
+// ── Les quatre contrôles de la machine neuve ──
+{
+  console.log('\n--- contrôles de la machine neuve ---');
+  const mk=G('mkControles');
+  const att={nom:'Vitesse de la mémoire',etat:'attention',
+    constat:'La mémoire tourne à 4800 MHz alors qu\'elle sait faire 6000 MHz.',
+    quoi:'Le profil XMP n\'est pas activé dans le BIOS.'};
+  const bon={nom:'TRIM du SSD',etat:'ok',constat:'TRIM est actif.',quoi:'Rien à faire.'};
+  const inc={nom:'Secure Boot et TPM',etat:'inconnu',constat:'Secure Boot : indéterminé',
+    quoi:'Relance ce script en tant qu\'administrateur.'};
+
+  ok('sans contrôle, rien',mk({}),'');
+  ok('liste vide, rien',mk({controles:[]}),'');
+  // Quatre « tout va bien » noieraient le seul point qui compte.
+  ok('que du vert, rien',mk({controles:[bon,Object.assign({},bon,{nom:'X'})]}),'');
+
+  const h=mk({controles:[att,bon,inc]});
+  ok('un point à regarder annoncé',/1 point à regarder/.test(h),true);
+  ok('le conforme est tu',/TRIM du SSD/.test(h),false);
+  ok('le problème est montré',/Vitesse de la mémoire/.test(h),true);
+  ok('son constat aussi',/4800 MHz/.test(h),true);
+  ok('et le remède',/XMP/.test(h),true);
+  ok('l\'indéterminé est montré',/Secure Boot et TPM/.test(h),true);
+
+  // Deux problèmes : le pluriel doit suivre.
+  const h2=mk({controles:[att,Object.assign({},att,{nom:'Usure des disques'})]});
+  ok('deux points au pluriel',/2 points à regarder/.test(h2),true);
+  // Rien que des indéterminés : ce n'est pas un problème, c'est une question.
+  const h3=mk({controles:[inc]});
+  ok('que des indéterminés',/Contrôles à confirmer/.test(h3),true);
+
+  // Le HTML doit être échappé : un constat vient d'un fichier importé.
+  const h4=mk({controles:[{nom:'<img src=x onerror=alert(1)>',etat:'attention',constat:'x',quoi:'y'}]});
+  ok('le nom est échappé',/<img/.test(h4),false);
+  ok('mais bien affiché',/&lt;img/.test(h4),true);
 }
 
 console.log(ko?'\n'+ko+' EN ECHEC':'\nSCANNER ETENDU OPERATIONNEL');

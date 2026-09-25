@@ -108,7 +108,7 @@ foreach ($f in @('Migration PC.bat', '1-scanner-ce-pc.bat', '2-verifier-ce-pc.ba
 # Le lanceur doit pouvoir basculer en mode texte : sans Windows Desktop, il n'y
 # a pas d'interface graphique, et une fenetre qui ne s'ouvre pas sans rien dire
 # serait pire que pas de fenetre.
-$source = Get-Content (Join-Path $racine 'migration-pc.ps1') -Raw
+$source = Get-Content (Join-Path $racine 'migration-pc.ps1') -Raw -Encoding UTF8
 ok 'le menu texte est le seul mode' ($source -match 'Show-MenuTexte') $true
 # La fenetre graphique a ete retiree : elle etait le seul morceau du projet
 # qu'aucun test ne pouvait exercer, WinForms ne se pilotant pas sur une machine
@@ -181,7 +181,7 @@ try {
     $p = @('-NoProfile', '-File', $cible, '-Destination', $arrivee)
     $exe = (Get-Process -Id $PID).Path
     Start-Process -FilePath $exe -ArgumentList (Get-LigneCommande $p) -Wait -NoNewWindow -RedirectStandardOutput $sortie
-    $lu = (Get-Content -LiteralPath $sortie -Raw).Trim()
+    $lu = (Get-Content -LiteralPath $sortie -Raw -Encoding UTF8).Trim()
     ok 'le script recoit le chemin entier' $lu "RECU:[$arrivee]"
 } finally {
     Remove-Item $bac -Recurse -Force -ErrorAction SilentlyContinue

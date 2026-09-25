@@ -101,7 +101,7 @@ try {
     $fs = Join-Path $bac 'verif.json'
     & (Join-Path $racineP 'verifier-pc.ps1') -Profil $fp -Sortie $fs -PasDOuverture | Out-Null
     ok 'le script va au bout'        (Test-Path $fs) $true
-    $rv = Get-Content $fs -Raw | ConvertFrom-Json
+    $rv = Get-Content $fs -Raw -Encoding UTF8 | ConvertFrom-Json
     ok 'les trois elements sont vus' (@($rv.trouves).Count + @($rv.absents).Count) 3
     $sansNom = @($rv.absents | Where-Object { $_.id -eq 'a2' })
     ok 'celui sans nom garde un libelle' $sansNom[0].nom 'Element sans nom'
@@ -122,7 +122,7 @@ $v = [ordered]@{
 }
 $f = Join-Path ([System.IO.Path]::GetTempPath()) "verif-test.json"
 Set-Content -Path $f -Value ($v | ConvertTo-Json -Depth 6) -Encoding UTF8
-$relu = Get-Content $f -Raw | ConvertFrom-Json
+$relu = Get-Content $f -Raw -Encoding UTF8 | ConvertFrom-Json
 ok 'type correct'            $relu.type 'verification-migration-pc'
 ok 'trouves serialises'      $relu.trouves.Count 1
 ok 'raison conservee'        $relu.trouves[0].raison 'identifiant winget 7zip.7zip'

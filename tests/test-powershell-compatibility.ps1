@@ -88,6 +88,33 @@ foreach ($f in $fichiers) {
 }
 ok 'aucun -Include avec -LiteralPath' ($melanges -join ', ') ''
 
+# Get-Content sans -Encoding lit un fichier en ANSI sous Windows PowerShell 5.1.
+# Nos scripts ecrivent en UTF-8 SANS marqueur d'octets — a dessein, pour qu'un
+# autre outil puisse relire le JSON — donc 5.1 n'a aucun moyen de deviner, et
+# « Cles SSH » revient en « ClA©s SSH ». PowerShell 7 lit en UTF-8 par defaut :
+# le defaut est invisible partout sauf sur une vraie machine Windows.
+#
+# C'est la deuxieme fois que ce meme oubli fait tomber la CI, et la premiere
+# correction n'avait traite que les trois lectures qui echouaient ce jour-la.
+# Les autres passaient par chance, faute d'accent dans leur assertion. Ce
+# controle couvre le cas plutot que l'incident.
+$sansEncodage = @()
+foreach ($f in $fichiers) {
+    $arbre = [System.Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$null)
+    $appels = $arbre.FindAll({
+        param($n) $n -is [System.Management.Automation.Language.CommandAst] }, $true)
+    foreach ($a in $appels) {
+        $nom = $a.GetCommandName()
+        if (-not $nom -or $nom.ToLowerInvariant() -ne 'get-content') { continue }
+        $params = @($a.CommandElements |
+            Where-Object { $_ -is [System.Management.Automation.Language.CommandParameterAst] } |
+            ForEach-Object { $_.ParameterName.ToLowerInvariant() })
+        $dit = @($params | Where-Object { 'encoding'.StartsWith($_) -and $_.Length -ge 2 }).Count -gt 0
+        if (-not $dit) { $sansEncodage += "$($f.Name):$($a.Extent.StartLineNumber)" }
+    }
+}
+ok 'aucun Get-Content sans -Encoding' ($sansEncodage -join ', ') ''
+
 Write-Host ""
 if ($script:ko -gt 0) { Write-Host "$script:ko EN ECHEC" -ForegroundColor Red; exit 1 }
 Write-Host "COMPATIBILITE POWERSHELL 5.1 OK" -ForegroundColor Green

@@ -116,6 +116,8 @@ $CouverturesScan = [ordered]@{
     configs    = 'Read-Configs'
     variables  = 'Read-Variables'
     materiel   = 'Read-Materiel'
+    licences   = 'Read-Licences'
+    controles  = 'Read-Controles'
     outils     = 'Read-SdkAndroid, Read-Wsl, Read-GestionnairesPaquets, Read-OutilsLangages'
     extensions = 'Read-Extensions'
     dossiers   = 'Read-GrosDossiers'
@@ -222,6 +224,8 @@ function Add-App {
     param(
         [string]$Nom, [string]$Editeur, [string]$Version,
         [string]$Source, [string]$Winget,
+        # Adresse officielle de l'editeur, quand le registre la porte.
+        [string]$Lien = '',
         # Taille sur disque en Go, quand la source la connait. Sert a dimensionner
         # le disque du nouveau PC, pas a decider quoi reinstaller.
         $TailleGo = $null
@@ -234,6 +238,7 @@ function Add-App {
         # Deja vu par une autre source : on complete les champs manquants.
         $exist = $resultats[$cle]
         if ([string]::IsNullOrWhiteSpace($exist.winget) -and $Winget) { $exist.winget = $Winget }
+        if ([string]::IsNullOrWhiteSpace($exist.lien) -and $Lien) { $exist.lien = $Lien }
         if ([string]::IsNullOrWhiteSpace($exist.editeur) -and $Editeur) { $exist.editeur = $Editeur }
         if ([string]::IsNullOrWhiteSpace($exist.version) -and $Version) { $exist.version = $Version }
         if ($null -eq $exist.tailleGo -and $null -ne $TailleGo) { $exist.tailleGo = $TailleGo }
@@ -248,6 +253,7 @@ function Add-App {
         version  = $Version
         source   = $Source
         winget   = $Winget
+        lien     = $Lien
         cat      = $cat
         priorite = Get-Priorite -Categorie $cat
         duree    = Get-Duree -Nom $Nom -Categorie $cat
@@ -256,6 +262,115 @@ function Add-App {
 }
 
 # --- source 1 : winget -------------------------------------------------
+
+# « winget list » melange deux choses qui n'ont rien a voir. Les paquets connus
+# du catalogue portent un identifiant « Editeur.Produit » qui se reinstalle
+# d'une commande. Les autres, ceux que winget a seulement apercus dans
+# Ajout/Suppression de programmes, recoivent un identifiant fabrique sur place :
+# « ARP\Machine\X64\{GUID} » ou « MSIX\... ». Celui-la ne s'installe pas, il ne
+# sert qu'a la deduplication interne de winget.
+#
+# Notre ancien filtre rejetait bien ces identifiants — il exigeait un point et
+# pas d'antislash — mais il ne le disait pas, et un relevé ou la moitie des
+# lignes ressortait sans identifiant passait pour un bug de lecture de colonnes.
+# Ce n'en etait pas forcement un : sur une machine ou peu de logiciels ont ete
+# poses par winget, il est normal que presque aucun n'ait d'identifiant.
+function Test-IdWingetInstallable {
+    param([string]$Id)
+    if ([string]::IsNullOrWhiteSpace($Id)) { return $false }
+    $t = $Id.Trim()
+    # Identifiants fabriques par winget pour ce qu'il n'a fait que decouvrir.
+    if ($t -like 'ARP\*' -or $t -like 'MSIX\*' -or $t -like 'arp\*' -or $t -like 'msix\*') { return $false }
+    if ($t.Contains('\')) { return $false }
+    return ($t -match '^[A-Za-z0-9][A-Za-z0-9._-]*\.[A-Za-z0-9._-]+$')
+}
+
+# « winget export » ne sort que les paquets du catalogue, en JSON, sans colonne
+# a largeur fixe ni accent a decaler. C'est la source d'identifiants la plus
+# fiable dont on dispose, et le fichier se rejoue tel quel avec
+# « winget import ». Il ne donne pas les noms d'affichage : c'est le registre
+# qui les porte, et Merge-IdsWinget se charge du rapprochement.
+function Read-ExportWinget {
+    param([string]$Json)
+    $ids = @()
+    if ([string]::IsNullOrWhiteSpace($Json)) { return $ids }
+    try { $d = $Json | ConvertFrom-Json } catch { return $ids }
+    if (-not $d -or -not $d.PSObject.Properties['Sources']) { return $ids }
+    foreach ($src in @($d.Sources)) {
+        if (-not $src -or -not $src.PSObject.Properties['Packages']) { continue }
+        foreach ($pkg in @($src.Packages)) {
+            if (-not $pkg -or -not $pkg.PSObject.Properties['PackageIdentifier']) { continue }
+            $id = [string]$pkg.PackageIdentifier
+            if (-not (Test-IdWingetInstallable -Id $id)) { continue }
+            $v = ''
+            if ($pkg.PSObject.Properties['Version']) { $v = [string]$pkg.Version }
+            $ids += [ordered]@{ id = $id.Trim(); version = $v }
+        }
+    }
+    return $ids
+}
+
+# Un identifiant winget doit rejoindre la ligne d'inventaire du logiciel qu'il
+# designe, pas en creer une deuxieme a cote. « Mozilla.Firefox » et la ligne du
+# registre « Mozilla Firefox (x64 fr) » sont le meme logiciel.
+#
+# Deux rapprochements suffisent en pratique. Editeur et produit colles donnent
+# « mozillafirefox », exactement ce que Get-Cle tire de « Mozilla Firefox ».
+# Le produit seul donne « 7zip », ce que Get-Cle tire de « 7-Zip ». On essaie
+# le plus specifique d'abord : le produit seul rapproche « Git.Git » de
+# n'importe quel logiciel nomme « Git », le couple complet est plus sur.
+function Get-ClesCandidatesWinget {
+    param([string]$Id)
+    $cles = @()
+    if ([string]::IsNullOrWhiteSpace($Id)) { return $cles }
+    $t = $Id.Trim()
+    $i = $t.IndexOf('.')
+    if ($i -le 0 -or $i -ge ($t.Length - 1)) { return @(Get-Cle -Nom $t) }
+    $editeur = $t.Substring(0, $i)
+    $produit = $t.Substring($i + 1)
+    $cles += Get-Cle -Nom "$editeur $produit"
+    $cles += Get-Cle -Nom $produit
+    return @($cles | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)
+}
+
+# Pose les identifiants de l'export sur les lignes deja connues, et cree une
+# ligne pour ceux qui ne correspondent a rien : un paquet installe par winget
+# mais absent du registre existe bel et bien, le perdre serait pire que
+# l'afficher sous un nom approximatif.
+function Merge-IdsWinget {
+    param($Entrees)
+    $poses = 0
+    $crees = 0
+    foreach ($e in @($Entrees)) {
+        if (-not $e) { continue }
+        $id = [string]$e.id
+        if ([string]::IsNullOrWhiteSpace($id)) { continue }
+
+        # Deja porte par une ligne : rien a faire.
+        $deja = $false
+        foreach ($v in $resultats.Values) { if ($v.winget -eq $id) { $deja = $true; break } }
+        if ($deja) { continue }
+
+        $trouve = $null
+        foreach ($c in (Get-ClesCandidatesWinget -Id $id)) {
+            if ($resultats.ContainsKey($c)) { $trouve = $resultats[$c]; break }
+        }
+        if ($trouve) {
+            if ([string]::IsNullOrWhiteSpace($trouve.winget)) { $trouve.winget = $id; $poses++ }
+            if ($trouve.source -notlike '*winget*') { $trouve.source = "$($trouve.source), winget" }
+            continue
+        }
+
+        # Rien ne correspond : on fabrique un nom lisible a partir du produit.
+        $i = $id.IndexOf('.')
+        $nom = if ($i -gt 0 -and $i -lt ($id.Length - 1)) { $id.Substring($i + 1) } else { $id }
+        Add-App -Nom $nom -Editeur $(if ($i -gt 0) { $id.Substring(0, $i) } else { '' }) `
+                -Version ([string]$e.version) -Source 'winget' -Winget $id
+        $crees++
+    }
+    return [ordered]@{ poses = $poses; crees = $crees }
+}
+
 function Read-Winget {
     Write-Host "  winget..." -NoNewline
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
@@ -264,8 +379,10 @@ function Read-Winget {
     }
     $n = 0
     try {
-        # --accept-source-agreements evite l'invite au premier lancement.
-        $lignes = & winget list --accept-source-agreements 2>$null | Out-String
+        # --disable-interactivity coupe les indicateurs de progression. Sans
+        # lui, winget ecrit des retours arriere (0x08) au milieu de sa sortie
+        # et le decoupage en colonnes a largeur fixe part de travers.
+        $lignes = & winget list --accept-source-agreements --disable-interactivity 2>$null | Out-String
         $lignes = $lignes -split "`r?`n"
 
         # La sortie est un tableau a colonnes fixes : on lit la ligne d'entete
@@ -283,6 +400,8 @@ function Read-Winget {
             if ($l -match '^-{5,}') { $debut = $true; continue }
             if (-not $debut) { continue }
             if ($l.Trim().Length -eq 0) { continue }
+            # Restes d'indicateur de progression malgre --disable-interactivity.
+            if ($l.Contains([char]8)) { continue }
             if ($l.Length -le $posId) { continue }
 
             $nom = $l.Substring(0, $posId).Trim()
@@ -296,8 +415,7 @@ function Read-Winget {
                 $ver = ''
             }
             if ([string]::IsNullOrWhiteSpace($nom)) { continue }
-            # Une entree sans identifiant exploitable n'apporte rien de plus que le registre.
-            $idValide = ($id -match '^[A-Za-z0-9][A-Za-z0-9._-]*\.[A-Za-z0-9._-]+$')
+            $idValide = Test-IdWingetInstallable -Id $id
             Add-App -Nom $nom -Editeur '' -Version $ver -Source 'winget' -Winget $(if ($idValide) { $id } else { '' })
             $n++
         }
@@ -306,7 +424,48 @@ function Read-Winget {
         return $n
     }
     Write-Host " $n entrees"
+
+    # Deuxieme passe, autoritaire : l'export ne contient que des identifiants
+    # reellement reinstallables. Une panne ici ne doit pas perdre la premiere.
+    try {
+        $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("mpc-winget-" + [guid]::NewGuid().ToString('N') + ".json")
+        & winget export --output $tmp --include-versions --accept-source-agreements --disable-interactivity 2>$null | Out-Null
+        if (Test-Path -LiteralPath $tmp) {
+            $json = Get-Content -LiteralPath $tmp -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue
+            $entrees = @(Read-ExportWinget -Json $json)
+            if ($entrees.Count) {
+                $r = Merge-IdsWinget -Entrees $entrees
+                Write-Host "  winget export... $($entrees.Count) identifiant(s), $($r.poses) pose(s), $($r.crees) ligne(s) ajoutee(s)"
+            } else {
+                Write-Host "  winget export... aucun paquet du catalogue" -ForegroundColor Yellow
+            }
+        }
+    } catch {
+        Write-Host "  winget export... erreur ignoree : $($_.Exception.Message)" -ForegroundColor Yellow
+    }
     return $n
+}
+
+# Le registre porte deja l'adresse officielle de l'editeur, dans URLInfoAbout
+# et a defaut HelpLink. Personne ne la lisait, et la checklist proposait un
+# lien de recherche Google la ou le disque connaissait le vrai site.
+#
+# On ne garde que http et https. Certains installateurs y mettent une adresse
+# de desinstallation locale, un chemin de fichier ou une chaine vide entourees
+# d'espaces : les afficher comme « site officiel » serait un mensonge.
+function Get-LienEditeur {
+    param($Entree)
+    if (-not $Entree) { return '' }
+    foreach ($champ in @('URLInfoAbout', 'HelpLink')) {
+        $p = $Entree.PSObject.Properties[$champ]
+        if (-not $p) { continue }
+        $v = [string]$p.Value
+        if ([string]::IsNullOrWhiteSpace($v)) { continue }
+        $v = $v.Trim().Trim('"')
+        if ($v -match '^https?://[^\s]+$') { return $v }
+    }
+    return ''
 }
 
 # --- source 2 : registre ------------------------------------------------
@@ -342,7 +501,8 @@ function Read-Registre {
             Add-App -Nom $nom.Value `
                     -Editeur $(if ($ed) { [string]$ed.Value } else { '' }) `
                     -Version $(if ($ver) { [string]$ver.Value } else { '' }) `
-                    -Source 'registre' -Winget '' -TailleGo $taille
+                    -Source 'registre' -Winget '' -TailleGo $taille `
+                    -Lien (Get-LienEditeur -Entree $e)
             $n++
         }
     }
@@ -423,7 +583,7 @@ function Read-Steam {
     $dossiers = @(Join-Path $racine 'steamapps')
     $vdf = Join-Path $racine 'steamapps\libraryfolders.vdf'
     if (Test-Path $vdf) {
-        foreach ($l in Get-Content $vdf -ErrorAction SilentlyContinue) {
+        foreach ($l in Get-Content $vdf -Encoding UTF8 -ErrorAction SilentlyContinue) {
             if ($l -match '"path"\s+"([^"]+)"') {
                 $p = $matches[1] -replace '\\\\', '\'
                 $sa = Join-Path $p 'steamapps'
@@ -435,7 +595,7 @@ function Read-Steam {
     $n = 0
     foreach ($d in $dossiers) {
         Get-ChildItem -Path $d -Filter 'appmanifest_*.acf' -ErrorAction SilentlyContinue | ForEach-Object {
-            $contenu = Get-Content $_.FullName -Raw -ErrorAction SilentlyContinue
+            $contenu = Get-Content $_.FullName -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
             if ($contenu -match '"name"\s+"([^"]+)"') {
                 $nomJeu = $matches[1]
                 $taille = $null
@@ -465,7 +625,7 @@ function Read-Epic {
     $n = 0
     Get-ChildItem -Path $dossier -Filter '*.item' -ErrorAction SilentlyContinue | ForEach-Object {
         try {
-            $m = Get-Content $_.FullName -Raw -ErrorAction Stop | ConvertFrom-Json
+            $m = Get-Content $_.FullName -Raw -Encoding UTF8 -ErrorAction Stop | ConvertFrom-Json
             $nom = $m.DisplayName
             if ([string]::IsNullOrWhiteSpace($nom)) { return }
             # Les greffons et redistribuables partagent le dossier avec les jeux.
@@ -1761,6 +1921,319 @@ function Read-Materiel {
     }
     Write-Host " $(@($config.Keys).Count) composant(s)"
     return $config
+}
+
+# ---------------------------------------------------------------- controles
+#
+# Quatre questions a poser a une machine NEUVE, et a elle seule. Elles ne
+# disent pas ce qu'il faut reinstaller : elles disent si la machine qu'on vient
+# de recevoir est bien celle qu'on a payee, et si elle est correctement reglee.
+# Aucune ne se voit a l'oeil nu, et les quatre se decouvrent trop tard.
+#
+# Chaque controle rend le meme objet : un constat, un etat, et ce que ca change.
+# « inconnu » n'est pas un echec : beaucoup de ces informations demandent les
+# droits administrateur ou un materiel qui les declare. Dire « je ne sais pas »
+# vaut mieux que dire « tout va bien » sans avoir regarde.
+
+function New-Controle {
+    param([string]$Nom, [string]$Etat, [string]$Constat, [string]$Quoi)
+    return [ordered]@{ nom = $Nom; etat = $Etat; constat = $Constat; quoi = $Quoi }
+}
+
+# 1. La memoire tourne-t-elle a sa vitesse nominale ?
+#
+# Une barrette DDR5-6000 posee sur une carte mere sortie d'usine tourne a
+# 4800 : le profil XMP (Intel) ou EXPO (AMD) n'est pas active tant que personne
+# ne l'a active dans le BIOS. Rien ne le signale, la machine marche, et on perd
+# 10 a 15 % de performances pendant des annees. C'est l'erreur d'assemblage la
+# plus repandue, y compris chez des assembleurs professionnels.
+#
+# Win32_PhysicalMemory porte les deux chiffres : Speed est ce que la barrette
+# sait faire, ConfiguredClockSpeed ce qu'elle fait vraiment.
+function Format-ControleMemoire {
+    param($Barrettes)
+    $b = @($Barrettes | Where-Object { $_ })
+    if (-not $b.Count) {
+        return New-Controle -Nom 'Vitesse de la mémoire' -Etat 'inconnu' `
+            -Constat 'Aucune barrette ne se déclare.' `
+            -Quoi 'À vérifier dans le BIOS, ou avec un outil dédié.'
+    }
+    $nominale = 0
+    $reelle = 0
+    foreach ($m in $b) {
+        $ps = $m.PSObject.Properties['Speed']
+        $pc = $m.PSObject.Properties['ConfiguredClockSpeed']
+        if ($ps -and $ps.Value) { $v = [int]$ps.Value; if ($v -gt $nominale) { $nominale = $v } }
+        if ($pc -and $pc.Value) { $v = [int]$pc.Value; if ($v -gt $reelle)   { $reelle   = $v } }
+    }
+    if (-not $nominale -or -not $reelle) {
+        return New-Controle -Nom 'Vitesse de la mémoire' -Etat 'inconnu' `
+            -Constat 'Les barrettes ne déclarent pas leur vitesse.' `
+            -Quoi 'À vérifier dans le BIOS : cherche XMP (Intel) ou EXPO (AMD).'
+    }
+    if ($reelle -lt $nominale) {
+        return New-Controle -Nom 'Vitesse de la mémoire' -Etat 'attention' `
+            -Constat "La mémoire tourne à $reelle MHz alors qu'elle sait faire $nominale MHz." `
+            -Quoi "Le profil XMP (Intel) ou EXPO (AMD) n'est pas activé dans le BIOS. Rien ne le signale, la machine marche, et tu perds 10 à 15 % de performances. Une case à cocher dans le BIOS."
+    }
+    return New-Controle -Nom 'Vitesse de la mémoire' -Etat 'ok' `
+        -Constat "La mémoire tourne à $reelle MHz, sa vitesse nominale." `
+        -Quoi 'Rien à faire.'
+}
+
+# 2. TRIM est-il actif ?
+#
+# Sans TRIM, un SSD ralentit durablement au fil des ecritures. Windows l'active
+# seul dans l'immense majorite des cas ; il arrive qu'un utilitaire
+# d'« optimisation » le coupe. La valeur de registre vaut 0 quand TRIM est
+# actif, et son absence veut dire la meme chose : c'est le defaut de Windows.
+function Format-ControleTrim {
+    param($Valeur)
+    if ($null -eq $Valeur) {
+        return New-Controle -Nom 'TRIM du SSD' -Etat 'ok' `
+            -Constat 'TRIM est actif (réglage par défaut de Windows).' `
+            -Quoi 'Rien à faire.'
+    }
+    $n = 0
+    if (-not [int]::TryParse([string]$Valeur, [ref]$n)) {
+        return New-Controle -Nom 'TRIM du SSD' -Etat 'inconnu' `
+            -Constat 'Le réglage est illisible.' `
+            -Quoi 'À vérifier : fsutil behavior query DisableDeleteNotify'
+    }
+    if ($n -eq 0) {
+        return New-Controle -Nom 'TRIM du SSD' -Etat 'ok' `
+            -Constat 'TRIM est actif.' -Quoi 'Rien à faire.'
+    }
+    return New-Controle -Nom 'TRIM du SSD' -Etat 'attention' `
+        -Constat 'TRIM est désactivé.' `
+        -Quoi "Un SSD sans TRIM ralentit durablement au fil des écritures. À réactiver : fsutil behavior set DisableDeleteNotify 0"
+}
+
+# 3. Secure Boot et TPM.
+#
+# Les deux conditionnent Windows 11 et le chiffrement BitLocker. Une machine
+# livree en mode Legacy ou avec le TPM desactive dans le BIOS demarre tres bien
+# et se retrouve bloquee a la premiere mise a jour majeure.
+function Format-ControleDemarrage {
+    param($SecureBoot, $Tpm)
+    $bouts = @()
+    $souci = $false
+    $inconnu = $false
+
+    if ($null -eq $SecureBoot) { $bouts += 'Secure Boot : indéterminé'; $inconnu = $true }
+    elseif ($SecureBoot)       { $bouts += 'Secure Boot actif' }
+    else                       { $bouts += 'Secure Boot inactif'; $souci = $true }
+
+    if ($null -eq $Tpm) { $bouts += 'TPM : indéterminé'; $inconnu = $true }
+    else {
+        $pres = $false
+        $pp = $Tpm.PSObject.Properties['IsEnabled_InitialValue']
+        if ($pp -and $pp.Value) { $pres = $true }
+        $ver = ''
+        $pv = $Tpm.PSObject.Properties['SpecVersion']
+        if ($pv -and $pv.Value) { $ver = (([string]$pv.Value) -split ',')[0].Trim() }
+        if ($pres) { $bouts += ("TPM actif" + $(if ($ver) { " (version $ver)" } else { '' })) }
+        else       { $bouts += 'TPM présent mais inactif'; $souci = $true }
+    }
+
+    $etat = if ($souci) { 'attention' } elseif ($inconnu) { 'inconnu' } else { 'ok' }
+    $quoi = if ($souci) {
+        "Windows 11 et BitLocker en dépendent. Les deux s'activent dans le BIOS. Une machine livrée comme ça démarre très bien et se bloque à la première grosse mise à jour."
+    } elseif ($inconnu) {
+        "Relance ce script en tant qu'administrateur pour obtenir la réponse."
+    } else { 'Rien à faire.' }
+
+    return New-Controle -Nom 'Secure Boot et TPM' -Etat $etat -Constat ($bouts -join ' · ') -Quoi $quoi
+}
+
+# 4. Le disque est-il reellement neuf ?
+#
+# Le controle qui rapporte le plus. Un SSD annonce neuf avec 400 heures au
+# compteur ne l'est pas : c'est un disque de retour, de demonstration, ou
+# recupere. Le compteur d'heures d'allumage ne se remet pas a zero.
+#
+# Quelques heures sont normales : l'assemblage, les tests, l'installation de
+# Windows. Au-dela d'une journee cumulee, il y a une question a poser.
+function Format-ControleDisques {
+    param($Compteurs, [int]$SeuilHeures = 50)
+    $c = @($Compteurs | Where-Object { $_ })
+    if (-not $c.Count) {
+        return New-Controle -Nom 'Usure des disques' -Etat 'inconnu' `
+            -Constat "Les disques ne rendent pas leur compteur d'heures." `
+            -Quoi "Souvent parce que le script n'est pas lancé en administrateur. Sinon, le disque ne le déclare pas."
+    }
+    $suspects = @()
+    $vus = @()
+    foreach ($d in $c) {
+        $ph = $d.PSObject.Properties['PowerOnHours']
+        if (-not $ph -or $null -eq $ph.Value) { continue }
+        $h = [int]$ph.Value
+        $nom = 'disque'
+        $pn = $d.PSObject.Properties['DeviceId']
+        if ($pn -and $pn.Value) { $nom = "disque $($pn.Value)" }
+        $vus += "$nom : $h h"
+        if ($h -gt $SeuilHeures) { $suspects += "$nom ($h heures)" }
+    }
+    if (-not $vus.Count) {
+        return New-Controle -Nom 'Usure des disques' -Etat 'inconnu' `
+            -Constat "Aucun disque ne rend son compteur d'heures." `
+            -Quoi "Souvent parce que le script n'est pas lancé en administrateur."
+    }
+    if ($suspects.Count) {
+        return New-Controle -Nom 'Usure des disques' -Etat 'attention' `
+            -Constat ("Compteur élevé sur : " + ($suspects -join ', ') + ".") `
+            -Quoi "Sur une machine neuve, quelques heures sont normales : assemblage, tests, installation. Au-delà, le disque a déjà servi — retour, démonstration, ou récupéré. Le compteur ne se remet pas à zéro. Question à poser au vendeur maintenant, pas dans six mois."
+    }
+    return New-Controle -Nom 'Usure des disques' -Etat 'ok' `
+        -Constat (($vus -join ' · ') + ".") `
+        -Quoi "Compatible avec une machine neuve."
+}
+
+function Read-Controles {
+    Write-Host "  controles machine..." -NoNewline
+    $out = @()
+
+    $barrettes = try { Get-CimInstance Win32_PhysicalMemory -ErrorAction Stop } catch { $null }
+    $out += Format-ControleMemoire -Barrettes $barrettes
+
+    # Le registre plutot que fsutil : la sortie de fsutil est traduite, donc
+    # illisible de facon portable. La valeur, elle, ne l'est pas.
+    $trim = $null
+    try {
+        $k = Get-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -ErrorAction Stop
+        $pv = $k.PSObject.Properties['DisableDeleteNotify']
+        if ($pv) { $trim = $pv.Value }
+    } catch { }
+    $out += Format-ControleTrim -Valeur $trim
+
+    # Confirme-SecureBootUEFI jette sur une machine en BIOS Legacy et sans les
+    # droits administrateur : les deux cas rendent « indetermine », pas « non ».
+    $sb = $null
+    try { $sb = [bool](Confirm-SecureBootUEFI -ErrorAction Stop) } catch { $sb = $null }
+    $tpm = $null
+    try {
+        $tpm = Get-CimInstance -Namespace 'root\cimv2\security\microsofttpm' -ClassName Win32_Tpm -ErrorAction Stop |
+               Select-Object -First 1
+    } catch { $tpm = $null }
+    $out += Format-ControleDemarrage -SecureBoot $sb -Tpm $tpm
+
+    $compteurs = @()
+    try {
+        $compteurs = @(Get-PhysicalDisk -ErrorAction Stop | ForEach-Object {
+            $d = $_
+            $r = $null
+            try { $r = $d | Get-StorageReliabilityCounter -ErrorAction Stop } catch { }
+            if ($r) {
+                $r | Add-Member -NotePropertyName DeviceId -NotePropertyValue $d.FriendlyName -Force -PassThru
+            }
+        })
+    } catch { $compteurs = @() }
+    $out += Format-ControleDisques -Compteurs $compteurs
+
+    $soucis = @($out | Where-Object { $_.etat -eq 'attention' }).Count
+    if ($soucis) { Write-Host " $soucis point(s) a regarder" -ForegroundColor Yellow }
+    else { Write-Host " $($out.Count) controle(s)" }
+    return $out
+}
+
+# ---------------------------------------------------------------- licences
+#
+# Le fait de migration le plus couteux a decouvrir trop tard, et le moins
+# visible : une licence Windows OEM est attachee a la carte mere de l'ancien
+# PC. Elle ne suit pas. Une licence Retail suit. La checklist ne posait meme
+# pas la question, et personne ne la pose avant d'avoir demonte la machine.
+#
+# La classe WMI SoftwareLicensingProduct dit tout ce qu'il faut sans toucher a
+# un secret. PartialProductKey ne rend que les cinq derniers caracteres de la
+# cle : c'est ce que Windows affiche lui-meme dans ses parametres, ca ne
+# reinstalle rien et ca ne s'envoie nulle part. La vraie cle OEM, gravee dans
+# l'UEFI, est lisible par ailleurs — elle n'a rien a faire dans un inventaire
+# qu'on se transmet par cle USB, et ce script ne la lit pas.
+
+# Les canaux que Windows declare, traduits en ce que ca change pour toi.
+$CanauxLicence = @{
+    'OEM'       = @{ suit = $false; quoi = "Attachee a la carte mere de cet ordinateur. Elle ne suit pas sur une machine neuve : prevois une licence." }
+    'OEM_DM'    = @{ suit = $false; quoi = "Attachee a la carte mere de cet ordinateur. Elle ne suit pas sur une machine neuve : prevois une licence." }
+    'OEM_SLP'   = @{ suit = $false; quoi = "Attachee a la carte mere de cet ordinateur. Elle ne suit pas sur une machine neuve : prevois une licence." }
+    'Retail'    = @{ suit = $true;  quoi = "Achetee separement : transferable sur la nouvelle machine. Delie-la de l'ancienne avant de la demonter." }
+    'Volume'    = @{ suit = $true;  quoi = "Licence en volume, gerée par une organisation. Vois avec celui qui l'administre." }
+    'Volume:GVLK' = @{ suit = $true; quoi = "Licence en volume, gerée par une organisation. Vois avec celui qui l'administre." }
+    'Volume:MAK'  = @{ suit = $true; quoi = "Licence en volume, gerée par une organisation. Vois avec celui qui l'administre." }
+}
+
+# LicenseStatus est un entier ; seul 1 veut dire « activee ».
+$EtatsLicence = @{
+    0 = 'non licencie'
+    1 = 'active'
+    2 = 'periode de grace'
+    3 = 'grace hors tolerance'
+    4 = 'grace non authentique'
+    5 = 'notification'
+    6 = 'grace prolongee'
+}
+
+function Format-Licences {
+    param($Produits)
+    $out = @()
+    foreach ($p in @($Produits)) {
+        if (-not $p) { continue }
+        # Sans cle partielle, l'entree decrit un produit installable mais non
+        # licencie : la liste en contient des dizaines, elles n'apprennent rien.
+        $cle = ''
+        $pc = $p.PSObject.Properties['PartialProductKey']
+        if ($pc) { $cle = [string]$pc.Value }
+        if ([string]::IsNullOrWhiteSpace($cle)) { continue }
+
+        $nom = ''
+        $pn = $p.PSObject.Properties['Name']
+        if ($pn) { $nom = [string]$pn.Value }
+        if ([string]::IsNullOrWhiteSpace($nom)) { continue }
+
+        $canal = ''
+        $pk = $p.PSObject.Properties['ProductKeyChannel']
+        if ($pk) { $canal = ([string]$pk.Value).Trim() }
+
+        $etat = ''
+        $ps = $p.PSObject.Properties['LicenseStatus']
+        if ($ps -and $null -ne $ps.Value) {
+            $n = 0
+            if ([int]::TryParse([string]$ps.Value, [ref]$n) -and $EtatsLicence.ContainsKey($n)) { $etat = $EtatsLicence[$n] }
+        }
+
+        $suit = $null
+        $quoi = "Canal inconnu : verifie dans Parametres > Systeme > Activation si la licence est liee a ton compte Microsoft."
+        if ($canal -and $CanauxLicence.ContainsKey($canal)) {
+            $suit = $CanauxLicence[$canal].suit
+            $quoi = $CanauxLicence[$canal].quoi
+        }
+
+        $out += [ordered]@{
+            nom        = $nom.Trim()
+            canal      = $canal
+            etat       = $etat
+            # Cinq derniers caracteres, ce que Windows affiche lui-meme.
+            clePartielle = $cle.Trim()
+            suitLeMateriel = $suit
+            quoi       = $quoi
+        }
+    }
+    return $out
+}
+
+function Read-Licences {
+    Write-Host "  licences..." -NoNewline
+    $produits = $null
+    try {
+        $produits = Get-CimInstance -ClassName SoftwareLicensingProduct -ErrorAction Stop |
+            Where-Object { $_.PartialProductKey }
+    } catch {
+        Write-Host " indisponible, ignore" -ForegroundColor Yellow
+        return @()
+    }
+    $out = @(Format-Licences -Produits $produits)
+    if (-not $out.Count) { Write-Host " aucune licence lisible" -ForegroundColor Yellow; return @() }
+    Write-Host " $($out.Count) licence(s)"
+    return $out
 }
 
 # ---------------------------------------------------------------- pilotes

@@ -119,6 +119,11 @@ $variables = if ($SansVariables) { [ordered]@{} } else {
 # Le materiel : Windows le connait, autant ne pas le faire saisir a la main.
 $materiel = Invoke-Detecteur -Nom 'materiel' -Bloc { Read-Materiel }
 
+# Une licence Windows OEM meurt avec la carte mere. Le savoir avant de
+# commander la machine neuve coute une ligne de WMI ; l'apprendre apres coute
+# le prix d'une licence.
+$licences = Invoke-Detecteur -Nom 'licences' -Bloc { Read-Licences }
+
 # Une machine de developpement porte des chaines d'outils qu'aucun installateur
 # n'enregistre : ni le registre, ni winget, ni le Store n'en savent rien. On ne
 # les copie pas — elles pesent des dizaines de Go et se retelechargent — on
@@ -184,6 +189,7 @@ $inventaire = [ordered]@{
     # pleine au milieu de la copie coute une soiree.
     aPrevoirMo = Get-TotalAPrevoirMo @($configs, $dossiers, $portables, $precieux)
     materiel  = $materiel
+    licences  = @($licences)
     outils    = @($outils)
     dossiers  = @($dossiers)
     precieux  = @($precieux)

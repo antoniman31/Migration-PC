@@ -593,11 +593,11 @@ try {
     Write-ResultatPourSite -Donnees $faux -DossierScript $bacEcr -NePasOuvrir *> $null
     $depose = Join-Path $bacEcr 'resultat-scan.js'
     ok 'le fichier est depose'      (Test-Path -LiteralPath $depose) $true
-    $contenu = Get-Content -LiteralPath $depose -Raw
+    $contenu = Get-Content -LiteralPath $depose -Raw -Encoding UTF8
     ok 'il pose la variable attendue' ($contenu.TrimStart([char]0xFEFF).StartsWith('window.MIGRATION_PC_SCAN=')) $true
     ok 'et se termine par un point-virgule' ($contenu.TrimEnd().EndsWith(';')) $true
     # La page lit cette variable-la : les deux cotes doivent s accorder.
-    $page = Get-Content -LiteralPath (Join-Path $racineScan 'index.html') -Raw
+    $page = Get-Content -LiteralPath (Join-Path $racineScan 'index.html') -Raw -Encoding UTF8
     ok 'la page lit cette variable'  ($page -match 'window\.MIGRATION_PC_SCAN') $true
     # Le JSON doit se relire, accents compris.
     $json = $contenu.Substring($contenu.IndexOf('=') + 1).TrimEnd()
@@ -626,7 +626,7 @@ $inv=[ordered]@{type='inventaire-migration-pc';version=1;genere=(Get-Date).ToStr
   machine=[ordered]@{os='Windows 11 Pro';nom='TEST'};apps=@($resultats.Values | Sort-Object {$_.nom})}
 $j=$inv | ConvertTo-Json -Depth 6
 Set-Content -Path (Join-Path ([System.IO.Path]::GetTempPath()) "inv-test.json") -Value $j -Encoding UTF8
-$relu = Get-Content (Join-Path ([System.IO.Path]::GetTempPath()) "inv-test.json") -Raw | ConvertFrom-Json
+$relu = Get-Content (Join-Path ([System.IO.Path]::GetTempPath()) "inv-test.json") -Raw -Encoding UTF8 | ConvertFrom-Json
 ok 'type'                   $relu.type 'inventaire-migration-pc'
 ok 'apps serialisees'       $relu.apps.Count 4
 ok 'champs presents'        ($null -ne $relu.apps[0].nom -and $null -ne $relu.apps[0].cat) $true
@@ -660,7 +660,7 @@ New-Item -ItemType Directory -Path $dossierEpic -Force | Out-Null
 $script:resultats = @{}
 $lus = 0
 Get-ChildItem -Path $dossierEpic -Filter '*.item' | ForEach-Object {
-    $m = Get-Content $_.FullName -Raw | ConvertFrom-Json
+    $m = Get-Content $_.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
     if ([string]::IsNullOrWhiteSpace($m.DisplayName)) { return }
     if ($m.PSObject.Properties['AppCategories'] -and $m.AppCategories -and
         ($m.AppCategories -notcontains 'games')) { return }
@@ -713,5 +713,157 @@ $relu2 = $j2 | ConvertFrom-Json
 ok 'tailleGo serialisee'     $relu2.apps[0].tailleGo 2.5
 ok 'variables serialisees'   $relu2.variables.JAVA_HOME 'C:/java'
 ok 'nom de variable avec espace' $relu2.variables.'PATH (utilisateur)' 'C:/bin'
+
+
+"--- winget : identifiants installables ---"
+ok 'catalogue accepte'      (Test-IdWingetInstallable -Id 'Mozilla.Firefox') $true
+ok 'ARP refuse'             (Test-IdWingetInstallable -Id 'ARP\Machine\X64\{1234-5678}') $false
+ok 'MSIX refuse'            (Test-IdWingetInstallable -Id 'MSIX\Microsoft.Paint_8wekyb3d8bbwe') $false
+ok 'minuscules refusees aussi' (Test-IdWingetInstallable -Id 'arp\Machine\X64\{9}') $false
+ok 'sans point refuse'      (Test-IdWingetInstallable -Id 'Firefox') $false
+ok 'vide refuse'            (Test-IdWingetInstallable -Id '') $false
+
+"--- winget : lecture de l'export ---"
+$exp = Read-ExportWinget -Json (Get-Content -LiteralPath "$PSScriptRoot/winget-export-exemple.json" -Raw -Encoding UTF8)
+# Le fichier d'exemple contient 8 entrees dont un doublon de 7zip : la lecture
+# ne deduplique pas, c'est Merge-IdsWinget qui s'en charge.
+ok 'export lu'              (Get-Nombre $exp) 8
+ok 'premier identifiant'    $exp[0].id '7zip.7zip'
+ok 'version quand presente' (@($exp | Where-Object { $_.id -eq 'Mozilla.Firefox' })[0].version) '142.0'
+ok 'JSON vide sans erreur'  (Get-Nombre (Read-ExportWinget -Json '')) 0
+ok 'JSON casse sans erreur' (Get-Nombre (Read-ExportWinget -Json '{pas du json')) 0
+ok 'ARP filtre a la lecture' (Get-Nombre (Read-ExportWinget -Json '{"Sources":[{"Packages":[{"PackageIdentifier":"ARP\\Machine\\X64\\{1}"}]}]}')) 0
+
+"--- winget : rapprochement des identifiants ---"
+ok 'editeur+produit'        ((Get-ClesCandidatesWinget -Id 'Mozilla.Firefox') -contains (Get-Cle -Nom 'Mozilla Firefox')) $true
+ok 'produit seul'           ((Get-ClesCandidatesWinget -Id '7zip.7zip') -contains (Get-Cle -Nom '7-Zip')) $true
+ok 'couple complet en premier' (Get-ClesCandidatesWinget -Id 'Mozilla.Firefox')[0] (Get-Cle -Nom 'Mozilla Firefox')
+
+# Un inventaire neuf : deux logiciels connus du registre, sans identifiant.
+$resultats = @{}
+Add-App -Nom 'Mozilla Firefox (x64 fr)' -Editeur 'Mozilla' -Version '142.0' -Source 'registre' -Winget ''
+Add-App -Nom '7-Zip 24.08 (x64)' -Editeur 'Igor Pavlov' -Version '24.08' -Source 'registre' -Winget ''
+$avant = $resultats.Count
+$r = Merge-IdsWinget -Entrees @(
+    [ordered]@{ id = 'Mozilla.Firefox'; version = '142.0' },
+    [ordered]@{ id = '7zip.7zip';       version = '24.08' },
+    [ordered]@{ id = 'Valve.Steam';     version = '' }
+)
+ok 'deux identifiants poses' $r.poses 2
+ok 'une ligne ajoutee'       $r.crees 1
+ok 'Firefox a son id'        $resultats[(Get-Cle -Nom 'Mozilla Firefox')].winget 'Mozilla.Firefox'
+ok '7-Zip a son id'          $resultats[(Get-Cle -Nom '7-Zip')].winget '7zip.7zip'
+ok 'Steam cree'              $resultats[(Get-Cle -Nom 'Steam')].winget 'Valve.Steam'
+ok 'Steam nomme lisiblement' $resultats[(Get-Cle -Nom 'Steam')].nom 'Steam'
+ok 'une seule ligne en plus' ($resultats.Count - $avant) 1
+ok 'source completee'        ($resultats[(Get-Cle -Nom 'Mozilla Firefox')].source -like '*winget*') $true
+
+# Rejouer le meme export ne doit rien reposer ni rien recreer.
+$r2 = Merge-IdsWinget -Entrees @([ordered]@{ id = 'Mozilla.Firefox'; version = '142.0' })
+ok 'rejeu sans effet (pose)' $r2.poses 0
+ok 'rejeu sans effet (cree)' $r2.crees 0
+
+"--- adresse officielle au registre ---"
+function EntreeReg($h){ $o = New-Object PSObject; foreach($k in $h.Keys){ $o | Add-Member -NotePropertyName $k -NotePropertyValue $h[$k] }; return $o }
+ok 'URLInfoAbout lu'        (Get-LienEditeur -Entree (EntreeReg @{ URLInfoAbout = 'https://www.videolan.org/' })) 'https://www.videolan.org/'
+ok 'HelpLink en secours'    (Get-LienEditeur -Entree (EntreeReg @{ HelpLink = 'https://support.mozilla.org' })) 'https://support.mozilla.org'
+ok 'URLInfoAbout prioritaire' (Get-LienEditeur -Entree (EntreeReg @{ URLInfoAbout='https://a.example'; HelpLink='https://b.example' })) 'https://a.example'
+ok 'guillemets retires'     (Get-LienEditeur -Entree (EntreeReg @{ URLInfoAbout = '"https://a.example"' })) 'https://a.example'
+ok 'espaces retires'        (Get-LienEditeur -Entree (EntreeReg @{ URLInfoAbout = '  https://a.example  ' })) 'https://a.example'
+# Des installateurs mettent la un chemin local, un protocole exotique ou rien.
+ok 'chemin local refuse'    (Get-LienEditeur -Entree (EntreeReg @{ URLInfoAbout = 'C:\Program Files\Truc' })) ''
+ok 'file:// refuse'         (Get-LienEditeur -Entree (EntreeReg @{ URLInfoAbout = 'file:///C:/x.htm' })) ''
+ok 'javascript: refuse'     (Get-LienEditeur -Entree (EntreeReg @{ URLInfoAbout = 'javascript:alert(1)' })) ''
+ok 'vide refuse'            (Get-LienEditeur -Entree (EntreeReg @{ URLInfoAbout = '   ' })) ''
+ok 'champ absent refuse'    (Get-LienEditeur -Entree (EntreeReg @{ Publisher = 'X' })) ''
+ok 'entree nulle refusee'   (Get-LienEditeur -Entree $null) ''
+
+$resultats = @{}
+Add-App -Nom 'VLC' -Editeur 'VideoLAN' -Version '3' -Source 'registre' -Winget '' -Lien 'https://www.videolan.org/'
+ok 'lien porte par l app'   $resultats[(Get-Cle -Nom 'VLC')].lien 'https://www.videolan.org/'
+# Une deuxieme source sans lien ne doit pas effacer celui qu'on a.
+Add-App -Nom 'VLC' -Editeur '' -Version '' -Source 'winget' -Winget 'VideoLAN.VLC'
+ok 'lien conserve'          $resultats[(Get-Cle -Nom 'VLC')].lien 'https://www.videolan.org/'
+# Et une source qui en apporte un le pose sur une ligne qui n'en avait pas.
+Add-App -Nom 'Krita' -Editeur '' -Version '' -Source 'winget' -Winget ''
+Add-App -Nom 'Krita' -Editeur 'KDE' -Version '' -Source 'registre' -Winget '' -Lien 'https://krita.org'
+ok 'lien ajoute apres coup' $resultats[(Get-Cle -Nom 'Krita')].lien 'https://krita.org'
+
+"--- licences ---"
+function Licence($h){ $o = New-Object PSObject; foreach($k in $h.Keys){ $o | Add-Member -NotePropertyName $k -NotePropertyValue $h[$k] }; return $o }
+$lic = @(Format-Licences -Produits @(
+    (Licence @{ Name='Windows(R), Professional edition'; PartialProductKey='7X2QK'; ProductKeyChannel='OEM';    LicenseStatus=1 }),
+    (Licence @{ Name='Office 16, Office16ProPlus';       PartialProductKey='9BQRT'; ProductKeyChannel='Retail'; LicenseStatus=1 }),
+    (Licence @{ Name='Windows(R), Core edition';         PartialProductKey='';      ProductKeyChannel='OEM';    LicenseStatus=1 })
+))
+# La troisieme n'a pas de cle partielle : produit installable mais pas licencie.
+ok 'sans cle partielle ecartee' (Get-Nombre $lic) 2
+ok 'canal OEM lu'           $lic[0].canal 'OEM'
+ok 'OEM ne suit pas'         $lic[0].suitLeMateriel $false
+ok 'Retail suit'             $lic[1].suitLeMateriel $true
+ok 'etat traduit'            $lic[0].etat 'active'
+ok 'cle partielle gardee'    $lic[0].clePartielle '7X2QK'
+ok 'explication non vide'    ($lic[0].quoi.Length -gt 20) $true
+# Un canal que Windows peut rendre et qu'on ne connait pas ne doit rien affirmer.
+$inc = @(Format-Licences -Produits @((Licence @{ Name='X'; PartialProductKey='AAAAA'; ProductKeyChannel='CanalInedit'; LicenseStatus=1 })))
+ok 'canal inconnu sans verdict' ($null -eq $inc[0].suitLeMateriel) $true
+ok 'canal inconnu explique'     ($inc[0].quoi -like '*verifie*') $true
+# Champs manquants : StrictMode ne doit pas faire tomber le scan.
+$vide = @(Format-Licences -Produits @((Licence @{ Name='Y'; PartialProductKey='BBBBB' })))
+ok 'sans canal ni etat'      (Get-Nombre $vide) 1
+ok 'canal vide'              $vide[0].canal ''
+ok 'liste vide sans erreur'  (Get-Nombre (Format-Licences -Produits @())) 0
+ok 'null sans erreur'        (Get-Nombre (Format-Licences -Produits $null)) 0
+ok 'licences declarees'      ($CouverturesScan.Contains('licences')) $true
+
+"--- controles de la machine neuve ---"
+function Obj($h){ $o = New-Object PSObject; foreach($k in $h.Keys){ $o | Add-Member -NotePropertyName $k -NotePropertyValue $h[$k] }; return $o }
+
+# 1. XMP : l'erreur d'assemblage la plus repandue, et la plus silencieuse.
+$lente = Format-ControleMemoire -Barrettes @((Obj @{ Speed=6000; ConfiguredClockSpeed=4800 }))
+ok 'XMP non active detecte'  $lente.etat 'attention'
+ok 'les deux chiffres sont dits' ($lente.constat -like '*4800*' -and $lente.constat -like '*6000*') $true
+ok 'XMP nomme dans le remede' ($lente.quoi -like '*XMP*') $true
+$bonne = Format-ControleMemoire -Barrettes @((Obj @{ Speed=6000; ConfiguredClockSpeed=6000 }))
+ok 'memoire a sa vitesse'    $bonne.etat 'ok'
+# Une barrette plus lente que l'autre ne doit pas masquer la plus rapide.
+$mix = Format-ControleMemoire -Barrettes @((Obj @{ Speed=6000; ConfiguredClockSpeed=6000 }), (Obj @{ Speed=6000; ConfiguredClockSpeed=6000 }))
+ok 'deux barrettes conformes' $mix.etat 'ok'
+ok 'sans barrette, inconnu'  (Format-ControleMemoire -Barrettes @()).etat 'inconnu'
+ok 'sans vitesse, inconnu'   (Format-ControleMemoire -Barrettes @((Obj @{ Capacity=8 }))).etat 'inconnu'
+
+# 2. TRIM.
+ok 'TRIM absent = actif'     (Format-ControleTrim -Valeur $null).etat 'ok'
+ok 'TRIM a 0 = actif'        (Format-ControleTrim -Valeur 0).etat 'ok'
+ok 'TRIM a 1 = coupe'        (Format-ControleTrim -Valeur 1).etat 'attention'
+ok 'la commande est donnee'  ((Format-ControleTrim -Valeur 1).quoi -like '*fsutil*') $true
+ok 'valeur illisible'        (Format-ControleTrim -Valeur 'oui').etat 'inconnu'
+
+# 3. Secure Boot et TPM.
+$tpmOn  = Obj @{ IsEnabled_InitialValue=$true; SpecVersion='2.0, 0, 1.38' }
+$tpmOff = Obj @{ IsEnabled_InitialValue=$false; SpecVersion='2.0, 0, 1.38' }
+$bon = Format-ControleDemarrage -SecureBoot $true -Tpm $tpmOn
+ok 'Secure Boot + TPM ok'    $bon.etat 'ok'
+ok 'la version du TPM est dite' ($bon.constat -like '*2.0*') $true
+ok 'Secure Boot coupe'       (Format-ControleDemarrage -SecureBoot $false -Tpm $tpmOn).etat 'attention'
+ok 'TPM coupe'               (Format-ControleDemarrage -SecureBoot $true -Tpm $tpmOff).etat 'attention'
+# Sans les droits administrateur, les deux remontent $null : on dit « je ne
+# sais pas », jamais « tout va bien ».
+$ind = Format-ControleDemarrage -SecureBoot $null -Tpm $null
+ok 'indetermine, pas ok'     $ind.etat 'inconnu'
+ok 'et on dit quoi faire'    ($ind.quoi -like '*administrateur*') $true
+
+# 4. Le disque a-t-il deja servi ?
+$neuf  = Format-ControleDisques -Compteurs @((Obj @{ PowerOnHours=3;   DeviceId='Samsung 990' }))
+$use   = Format-ControleDisques -Compteurs @((Obj @{ PowerOnHours=412; DeviceId='Samsung 990' }))
+ok 'disque neuf'             $neuf.etat 'ok'
+ok 'disque deja servi'       $use.etat 'attention'
+ok 'le compteur est cite'    ($use.constat -like '*412*') $true
+ok 'le disque est nomme'     ($use.constat -like '*Samsung 990*') $true
+ok 'seuil reglable'          (Format-ControleDisques -Compteurs @((Obj @{ PowerOnHours=412; DeviceId='X' })) -SeuilHeures 500).etat 'ok'
+ok 'aucun compteur, inconnu' (Format-ControleDisques -Compteurs @()).etat 'inconnu'
+ok 'compteur absent, inconnu' (Format-ControleDisques -Compteurs @((Obj @{ DeviceId='X' }))).etat 'inconnu'
+ok 'controles declares'      ($CouverturesScan.Contains('controles')) $true
+
 
 if($script:ko){"`n$($script:ko) TEST(S) EN ECHEC"; exit 1} else {"`nTOUS LES TESTS POWERSHELL PASSENT"}

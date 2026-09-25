@@ -62,7 +62,7 @@ try {
 
     # --- execution ----------------------------------------------------
     & (Join-Path $racine 'verifier-sauvegardes.ps1') -Destination $dst -Profil $fProfil -Sortie $fSortie | Out-Null
-    $r = Get-Content $fSortie -Raw | ConvertFrom-Json
+    $r = Get-Content $fSortie -Raw -Encoding UTF8 | ConvertFrom-Json
 
     "--- rapport produit ---"
     ok 'type correct'          $r.type 'sauvegardes-migration-pc'
@@ -104,7 +104,7 @@ try {
     "--- tolerance reglable ---"
     $f2 = Join-Path $base 'rapport2.json'
     & (Join-Path $racine 'verifier-sauvegardes.ps1') -Destination $dst -Profil $fProfil -Sortie $f2 -ToleranceParCent 90 | Out-Null
-    $r2 = Get-Content $f2 -Raw | ConvertFrom-Json
+    $r2 = Get-Content $f2 -Raw -Encoding UTF8 | ConvertFrom-Json
     $etat2 = @{}
     foreach ($e in $r2.elements) { $etat2[$e.id] = $e.etat }
     ok 'tolerance large accepte l ecart' $etat2['s2'] 'ok'
@@ -125,7 +125,7 @@ try {
     Set-Content -Path $fTrou -Value ($troue | ConvertTo-Json -Depth 6) -Encoding UTF8
     $fr = Join-Path $base 'rapport-troue.json'
     & (Join-Path $racine 'verifier-sauvegardes.ps1') -Destination $dst -Profil $fTrou -Sortie $fr | Out-Null
-    $rt = Get-Content $fr -Raw | ConvertFrom-Json
+    $rt = Get-Content $fr -Raw -Encoding UTF8 | ConvertFrom-Json
     ok 'les trois elements sont rapportes' @($rt.elements).Count 3
     $sansChemin = $rt.elements | Where-Object { $_.id -eq 't1' }
     ok 'celui sans chemin est dit non verifiable' $sansChemin.etat 'non-verifiable'
