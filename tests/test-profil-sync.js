@@ -125,6 +125,48 @@ ok('catégories déclarées',catsInconnues.length===0,catsInconnues.map(a=>a.id+
 
 const ids=new Set(tous.map(e=>e.id));
 const ordreInconnu=(fichier.ordre||[]).filter(function(id){return !ids.has(id);});
+// ── Ce que le scanner couvre, et ce qu'il ne couvre pas ──────────────────
+// La checklist a été écrite à la main d'abord ; le scanner est arrivé après et
+// n'en couvre qu'une partie. Rien ne disait « cette ligne prétend être
+// vérifiable, mais aucun détecteur ne la regarde » — le même sens manquant qui
+// avait laissé `ecrire-resultat.ps1` hors de la liste de téléchargement.
+//
+// Chaque ligne de Données déclare donc l'une de trois choses :
+//   une couverture qui existe  — un détecteur la remplit aujourd'hui
+//   « attendu:xxx »            — c'est scannable, le détecteur reste à écrire
+//   « manuel »                 — personne ne scannera ça, et c'est assumé
+const lib=fs.readFileSync(path.join(racine,'lib-detection.ps1'),'utf8');
+const blocCouv=(lib.match(/\$CouverturesScan\s*=\s*\[ordered\]@\{([\s\S]*?)\n\}/)||[,''])[1];
+const couvertures=(blocCouv.match(/^\s*([a-z]+)\s*=/gm)||[]).map(m=>m.trim().replace(/\s*=$/,''));
+ok('les couvertures sont déclarées dans lib-detection.ps1',couvertures.length>0,true);
+
+const sansDeclaration=[],couvInconnue=[],attendus=[];
+fichier.data.forEach(e=>{
+  const c=e.scan;
+  if(!c){sansDeclaration.push(e.id);return;}
+  if(c==='manuel')return;
+  if(String(c).startsWith('attendu:')){attendus.push(e.id);return;}
+  if(couvertures.indexOf(c)<0)couvInconnue.push(e.id+'→'+c);
+});
+ok('chaque ligne de Données déclare ce qui la couvre',
+  sansDeclaration.length===0,sansDeclaration.join(', '));
+ok('et aucune ne cite une couverture qui n\'existe pas',
+  couvInconnue.length===0,couvInconnue.join(', '));
+
+// Une ligne qui porte un vrai chemin ne peut pas se dire « manuelle » : si le
+// chemin est là, quelque chose peut aller le voir. C'est ce mélange qui faisait
+// proposer des dossiers que le scan savait déjà trouver.
+const manuelAvecChemin=fichier.data.filter(e=>
+  e.scan==='manuel'&&/%[^%]+%|^[A-Za-z]:\\/.test(String(e.p||''))).map(e=>e.id);
+ok('aucune ligne « manuelle » ne porte un chemin scannable',
+  manuelAvecChemin.length===0,manuelAvecChemin.join(', '));
+
+// Le compte est affiché pour qu'il se voie bouger quand un détecteur arrive.
+console.log('   → '+fichier.data.filter(e=>e.scan==="manuel").length+" manuelles, "
+  +attendus.length+' détecteurs attendus, '
+  +fichier.data.filter(e=>e.scan&&e.scan!=="manuel"&&!String(e.scan).startsWith("attendu:")).length
+  +' couvertes aujourd\'hui');
+
 ok("l'ordre conseillé ne cite que des éléments existants",ordreInconnu.length===0,ordreInconnu.join(', '));
 
 // Les fichiers dont les tests dependent doivent etre versionnes. Une regle de

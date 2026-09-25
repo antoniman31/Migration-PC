@@ -1823,35 +1823,40 @@ const PROFIL_DEFAUT = {
       "n": "Documents, images, vidéos",
       "p": "%USERPROFILE%\\Documents, Pictures, Videos",
       "note": "Les dossiers personnels de base. Vérifier aussi les sous-dossiers de OneDrive.",
-      "pr": "high"
+      "pr": "high",
+      "scan": "dossiers"
     },
     {
       "id": "s2",
       "n": "Bureau",
       "p": "%USERPROFILE%\\Desktop",
       "note": "Souvent plein de fichiers de travail jamais rangés ailleurs.",
-      "pr": "high"
+      "pr": "high",
+      "scan": "dossiers"
     },
     {
       "id": "s3",
       "n": "Téléchargements",
       "p": "%USERPROFILE%\\Downloads",
       "note": "À trier avant la migration plutôt qu'après.",
-      "pr": "med"
+      "pr": "med",
+      "scan": "dossiers"
     },
     {
       "id": "s4",
       "n": "Projets et code local",
       "p": "Selon ton organisation",
       "note": "Tout ce qui n'est pas poussé sur un dépôt distant n'a aucun filet de sécurité.",
-      "pr": "high"
+      "pr": "high",
+      "scan": "dossiers"
     },
     {
       "id": "s5",
       "n": "Clés SSH et GPG",
       "p": "%USERPROFILE%\\.ssh",
       "note": "Copier sur un support chiffré, jamais dans un espace de stockage partagé.",
-      "pr": "high"
+      "pr": "high",
+      "scan": "configs"
     },
     {
       "id": "s6",
@@ -1859,7 +1864,8 @@ const PROFIL_DEFAUT = {
       "p": "Courriels et espaces clients",
       "note": "Rassembler les clés des logiciels payants avant de désinstaller quoi que ce soit.",
       "pr": "high",
-      "lic": true
+      "lic": true,
+      "scan": "manuel"
     },
     {
       "id": "s7",
@@ -1867,105 +1873,120 @@ const PROFIL_DEFAUT = {
       "p": "Panneau de configuration → Système → Variables d'environnement",
       "note": "Relever les variables personnalisées et les ajouts au PATH.",
       "pr": "med",
-      "env": true
+      "env": true,
+      "scan": "variables"
     },
     {
       "id": "s8",
       "n": "Mots de passe du navigateur",
       "p": "Compte du navigateur ou gestionnaire dédié",
       "note": "Vérifier que la synchronisation est à jour, ou exporter vers un gestionnaire.",
-      "pr": "high"
+      "pr": "high",
+      "scan": "manuel"
     },
     {
       "id": "s9",
       "n": "Sauvegardes de jeux hors ligne",
       "p": "%USERPROFILE%\\Documents\\My Games et %APPDATA%",
       "note": "Les jeux sans sauvegarde en ligne perdent tout. Vérifier avant de formater.",
-      "pr": "med"
+      "pr": "med",
+      "scan": "configs"
     },
     {
       "id": "s10",
       "n": "Configurations d'applications",
       "p": "%APPDATA% et %LOCALAPPDATA%",
       "note": "Réglages, profils et raccourcis personnalisés des logiciels que tu utilises beaucoup.",
-      "pr": "med"
+      "pr": "med",
+      "scan": "configs"
     },
     {
       "id": "s11",
       "n": "Polices installées",
       "p": "C:\\Windows\\Fonts",
       "note": "Seulement celles que tu as ajoutées toi-même.",
-      "pr": "ok"
+      "pr": "ok",
+      "scan": "attendu:polices"
     },
     {
       "id": "s12",
       "n": "Imprimantes et périphériques",
       "p": "Paramètres → Bluetooth et appareils",
       "note": "Noter les modèles et les adresses réseau pour les reconfigurer plus vite.",
-      "pr": "ok"
+      "pr": "ok",
+      "scan": "attendu:imprimantes"
     },
     {
       "id": "s13",
       "n": "Codes de récupération 2FA",
       "p": "Coffre-fort ou support hors ligne",
       "note": "Le plus souvent oublié, et le seul qui enferme dehors définitivement. Sortir les codes de secours de chaque compte AVANT de toucher à quoi que ce soit.",
-      "pr": "high"
+      "pr": "high",
+      "scan": "manuel"
     },
     {
       "id": "s14",
       "n": "Application d'authentification",
       "p": "Sur le téléphone — fonction de transfert",
       "note": "Les jetons ne se copient pas comme un fichier. Utiliser la fonction de transfert de l'application, et le faire avant de changer de téléphone si les deux migrations tombent en même temps.",
-      "pr": "high"
+      "pr": "high",
+      "scan": "manuel"
     },
     {
       "id": "s15",
       "n": "Clé de récupération BitLocker de cet ancien PC",
       "p": "Compte Microsoft ou impression",
       "note": "Si le disque de l'ancien PC est chiffré et que vous comptez y revenir chercher quelque chose, sans cette clé il sera illisible.",
-      "pr": "high"
+      "pr": "high",
+      "scan": "attendu:bitlocker"
     },
     {
       "id": "s16",
       "n": "Favoris du navigateur",
       "p": "Gestionnaire de favoris → Exporter",
       "note": "La synchronisation les couvre si elle est active. Sinon, un export HTML prend dix secondes et évite de tout reconstruire.",
-      "pr": "med"
+      "pr": "med",
+      "scan": "attendu:favoris"
     },
     {
       "id": "s17",
       "n": "Gestionnaire d'identification Windows",
       "p": "Panneau de configuration → Comptes d'utilisateurs",
       "note": "Garde les accès aux partages réseau, aux lecteurs mappés et au bureau à distance. Personne n'y pense, et tout cesse de fonctionner après la réinstallation.",
-      "pr": "med"
+      "pr": "med",
+      "scan": "attendu:identifiants"
     },
     {
       "id": "s18",
       "n": "Profils Wi-Fi et clés réseau",
       "p": "netsh wlan export profile key=clear",
       "note": "La commande exporte chaque réseau enregistré avec sa clé. Utile pour les réseaux dont personne ne se souvient du mot de passe.",
-      "pr": "med"
+      "pr": "med",
+      "scan": "attendu:wifi"
     },
     {
       "id": "s19",
       "n": "Profils VPN et certificats",
       "p": "Paramètres → Réseau → VPN",
       "note": "Adresses de serveurs, certificats et fichiers de configuration. Un client VPN réinstallé ne retrouve rien tout seul.",
-      "pr": "med"
+      "pr": "med",
+      "scan": "attendu:vpn"
     },
     {
       "id": "s20",
       "n": "Archives mail locales",
       "p": "Fichiers .pst et .ost, dossiers de profil",
       "note": "Les messages restés en local n'existent nulle part ailleurs. Vérifier aussi les signatures, les règles et les carnets d'adresses.",
-      "pr": "med"
+      "pr": "med",
+      "scan": "attendu:mail"
     },
     {
       "id": "s21",
       "n": "Machines virtuelles",
       "p": "Selon l'hyperviseur utilisé",
       "note": "Des dizaines de gigaoctets faciles à oublier, et impossibles à recréer à l'identique. Les arrêter proprement avant de copier.",
-      "pr": "ok"
+      "pr": "ok",
+      "scan": "attendu:vm"
     },
     {
       "id": "sy1",
@@ -1975,7 +1996,8 @@ const PROFIL_DEFAUT = {
       "cas": [
         "second"
       ],
-      "d": "Tout synchroniser est le réflexe, et c'est l'erreur : une bibliothèque de jeux ou une réserve de machines virtuelles n'ont rien à faire sur un portable, et la synchronisation passera des heures à les recopier. Faites trois piles — ce qui suit partout, ce qui reste sur le fixe, ce qui ne vit que sur le portable — avant d'installer le moindre outil."
+      "d": "Tout synchroniser est le réflexe, et c'est l'erreur : une bibliothèque de jeux ou une réserve de machines virtuelles n'ont rien à faire sur un portable, et la synchronisation passera des heures à les recopier. Faites trois piles — ce qui suit partout, ce qui reste sur le fixe, ce qui ne vit que sur le portable — avant d'installer le moindre outil.",
+      "scan": "manuel"
     },
     {
       "id": "sy2",
@@ -1989,7 +2011,8 @@ const PROFIL_DEFAUT = {
         "sy1"
       ],
       "d": "Les services grand public suffisent pour des documents. Pour du code ou de gros projets, Syncthing synchronise en direct entre vos deux machines sans passer par un serveur, et sans limite de taille.",
-      "note": "Le code se gère mieux avec git qu'avec une synchronisation de fichiers : deux copies d'un dépôt synchronisées en même temps finissent par se marcher dessus."
+      "note": "Le code se gère mieux avec git qu'avec une synchronisation de fichiers : deux copies d'un dépôt synchronisées en même temps finissent par se marcher dessus.",
+      "scan": "manuel"
     },
     {
       "id": "sy3",
@@ -2003,7 +2026,8 @@ const PROFIL_DEFAUT = {
         "sy2"
       ],
       "d": "Créez un fichier sur le fixe, voyez-le arriver sur le portable, modifiez-le là-bas, voyez la modification revenir. Tant que ce va-et-vient n'est pas constaté, vous n'avez pas une synchronisation, vous avez une sauvegarde à sens unique dont vous ignorez le sens.",
-      "warn": "Une synchronisation qu'on n'a jamais testée dans les deux sens se découvre le jour où elle a écrasé la bonne version."
+      "warn": "Une synchronisation qu'on n'a jamais testée dans les deux sens se découvre le jour où elle a écrasé la bonne version.",
+      "scan": "manuel"
     },
     {
       "id": "sy4",
@@ -2016,7 +2040,8 @@ const PROFIL_DEFAUT = {
       "dep": [
         "sy3"
       ],
-      "d": "Deux machines qui modifient le même fichier hors ligne produisent deux versions, et la plupart des outils tranchent en silence. Une règle simple suffit : fermer ses fichiers avant de changer de machine, et attendre que la synchronisation affiche « à jour » avant de refermer le capot."
+      "d": "Deux machines qui modifient le même fichier hors ligne produisent deux versions, et la plupart des outils tranchent en silence. Une règle simple suffit : fermer ses fichiers avant de changer de machine, et attendre que la synchronisation affiche « à jour » avant de refermer le capot.",
+      "scan": "manuel"
     },
     {
       "id": "s24",
@@ -2027,7 +2052,8 @@ const PROFIL_DEFAUT = {
       "cas": [
         "migration",
         "second"
-      ]
+      ],
+      "scan": "manuel"
     }
   ],
   "pwa": [

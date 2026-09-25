@@ -97,6 +97,33 @@ function Test-Exclu {
     return $false
 }
 
+# ---------------------------------------------------------------- couvertures
+#
+# Ce que le scanner sait reellement trouver, nomme une fois pour toutes.
+#
+# La checklist a ete ecrite a la main d'abord, comme une liste pour un humain ;
+# le scanner est arrive apres et n'en couvre qu'une partie. Personne n'avait
+# jamais compare les deux listes, et rien ne disait « cette ligne pretend etre
+# verifiable, mais aucun detecteur ne la regarde ». C'est le meme sens manquant
+# qui avait laisse ecrire-resultat.ps1 hors de la liste de telechargement.
+#
+# Chaque ligne de l'onglet « Donnees » du profil declare donc soit la
+# couverture qui la remplit, soit qu'elle est manuelle. Un test refuse une
+# couverture qui ne figure pas ici, et refuse une ligne qui ne declare rien.
+$CouverturesScan = [ordered]@{
+    apps       = 'Read-Registre, Read-Winget, Read-Store'
+    jeux       = 'Read-Steam, Read-Epic, Read-GOG, Read-Xbox, Read-Ubisoft, Read-Ea'
+    configs    = 'Read-Configs'
+    variables  = 'Read-Variables'
+    materiel   = 'Read-Materiel'
+    outils     = 'Read-SdkAndroid, Read-Wsl, Read-GestionnairesPaquets, Read-OutilsLangages'
+    extensions = 'Read-Extensions'
+    dossiers   = 'Read-GrosDossiers'
+    precieux   = 'Read-FichiersPrecieux'
+    portables  = 'Read-Portables'
+    web        = 'Read-Registre (applications web du navigateur)'
+}
+
 # ---------------------------------------------------------------- categories
 
 # Classement approximatif par mots-cles. Sert a pre-trier la checklist ;
