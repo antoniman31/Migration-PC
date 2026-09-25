@@ -74,8 +74,11 @@ ok('ni un composant non renseigné',apres.some(n=>/Benchmark du SSD —/.test(n)
 const lien=await lienDe('chipset');
 ok('la recherche vise le constructeur',lien.indexOf('ASUS ROG STRIX B850-A support pilotes')>=0,true);
 ok('et pas la phrase entière',lien.indexOf('Pilote chipset de la carte')<0,true);
-ok('une étape sans composant garde sa recherche',
-  (await lienDe('Windows Update')).indexOf('download')>=0,true);
+// Une etape qui n'est ni un telechargement ni un composant n'a rien a
+// chercher : « download Windows Update official » ne mene nulle part, et un
+// bouton qui deçoit a chaque clic coute plus que son absence.
+ok('une étape sans composant n\'a pas de bouton',
+  await lienDe('Windows Update'),null);
 
 console.log('\n--- ça tient, et ça s\'efface ---');
 await pg.reload({waitUntil:'networkidle'});

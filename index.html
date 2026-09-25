@@ -3302,7 +3302,10 @@ function renderNPC(){
     const ck=!!S.checked[item.id];
     const dt=ck&&S.dates[item.id]?'<span class="item-date">✓ '+fmtDate(S.dates[item.id])+'</span>':'';
     const srcBadge=item.src?'<span class="badge b-src">'+esc(item.src)+'</span>':'';
-    const pBadge=item.p==='high'?'<span class="badge b-high">⚡ Priorité haute</span>':'';
+    // Seize lignes sur trente et une sont prioritaires : l'etiquette informe
+    // encore. Mais « Priorité haute » ecrit en toutes lettres sur la moitie
+    // des lignes prend la place de ce qu'on lit vraiment.
+    const pBadge=item.p==='high'?'<span class="badge b-high" title="Priorité haute">⚡</span>':'';
     const tBadge=item.t?'<span class="badge b-time">⏱ '+fmtTime(item.t)+'</span>':'';
     const depBadge=item.dep?mkDepBadge(item.dep):'';
     const warn=item.warn?'<div class="warn-badge">⚠️ '+esc(item.warn)+'</div>':'';
@@ -3315,7 +3318,7 @@ function renderNPC(){
         +warn
         +mkNoteArea(item.id)
       +'</div>'
-      +mkLink(libelleDe(item),item)
+      +(item.u||item.comp?mkLink(preciser(item,libelleDe(item)),item):'')
     +'</div>';
   });
   cont.innerHTML=html;
@@ -3553,12 +3556,11 @@ function renderParPriorite(onglet,donnees,labels){
     grp.forEach(function(s){
       const ck=!!S.checked[s.id];
       const dt=ck&&S.dates[s.id]?'<span class="item-date">✓ '+fmtDate(S.dates[s.id])+'</span>':'';
-      const pBadge=pr==='high'?'<span class="badge b-crit">Critique</span>':pr==='med'?'<span class="badge b-imp">Important</span>':'<span class="badge b-opt">Optionnel</span>';
+
       html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(s)+'">'
         +mkChkbox()
         +'<div class="item-body">'
           +'<div class="item-name-row"><span class="item-name">'+esc(libelleDe(s))+'</span>'+dt+mkNoteBtn(s.id)+'</div>'
-          +'<div class="item-badges">'+pBadge+'</div>'
           +(s.p?'<div class="save-path">'+esc(s.p)+'</div>':'')
           +(s.note?'<div class="save-note">'+esc(s.note)+'</div>':'')
           +mkLicField(s)
