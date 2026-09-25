@@ -23,6 +23,16 @@ const ok=(l,a,c)=>{const p=(c===undefined?!!a:a===c);
   console.log((p?'  ok  ':' FAIL ')+l+' → '+JSON.stringify(a)+(p?'':' (attendu '+JSON.stringify(c)+')'));
   if(!p)ko++;};
 
+
+// Le profil livré ne contient aucune application : celles d'une autre machine
+// feraient croire à l'arrivant que c'est sa liste. Les suites qui exercent
+// l'onglet Apps chargent donc la démonstration, comme le ferait quelqu'un qui
+// clique « Voir un exemple garni ».
+async function chargerExemple(pg){
+  await pg.evaluate(()=>{chargerDemo();});
+  await pg.waitForTimeout(250);
+}
+
 (async()=>{
 const b=await chromium.launch(lancement);
 
@@ -54,6 +64,9 @@ ok('une seule tâche affichée',t.titres,1);
 ok('la 1re tâche vient de la 1re section',t.onglet,PREMIERE);
 ok('compteur présent',t.etape,'Tâche 1 sur '+TOTAL);
 
+// La suite cherche une tâche qui porte une commande winget : elles vivent
+// dans les applications, et le profil livré n'en contient aucune.
+await chargerExemple(pg);
 console.log('\n--- ce qui reste visible : commande et avertissement ---');
 await pg.evaluate(()=>{
   // on avance jusqu'a une tache qui a les deux

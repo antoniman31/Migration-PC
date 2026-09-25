@@ -19,6 +19,16 @@ const ok=(l,a,c)=>{const p=(c===undefined?!!a:a===c);
   console.log((p?'  ok  ':' FAIL ')+l+' → '+JSON.stringify(a)+(p?'':' (attendu '+JSON.stringify(c)+')'));
   if(!p)ko++;};
 
+
+// Le profil livré ne contient aucune application : celles d'une autre machine
+// feraient croire à l'arrivant que c'est sa liste. Les suites qui exercent
+// l'onglet Apps chargent donc la démonstration, comme le ferait quelqu'un qui
+// clique « Voir un exemple garni ».
+async function chargerExemple(pg){
+  await pg.evaluate(()=>{chargerDemo();});
+  await pg.waitForTimeout(250);
+}
+
 (async()=>{
 const b=await chromium.launch(lancement);
 
@@ -134,6 +144,9 @@ await pg.keyboard.press('Space');await pg.waitForTimeout(150);
 ok('pas de défilement parasite',await pg.evaluate(()=>window.scrollY),y);
 
 console.log('\n--- un bouton dans la ligne garde son rôle propre ---');
+// L'onglet Apps arrive vide : la liste des logiciels est celle de la machine
+// qu'on scanne, pas une liste livrée d'avance.
+await chargerExemple(pg);
 await pg.click('#tab-apps');await pg.waitForTimeout(200);
 const av=await pg.evaluate(()=>Object.keys(S.checked).length);
 await pg.evaluate(()=>{document.querySelector('#list-apps .lg-plus').click();document.querySelector('#list-apps .note-btn').focus();});
@@ -155,6 +168,8 @@ const pg=await (await b.newContext({viewport:{width:1280,height:900}})).newPage(
 pg.on('pageerror',e=>{console.log(' FAIL erreur JS → '+e.message);ko++;});
 const dialogues=[];pg.on('dialog',d=>{dialogues.push(d.type());d.accept();});
 await pg.goto(HTML,{waitUntil:'networkidle'});
+// a1, a2, a3 sont des applications : elles vivent dans la démonstration.
+await chargerExemple(pg);
 await pg.click('#tab-apps');await pg.waitForTimeout(150);
 console.log('--- réinitialisation annulable ---');
 await pg.evaluate(()=>{['a1','a2','a3'].forEach(i=>{S.checked[i]=true;S.dates[i]=Date.now();});saveState();renderAll();updateGlobal();});

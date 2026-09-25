@@ -619,6 +619,10 @@ body.compact .b-dep{display:none}
 .scen-btn.active{background:var(--accl);border-color:var(--accb);
   color:var(--acc-fort);font-weight:600}
 .scen-note{font-size:11px;color:var(--tx2);margin-left:auto}
+.onglet-vide-act{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+/* Le nom du fichier a lancer est ce qu'on vient chercher ici : il se lit a la
+   meme taille que la phrase qui l'entoure, pas a 90 %. */
+.onglet-vide code{font-size:1em}
 .onglet-vide{padding:28px 20px;text-align:center;color:var(--tx2);font-size:13px;line-height:1.7}
 @media (max-width:560px){
   .scen{gap:8px}
@@ -1012,6 +1016,7 @@ if(location.protocol==='file:'){
         <button type="button" role="menuitem" onclick="depuisMenu(exportProfil)"><span class="hdr-menu-ico" aria-hidden="true">🧩</span>Exporter le profil</button>
         <button type="button" role="menuitem" id="reglages-btn" onclick="depuisMenu(basculerReglages)"><span class="hdr-menu-ico" aria-hidden="true">♻️</span>Réinitialiser…</button>
         <button type="button" role="menuitem" onclick="depuisMenu(basculerOutils)"><span class="hdr-menu-ico" aria-hidden="true">⬇️</span>Les scripts pour Windows…</button>
+        <button type="button" role="menuitem" onclick="depuisMenu(chargerDemo)"><span class="hdr-menu-ico" aria-hidden="true">👁️</span>Voir un exemple garni</button>
         <button type="button" role="menuitem" id="scan-rejouer" style="display:none" onclick="depuisMenu(rejouerScanLocal)"><span class="hdr-menu-ico" aria-hidden="true">🔄</span>Recharger le scan de la clé</button>
         <button type="button" role="menuitem" id="config-btn" onclick="depuisMenu(basculerConfig)" aria-expanded="false"><span class="hdr-menu-ico" aria-hidden="true">🔧</span>Ma configuration…</button>
         <button type="button" role="menuitem" onclick="depuisMenu(relancerDebut)"><span class="hdr-menu-ico" aria-hidden="true">🧭</span>Adapter à mon cas…</button>
@@ -1146,8 +1151,840 @@ if(location.protocol==='file:'){
 const PROFIL_DEFAUT = {
   "meta": {
     "version": 1,
-    "nom": "Migration Windows — profil type",
-    "soustitre": "Profil d'exemple · remplace-le par ton inventaire ou ton propre profil",
+    "nom": "Migration Windows",
+    "soustitre": "Checklist universelle · lance le scan pour y ajouter tes logiciels",
+    "cles": {
+      "state": "mpc_state_v1"
+    }
+  },
+  "cats": {
+    "dev": "🛠️ Développement",
+    "jeux": "🎮 Jeux & Launchers",
+    "reseau": "🌐 Réseau & Sécurité",
+    "bureautique": "📄 Bureautique & Web",
+    "media": "🎵 Médias",
+    "system": "🔧 Utilitaires Système",
+    "comms": "💬 Communication"
+  },
+  "quitter": [
+    {
+      "id": "q1",
+      "n": "Désactiver les logiciels Adobe",
+      "p": "Application → Aide → Se déconnecter",
+      "note": "Désinstaller ou formater ne désactive rien : l'activation reste attachée à une machine qui n'existe plus, et une licence n'en autorise qu'un nombre limité.",
+      "pr": "high",
+      "warn": "À faire pendant que l'ancien PC fonctionne encore. Après le formatage, il faut passer par le support.",
+      "alt": {
+        "second": {
+          "n": "Vérifier combien de postes vos licences Adobe autorisent",
+          "d": "Un abonnement Creative Cloud permet deux installations actives. Au-delà, la troisième déconnecte la première sans prévenir. Si vous comptez travailler sur les deux machines, vérifiez-le maintenant plutôt qu'en pleine séance."
+        }
+      }
+    },
+    {
+      "id": "q2",
+      "n": "Délier les autres licences liées à la machine",
+      "p": "Chaque éditeur concerné",
+      "note": "Antivirus, utilitaires système, logiciels de montage, suites de création. Tout ce qui s'active par clé plutôt que par compte est concerné. La page « mes appareils » de chaque compte en ligne les liste.",
+      "pr": "high",
+      "alt": {
+        "second": {
+          "n": "Compter les postes autorisés par vos autres licences",
+          "d": "Beaucoup de logiciels payants n'en autorisent qu'un ou deux. Faites le tour de ceux que vous voulez sur les deux machines : c'est le moment de le savoir, pas quand l'un des deux refusera de démarrer."
+        }
+      }
+    },
+    {
+      "id": "q3",
+      "n": "Transférer l'application d'authentification",
+      "p": "Téléphone — fonction de transfert",
+      "note": "Les jetons ne se copient pas. Utiliser la fonction de transfert prévue, et le faire avant de changer de téléphone si les deux migrations tombent ensemble.",
+      "pr": "high",
+      "warn": "Sans transfert ni codes de secours, les comptes concernés deviennent inaccessibles.",
+      "alt": {
+        "second": {
+          "n": "Ajouter la seconde machine à l'application d'authentification",
+          "d": "Rien à transférer puisque l'ancienne reste en service : il s'agit d'autoriser la nouvelle. Gardez les codes de récupération sous la main, certains comptes les redemandent à la première connexion depuis un appareil inconnu."
+        }
+      }
+    },
+    {
+      "id": "q4",
+      "n": "Sortir les codes de récupération 2FA",
+      "p": "Chaque compte → Sécurité",
+      "note": "Le filet quand le transfert échoue. Les imprimer ou les mettre dans un gestionnaire de mots de passe, jamais sur la machine qu'on efface.",
+      "pr": "high"
+    },
+    {
+      "id": "q5",
+      "n": "Noter la clé de récupération BitLocker",
+      "p": "Paramètres → Chiffrement de l'appareil",
+      "note": "Si le disque est chiffré et que vous comptez y revenir chercher un fichier oublié, sans cette clé il est illisible. Cela vaut aussi pour un disque secondaire.",
+      "pr": "high",
+      "alt": {
+        "second": {
+          "n": "Noter les clés BitLocker des DEUX machines",
+          "d": "Deux machines, deux clés, et aucune des deux ne doit vivre seulement sur le disque qu'elle déverrouille."
+        }
+      }
+    },
+    {
+      "id": "q6",
+      "n": "Vérifier que les sauvegardes sont restaurables",
+      "p": "Le support de sauvegarde",
+      "note": "Ouvrir quelques fichiers au hasard depuis la copie, pas depuis l'original. Une sauvegarde jamais relue n'est qu'une intention.",
+      "pr": "high",
+      "warn": "Dernière occasion de s'en apercevoir. Après le formatage, il n'y a plus de source."
+    },
+    {
+      "id": "q7",
+      "n": "Désautoriser Steam Guard",
+      "p": "Steam → Paramètres → Sécurité",
+      "note": "Retirer l'ancien PC des appareils autorisés évite qu'il compte dans la limite, et coupe l'accès si la machine change de mains.",
+      "pr": "med",
+      "cas": [
+        "migration",
+        "reinstall"
+      ]
+    },
+    {
+      "id": "q8",
+      "n": "Désautoriser iTunes et les lecteurs liés",
+      "p": "Compte → Autorisations",
+      "note": "Le nombre d'ordinateurs autorisés est limité et ne se libère pas tout seul. Une machine formatée reste comptée.",
+      "pr": "med",
+      "cas": [
+        "migration",
+        "reinstall"
+      ]
+    },
+    {
+      "id": "q9",
+      "n": "Se déconnecter des sessions ouvertes",
+      "p": "Comptes en ligne → Appareils connectés",
+      "note": "Messageries, réseaux sociaux, services de stockage. Une session laissée ouverte sur une machine cédée le reste.",
+      "pr": "med",
+      "cas": [
+        "migration",
+        "reinstall"
+      ]
+    },
+    {
+      "id": "q10",
+      "n": "Récupérer les licences encore inconnues",
+      "p": "Belarc Advisor, ProduKey ou l'éditeur",
+      "note": "Les clés saisies il y a des années et jamais notées. Les relever tant que le système fonctionne.",
+      "pr": "med"
+    },
+    {
+      "id": "q11",
+      "n": "Exporter les profils Wi-Fi",
+      "p": "netsh wlan export profile key=clear folder=.",
+      "note": "Exporte chaque réseau enregistré avec sa clé. Utile pour les réseaux dont plus personne ne connaît le mot de passe.",
+      "pr": "med"
+    },
+    {
+      "id": "q12",
+      "n": "Photographier les réglages personnalisés",
+      "p": "Appareil photo du téléphone",
+      "note": "Disposition des icônes, profils de couleur des écrans, macros de périphériques, réglages audio. Une photo remplace une heure de tâtonnements.",
+      "pr": "ok"
+    },
+    {
+      "id": "q13",
+      "n": "Effacer le disque de façon sécurisée",
+      "p": "Outil du fabricant du SSD, ou chiffrement puis formatage",
+      "note": "Seulement si la machine est vendue ou donnée. Un formatage ordinaire laisse les données récupérables ; sur un SSD, un Secure Erase du fabricant est plus fiable qu'un écrasement.",
+      "pr": "ok",
+      "cas": [
+        "migration"
+      ],
+      "warn": "À ne faire qu'après avoir vérifié les sauvegardes et désactivé les licences."
+    }
+  ],
+  "npc": [
+    {
+      "id": "n13",
+      "o": 3,
+      "n": "Entrer dans le BIOS/UEFI",
+      "src": "Touche Suppr ou F2 au démarrage",
+      "p": "high",
+      "t": 5,
+      "d": "Tapoter Suppr dès l'allumage, quatre à cinq fois par seconde. Sur certaines cartes et sur les portables, c'est F2. Tous les réglages qui suivent se font là, avant d'installer Windows."
+    },
+    {
+      "id": "n14",
+      "o": 4,
+      "n": "Mettre à jour le BIOS si nécessaire",
+      "src": "Site du fabricant de la carte mère",
+      "p": "med",
+      "t": 15,
+      "alt": {
+        "n": "Mettre à jour le BIOS si nécessaire",
+        "d": "Occasion commode si une version corrige un problème qui vous concerne. Sinon, ne rien toucher : les réglages seraient remis par défaut."
+      },
+      "dep": [
+        "n13"
+      ],
+      "d": "Seulement si une version corrige un problème qui vous concerne, ou si le processeur est plus récent que la carte. Un BIOS qui fonctionne n'a pas besoin d'être mis à jour.",
+      "warn": "Ne jamais couper l'alimentation pendant la mise à jour : la carte mère devient inutilisable.",
+      "comp": "cm"
+    },
+    {
+      "id": "n15",
+      "o": 5,
+      "n": "Activer TPM 2.0 et Secure Boot",
+      "src": "BIOS — Sécurité / Avancé",
+      "p": "high",
+      "t": 5,
+      "alt": {
+        "n": "Vérifier que TPM 2.0 et Secure Boot sont actifs",
+        "d": "Ils l'étaient déjà, mais une mise à jour du BIOS ou une pile morte remet les réglages par défaut. Un contrôle de trente secondes évite une installation qui refuse de démarrer."
+      },
+      "dep": [
+        "n13"
+      ],
+      "d": "Windows 11 les exige : sans eux, l'installation refuse de démarrer. Le TPM s'appelle PTT chez Intel et fTPM chez AMD. Secure Boot demande parfois de restaurer les clés par défaut avant de pouvoir s'activer."
+    },
+    {
+      "id": "n16",
+      "o": 6,
+      "n": "Désactiver le CSM",
+      "src": "BIOS — Démarrage",
+      "p": "high",
+      "t": 3,
+      "alt": {
+        "n": "Vérifier que le CSM est toujours désactivé",
+        "d": "S'il s'est réactivé, Secure Boot retombe et le disque ne sera pas vu en UEFI."
+      },
+      "dep": [
+        "n15"
+      ],
+      "d": "Le module de compatibilité fait démarrer en mode ancien (BIOS) au lieu d'UEFI. Secure Boot ne s'active pas tant qu'il est là, et Windows 11 demande un disque en GPT, donc un démarrage UEFI."
+    },
+    {
+      "id": "n7",
+      "o": 7,
+      "n": "Activer le profil XMP / EXPO de la RAM",
+      "src": "BIOS — réglages mémoire",
+      "p": "high",
+      "t": 5,
+      "alt": {
+        "n": "Vérifier le profil XMP / EXPO",
+        "d": "Contrôler dans le Gestionnaire des tâches, onglet Performance, que la mémoire tourne bien à sa fréquence annoncée."
+      },
+      "dep": [
+        "n13"
+      ],
+      "d": "Sans ce profil, la mémoire tourne à sa fréquence de base, bien en dessous de ce pour quoi vous l'avez payée. XMP chez Intel, EXPO chez AMD.",
+      "comp": "ram"
+    },
+    {
+      "id": "n17",
+      "o": 8,
+      "n": "Activer Resizable BAR",
+      "src": "BIOS — Avancé / PCIe",
+      "p": "med",
+      "t": 3,
+      "alt": {
+        "n": "Vérifier Resizable BAR",
+        "d": "Se désactive parfois après une mise à jour du BIOS ou un changement de carte graphique."
+      },
+      "dep": [
+        "n16"
+      ],
+      "d": "Laisse le processeur accéder à toute la mémoire de la carte graphique d'un coup. Deux à cinq pour cent de performance en jeu, gratuitement. S'appelle Smart Access Memory chez AMD, et demande le mode UEFI."
+    },
+    {
+      "id": "n18",
+      "o": 9,
+      "n": "Activer la virtualisation du processeur",
+      "src": "BIOS — Avancé / CPU",
+      "p": "med",
+      "t": 3,
+      "alt": {
+        "n": "Vérifier la virtualisation du processeur",
+        "d": "Nécessaire si vous comptez réinstaller WSL, Docker ou un émulateur."
+      },
+      "dep": [
+        "n13"
+      ],
+      "d": "Nécessaire aux machines virtuelles, à WSL, à Docker et aux émulateurs Android. S'appelle SVM chez AMD, VT-x ou Intel Virtualization Technology chez Intel."
+    },
+    {
+      "id": "n19",
+      "o": 10,
+      "n": "Régler l'ordre de démarrage et l'heure",
+      "src": "BIOS — Démarrage",
+      "p": "med",
+      "t": 3,
+      "alt": {
+        "n": "Vérifier l'ordre de démarrage et l'heure",
+        "d": "La clé d'installation doit passer avant le SSD, sinon la machine redémarre sur le système qu'on veut remplacer."
+      },
+      "dep": [
+        "n13"
+      ],
+      "d": "La clé d'installation en premier, le SSD ensuite. Vérifier aussi la date et l'heure : une horloge fausse provoque des erreurs de certificat pendant l'installation."
+    },
+    {
+      "id": "n20",
+      "o": 11,
+      "n": "Régler la courbe des ventilateurs",
+      "src": "BIOS — Monitoring / Fan control",
+      "p": "ok",
+      "t": 10,
+      "alt": {
+        "n": "Vérifier les courbes de ventilateurs",
+        "d": "Elles sont conservées par le BIOS, mais autant s'en assurer avant de repartir."
+      },
+      "dep": [
+        "n13"
+      ],
+      "d": "Le profil par défaut est souvent bruyant pour rien. Un profil silencieux suffit tant que les températures restent correctes, ce qui se vérifie plus loin."
+    },
+    {
+      "id": "n21",
+      "o": 12,
+      "n": "Revérifier les réglages après redémarrage",
+      "src": "BIOS",
+      "p": "high",
+      "t": 5,
+      "dep": [
+        "n15",
+        "n16",
+        "n7",
+        "n17"
+      ],
+      "d": "Enregistrer, sortir, puis revenir dans le BIOS pour contrôler que TPM, Secure Boot, XMP et Resizable BAR sont bien actifs. Il arrive qu'un réglage ne tienne pas au premier enregistrement."
+    },
+    {
+      "id": "n37",
+      "o": 1,
+      "n": "Télécharger les pilotes sur une clé USB",
+      "src": "Site du fabricant de la carte mère",
+      "p": "high",
+      "t": 15,
+      "cas": [
+        "reinstall"
+      ],
+      "d": "Au minimum le pilote réseau, idéalement le chipset aussi. Si Windows ne reconnaît pas la carte réseau au premier démarrage, il n'y a pas d'autre machine sous la main pour aller le chercher — contrairement à une migration, où l'ancien PC est encore là.",
+      "warn": "À faire avant de formater. Après, il est trop tard pour télécharger quoi que ce soit.",
+      "pilote": true,
+      "comp": "cm"
+    },
+    {
+      "id": "n36",
+      "o": 13,
+      "n": "POINT DE NON-RETOUR — dernier contrôle avant d'effacer",
+      "src": "Sur cette machine, maintenant",
+      "p": "high",
+      "t": 15,
+      "cas": [
+        "reinstall"
+      ],
+      "dep": [
+        "n21",
+        "n22"
+      ],
+      "d": "Une fois le disque effacé, cette machine n'est plus une source : ce qui n'a pas été copié n'existe plus nulle part. Reprendre point par point avant de lancer l'installation. Les sauvegardes sont-elles faites ET relues depuis la copie, pas depuis l'original ? Les licences sont-elles désactivées ? Les codes 2FA sont-ils sortis et l'authentificateur transféré ? La clé BitLocker est-elle notée ailleurs ? Le pilote réseau est-il sur la clé USB, au cas où Windows n'ait pas de réseau au premier démarrage ?",
+      "warn": "C'est la dernière étape réversible. Après, il n'y a plus de retour en arrière."
+    },
+    {
+      "id": "n22",
+      "o": 2,
+      "n": "Préparer la clé d'installation Windows",
+      "src": "Media Creation Tool ou Rufus",
+      "p": "high",
+      "t": 20,
+      "d": "Une clé USB de 8 Go minimum, qui sera effacée. Rufus permet en plus de retirer certaines contraintes et de préconfigurer l'installation. Pour aller plus loin, le générateur schneegans.de/windows/unattend-generator prépare un fichier autounattend.xml : déposé à la racine de la clé, il répond à votre place aux questions de l'installation — langue, partitionnement, compte local, réglages de confidentialité — et retire les applications préinstallées. Facultatif, mais ça change une installation de vingt minutes de clics en une installation qu'on lance et qu'on laisse tourner."
+    },
+    {
+      "id": "n23",
+      "o": 14,
+      "n": "Installer Windows",
+      "src": "Clé USB",
+      "p": "high",
+      "t": 30,
+      "dep": [
+        "n21",
+        "n22"
+      ],
+      "d": "Supprimer toutes les partitions existantes du disque cible pour repartir propre. Ne pas brancher les autres disques pendant l'installation : cela évite que le chargeur de démarrage atterrisse sur le mauvais.",
+      "warn": "Toutes les données du disque choisi sont perdues. Vérifier que les sauvegardes sont faites ET vérifiées."
+    },
+    {
+      "id": "n24",
+      "o": 15,
+      "n": "Choisir le type de compte",
+      "src": "Assistant de première configuration",
+      "p": "med",
+      "t": 5,
+      "dep": [
+        "n23"
+      ],
+      "d": "Compte Microsoft ou compte local. Le compte Microsoft synchronise les réglages et rattache la licence, le compte local garde tout sur la machine. On peut ajouter le compte Microsoft plus tard, l'inverse est plus pénible."
+    },
+    {
+      "id": "n1",
+      "o": 16,
+      "n": "Windows Update — tous les correctifs",
+      "src": "Paramètres → Windows Update",
+      "p": "high",
+      "t": 30,
+      "dep": [
+        "n23"
+      ],
+      "d": "Relancer jusqu'à ce qu'il n'y ait plus rien, redémarrages compris, et penser aux mises à jour facultatives qui contiennent souvent des pilotes."
+    },
+    {
+      "id": "n6",
+      "o": 17,
+      "n": "Vérifier l'activation de Windows",
+      "src": "Paramètres → Système → Activation",
+      "p": "high",
+      "t": 5,
+      "dep": [
+        "n23"
+      ],
+      "d": "Une licence liée au compte Microsoft se réactive en se connectant. Une licence OEM s'attache à la carte mère et revient seule après une réinstallation sur le même matériel."
+    },
+    {
+      "id": "n25",
+      "o": 18,
+      "n": "Noter la clé de récupération BitLocker",
+      "src": "Paramètres → Confidentialité → Chiffrement",
+      "p": "high",
+      "t": 5,
+      "dep": [
+        "n6"
+      ],
+      "d": "Windows 11 chiffre souvent le disque sans le dire clairement. Sans cette clé, un démarrage qui tourne mal ou un changement de matériel rend les données définitivement illisibles. La sauvegarder ailleurs que sur cette machine.",
+      "warn": "À faire tout de suite. Une clé perdue ne se retrouve pas."
+    },
+    {
+      "id": "n26",
+      "o": 19,
+      "n": "Retirer les applications préinstallées",
+      "src": "Paramètres → Applications",
+      "p": "med",
+      "t": 15,
+      "dep": [
+        "n1"
+      ],
+      "d": "Les machines de marque arrivent avec des essais d'antivirus et des utilitaires maison. Désinstaller ce qui ne sert pas, sans toucher aux pilotes ni aux utilitaires du fabricant de la carte mère."
+    },
+    {
+      "id": "n27",
+      "o": 20,
+      "n": "Passer les paramètres de confidentialité",
+      "src": "Paramètres → Confidentialité et sécurité",
+      "p": "med",
+      "t": 10,
+      "dep": [
+        "n1"
+      ],
+      "d": "Publicité personnalisée, historique d'activité, données de diagnostic facultatives, autorisations des applications. Rien de vital, mais c'est le moment de le faire une fois pour toutes."
+    },
+    {
+      "id": "n2",
+      "o": 21,
+      "n": "Pilote chipset de la carte mère",
+      "src": "Site du fabricant de la carte mère",
+      "p": "high",
+      "t": 10,
+      "alt": {
+        "n": "Réinstaller le pilote chipset",
+        "d": "Même sur la même carte mère : une installation propre repart d'un pilote générique."
+      },
+      "dep": [
+        "n1"
+      ],
+      "d": "Gère l'USB, le SATA, le NVMe et la gestion d'énergie. À installer avant les autres pilotes.",
+      "warn": "Télécharger uniquement sur le site officiel du fabricant.",
+      "pilote": true,
+      "comp": "cm"
+    },
+    {
+      "id": "n3",
+      "o": 22,
+      "n": "Pilote réseau (Ethernet / Wi-Fi)",
+      "src": "Site du fabricant de la carte mère",
+      "p": "high",
+      "t": 5,
+      "dep": [
+        "n2"
+      ],
+      "d": "À récupérer sur une clé USB AVANT la migration si le nouveau PC n'a pas de réseau au premier démarrage : sans lui, impossible de télécharger quoi que ce soit.",
+      "pilote": true,
+      "comp": "cm"
+    },
+    {
+      "id": "n4",
+      "o": 23,
+      "n": "Pilote audio",
+      "src": "Site du fabricant de la carte mère",
+      "p": "med",
+      "t": 5,
+      "dep": [
+        "n2"
+      ],
+      "d": "Windows installe un pilote générique ; celui du fabricant débloque les sorties et les effets spécifiques.",
+      "pilote": true,
+      "comp": "cm"
+    },
+    {
+      "id": "n5",
+      "o": 24,
+      "n": "Pilote de carte graphique",
+      "src": "nvidia.com / amd.com / intel.com",
+      "p": "high",
+      "t": 15,
+      "dep": [
+        "n2"
+      ],
+      "d": "Pilote officiel du GPU. Choisir la branche Game Ready ou Studio selon l'usage.",
+      "warn": "Télécharger uniquement sur le site du fabricant — beaucoup de faux sites de pilotes.",
+      "pilote": true,
+      "comp": "gpu"
+    },
+    {
+      "id": "n8",
+      "o": 25,
+      "n": "Vérifier les températures au repos",
+      "src": "HWiNFO64",
+      "p": "med",
+      "t": 10,
+      "post": true,
+      "dep": [
+        "n5"
+      ],
+      "d": "Repères courants : processeur sous 50 °C, carte graphique sous 45 °C, SSD sous 50 °C au repos. Au-dessus, vérifier le montage du refroidissement."
+    },
+    {
+      "id": "n9",
+      "o": 26,
+      "n": "Vérifier le sens des ventilateurs",
+      "src": "Vérification physique",
+      "p": "med",
+      "t": 10,
+      "post": true,
+      "cas": [
+        "migration"
+      ],
+      "d": "L'air doit entrer par l'avant et le bas, sortir par l'arrière et le haut. Les modèles à flux inversé se montent dans l'autre sens que d'habitude."
+    },
+    {
+      "id": "n10",
+      "o": 27,
+      "n": "Benchmark du SSD",
+      "src": "CrystalDiskMark",
+      "p": "ok",
+      "t": 10,
+      "post": true,
+      "d": "Comparer les débits mesurés à ceux annoncés. Un écart important signale souvent un mauvais port M.2, partagé avec d'autres connecteurs.",
+      "comp": "ssd"
+    },
+    {
+      "id": "n11",
+      "o": 28,
+      "n": "Configurer les écrans (résolution + Hz)",
+      "src": "Paramètres → Système → Affichage",
+      "p": "med",
+      "t": 10,
+      "post": true,
+      "dep": [
+        "n5"
+      ],
+      "d": "Windows ne choisit pas toujours la fréquence maximale. Régler chaque écran sur sa résolution native et son taux de rafraîchissement maximal."
+    },
+    {
+      "id": "n28",
+      "o": 29,
+      "n": "Mettre en place une sauvegarde",
+      "src": "Historique des fichiers, OneDrive ou autre",
+      "p": "high",
+      "t": 15,
+      "post": true,
+      "d": "Le moment le plus facile pour s'en occuper, et celui où on le remet toujours à plus tard. Une sauvegarde qui n'a jamais été restaurée n'est pas une sauvegarde : tester une restauration."
+    },
+    {
+      "id": "n12",
+      "o": 30,
+      "n": "Créer un point de restauration",
+      "src": "Créer un point de restauration",
+      "p": "med",
+      "t": 5,
+      "post": true,
+      "dep": [
+        "n1"
+      ],
+      "d": "Une fois le système propre et à jour, avant d'installer les applications. Filet de sécurité en cas d'installation qui tourne mal."
+    },
+    {
+      "id": "sy5",
+      "o": 31,
+      "n": "Harmoniser les réglages entre les deux machines",
+      "src": "Comptes de synchronisation",
+      "p": "ok",
+      "t": 20,
+      "post": true,
+      "cas": [
+        "second"
+      ],
+      "d": "Navigateur, éditeur de code, raccourcis clavier, thème : la plupart savent synchroniser leurs réglages via un compte. Une demi-heure passée là évite de se sentir chez les autres à chaque fois qu'on change de machine."
+    }
+  ],
+  "ordre": [],
+  "apps": [],
+  "data": [
+    {
+      "id": "s1",
+      "n": "Documents, images, vidéos",
+      "p": "%USERPROFILE%\\Documents, Pictures, Videos",
+      "note": "Les dossiers personnels de base. Vérifier aussi les sous-dossiers de OneDrive.",
+      "pr": "high",
+      "scan": "dossiers"
+    },
+    {
+      "id": "s2",
+      "n": "Bureau",
+      "p": "%USERPROFILE%\\Desktop",
+      "note": "Souvent plein de fichiers de travail jamais rangés ailleurs.",
+      "pr": "high",
+      "scan": "dossiers"
+    },
+    {
+      "id": "s3",
+      "n": "Téléchargements",
+      "p": "%USERPROFILE%\\Downloads",
+      "note": "À trier avant la migration plutôt qu'après.",
+      "pr": "med",
+      "scan": "dossiers"
+    },
+    {
+      "id": "s4",
+      "n": "Projets et code local",
+      "p": "Selon ton organisation",
+      "note": "Tout ce qui n'est pas poussé sur un dépôt distant n'a aucun filet de sécurité.",
+      "pr": "high",
+      "scan": "dossiers"
+    },
+    {
+      "id": "s5",
+      "n": "Clés SSH et GPG",
+      "p": "%USERPROFILE%\\.ssh",
+      "note": "Copier sur un support chiffré, jamais dans un espace de stockage partagé.",
+      "pr": "high",
+      "scan": "configs"
+    },
+    {
+      "id": "s6",
+      "n": "Licences logicielles",
+      "p": "Courriels et espaces clients",
+      "note": "Rassembler les clés des logiciels payants avant de désinstaller quoi que ce soit.",
+      "pr": "high",
+      "lic": true,
+      "scan": "manuel"
+    },
+    {
+      "id": "s7",
+      "n": "Variables d'environnement",
+      "p": "Panneau de configuration → Système → Variables d'environnement",
+      "note": "Relever les variables personnalisées et les ajouts au PATH.",
+      "pr": "med",
+      "env": true,
+      "scan": "variables"
+    },
+    {
+      "id": "s8",
+      "n": "Mots de passe du navigateur",
+      "p": "Compte du navigateur ou gestionnaire dédié",
+      "note": "Vérifier que la synchronisation est à jour, ou exporter vers un gestionnaire.",
+      "pr": "high",
+      "scan": "manuel"
+    },
+    {
+      "id": "s9",
+      "n": "Sauvegardes de jeux hors ligne",
+      "p": "%USERPROFILE%\\Documents\\My Games et %APPDATA%",
+      "note": "Les jeux sans sauvegarde en ligne perdent tout. Vérifier avant de formater.",
+      "pr": "med",
+      "scan": "configs"
+    },
+    {
+      "id": "s10",
+      "n": "Configurations d'applications",
+      "p": "%APPDATA% et %LOCALAPPDATA%",
+      "note": "Réglages, profils et raccourcis personnalisés des logiciels que tu utilises beaucoup.",
+      "pr": "med",
+      "scan": "configs"
+    },
+    {
+      "id": "s11",
+      "n": "Polices installées",
+      "p": "C:\\Windows\\Fonts",
+      "note": "Seulement celles que tu as ajoutées toi-même.",
+      "pr": "ok",
+      "scan": "attendu:polices"
+    },
+    {
+      "id": "s12",
+      "n": "Imprimantes et périphériques",
+      "p": "Paramètres → Bluetooth et appareils",
+      "note": "Noter les modèles et les adresses réseau pour les reconfigurer plus vite.",
+      "pr": "ok",
+      "scan": "attendu:imprimantes"
+    },
+    {
+      "id": "s13",
+      "n": "Codes de récupération 2FA",
+      "p": "Coffre-fort ou support hors ligne",
+      "note": "Le plus souvent oublié, et le seul qui enferme dehors définitivement. Sortir les codes de secours de chaque compte AVANT de toucher à quoi que ce soit.",
+      "pr": "high",
+      "scan": "manuel"
+    },
+    {
+      "id": "s14",
+      "n": "Application d'authentification",
+      "p": "Sur le téléphone — fonction de transfert",
+      "note": "Les jetons ne se copient pas comme un fichier. Utiliser la fonction de transfert de l'application, et le faire avant de changer de téléphone si les deux migrations tombent en même temps.",
+      "pr": "high",
+      "scan": "manuel"
+    },
+    {
+      "id": "s15",
+      "n": "Clé de récupération BitLocker de cet ancien PC",
+      "p": "Compte Microsoft ou impression",
+      "note": "Si le disque de l'ancien PC est chiffré et que vous comptez y revenir chercher quelque chose, sans cette clé il sera illisible.",
+      "pr": "high",
+      "scan": "attendu:bitlocker"
+    },
+    {
+      "id": "s16",
+      "n": "Favoris du navigateur",
+      "p": "Gestionnaire de favoris → Exporter",
+      "note": "La synchronisation les couvre si elle est active. Sinon, un export HTML prend dix secondes et évite de tout reconstruire.",
+      "pr": "med",
+      "scan": "attendu:favoris"
+    },
+    {
+      "id": "s17",
+      "n": "Gestionnaire d'identification Windows",
+      "p": "Panneau de configuration → Comptes d'utilisateurs",
+      "note": "Garde les accès aux partages réseau, aux lecteurs mappés et au bureau à distance. Personne n'y pense, et tout cesse de fonctionner après la réinstallation.",
+      "pr": "med",
+      "scan": "attendu:identifiants"
+    },
+    {
+      "id": "s18",
+      "n": "Profils Wi-Fi et clés réseau",
+      "p": "netsh wlan export profile key=clear",
+      "note": "La commande exporte chaque réseau enregistré avec sa clé. Utile pour les réseaux dont personne ne se souvient du mot de passe.",
+      "pr": "med",
+      "scan": "attendu:wifi"
+    },
+    {
+      "id": "s19",
+      "n": "Profils VPN et certificats",
+      "p": "Paramètres → Réseau → VPN",
+      "note": "Adresses de serveurs, certificats et fichiers de configuration. Un client VPN réinstallé ne retrouve rien tout seul.",
+      "pr": "med",
+      "scan": "attendu:vpn"
+    },
+    {
+      "id": "s20",
+      "n": "Archives mail locales",
+      "p": "Fichiers .pst et .ost, dossiers de profil",
+      "note": "Les messages restés en local n'existent nulle part ailleurs. Vérifier aussi les signatures, les règles et les carnets d'adresses.",
+      "pr": "med",
+      "scan": "attendu:mail"
+    },
+    {
+      "id": "s21",
+      "n": "Machines virtuelles",
+      "p": "Selon l'hyperviseur utilisé",
+      "note": "Des dizaines de gigaoctets faciles à oublier, et impossibles à recréer à l'identique. Les arrêter proprement avant de copier.",
+      "pr": "ok",
+      "scan": "attendu:vm"
+    },
+    {
+      "id": "sy1",
+      "n": "Décider quels dossiers vivent sur les deux machines",
+      "pr": "high",
+      "p": "À trancher avant de synchroniser quoi que ce soit",
+      "cas": [
+        "second"
+      ],
+      "d": "Tout synchroniser est le réflexe, et c'est l'erreur : une bibliothèque de jeux ou une réserve de machines virtuelles n'ont rien à faire sur un portable, et la synchronisation passera des heures à les recopier. Faites trois piles — ce qui suit partout, ce qui reste sur le fixe, ce qui ne vit que sur le portable — avant d'installer le moindre outil.",
+      "scan": "manuel"
+    },
+    {
+      "id": "sy2",
+      "n": "Mettre en place la synchronisation des dossiers de travail",
+      "pr": "high",
+      "p": "OneDrive, Google Drive, Dropbox ou Syncthing",
+      "cas": [
+        "second"
+      ],
+      "dep": [
+        "sy1"
+      ],
+      "d": "Les services grand public suffisent pour des documents. Pour du code ou de gros projets, Syncthing synchronise en direct entre vos deux machines sans passer par un serveur, et sans limite de taille.",
+      "note": "Le code se gère mieux avec git qu'avec une synchronisation de fichiers : deux copies d'un dépôt synchronisées en même temps finissent par se marcher dessus.",
+      "scan": "manuel"
+    },
+    {
+      "id": "sy3",
+      "n": "Vérifier que la synchronisation marche dans les deux sens",
+      "pr": "high",
+      "p": "Un fichier test créé de chaque côté",
+      "cas": [
+        "second"
+      ],
+      "dep": [
+        "sy2"
+      ],
+      "d": "Créez un fichier sur le fixe, voyez-le arriver sur le portable, modifiez-le là-bas, voyez la modification revenir. Tant que ce va-et-vient n'est pas constaté, vous n'avez pas une synchronisation, vous avez une sauvegarde à sens unique dont vous ignorez le sens.",
+      "warn": "Une synchronisation qu'on n'a jamais testée dans les deux sens se découvre le jour où elle a écrasé la bonne version.",
+      "scan": "manuel"
+    },
+    {
+      "id": "sy4",
+      "n": "Se donner une règle contre les versions divergentes",
+      "pr": "med",
+      "p": "La règle, pas l'outil",
+      "cas": [
+        "second"
+      ],
+      "dep": [
+        "sy3"
+      ],
+      "d": "Deux machines qui modifient le même fichier hors ligne produisent deux versions, et la plupart des outils tranchent en silence. Une règle simple suffit : fermer ses fichiers avant de changer de machine, et attendre que la synchronisation affiche « à jour » avant de refermer le capot.",
+      "scan": "manuel"
+    },
+    {
+      "id": "s24",
+      "n": "local.properties de vos projets Android",
+      "p": "Dans chaque projet, à côté de build.gradle",
+      "note": "Chaque projet Android en a un, hors de git, et il contient le chemin du SDK de l'ANCIENNE machine. Après migration, le projet refuse de compiler pour cette seule raison : corriger sdk.dir, ou supprimer le fichier et laisser Android Studio le refaire.",
+      "pr": "med",
+      "cas": [
+        "migration",
+        "second"
+      ],
+      "scan": "manuel"
+    }
+  ],
+  "pwa": [],
+  "requetes": {}
+};
+
+const PROFIL_DEMO = {
+  "meta": {
+    "version": 1,
+    "nom": "Migration Windows — exemple garni",
+    "soustitre": "Exemple : la liste d'une autre machine, pour voir à quoi ça ressemble",
     "cles": {
       "state": "mpc_state_v1"
     }
@@ -2284,6 +3121,20 @@ function messageOngletVide(cle){
   const sc=SCENARIOS[scenario]||{};
   const total=donneesDe(cle).length;
   if(!total){
+    // Les onglets Apps et PWA arrivent vides : la checklist livree ne contient
+    // que ce qui vaut pour tout le monde, et la liste des logiciels est celle
+    // de TA machine, que seul le scan connait. Un onglet vide qui dit quoi
+    // faire vaut mieux qu'un onglet rempli des logiciels de quelqu'un d'autre.
+    if(cle==='apps'||cle==='pwa'){
+      return '<div class="onglet-vide">'
+        +'<b>Cette liste se remplit avec le scan de ton ancien PC.</b><br>'
+        +'Lance <code>Migration PC.bat</code> sur la machine que tu quittes : '
+        +'il releve tes logiciels et remplit cet onglet.'
+        +'<div class="onglet-vide-act">'
+        +'<button type="button" class="sm-btn" onclick="basculerOutils()">⬇️ Les scripts pour Windows…</button>'
+        +'<button type="button" class="sm-btn" onclick="chargerDemo()">👁️ Voir un exemple garni</button>'
+        +'</div></div>';
+    }
     return '<div class="onglet-vide">Le profil chargé ne décrit rien dans « '
       +esc(nomOnglet(cle))+' ».</div>';
   }
@@ -2452,6 +3303,17 @@ function construireFiltresCats(){
       +' onchange="basculerCat(\''+escJS(k)+'\')"> '+esc(CATS[k])+'</label>';
   });
   c.innerHTML=html;
+}
+
+// Le profil de demonstration porte les logiciels d'une autre machine. Il ne
+// s'affiche jamais tout seul : quelqu'un qui decouvre la checklist croirait
+// que c'est sa liste et se demanderait d'ou sortent ces logiciels. On le
+// charge quand il est demande, et on le dit.
+function chargerDemo(){
+  if(!PROFIL_DEMO||!PROFIL_DEMO.apps){informer('Exemple indisponible.');return;}
+  appliquerProfil(PROFIL_DEMO,true);
+  informer('Exemple chargé : ces logiciels sont ceux d\'une autre machine, '
+    +'pas les tiens. Réglages → Repartir de zéro pour revenir à la checklist vide.');
 }
 
 function chargerProfilMemorise(){

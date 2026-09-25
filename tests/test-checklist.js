@@ -61,7 +61,13 @@ eq('pwa',G('PWA_DATA').length,DEF.pwa.length);
 eq('titre du profil',G('PROFIL_NOM'),DEF.meta.nom);
 eq('entête rendue',els['profil-titre'].textContent,DEF.meta.nom);
 eq('filtres générés',els['cat-filters'].innerHTML.split('<label').length-1,Object.keys(DEF.cats).length);
-eq('liste apps rendue',els['list-apps'].innerHTML.length>500,true);
+// Le profil livré n'a pas d'applications : l'onglet affiche ce qu'il faut
+// faire pour le remplir, pas la liste de quelqu'un d'autre.
+eq('l\'onglet Apps invite au scan',
+  els['list-apps'].innerHTML.indexOf('se remplit avec le scan')>=0,true);
+G('appliquerProfil')(G('PROFIL_DEMO'),true);
+eq('liste apps rendue avec la démonstration',els['list-apps'].innerHTML.length>500,true);
+G('appliquerProfil')(DEF,true);
 eq('liste npc rendue',els['list-npc'].innerHTML.length>500,true);
 // Somme de toutes les sections du profil, y compris celles ajoutées depuis.
 const SECTIONS=['quitter','npc','apps','data','pwa'];

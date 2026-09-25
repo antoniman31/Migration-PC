@@ -49,6 +49,16 @@ async function deplierData(pg){
   await pg.evaluate(()=>{DATA_SAVES.forEach(s=>{lignesOuvertes[s.id]=true;});renderData();});
 }
 
+
+// Le profil livré ne contient aucune application : celles d'une autre machine
+// feraient croire à l'arrivant que c'est sa liste. Les suites qui exercent
+// l'onglet Apps chargent donc la démonstration, comme le ferait quelqu'un qui
+// clique « Voir un exemple garni ».
+async function chargerExemple(pg){
+  await pg.evaluate(()=>{chargerDemo();});
+  await pg.waitForTimeout(250);
+}
+
 (async()=>{
 const lancement={args:['--no-sandbox']};
 if(process.env.CHROME)lancement.executablePath=process.env.CHROME;
@@ -73,7 +83,7 @@ await pg.goto(HTML,{waitUntil:'networkidle'});
 console.log('--- chargement ---');
 ok('aucune erreur JS',erreurs.length===0?'oui':'NON : '+erreurs.join(' | '),'oui');
 ok('titre onglet',await pg.title());
-ok('en-tête',await pg.textContent('#profil-titre'),'Migration Windows — profil type');
+ok('en-tête',await pg.textContent('#profil-titre'),'Migration Windows');
 ok('total affiché',await pg.textContent('#gp-total'),String(TOTAL));
 ok('filtres catégories',(await pg.$$('#cat-filters input[type=checkbox]')).length,7);
 
@@ -94,6 +104,7 @@ ok('items rendus',(await pg.$$('#list-npc .item')).length,PROFIL.npc.length);
 ok('badge étape visible',await pg.isVisible('#list-npc .b-num'));
 
 console.log('\n--- onglet Apps (celui qui était cassé en v6) ---');
+await chargerExemple(pg);
 await pg.click('#tab-apps');
 ok('items rendus',(await pg.$$('#list-apps .lg-l')).length,18);
 const boite=await (await pg.$('#list-apps .lg-r')).boundingBox();

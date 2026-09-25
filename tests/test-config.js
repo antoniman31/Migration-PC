@@ -336,6 +336,11 @@ console.log('\n--- un scan qui ne trouve rien n\'est pas une panne ---');
 // C'est justement le cas d'une machine fraîchement installée : le scan tourne,
 // ne trouve presque rien, et ouvrir la page sur un panneau rouge serait faux.
 await pg.evaluate(()=>{CONFIG={};saveConfig();construireConfig();});
+// On charge une liste garnie pour avoir quelque chose a preserver : ce qu'on
+// verifie ici est qu'un inventaire vide n'efface pas ce qui est deja la.
+await pg.evaluate(()=>{chargerDemo();});
+await pg.waitForTimeout(250);
+const appsAvant=await pg.evaluate(()=>APPS_DATA.length);
 const vide=await pg.evaluate(()=>traiterDonnees({
   type:'inventaire-migration-pc',machine:{nom:'NEUF'},apps:[],variables:{},configs:[],
   materiel:{cm:'ASUS B850-A'}},''));
@@ -345,8 +350,8 @@ ok('aucun panneau d\'erreur',await pg.isVisible('#panne'),false);
 ok('on le dit calmement',
   (await pg.textContent('#annul-txt')).indexOf('aucune application détectée')>=0,true);
 ok('le matériel est repris quand même',await pg.evaluate(()=>CONFIG.cm),'ASUS B850-A');
-ok('et le profil d\'exemple reste en place',
-  await pg.evaluate(()=>APPS_DATA.length>0),true);
+ok('et la liste en place n\'est pas effacée',
+  await pg.evaluate(()=>APPS_DATA.length),appsAvant);
 
 console.log('\n--- une vérification sans pilote en défaut ---');
 await pg.evaluate(()=>traiterDonnees({

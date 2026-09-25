@@ -11,21 +11,36 @@ let ko=0;
 const ok=(l,vrai,detail)=>{console.log((vrai?'  ok  ':' FAIL ')+l+(vrai||!detail?'':' → '+detail));if(!vrai)ko++;};
 
 const html=fs.readFileSync(path.join(racine,'index.html'),'utf8');
-const debut=html.indexOf('const PROFIL_DEFAUT = ');
-const fin=html.indexOf('const CLE_PROFIL');
-ok('PROFIL_DEFAUT trouvé dans index.html',debut>=0&&fin>debut);
-if(debut<0||fin<=debut){console.log('\n1 TEST EN ECHEC');process.exit(1);}
-
-const brut=html.slice(debut+'const PROFIL_DEFAUT = '.length,fin).trim().replace(/;$/,'');
-let embarque;
-try{embarque=JSON.parse(brut);}
-catch(e){
-  // Un objet JS n'est pas forcement du JSON : si ce parse echoue, le profil
-  // embarque a ete edite a la main dans un style que ce test ne sait pas relire.
-  console.log(' FAIL le profil embarqué n\'est pas du JSON strict → '+e.message);
-  console.log('\n1 TEST EN ECHEC');process.exit(1);
+// Deux profils sont embarques : celui qui s'affiche au demarrage, universel,
+// et celui de demonstration qu'on charge a la demande. Les deux doivent rester
+// identiques a leur fichier source.
+function lireEmbarque(marque,fin,quoi){
+  const debut=html.indexOf(marque);
+  const f=html.indexOf(fin);
+  ok(quoi+' trouvé dans index.html',debut>=0&&f>debut);
+  if(debut<0||f<=debut){console.log('\n1 TEST EN ECHEC');process.exit(1);}
+  const brut=html.slice(debut+marque.length,f).trim().replace(/;$/,'');
+  try{return JSON.parse(brut);}
+  catch(e){
+    // Un objet JS n'est pas forcement du JSON : si ce parse echoue, le profil
+    // embarque a ete edite a la main dans un style que ce test ne sait pas relire.
+    console.log(' FAIL '+quoi+' n\'est pas du JSON strict → '+e.message);
+    console.log('\n1 TEST EN ECHEC');process.exit(1);
+  }
 }
+const embarque=lireEmbarque('const PROFIL_DEFAUT = ','const PROFIL_DEMO','PROFIL_DEFAUT');
+const embarqueDemo=lireEmbarque('const PROFIL_DEMO = ','const CLE_PROFIL','PROFIL_DEMO');
 const fichier=JSON.parse(fs.readFileSync(path.join(racine,'presets','exemple.json'),'utf8'));
+const fichierDemo=JSON.parse(fs.readFileSync(path.join(racine,'presets','demonstration.json'),'utf8'));
+
+ok('démonstration embarquée identique à presets/demonstration.json',
+  JSON.stringify(embarqueDemo)===JSON.stringify(fichierDemo));
+// Le profil livre ne porte aucune application : celles d'une autre machine
+// feraient croire a l'arrivant que c'est sa liste. Elles vivent dans la
+// demonstration, qu'on charge en le sachant.
+ok('le profil livré ne contient aucune application',(embarque.apps||[]).length===0);
+ok('ni aucun raccourci web',(embarque.pwa||[]).length===0);
+ok('la démonstration, elle, en contient',(embarqueDemo.apps||[]).length>0);
 
 ok('profil embarqué identique à presets/exemple.json',
    JSON.stringify(embarque)===JSON.stringify(fichier),

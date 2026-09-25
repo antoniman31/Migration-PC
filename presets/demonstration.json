@@ -1,8 +1,8 @@
 {
   "meta": {
     "version": 1,
-    "nom": "Migration Windows",
-    "soustitre": "Checklist universelle · lance le scan pour y ajouter tes logiciels",
+    "nom": "Migration Windows — exemple garni",
+    "soustitre": "Exemple : la liste d'une autre machine, pour voir à quoi ça ressemble",
     "cles": {
       "state": "mpc_state_v1"
     }
@@ -585,8 +585,214 @@
       "d": "Navigateur, éditeur de code, raccourcis clavier, thème : la plupart savent synchroniser leurs réglages via un compte. Une demi-heure passée là évite de se sentir chez les autres à chaque fois qu'on change de machine."
     }
   ],
-  "ordre": [],
-  "apps": [],
+  "ordre": [
+    "a1",
+    "a2",
+    "a3",
+    "a4",
+    "a5",
+    "a6",
+    "a7",
+    "a8",
+    "a9",
+    "a10",
+    "a11",
+    "a12",
+    "a13",
+    "a14",
+    "a15",
+    "a16",
+    "a17",
+    "a18"
+  ],
+  "apps": [
+    {
+      "id": "a1",
+      "n": "7-Zip",
+      "c": "system",
+      "src": "Site officiel",
+      "w": "7zip.7zip",
+      "p": "high",
+      "t": 3,
+      "d": "Gestionnaire d'archives. À installer en premier pour ouvrir tout le reste."
+    },
+    {
+      "id": "a2",
+      "n": "Navigateur web",
+      "c": "bureautique",
+      "src": "Site officiel",
+      "w": "Google.Chrome",
+      "p": "high",
+      "t": 5,
+      "dep": "Requis avant les raccourcis web",
+      "d": "Se connecter au compte pour récupérer favoris, mots de passe et extensions."
+    },
+    {
+      "id": "a3",
+      "n": "VLC",
+      "c": "media",
+      "src": "Site officiel",
+      "w": "VideoLAN.VLC",
+      "p": "med",
+      "t": 3,
+      "d": "Lecteur multimédia qui lit à peu près tous les formats sans codec supplémentaire."
+    },
+    {
+      "id": "a4",
+      "n": "PowerToys",
+      "c": "system",
+      "src": "GitHub",
+      "w": "Microsoft.PowerToys",
+      "p": "med",
+      "t": 5,
+      "d": "Boîte à outils Microsoft : gestion de fenêtres, renommage par lot, sélecteur de couleur."
+    },
+    {
+      "id": "a5",
+      "n": "HWiNFO64",
+      "c": "system",
+      "src": "Site officiel",
+      "w": "REALiX.HWiNFO",
+      "p": "med",
+      "t": 3,
+      "d": "Surveillance des températures, tensions et fréquences. Utile pour valider le montage."
+    },
+    {
+      "id": "a6",
+      "n": "CrystalDiskInfo",
+      "c": "system",
+      "src": "Site officiel",
+      "w": "CrystalDewWorld.CrystalDiskInfo",
+      "p": "ok",
+      "t": 3,
+      "d": "État de santé S.M.A.R.T. des disques."
+    },
+    {
+      "id": "a7",
+      "n": "Git",
+      "c": "dev",
+      "src": "Site officiel",
+      "w": "Git.Git",
+      "p": "med",
+      "t": 3,
+      "d": "Gestion de versions. Penser à recopier la configuration et les clés SSH."
+    },
+    {
+      "id": "a8",
+      "n": "Node.js",
+      "c": "dev",
+      "src": "Site officiel",
+      "w": "OpenJS.NodeJS",
+      "p": "med",
+      "t": 5,
+      "d": "Runtime JavaScript et npm.",
+      "dep": [
+        "a1"
+      ]
+    },
+    {
+      "id": "a9",
+      "n": "Python",
+      "c": "dev",
+      "src": "Site officiel",
+      "w": "Python.Python.3.13",
+      "p": "med",
+      "t": 5,
+      "d": "Cocher « Add to PATH » pendant l'installation."
+    },
+    {
+      "id": "a10",
+      "n": "Visual Studio Code",
+      "c": "dev",
+      "src": "Site officiel",
+      "w": "Microsoft.VisualStudioCode",
+      "p": "med",
+      "t": 5,
+      "d": "Éditeur de code. La synchronisation des paramètres restaure extensions et réglages.",
+      "dep": [
+        "a7"
+      ]
+    },
+    {
+      "id": "a11",
+      "n": "Windows Terminal",
+      "c": "dev",
+      "src": "Microsoft Store",
+      "w": "Microsoft.WindowsTerminal",
+      "p": "ok",
+      "t": 3,
+      "d": "Terminal moderne, déjà présent sur Windows 11 récent."
+    },
+    {
+      "id": "a12",
+      "n": "PowerShell 7",
+      "c": "dev",
+      "src": "GitHub",
+      "w": "Microsoft.PowerShell",
+      "p": "med",
+      "t": 3,
+      "d": "Version actuelle de PowerShell, installée à côté de celle de Windows."
+    },
+    {
+      "id": "a13",
+      "n": "Steam",
+      "c": "jeux",
+      "src": "Site officiel",
+      "w": "Valve.Steam",
+      "p": "med",
+      "t": 5,
+      "d": "Bibliothèque de jeux. Penser à pointer le dossier d'installation vers le bon disque."
+    },
+    {
+      "id": "a14",
+      "n": "Discord",
+      "c": "comms",
+      "src": "Site officiel",
+      "w": "Discord.Discord",
+      "p": "med",
+      "t": 5,
+      "d": "Messagerie vocale et texte."
+    },
+    {
+      "id": "a15",
+      "n": "Suite bureautique",
+      "c": "bureautique",
+      "src": "Site officiel",
+      "w": "Microsoft.Office",
+      "p": "med",
+      "t": 15,
+      "d": "Se connecter au compte pour activer la licence."
+    },
+    {
+      "id": "a16",
+      "n": "Client de stockage en ligne",
+      "c": "bureautique",
+      "src": "Site officiel",
+      "w": "Google.GoogleDrive",
+      "p": "med",
+      "t": 10,
+      "d": "Attendre la fin de la synchronisation initiale avant de débrancher l'ancien PC."
+    },
+    {
+      "id": "a17",
+      "n": "Lecteur PDF",
+      "c": "bureautique",
+      "src": "Site officiel",
+      "w": "Adobe.Acrobat.Reader.64-bit",
+      "p": "ok",
+      "t": 5,
+      "d": "Le navigateur suffit souvent ; utile pour les formulaires et les signatures."
+    },
+    {
+      "id": "a18",
+      "n": "Client VPN",
+      "c": "reseau",
+      "src": "Site officiel",
+      "p": "ok",
+      "t": 5,
+      "d": "Si tu en utilises un : réinstaller et se reconnecter avant de remettre le pare-feu en place."
+    }
+  ],
   "data": [
     {
       "id": "s1",
@@ -826,6 +1032,44 @@
       "scan": "manuel"
     }
   ],
-  "pwa": [],
-  "requetes": {}
+  "pwa": [
+    {
+      "id": "p1",
+      "n": "Messagerie web",
+      "u": "https://mail.google.com",
+      "d": "Raccourci navigateur — revient avec la synchronisation du compte."
+    },
+    {
+      "id": "p2",
+      "n": "Agenda",
+      "u": "https://calendar.google.com",
+      "d": "Raccourci navigateur — revient avec la synchronisation du compte."
+    },
+    {
+      "id": "p3",
+      "n": "Prise de notes",
+      "u": "https://keep.google.com",
+      "d": "Raccourci navigateur — revient avec la synchronisation du compte."
+    }
+  ],
+  "requetes": {
+    "7-Zip": "site:7-zip.org download",
+    "Navigateur web": "site:google.com chrome download",
+    "VLC": "site:videolan.org download VLC",
+    "PowerToys": "site:github.com microsoft PowerToys releases",
+    "HWiNFO64": "site:hwinfo.com download",
+    "CrystalDiskInfo": "site:crystalmark.info CrystalDiskInfo download",
+    "Git": "site:git-scm.com download",
+    "Node.js": "site:nodejs.org download",
+    "Python": "site:python.org download python 3",
+    "Visual Studio Code": "site:code.visualstudio.com download",
+    "Windows Terminal": "site:github.com microsoft terminal releases",
+    "PowerShell 7": "site:github.com PowerShell releases download",
+    "Steam": "site:store.steampowered.com about download",
+    "Discord": "site:discord.com download",
+    "Suite bureautique": "site:microsoft.com download microsoft 365",
+    "Client de stockage en ligne": "site:google.com drive download",
+    "Lecteur PDF": "site:adobe.com download acrobat reader",
+    "Client VPN": "client VPN Windows telechargement officiel"
+  }
 }
