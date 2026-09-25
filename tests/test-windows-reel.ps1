@@ -66,7 +66,7 @@ try {
     ok 'le JSON relu ne l est pas non plus' ($texte -match 'Ã¢|Ã©|â€') $false
 
     "`n--- rien ne s est casse en silence ---"
-    $j = Get-Content -LiteralPath $journal -Raw
+    $j = Get-Content -LiteralPath $journal -Raw -Encoding UTF8
     # Un detecteur qui tombe est rattrape et annonce ; une trace d'exception
     # non geree, elle, ne doit jamais apparaitre.
     ok 'aucune exception non geree'  ($j -match 'Exception|At line:|ScriptStackTrace') $false
@@ -103,7 +103,7 @@ try {
     ok 'elle va au bout'             (Test-Path -LiteralPath $verif) $true
     $v = Get-Content -LiteralPath $verif -Raw -Encoding UTF8 | ConvertFrom-Json
     ok 'elle porte son type'         $v.type 'verification-migration-pc'
-    ok 'aucune exception non geree'  ((Get-Content -LiteralPath $jv -Raw) -match 'Exception|At line:') $false
+    ok 'aucune exception non geree'  ((Get-Content -LiteralPath $jv -Raw -Encoding UTF8) -match 'Exception|At line:') $false
     # Le script verifie deux onglets, « Nouveau PC » et « Apps » : ce sont les
     # seuls qui designent des logiciels installables. Trouve ou absent, chaque
     # element doit etre rapporte, sans quoi un a disparu en chemin.
@@ -126,9 +126,16 @@ try {
     $fini = $p.WaitForExit(60000)
     if (-not $fini) { $p.Kill() }
     ok 'il ne reste pas bloque'      $fini $true
-    $l = if (Test-Path -LiteralPath $jl) { Get-Content -LiteralPath $jl -Raw } else { '' }
+    # -Encoding UTF8 : les scripts forcent leur sortie en UTF-8, donc le fichier
+    # de redirection en est. Relu sans le dire, Windows PowerShell 5.1 le prend
+    # pour de l'ANSI et « Par ou commencer » arrive en charabia — ce qui a fait
+    # tomber ce test des que le menu a pris ses accents.
+    $l = if (Test-Path -LiteralPath $jl) { Get-Content -LiteralPath $jl -Raw -Encoding UTF8 } else { '' }
     ok 'il a liste ses actions'      ($l -match "Cet ordinateur est l'ANCIEN") $true
-    ok 'et le parcours complet'      ($l -match 'Par o[uù] commencer') $true
+    ok 'et le parcours complet'      ($l -match 'Par où commencer') $true
+    # C'est tout l'interet d'avoir force l'UTF-8 : si les accents n'arrivaient
+    # pas, ils arriveraient en « Ã¹ » ou en « ├¹ ».
+    ok 'les accents arrivent intacts' ($l -match 'Ã|├|Â') $false
 }
 finally {
     Remove-Item -LiteralPath $bac -Recurse -Force -ErrorAction SilentlyContinue
