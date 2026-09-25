@@ -38,7 +38,15 @@ async function ouvrirSituation(pg){
 // Commandes, dependances et avertissements vivent dans le detail d'une ligne,
 // qui s'ouvre au clic. On le deplie avant de les chercher.
 async function deplierApps(pg){
-  await pg.evaluate(()=>{APPS_DATA.forEach(a=>{appsOuverts[a.id]=true;});renderApps();});
+  await pg.evaluate(()=>{APPS_DATA.forEach(a=>{lignesOuvertes[a.id]=true;});renderApps();});
+}
+
+
+// Les champs à remplir d'une ligne de « Données » — clé de licence, variables
+// d'environnement, note — vivent dans le détail, qu'on ouvre. On le déplie
+// plutôt que de chercher dans une ligne repliée ce qui n'y est plus.
+async function deplierData(pg){
+  await pg.evaluate(()=>{DATA_SAVES.forEach(s=>{lignesOuvertes[s.id]=true;});renderData();});
 }
 
 (async()=>{
@@ -87,8 +95,8 @@ ok('badge étape visible',await pg.isVisible('#list-npc .b-num'));
 
 console.log('\n--- onglet Apps (celui qui était cassé en v6) ---');
 await pg.click('#tab-apps');
-ok('items rendus',(await pg.$$('#list-apps .app-l')).length,18);
-const boite=await (await pg.$('#list-apps .app-r')).boundingBox();
+ok('items rendus',(await pg.$$('#list-apps .lg-l')).length,18);
+const boite=await (await pg.$('#list-apps .lg-r')).boundingBox();
 ok('items réellement visibles',boite&&boite.height>0&&boite.width>0,true);
 await deplierApps(pg);
 ok('badges winget rendus',(await pg.$$('#list-apps .b-winget')).length,17);
@@ -96,8 +104,8 @@ ok('badge dépendance rendu',(await pg.$$('#list-apps .b-dep')).length>0);
 ok('lien recherche',(await pg.getAttribute('#list-apps .lnk-btn','href')).startsWith('https://www.google.com/search'));
 
 console.log('\n--- interaction ---');
-await pg.click('#list-apps .app-r');
-ok('case cochée',(await pg.$$('#list-apps .app-l.done')).length,1);
+await pg.click('#list-apps .lg-r');
+ok('case cochée',(await pg.$$('#list-apps .lg-l.done')).length,1);
 ok('compteur global',await pg.textContent('#gp-done'),'1');
 const persiste=await pg.evaluate(()=>{const s=JSON.parse(localStorage.getItem('mpc_state_v1'));return Object.keys(s.checked).length;});
 ok('persisté en localStorage',persiste,1);
@@ -109,7 +117,8 @@ await pg.fill('#gsearch-input','');
 
 console.log('\n--- onglets Données et PWA ---');
 await pg.click('#tab-data');
-ok('données rendues',(await pg.$$('#list-data .item')).length,PROFIL.data.length);
+ok('données rendues',(await pg.$$('#list-data .lg-l')).length,PROFIL.data.length);
+await deplierData(pg);
 ok('champ licence présent',(await pg.$$('#list-data .lic-field')).length>0);
 ok('champs env présents',(await pg.$$('#list-data .env-row')).length,3);
 await pg.fill('#list-data .lic-input','ABCD-1234-EFGH');
@@ -121,6 +130,7 @@ ok('variable persistée',Object.values(sto.env)[0],'D:/outils/java');
 await pg.reload({waitUntil:'networkidle'});
 await pg.click('#tab-data');
 await pg.waitForTimeout(300);
+await deplierData(pg);
 ok('licence relue après rechargement',await pg.inputValue('#list-data .lic-input'),'ABCD-1234-EFGH');
 await pg.click('#tab-pwa');
 ok('pwa rendues',(await pg.$$('#list-pwa .item')).length,3);
@@ -131,9 +141,9 @@ const inv=fs.readFileSync(path.join(__dirname,'inventaire-exemple.json'),'utf8')
 pg.on('dialog',d=>d.accept());
 await pg.setInputFiles('#json-file',{name:'inventaire-pc.json',mimeType:'application/json',buffer:Buffer.from(inv)});
 await pg.waitForTimeout(400);
-ok('apps remplacées',(await pg.$$('#list-apps .app-l')).length,4);
+ok('apps remplacées',(await pg.$$('#list-apps .lg-l')).length,4);
 ok('en-tête mis à jour',await pg.textContent('#profil-titre'),'Migration PC — inventaire importé');
-ok('progression conservée',(await pg.$$('#list-apps .app-l.done')).length>=0);
+ok('progression conservée',(await pg.$$('#list-apps .lg-l.done')).length>=0);
 
 // Un profil local, s'il y en a un : permet de verifier son propre fichier.
 const profilLocal=process.env.PROFIL||path.join(racine,'profil-local.json');
@@ -144,7 +154,7 @@ if(fs.existsSync(profilLocal)){
   await pg.setInputFiles('#json-file',{name:'profil.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(p))});
   await pg.waitForTimeout(500);
   ok('items chargés',await pg.textContent('#gp-total'),String(attendu));
-  ok('apps rendues',(await pg.$$('#list-apps .app-l')).length,p.apps.length);
+  ok('apps rendues',(await pg.$$('#list-apps .lg-l')).length,p.apps.length);
   ok('en-tête',await pg.textContent('#profil-titre'),p.meta.nom);
 }
 
@@ -152,14 +162,14 @@ console.log('\n--- import d\'un export winget ---');
 const wg=fs.readFileSync(path.join(__dirname,'winget-export-exemple.json'),'utf8');
 await pg.setInputFiles('#json-file',{name:'apps.json',mimeType:'application/json',buffer:Buffer.from(wg)});
 await pg.waitForTimeout(400);
-ok('paquets importés',(await pg.$$('#list-apps .app-l')).length,7);
+ok('paquets importés',(await pg.$$('#list-apps .lg-l')).length,7);
 ok('en-tête winget',await pg.textContent('#profil-titre'),'Migration PC — export winget');
 await deplierApps(pg);
 ok('badge identifiant rendu',(await pg.textContent('#list-apps')).indexOf('Mozilla.Firefox')>=0,true);
 ok('bouton winget .json présent',await pg.isVisible('button[onclick="exportWingetJSON(true)"]'),true);
 await pg.reload({waitUntil:'networkidle'});
 await pg.click('#tab-apps');
-ok('profil winget mémorisé après rechargement',(await pg.$$('#list-apps .app-l')).length,7);
+ok('profil winget mémorisé après rechargement',(await pg.$$('#list-apps .lg-l')).length,7);
 
 console.log('\n--- filet d\'erreur ---');
 // Une exception pendant un rendu doit devenir visible, et ne pas emporter les autres onglets.

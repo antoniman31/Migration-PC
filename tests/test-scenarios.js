@@ -31,7 +31,7 @@ async function ouvrirSituation(pg){
 // au clic. Ces assertions le deplient d'abord au lieu de chercher dans une
 // ligne repliee ce qui n'y est plus.
 async function deplierApps(pg){
-  await pg.evaluate(()=>{APPS_DATA.forEach(a=>{appsOuverts[a.id]=true;});renderApps();});
+  await pg.evaluate(()=>{APPS_DATA.forEach(a=>{lignesOuvertes[a.id]=true;});renderApps();});
 }
 
 (async()=>{
@@ -157,7 +157,7 @@ const parOnglet=await pg.evaluate(()=>{
   viderIndex();
   changerScenario('reinstall');
   Object.keys(cibles).forEach(k=>{
-    if(k==='apps'){APPS_DATA.forEach(a=>{appsOuverts[a.id]=true;});renderApps();}
+    if(k==='apps'){APPS_DATA.forEach(a=>{lignesOuvertes[a.id]=true;});renderApps();}
     const l=document.getElementById('list-'+k);
     const t=l?l.textContent:'';
     resultat[k]={nom:t.indexOf('LIBELLE-'+k.toUpperCase())>=0,
@@ -264,8 +264,8 @@ ok('et ce sont bien eux',npcVus.every(n=>/ilote/.test(n)),true);
 ok('aucun reglage BIOS',npcVus.some(n=>/BIOS|Secure Boot|CSM|XMP|EXPO/.test(n)),false);
 ok('ni l\'installation de Windows',npcVus.some(n=>/Installer Windows|NON-RETOUR/.test(n)),false);
 ok('les applications sont toutes la',
-  (await pg.$$('#list-apps .app-l')).length,appsAff);
-ok('les donnees aussi',(await pg.$$('#list-data .item')).length,dataAff);
+  (await pg.$$('#list-apps .lg-l')).length,appsAff);
+ok('les donnees aussi',(await pg.$$('#list-data .lg-l')).length,dataAff);
 ok('les PWA aussi',(await pg.$$('#list-pwa .item')).length,pwaAff);
 
 // Un onglet garde en entier ne ramene pas pour autant ce qui appartient a un

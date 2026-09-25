@@ -23,7 +23,7 @@ if(process.env.CHROME)lancement.executablePath=process.env.CHROME;
 // au clic. Ces assertions le deplient d'abord au lieu de chercher dans une
 // ligne repliee ce qui n'y est plus.
 async function deplierApps(pg){
-  await pg.evaluate(()=>{APPS_DATA.forEach(a=>{appsOuverts[a.id]=true;});renderApps();});
+  await pg.evaluate(()=>{APPS_DATA.forEach(a=>{lignesOuvertes[a.id]=true;});renderApps();});
 }
 
 (async()=>{
@@ -142,7 +142,7 @@ await pg.evaluate(()=>{
 });
 await pg.waitForTimeout(300);
 ok('les listes se remplissent',
-  await pg.evaluate(()=>document.querySelectorAll('#list-apps .app-l').length>0),true);
+  await pg.evaluate(()=>document.querySelectorAll('#list-apps .lg-l').length>0),true);
 ok('les catégories accentuées s\'affichent correctement',
   await pg.evaluate(()=>{
     const h=document.querySelector('#list-apps .sec-hdr');

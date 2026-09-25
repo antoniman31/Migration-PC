@@ -271,7 +271,7 @@ body.compact .item{padding:5px 0}
   padding:12px 20px;border-bottom:.5px solid var(--brd)}
 .apps-act .search-wrap{flex:1;min-width:150px}
 /* La commande a copier est longue : elle s'enroule au lieu d'etre coupee. */
-.app-det .b-winget{white-space:normal;text-align:left;word-break:break-all}
+.lg-det .b-winget{white-space:normal;text-align:left;word-break:break-all}
 @media (max-width:900px){
   .apps-wrap{display:block}
   .apps-filtres{width:auto;border-right:none;border-bottom:.5px solid var(--brd);padding:12px 16px}
@@ -280,32 +280,37 @@ body.compact .item{padding:5px 0}
 /* ═══ Liste des applications, en colonnes ═══
    Un logiciel se choisit sur son nom, sa version et le temps qu'il prend.
    Le reste — description, commande, avertissement — s'ouvre au clic. */
-.app-l{border-bottom:.5px solid var(--brd)}
-.app-r{display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer}
-.app-n{font-size:13px;font-weight:500;color:var(--tx);flex:1;min-width:0;
+.lg-l{border-bottom:.5px solid var(--brd)}
+.lg-r{display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer}
+.lg-n{font-size:13px;font-weight:500;color:var(--tx);flex:1;min-width:0;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.app-m{font-size:12px;color:var(--tx2);white-space:nowrap;
+.lg-m{font-size:12px;color:var(--tx2);white-space:nowrap;
   max-width:190px;overflow:hidden;text-overflow:ellipsis}
-.app-t{font-size:12px;color:var(--tx2);white-space:nowrap;
+/* Un chemin est plus long qu'une provenance : la colonne de l'onglet
+   Donnees respire. On coupe a droite : couper a gauche demandait
+   direction:rtl, qui deplace le %% de tete a la fin et rend le chemin faux. */
+#list-data .lg-m{max-width:360px}
+.lg-t{font-size:12px;color:var(--tx2);white-space:nowrap;
   display:flex;align-items:center;gap:4px;min-width:46px;justify-content:flex-end}
-.app-plus{width:30px;height:30px;border:none;background:transparent;color:var(--tx2);
+.lg-plus{width:30px;height:30px;border:none;background:transparent;color:var(--tx2);
   cursor:pointer;border-radius:6px;font-size:12px;flex-shrink:0}
-.app-plus:hover{background:var(--bg3);color:var(--tx)}
-.app-l.done .app-n{text-decoration:line-through;color:var(--tx3)}
-.app-det{padding:2px 0 12px 34px;cursor:default}
-.app-det-d{font-size:12px;color:var(--tx2);line-height:1.5;margin-bottom:8px}
+.lg-plus:hover{background:var(--bg3);color:var(--tx)}
+.lg-l.done .lg-n{text-decoration:line-through;color:var(--tx3)}
+.lg-det{padding:2px 0 12px 34px;cursor:default}
+.lg-det .lic-field,.lg-det .env-field{margin-top:8px}
+.lg-det-d{font-size:12px;color:var(--tx2);line-height:1.5;margin-bottom:8px}
 /* Sur un ecran etroit, sept colonnes ne tiennent pas : la version et la
    provenance passent sous le nom plutot que de le comprimer a trois lettres. */
 @media (max-width:640px){
-  .app-r{flex-wrap:wrap;row-gap:2px;gap:12px}
-  .app-plus{width:44px;height:44px}
+  .lg-r{flex-wrap:wrap;row-gap:2px;gap:12px}
+  .lg-plus{width:44px;height:44px}
   .af-c{padding:0;min-height:44px;align-items:center}
   /* Au doigt, la case fait la taille reglementaire. Elle est grosse, mais une
      case qu'on rate deux fois sur trois est pire qu'une case voyante. */
   .af-c input{width:44px;height:44px;margin:0}
-  .app-n{flex:1 1 100%;white-space:normal;order:1}
-  .app-r .chkbox{order:0}
-  .app-m,.app-t,.app-plus,.note-btn,.item-link{order:2}
+  .lg-n{flex:1 1 100%;white-space:normal;order:1}
+  .lg-r .chkbox{order:0}
+  .lg-m,.lg-t,.lg-plus,.note-btn,.item-link{order:2}
 }
 .item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:.5px solid var(--brd);cursor:pointer;border-radius:4px}
 .item:hover{background:rgba(0,0,0,.025)}
@@ -3408,7 +3413,7 @@ function renderApps(){
 // s'affiche que haute : une etiquette presente sur chaque ligne n'informe plus.
 function mkAppItem(a){
   const ck=!!S.checked[a.id];
-  const ouvert=!!appsOuverts[a.id];
+  const ouvert=!!lignesOuvertes[a.id];
   const dt=ck&&S.dates[a.id]?'<span class="item-date">✓ '+fmtDate(S.dates[a.id])+'</span>':'';
   const pBadge=a.p==='high'?'<span class="badge b-high">⚡</span>':'';
   const meta=[];
@@ -3420,8 +3425,8 @@ function mkAppItem(a){
   let detail='';
   if(ouvert){
     const d=texte(descDe(a));
-    detail='<div class="app-det" onclick="event.stopPropagation()">'
-      +(d?'<p class="app-det-d">'+esc(d)+'</p>':'')
+    detail='<div class="lg-det" onclick="event.stopPropagation()">'
+      +(d?'<p class="lg-det-d">'+esc(d)+'</p>':'')
       +(a.warn?'<div class="warn-badge">⚠️ '+esc(a.warn)+'</div>':'')
       +(a.dep?mkDepBadge(a.dep):'')
       +(cmd?'<button type="button" class="badge b-winget" onclick="'
@@ -3431,15 +3436,15 @@ function mkAppItem(a){
       +'</div>';
   }
 
-  return '<div class="app-l'+(ck?' done':'')+'">'
-    +'<div class="app-r" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(a)+'">'
+  return '<div class="lg-l'+(ck?' done':'')+'">'
+    +'<div class="lg-r" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(a)+'">'
       +mkChkbox()
-      +'<span class="app-n">'+esc(libelleDe(a))+dt+'</span>'
-      +'<span class="app-m">'+meta.join(' · ')+'</span>'
-      +'<span class="app-t">'+(a.t?fmtTime(a.t):'')+pBadge+'</span>'
-      +'<button type="button" class="app-plus" aria-expanded="'+ouvert+'" '
+      +'<span class="lg-n">'+esc(libelleDe(a))+dt+'</span>'
+      +'<span class="lg-m">'+meta.join(' · ')+'</span>'
+      +'<span class="lg-t">'+(a.t?fmtTime(a.t):'')+pBadge+'</span>'
+      +'<button type="button" class="lg-plus" aria-expanded="'+ouvert+'" '
         +'aria-label="'+(ouvert?'Masquer':'Afficher')+' le détail de '+esc(libelleDe(a))+'" '
-        +'onclick="basculerDetailApp(\''+escJS(a.id)+'\',event)">'+(ouvert?'▴':'▾')+'</button>'
+        +'onclick="basculerDetail(\''+escJS(a.id)+'\',event)">'+(ouvert?'▴':'▾')+'</button>'
       +mkNoteBtn(a.id)
       +mkLink(libelleDe(a),a)
     +'</div>'
@@ -3449,11 +3454,13 @@ function mkAppItem(a){
 
 // Quelles lignes sont depliees. Volontairement hors de S : c'est un etat
 // d'affichage du moment, il n'a rien a faire dans la progression sauvegardee.
-let appsOuverts={};
-function basculerDetailApp(id,evt){
+let lignesOuvertes={};
+function basculerDetail(id,evt){
   evt.stopPropagation();
-  if(appsOuverts[id])delete appsOuverts[id];else appsOuverts[id]=true;
-  renderApps();
+  if(lignesOuvertes[id])delete lignesOuvertes[id];else lignesOuvertes[id]=true;
+  // Les deux onglets partagent ce depliage : ne redessiner que « Apps »
+  // laissait la ligne de « Donnees » repliee, sans rien dire.
+  renderApps();renderData();
 }
 
 function checkAllCat(cat,evt){
@@ -3466,11 +3473,62 @@ function checkAllCat(cat,evt){
 }
 
 // ═══ RENDER DATA ═══
+// L'onglet Donnees porte les memes lignes compactes que l'onglet Apps : ce
+// sont des choses qu'on emporte, decrites par un chemin et une taille, et on
+// en a beaucoup. L'onglet « Avant de quitter » garde sa mise en forme
+// explicative : ses quatorze lignes sont des instructions, chacune avec un
+// paragraphe qui dit pourquoi elle compte, et un tableau les rendrait muettes.
+const LIBELLES_PRIO_DATA={high:'🔴 Critique — sauvegarder en priorité absolue',
+  med:'🟡 Important — à ne pas oublier',
+  ok:'🟢 Optionnel — pratique mais récupérable'};
+
 function renderData(){
-  renderParPriorite('data',DATA_SAVES,
-    {high:'🔴 Critique — sauvegarder en priorité absolue',
-     med:'🟡 Important — à ne pas oublier',
-     ok:'🟢 Optionnel — pratique mais récupérable'});
+  const groups={high:[],med:[],ok:[]};
+  DATA_SAVES.filter(visibleDansScenario).forEach(function(s){(groups[s.pr]||groups.ok).push(s);});
+  let html='';let first=true;
+  ['high','med','ok'].forEach(function(pr){
+    const grp=groups[pr];if(!grp.length)return;
+    const dn=grp.filter(function(s){return S.checked[s.id];}).length;
+    const allDone=dn===grp.length;
+    html+='<div class="sec-hdr'+(first?' first':'')+'">'+LIBELLES_PRIO_DATA[pr]
+      +'<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+grp.length+'</span>'
+      +'<button class="chk-all" type="button" onclick="checkAllPriorite(\'data\',\''+pr+'\',event)">'
+      +(allDone?'Décocher tout':'Tout cocher')+'</button></div></div>';
+    grp.forEach(function(s){html+=mkDataItem(s);});
+    first=false;
+  });
+  document.getElementById('list-data').innerHTML=html||messageOngletVide('data');
+  updateSecProg('data',DATA_SAVES.filter(visibleDansScenario));
+}
+
+// Le chemin est ce qu'on lit en premier pour savoir de quoi il s'agit : il
+// reste sur la ligne. La note, la cle de licence et les variables
+// d'environnement s'ouvrent au chevron — ce sont des champs qu'on remplit une
+// fois, pas des informations qu'on parcourt.
+function mkDataItem(s){
+  const ck=!!S.checked[s.id];
+  const ouvert=!!lignesOuvertes[s.id];
+  const dt=ck&&S.dates[s.id]?'<span class="item-date">✓ '+fmtDate(S.dates[s.id])+'</span>':'';
+  const aRemplir=!!(s.lic||s.env);
+  const detail=ouvert?'<div class="lg-det" onclick="event.stopPropagation()">'
+      +(s.note?'<p class="lg-det-d">'+esc(s.note)+'</p>':'')
+      +(s.warn?'<div class="warn-badge">⚠️ '+esc(s.warn)+'</div>':'')
+      +mkLicField(s)+mkEnvFields(s)+mkNoteArea(s.id)
+    +'</div>':'';
+  return '<div class="lg-l'+(ck?' done':'')+'">'
+    +'<div class="lg-r" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(s)+'">'
+      +mkChkbox()
+      +'<span class="lg-n">'+esc(libelleDe(s))+dt+'</span>'
+      +'<span class="lg-m">'+(s.p?esc(s.p):'')+'</span>'
+      +'<span class="lg-t">'+(s.mo?esc(fmtMo(s.mo)):'')
+        +(aRemplir?'<span class="badge b-high" title="Un champ à remplir">✎</span>':'')+'</span>'
+      +'<button type="button" class="lg-plus" aria-expanded="'+ouvert+'" '
+        +'aria-label="'+(ouvert?'Masquer':'Afficher')+' le détail de '+esc(libelleDe(s))+'" '
+        +'onclick="basculerDetail(\''+escJS(s.id)+'\',event)">'+(ouvert?'▴':'▾')+'</button>'
+      +mkNoteBtn(s.id)
+    +'</div>'
+    +detail
+  +'</div>';
 }
 
 // « Avant de quitter » partage la mise en forme de « Données » : mêmes

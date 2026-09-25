@@ -139,7 +139,7 @@ if(fs.existsSync(fInv)){
   eq('liste rendue',els['list-apps'].innerHTML.length>200,true);
   // La commande vit dans le detail, qu'on deplie : la ligne repliee ne
   // montre plus l'identifiant winget, qui ne dit rien a personne.
-  G('APPS_DATA').forEach(a=>{G('appsOuverts')[a.id]=true;});G('renderApps')();
+  G('APPS_DATA').forEach(a=>{G('lignesOuvertes')[a.id]=true;});G('renderApps')();
   eq('badge winget present',els['list-apps'].innerHTML.indexOf('7zip.7zip')>=0,true);
   eq('app sans winget toleree',G('APPS_DATA').filter(a=>!a.w).length,1);
   eq('categories deduites',Object.keys(G('CATS')).length>=2,true);

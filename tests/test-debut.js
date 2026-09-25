@@ -82,7 +82,7 @@ ok('l\'authentificateur s\'ajoute au lieu de se transférer',
 ok('les deux clés BitLocker sont demandées',
   q.some(n=>/DEUX machines/.test(n)),true);
 // Ce qui apparait, et qui n'existait nulle part.
-const d=await pg.evaluate(()=>[...document.querySelectorAll('#list-data .item-name')]
+const d=await pg.evaluate(()=>[...document.querySelectorAll('#list-data .lg-n')]
   .map(x=>x.textContent));
 ['Décider quels dossiers','Mettre en place la synchronisation',
  'marche dans les deux sens','versions divergentes'].forEach(t=>
