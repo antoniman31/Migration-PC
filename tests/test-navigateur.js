@@ -18,6 +18,22 @@ const TOTAL=SECTIONS.reduce(function(n,s){return n+((PROFIL[s]||[]).length);},0)
 let ko=0;
 const ok=(l,a,b)=>{const p=(b===undefined?!!a:a===b);console.log((p?'  ok   ':'  FAIL ')+l+' → '+a+(p?'':' (attendu '+b+')'));if(!p)ko++;};
 
+
+// Depuis la refonte, la situation et le theme sont derriere « Réglages ».
+// Ces deux aides reproduisent le chemin qu'un utilisateur emprunte, plutôt
+// que d'affaiblir les assertions qui suivent.
+async function ouvrirReglages(pg){
+  if(await pg.isVisible('#hdr-menu-liste'))return;
+  await pg.click('#menu-btn');
+  await pg.waitForSelector('#hdr-menu-liste',{state:'visible'});
+}
+async function ouvrirSituation(pg){
+  if(await pg.isVisible('#scen'))return;
+  await ouvrirReglages(pg);
+  await pg.click('#scen-btn');
+  await pg.waitForSelector('#scen',{state:'visible'});
+}
+
 (async()=>{
 const lancement={args:['--no-sandbox']};
 if(process.env.CHROME)lancement.executablePath=process.env.CHROME;
@@ -153,12 +169,12 @@ erreurs.length=0;
 await pg.reload({waitUntil:'networkidle'});
 
 console.log('\n--- thème sombre ---');
-await pg.click('#theme-btn');
+await ouvrirReglages(pg);await pg.click('#theme-btn');
 ok('thème basculé',await pg.getAttribute('html','data-theme'),'dark');
 
 if(process.env.CAPTURE){
   await pg.screenshot({path:process.env.CAPTURE+'/sombre.png'});
-  await pg.click('#theme-btn');await pg.waitForTimeout(200);
+  await ouvrirReglages(pg);await pg.click('#theme-btn');await pg.waitForTimeout(200);
   await pg.screenshot({path:process.env.CAPTURE+'/clair.png'});
 }
 

@@ -63,7 +63,7 @@ for(const theme of ['light','dark']){
         .map(e=>e.tagName.toLowerCase()+'.'+[...e.classList].join('.')))],
       sansRole:[...document.querySelectorAll('.item')].filter(e=>e.getAttribute('role')!=='checkbox').length,
       sansEtat:[...document.querySelectorAll('.item')].filter(e=>!e.hasAttribute('aria-checked')).length,
-      ongletsSansRole:[...document.querySelectorAll('.tab')].filter(e=>e.getAttribute('role')!=='tab').length,
+      ongletsSansRole:[...document.querySelectorAll('.snav')].filter(e=>e.getAttribute('role')!=='tab').length,
       champsSansNom:[...document.querySelectorAll('input,select,textarea')]
         .filter(e=>visible(e)&&!e.getAttribute('aria-label')&&!e.getAttribute('title')
           &&!document.querySelector('label[for="'+e.id+'"]')&&!e.closest('label')).length,

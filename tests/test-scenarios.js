@@ -10,6 +10,22 @@ const racine=path.join(__dirname,'..');
 const HTML='file://'+path.join(racine,'index.html');
 const lancement={args:['--no-sandbox']};
 if(process.env.CHROME)lancement.executablePath=process.env.CHROME;
+
+// Depuis la refonte, la situation et le theme sont derriere « Réglages ».
+// Ces deux aides reproduisent le chemin qu'un utilisateur emprunte, plutôt
+// que d'affaiblir les assertions qui suivent.
+async function ouvrirReglages(pg){
+  if(await pg.isVisible('#hdr-menu-liste'))return;
+  await pg.click('#menu-btn');
+  await pg.waitForSelector('#hdr-menu-liste',{state:'visible'});
+}
+async function ouvrirSituation(pg){
+  if(await pg.isVisible('#scen'))return;
+  await ouvrirReglages(pg);
+  await pg.click('#scen-btn');
+  await pg.waitForSelector('#scen',{state:'visible'});
+}
+
 (async()=>{
 const b=await chromium.launch(lancement);
 const pg=await (await b.newContext({viewport:{width:1200,height:900},deviceScaleFactor:2})).newPage();
@@ -21,12 +37,14 @@ const tous=[...P.quitter,...P.npc,...P.apps,...P.data,...P.pwa];
 const vis=sc=>tous.filter(e=>!e.cas||e.cas.includes(sc)).length;
 
 console.log('--- au départ : tout ---');
-ok('sélecteur présent',await pg.isVisible('.scen'),true);
+ok('sélecteur replié au départ',await pg.isVisible('.scen'),false);
+await ouvrirSituation(pg);
+ok('sélecteur atteignable depuis Réglages',await pg.isVisible('.scen'),true);
 ok('« Tout » actif',await pg.getAttribute('#sc-tout','aria-pressed'),'true');
 ok('total complet',await pg.textContent('#gp-total'),String(tous.length));
 
 console.log('\n--- migration ---');
-await pg.click('#sc-migration');await pg.waitForTimeout(300);
+await ouvrirSituation(pg);await pg.click('#sc-migration');await pg.waitForTimeout(300);
 ok('bouton actif',await pg.getAttribute('#sc-migration','aria-pressed'),'true');
 ok('total filtré',await pg.textContent('#gp-total'),String(vis('migration')));
 const npcM=(await pg.$$('#list-npc .item')).length;
@@ -37,7 +55,7 @@ ok('le sens des ventilateurs est là',txtM.indexOf('sens des ventilateurs')>=0,t
 ok('libellé « Activer TPM »',txtM.indexOf('Activer TPM 2.0')>=0,true);
 
 console.log('\n--- réinstallation ---');
-await pg.click('#sc-reinstall');await pg.waitForTimeout(300);
+await ouvrirSituation(pg);await pg.click('#sc-reinstall');await pg.waitForTimeout(300);
 ok('total filtré',await pg.textContent('#gp-total'),String(vis('reinstall')));
 const txtR=await pg.textContent('#list-npc');
 ok('point de non-retour visible',txtR.indexOf('NON-RETOUR')>=0,true);
@@ -51,15 +69,15 @@ ok('effacement sécurisé masqué',q.indexOf('Effacer le disque')<0,true);
 ok('désactivation Adobe conservée',q.indexOf('Adobe')>=0,true);
 
 console.log('\n--- la progression survit au changement de mode ---');
-await pg.click('#sc-tout');await pg.waitForTimeout(250);
+await ouvrirSituation(pg);await pg.click('#sc-tout');await pg.waitForTimeout(250);
 await pg.evaluate(()=>{switchTab('npc');});
 await pg.waitForTimeout(200);
 await pg.evaluate(()=>{const e=NPC_DATA.find(x=>x.cas&&x.cas[0]==='migration');S.checked[e.id]=true;saveState();renderAll();updateGlobal();});
 const avant=await pg.evaluate(()=>Object.keys(S.checked).length);
-await pg.click('#sc-reinstall');await pg.waitForTimeout(250);
+await ouvrirSituation(pg);await pg.click('#sc-reinstall');await pg.waitForTimeout(250);
 ok('la case cochée reste en mémoire',await pg.evaluate(()=>Object.keys(S.checked).length),avant);
 ok('mais ne compte plus',await pg.textContent('#gp-done'),'0');
-await pg.click('#sc-migration');await pg.waitForTimeout(250);
+await ouvrirSituation(pg);await pg.click('#sc-migration');await pg.waitForTimeout(250);
 ok('elle recompte au retour',await pg.textContent('#gp-done'),'1');
 
 console.log('\n--- mémorisation, recherche, guide ---');
@@ -69,7 +87,7 @@ await pg.fill('#gsearch-input','non-retour');
 await pg.waitForTimeout(300);
 ok('la recherche respecte le filtre',(await pg.textContent('#gsearch-results')).indexOf('NON-RETOUR')<0,true);
 await pg.fill('#gsearch-input','');
-await pg.click('#sc-reinstall');await pg.waitForTimeout(250);
+await ouvrirSituation(pg);await pg.click('#sc-reinstall');await pg.waitForTimeout(250);
 await pg.fill('#gsearch-input','non-retour');await pg.waitForTimeout(300);
 ok('et le trouve dans l\'autre mode',(await pg.textContent('#gsearch-results')).indexOf('NON-RETOUR')>=0,true);
 await pg.fill('#gsearch-input','');
@@ -216,7 +234,7 @@ console.log('\n--- le troisieme cas : juste mes affaires ---');
 // Celui-ci marche a l'envers des deux autres : il part de rien et ne garde que
 // ce qu'il reclame. Sans cette inversion, les reglages BIOS — qui ne portent
 // aucune mention — s'y retrouveraient aussi.
-await pg.click('#sc-affaires');await pg.waitForTimeout(350);
+await ouvrirSituation(pg);await pg.click('#sc-affaires');await pg.waitForTimeout(350);
 // Un element qui nomme ses cas et ne nomme pas celui-ci se reclame d'une autre
 // situation : ce qu'il dit de lui-meme passe avant l'onglet ou il se trouve.
 const pourAffaires=e=>!Array.isArray(e.cas)||!e.cas.length||e.cas.indexOf('affaires')>=0;
@@ -265,7 +283,7 @@ for(const [cle,att] of [['tout',tous.length],['migration',vis('migration')],
   await pg.click('#sc-'+cle);await pg.waitForTimeout(250);
   ok('« '+cle+' » compte toujours pareil',await pg.textContent('#gp-total'),String(att));
 }
-await pg.click('#sc-tout');await pg.waitForTimeout(250);
+await ouvrirSituation(pg);await pg.click('#sc-tout');await pg.waitForTimeout(250);
 
 await b.close();
 console.log(ko?'\n'+ko+' EN ECHEC':'\nSCENARIOS OPERATIONNELS');

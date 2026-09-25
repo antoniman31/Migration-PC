@@ -31,7 +31,7 @@ console.log('\n--- totaux ---');
 ok('badge onglet',await pg.textContent('#badge-quitter'),'0/'+PROFIL.quitter.length);
 const total=await pg.evaluate(()=>tousLesItems().length);
 ok('total global inclut la section',await pg.textContent('#gp-total'),String(total));
-ok('cinq onglets',(await pg.$$('.tabs .tab')).length,5);
+ok('cinq onglets',(await pg.$$('.side-nav .snav')).length,5);
 
 console.log('\n--- cocher, tout cocher, réinitialiser ---');
 await pg.click('#list-quitter .item');

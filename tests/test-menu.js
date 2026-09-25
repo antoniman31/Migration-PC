@@ -84,7 +84,7 @@ await pg.click('#menu-btn');await pg.waitForTimeout(200);
 ok('« Commencer une session » a disparu du menu',
   await pg.isVisible('#session-start-btn'),false);
 ok('le focus va au premier item encore affiche',
-  await pg.evaluate(()=>document.activeElement.textContent.indexOf('Exporter le profil')>=0),true);
+  await pg.evaluate(()=>document.activeElement.textContent.indexOf('Importer un fichier')>=0),true);
 await pg.keyboard.press('Escape');await pg.waitForTimeout(150);
 await pg.evaluate(()=>stopSession());
 

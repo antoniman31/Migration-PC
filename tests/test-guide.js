@@ -34,11 +34,11 @@ pg.on('pageerror',e=>{console.log(' FAIL erreur JS → '+e.message);ko++;});
 await pg.goto(HTML,{waitUntil:'networkidle'});
 console.log('--- bascule ---');
 ok('guide masqué par défaut',await pg.isVisible('#guide'),false);
-ok('la vue liste est là',await pg.isVisible('.tabs'),true);
+ok('la vue liste est là',await pg.isVisible('.side-nav'),true);
 await pg.click('#guide-btn');
 await pg.waitForTimeout(250);
 ok('guide affiché',await pg.isVisible('#guide'),true);
-ok('onglets masqués',await pg.isVisible('.tabs'),false);
+ok('onglets masqués',await pg.isVisible('.side-nav'),false);
 ok('recherche masquée',await pg.isVisible('.gsearch'),false);
 ok('aria-pressed suit',await pg.getAttribute('#guide-btn','aria-pressed'),'true');
 
@@ -115,7 +115,7 @@ console.log('   ',(await pg.textContent('.guide-fin-titre')).trim());
 console.log('\n--- retour à la vue liste ---');
 await pg.click('#guide-btn');
 await pg.waitForTimeout(250);
-ok('onglets revenus',await pg.isVisible('.tabs'),true);
+ok('onglets revenus',await pg.isVisible('.side-nav'),true);
 ok('guide masqué',await pg.isVisible('#guide'),false);
 ok('progression conservée',await pg.evaluate(()=>Object.keys(S.checked).length)>0,true);
 

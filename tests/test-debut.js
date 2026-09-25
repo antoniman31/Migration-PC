@@ -11,6 +11,22 @@ const HTML='file://'+path.join(racine,'index.html');
 const lancement={args:['--no-sandbox']};
 if(process.env.CHROME)lancement.executablePath=process.env.CHROME;
 
+
+// Depuis la refonte, la situation et le theme sont derriere « Réglages ».
+// Ces deux aides reproduisent le chemin qu'un utilisateur emprunte, plutôt
+// que d'affaiblir les assertions qui suivent.
+async function ouvrirReglages(pg){
+  if(await pg.isVisible('#hdr-menu-liste'))return;
+  await pg.click('#menu-btn');
+  await pg.waitForSelector('#hdr-menu-liste',{state:'visible'});
+}
+async function ouvrirSituation(pg){
+  if(await pg.isVisible('#scen'))return;
+  await ouvrirReglages(pg);
+  await pg.click('#scen-btn');
+  await pg.waitForSelector('#scen',{state:'visible'});
+}
+
 (async()=>{
 const b=await chromium.launch(lancement);
 const pg=await (await b.newContext({viewport:{width:1200,height:900}})).newPage();
@@ -75,7 +91,7 @@ ok('la répartition précède la synchronisation',
   d.findIndex(n=>/Décider quels dossiers/.test(n))<d.findIndex(n=>/Mettre en place la synchro/.test(n)),true);
 
 console.log('\n--- et en migration, tout redevient comme avant ---');
-await pg.click('#sc-migration');await pg.waitForTimeout(300);
+await ouvrirSituation(pg);await pg.click('#sc-migration');await pg.waitForTimeout(300);
 const qm=await pg.evaluate(()=>[...document.querySelectorAll('#list-quitter .item-name')]
   .map(x=>x.textContent));
 ok('Steam se désautorise de nouveau',qm.some(n=>/Désautoriser Steam/.test(n)),true);
