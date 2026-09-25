@@ -75,10 +75,14 @@ const TOT=SECTIONS.reduce(function(n,s){return n+((DEF[s]||[]).length);},0);
 eq('total global',String(els['gp-total'].textContent),String(TOT));
 
 console.log('\n--- cocher une tâche ---');
+// « a1 » est une application : le profil livré n'en a aucune, elles vivent
+// dans la démonstration qu'on charge en connaissance de cause.
+const DEMO=JSON.parse(fs.readFileSync(path.join(racine,'presets','demonstration.json'),'utf8'));
+G('appliquerProfil')(DEMO,true);
 G('toggle')('a1','7-Zip');
-eq('case enregistrée',G('S').checked[DEF.apps[0].id],true);
+eq('case enregistrée',G('S').checked[DEMO.apps[0].id],true);
 eq('compteur global',String(els['gp-done'].textContent),'1');
-eq('persisté en localStorage',JSON.parse(store['mpc_state_v1']).checked[DEF.apps[0].id],true);
+eq('persisté en localStorage',JSON.parse(store['mpc_state_v1']).checked[DEMO.apps[0].id],true);
 
 console.log('\n--- import d\'un inventaire ---');
 const inv={type:'inventaire-migration-pc',version:1,genere:'2026-09-24T10:00:00Z',
@@ -97,7 +101,7 @@ eq('profil appliqué',G('APPS_DATA').length,3);
 eq('profil mémorisé',JSON.parse(store['mpc_profil_v1']).apps.length,3);
 eq('entête mise à jour',els['profil-titre'].textContent,'Migration PC — inventaire importé');
 eq('catégories déduites',Object.keys(G('CATS')).length,3);
-eq('progression conservée',G('S').checked[DEF.apps[0].id],true);
+eq('progression conservée',G('S').checked[DEMO.apps[0].id],true);
 
 console.log('\n--- exports ---');
 // eq(true,true) ne verifiait rien : on regarde ce qui sort.

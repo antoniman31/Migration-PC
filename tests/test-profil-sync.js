@@ -150,7 +150,7 @@ const ordreInconnu=(fichier.ordre||[]).filter(function(id){return !ids.has(id);}
 //   une couverture qui existe  — un détecteur la remplit aujourd'hui
 //   « attendu:xxx »            — c'est scannable, le détecteur reste à écrire
 //   « manuel »                 — personne ne scannera ça, et c'est assumé
-const lib=fs.readFileSync(path.join(racine,'lib-detection.ps1'),'utf8');
+const lib=fs.readFileSync(path.join(racine,'scripts','lib-detection.ps1'),'utf8');
 const blocCouv=(lib.match(/\$CouverturesScan\s*=\s*\[ordered\]@\{([\s\S]*?)\n\}/)||[,''])[1];
 const couvertures=(blocCouv.match(/^\s*([a-z]+)\s*=/gm)||[]).map(m=>m.trim().replace(/\s*=$/,''));
 ok('les couvertures sont déclarées dans lib-detection.ps1',couvertures.length>0,true);
@@ -189,8 +189,9 @@ ok("l'ordre conseillé ne cite que des éléments existants",ordreInconnu.length
 // echouait sur un fichier absent du depot. Ce controle le dit avant le push.
 const {execFileSync}=require('child_process');
 const requis=['tests/inventaire-exemple.json','tests/inventaire-etendu.json',
-  'tests/winget-export-exemple.json','presets/exemple.json','index.html',
-  'scan-pc.ps1','manifest.json','sw.js'];
+  'tests/winget-export-exemple.json','presets/exemple.json',
+  'presets/demonstration.json','index.html','Migration PC.bat',
+  'scripts/scan-pc.ps1','manifest.json','sw.js'];
 requis.forEach(function(f){
   const chemin=path.join(racine,f);
   if(!fs.existsSync(chemin)){ok('fichier requis présent : '+f,false,'absent du disque');return;}

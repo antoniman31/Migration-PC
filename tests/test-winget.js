@@ -78,7 +78,9 @@ G('exportWingetJSON')(true);
 ok('la cochée est exclue',JSON.parse(fichiers[0]).Sources[0].Packages.length,6);
 
 console.log('\n--- script .ps1 restant : plus de catégorie perdue ---');
-const ex=JSON.parse(fs.readFileSync(path.join(racine,'presets','exemple.json'),'utf8'));
+// L'export winget porte sur des applications : celles-ci vivent dans le
+// profil de demonstration depuis que la checklist livree n'en contient plus.
+const ex=JSON.parse(fs.readFileSync(path.join(racine,'presets','demonstration.json'),'utf8'));
 G('appliquerProfil')(ex,false);
 fichiers.length=0;
 G('exportWingetRemaining')();
