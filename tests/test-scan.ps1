@@ -763,4 +763,58 @@ $r2 = Merge-IdsWinget -Entrees @([ordered]@{ id = 'Mozilla.Firefox'; version = '
 ok 'rejeu sans effet (pose)' $r2.poses 0
 ok 'rejeu sans effet (cree)' $r2.crees 0
 
+"--- adresse officielle au registre ---"
+function EntreeReg($h){ $o = New-Object PSObject; foreach($k in $h.Keys){ $o | Add-Member -NotePropertyName $k -NotePropertyValue $h[$k] }; return $o }
+ok 'URLInfoAbout lu'        (Get-LienEditeur -Entree (EntreeReg @{ URLInfoAbout = 'https://www.videolan.org/' })) 'https://www.videolan.org/'
+ok 'HelpLink en secours'    (Get-LienEditeur -Entree (EntreeReg @{ HelpLink = 'https://support.mozilla.org' })) 'https://support.mozilla.org'
+ok 'URLInfoAbout prioritaire' (Get-LienEditeur -Entree (EntreeReg @{ URLInfoAbout='https://a.example'; HelpLink='https://b.example' })) 'https://a.example'
+ok 'guillemets retires'     (Get-LienEditeur -Entree (EntreeReg @{ URLInfoAbout = '"https://a.example"' })) 'https://a.example'
+ok 'espaces retires'        (Get-LienEditeur -Entree (EntreeReg @{ URLInfoAbout = '  https://a.example  ' })) 'https://a.example'
+# Des installateurs mettent la un chemin local, un protocole exotique ou rien.
+ok 'chemin local refuse'    (Get-LienEditeur -Entree (EntreeReg @{ URLInfoAbout = 'C:\Program Files\Truc' })) ''
+ok 'file:// refuse'         (Get-LienEditeur -Entree (EntreeReg @{ URLInfoAbout = 'file:///C:/x.htm' })) ''
+ok 'javascript: refuse'     (Get-LienEditeur -Entree (EntreeReg @{ URLInfoAbout = 'javascript:alert(1)' })) ''
+ok 'vide refuse'            (Get-LienEditeur -Entree (EntreeReg @{ URLInfoAbout = '   ' })) ''
+ok 'champ absent refuse'    (Get-LienEditeur -Entree (EntreeReg @{ Publisher = 'X' })) ''
+ok 'entree nulle refusee'   (Get-LienEditeur -Entree $null) ''
+
+$resultats = @{}
+Add-App -Nom 'VLC' -Editeur 'VideoLAN' -Version '3' -Source 'registre' -Winget '' -Lien 'https://www.videolan.org/'
+ok 'lien porte par l app'   $resultats[(Get-Cle -Nom 'VLC')].lien 'https://www.videolan.org/'
+# Une deuxieme source sans lien ne doit pas effacer celui qu'on a.
+Add-App -Nom 'VLC' -Editeur '' -Version '' -Source 'winget' -Winget 'VideoLAN.VLC'
+ok 'lien conserve'          $resultats[(Get-Cle -Nom 'VLC')].lien 'https://www.videolan.org/'
+# Et une source qui en apporte un le pose sur une ligne qui n'en avait pas.
+Add-App -Nom 'Krita' -Editeur '' -Version '' -Source 'winget' -Winget ''
+Add-App -Nom 'Krita' -Editeur 'KDE' -Version '' -Source 'registre' -Winget '' -Lien 'https://krita.org'
+ok 'lien ajoute apres coup' $resultats[(Get-Cle -Nom 'Krita')].lien 'https://krita.org'
+
+"--- licences ---"
+function Licence($h){ $o = New-Object PSObject; foreach($k in $h.Keys){ $o | Add-Member -NotePropertyName $k -NotePropertyValue $h[$k] }; return $o }
+$lic = @(Format-Licences -Produits @(
+    (Licence @{ Name='Windows(R), Professional edition'; PartialProductKey='7X2QK'; ProductKeyChannel='OEM';    LicenseStatus=1 }),
+    (Licence @{ Name='Office 16, Office16ProPlus';       PartialProductKey='9BQRT'; ProductKeyChannel='Retail'; LicenseStatus=1 }),
+    (Licence @{ Name='Windows(R), Core edition';         PartialProductKey='';      ProductKeyChannel='OEM';    LicenseStatus=1 })
+))
+# La troisieme n'a pas de cle partielle : produit installable mais pas licencie.
+ok 'sans cle partielle ecartee' (Get-Nombre $lic) 2
+ok 'canal OEM lu'           $lic[0].canal 'OEM'
+ok 'OEM ne suit pas'         $lic[0].suitLeMateriel $false
+ok 'Retail suit'             $lic[1].suitLeMateriel $true
+ok 'etat traduit'            $lic[0].etat 'active'
+ok 'cle partielle gardee'    $lic[0].clePartielle '7X2QK'
+ok 'explication non vide'    ($lic[0].quoi.Length -gt 20) $true
+# Un canal que Windows peut rendre et qu'on ne connait pas ne doit rien affirmer.
+$inc = @(Format-Licences -Produits @((Licence @{ Name='X'; PartialProductKey='AAAAA'; ProductKeyChannel='CanalInedit'; LicenseStatus=1 })))
+ok 'canal inconnu sans verdict' ($null -eq $inc[0].suitLeMateriel) $true
+ok 'canal inconnu explique'     ($inc[0].quoi -like '*verifie*') $true
+# Champs manquants : StrictMode ne doit pas faire tomber le scan.
+$vide = @(Format-Licences -Produits @((Licence @{ Name='Y'; PartialProductKey='BBBBB' })))
+ok 'sans canal ni etat'      (Get-Nombre $vide) 1
+ok 'canal vide'              $vide[0].canal ''
+ok 'liste vide sans erreur'  (Get-Nombre (Format-Licences -Produits @())) 0
+ok 'null sans erreur'        (Get-Nombre (Format-Licences -Produits $null)) 0
+ok 'licences declarees'      ($CouverturesScan.Contains('licences')) $true
+
+
 if($script:ko){"`n$($script:ko) TEST(S) EN ECHEC"; exit 1} else {"`nTOUS LES TESTS POWERSHELL PASSENT"}

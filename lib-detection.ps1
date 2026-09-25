@@ -116,6 +116,7 @@ $CouverturesScan = [ordered]@{
     configs    = 'Read-Configs'
     variables  = 'Read-Variables'
     materiel   = 'Read-Materiel'
+    licences   = 'Read-Licences'
     outils     = 'Read-SdkAndroid, Read-Wsl, Read-GestionnairesPaquets, Read-OutilsLangages'
     extensions = 'Read-Extensions'
     dossiers   = 'Read-GrosDossiers'
@@ -222,6 +223,8 @@ function Add-App {
     param(
         [string]$Nom, [string]$Editeur, [string]$Version,
         [string]$Source, [string]$Winget,
+        # Adresse officielle de l'editeur, quand le registre la porte.
+        [string]$Lien = '',
         # Taille sur disque en Go, quand la source la connait. Sert a dimensionner
         # le disque du nouveau PC, pas a decider quoi reinstaller.
         $TailleGo = $null
@@ -234,6 +237,7 @@ function Add-App {
         # Deja vu par une autre source : on complete les champs manquants.
         $exist = $resultats[$cle]
         if ([string]::IsNullOrWhiteSpace($exist.winget) -and $Winget) { $exist.winget = $Winget }
+        if ([string]::IsNullOrWhiteSpace($exist.lien) -and $Lien) { $exist.lien = $Lien }
         if ([string]::IsNullOrWhiteSpace($exist.editeur) -and $Editeur) { $exist.editeur = $Editeur }
         if ([string]::IsNullOrWhiteSpace($exist.version) -and $Version) { $exist.version = $Version }
         if ($null -eq $exist.tailleGo -and $null -ne $TailleGo) { $exist.tailleGo = $TailleGo }
@@ -248,6 +252,7 @@ function Add-App {
         version  = $Version
         source   = $Source
         winget   = $Winget
+        lien     = $Lien
         cat      = $cat
         priorite = Get-Priorite -Categorie $cat
         duree    = Get-Duree -Nom $Nom -Categorie $cat
@@ -441,6 +446,27 @@ function Read-Winget {
     return $n
 }
 
+# Le registre porte deja l'adresse officielle de l'editeur, dans URLInfoAbout
+# et a defaut HelpLink. Personne ne la lisait, et la checklist proposait un
+# lien de recherche Google la ou le disque connaissait le vrai site.
+#
+# On ne garde que http et https. Certains installateurs y mettent une adresse
+# de desinstallation locale, un chemin de fichier ou une chaine vide entourees
+# d'espaces : les afficher comme « site officiel » serait un mensonge.
+function Get-LienEditeur {
+    param($Entree)
+    if (-not $Entree) { return '' }
+    foreach ($champ in @('URLInfoAbout', 'HelpLink')) {
+        $p = $Entree.PSObject.Properties[$champ]
+        if (-not $p) { continue }
+        $v = [string]$p.Value
+        if ([string]::IsNullOrWhiteSpace($v)) { continue }
+        $v = $v.Trim().Trim('"')
+        if ($v -match '^https?://[^\s]+$') { return $v }
+    }
+    return ''
+}
+
 # --- source 2 : registre ------------------------------------------------
 function Read-Registre {
     Write-Host "  registre..." -NoNewline
@@ -474,7 +500,8 @@ function Read-Registre {
             Add-App -Nom $nom.Value `
                     -Editeur $(if ($ed) { [string]$ed.Value } else { '' }) `
                     -Version $(if ($ver) { [string]$ver.Value } else { '' }) `
-                    -Source 'registre' -Winget '' -TailleGo $taille
+                    -Source 'registre' -Winget '' -TailleGo $taille `
+                    -Lien (Get-LienEditeur -Entree $e)
             $n++
         }
     }
@@ -1893,6 +1920,106 @@ function Read-Materiel {
     }
     Write-Host " $(@($config.Keys).Count) composant(s)"
     return $config
+}
+
+# ---------------------------------------------------------------- licences
+#
+# Le fait de migration le plus couteux a decouvrir trop tard, et le moins
+# visible : une licence Windows OEM est attachee a la carte mere de l'ancien
+# PC. Elle ne suit pas. Une licence Retail suit. La checklist ne posait meme
+# pas la question, et personne ne la pose avant d'avoir demonte la machine.
+#
+# La classe WMI SoftwareLicensingProduct dit tout ce qu'il faut sans toucher a
+# un secret. PartialProductKey ne rend que les cinq derniers caracteres de la
+# cle : c'est ce que Windows affiche lui-meme dans ses parametres, ca ne
+# reinstalle rien et ca ne s'envoie nulle part. La vraie cle OEM, gravee dans
+# l'UEFI, est lisible par ailleurs — elle n'a rien a faire dans un inventaire
+# qu'on se transmet par cle USB, et ce script ne la lit pas.
+
+# Les canaux que Windows declare, traduits en ce que ca change pour toi.
+$CanauxLicence = @{
+    'OEM'       = @{ suit = $false; quoi = "Attachee a la carte mere de cet ordinateur. Elle ne suit pas sur une machine neuve : prevois une licence." }
+    'OEM_DM'    = @{ suit = $false; quoi = "Attachee a la carte mere de cet ordinateur. Elle ne suit pas sur une machine neuve : prevois une licence." }
+    'OEM_SLP'   = @{ suit = $false; quoi = "Attachee a la carte mere de cet ordinateur. Elle ne suit pas sur une machine neuve : prevois une licence." }
+    'Retail'    = @{ suit = $true;  quoi = "Achetee separement : transferable sur la nouvelle machine. Delie-la de l'ancienne avant de la demonter." }
+    'Volume'    = @{ suit = $true;  quoi = "Licence en volume, gerée par une organisation. Vois avec celui qui l'administre." }
+    'Volume:GVLK' = @{ suit = $true; quoi = "Licence en volume, gerée par une organisation. Vois avec celui qui l'administre." }
+    'Volume:MAK'  = @{ suit = $true; quoi = "Licence en volume, gerée par une organisation. Vois avec celui qui l'administre." }
+}
+
+# LicenseStatus est un entier ; seul 1 veut dire « activee ».
+$EtatsLicence = @{
+    0 = 'non licencie'
+    1 = 'active'
+    2 = 'periode de grace'
+    3 = 'grace hors tolerance'
+    4 = 'grace non authentique'
+    5 = 'notification'
+    6 = 'grace prolongee'
+}
+
+function Format-Licences {
+    param($Produits)
+    $out = @()
+    foreach ($p in @($Produits)) {
+        if (-not $p) { continue }
+        # Sans cle partielle, l'entree decrit un produit installable mais non
+        # licencie : la liste en contient des dizaines, elles n'apprennent rien.
+        $cle = ''
+        $pc = $p.PSObject.Properties['PartialProductKey']
+        if ($pc) { $cle = [string]$pc.Value }
+        if ([string]::IsNullOrWhiteSpace($cle)) { continue }
+
+        $nom = ''
+        $pn = $p.PSObject.Properties['Name']
+        if ($pn) { $nom = [string]$pn.Value }
+        if ([string]::IsNullOrWhiteSpace($nom)) { continue }
+
+        $canal = ''
+        $pk = $p.PSObject.Properties['ProductKeyChannel']
+        if ($pk) { $canal = ([string]$pk.Value).Trim() }
+
+        $etat = ''
+        $ps = $p.PSObject.Properties['LicenseStatus']
+        if ($ps -and $null -ne $ps.Value) {
+            $n = 0
+            if ([int]::TryParse([string]$ps.Value, [ref]$n) -and $EtatsLicence.ContainsKey($n)) { $etat = $EtatsLicence[$n] }
+        }
+
+        $suit = $null
+        $quoi = "Canal inconnu : verifie dans Parametres > Systeme > Activation si la licence est liee a ton compte Microsoft."
+        if ($canal -and $CanauxLicence.ContainsKey($canal)) {
+            $suit = $CanauxLicence[$canal].suit
+            $quoi = $CanauxLicence[$canal].quoi
+        }
+
+        $out += [ordered]@{
+            nom        = $nom.Trim()
+            canal      = $canal
+            etat       = $etat
+            # Cinq derniers caracteres, ce que Windows affiche lui-meme.
+            clePartielle = $cle.Trim()
+            suitLeMateriel = $suit
+            quoi       = $quoi
+        }
+    }
+    return $out
+}
+
+function Read-Licences {
+    Write-Host "  licences..." -NoNewline
+    $produits = $null
+    try {
+        $produits = Get-CimInstance -ClassName SoftwareLicensingProduct -ErrorAction Stop |
+            Where-Object { $_.PartialProductKey }
+    } catch {
+        Write-Host " indisponible, ignore" -ForegroundColor Yellow
+        return @()
+    }
+    $out = @(Format-Licences -Produits $produits)
+    if (-not $out.Count) { Write-Host " aucune licence lisible" -ForegroundColor Yellow; return @() }
+    Write-Host " $($out.Count) licence(s)"
+    return $out
 }
 
 # ---------------------------------------------------------------- pilotes

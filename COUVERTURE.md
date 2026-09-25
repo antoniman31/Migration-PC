@@ -25,6 +25,7 @@ couverture inconnue. Les noms de famille utilisés ici sont ceux de
 | `precieux` | `Read-FichiersPrecieux` | — |
 | `portables` | `Read-Portables` | — |
 | `web` | `Read-Registre` (applications web du navigateur) | — |
+| `licences` | `Read-Licences` | Windows et Office seulement, via `SoftwareLicensingProduct` |
 
 ### Pourquoi `configs` n'est que partiel
 
@@ -69,8 +70,6 @@ Kozphy/installed-software-inventory.
 
 | Famille | Méthode | Pourquoi ça compte pour une migration |
 |---|---|---|
-| `licence-windows` | `SoftwareLicensingProduct` → `ProductKeyChannel` | Une licence OEM est attachée à la carte mère et **ne suit pas** le déménagement ; une Retail suit. Idem Office. |
-| `liens` | `URLInfoAbout` et `HelpLink` au registre | L'adresse officielle de l'éditeur est déjà sur le disque : pas besoin d'Internet pour la retrouver. |
 | `date-installation` | `InstallDate` au registre | Permet de dire « ce logiciel n'a pas servi depuis trois ans ». |
 | `ecrans` | `WmiMonitorID` (`root\wmi`) | Combien de sorties vidéo prévoir sur le nouveau PC. |
 | `antivirus` | `AntiVirusProduct` (`root\SecurityCenter2`) | Un antivirus tiers payant a une licence à transférer. |
@@ -80,6 +79,14 @@ Kozphy/installed-software-inventory.
 | `pilotes` | `Win32_PnPSignedDriver` | Matériel exotique dont le pilote ne sera pas retrouvé tout seul. |
 | `outils` (extension) | `dotnet tool list -g`, `Get-InstalledModule`, `cargo install --list` | Les modules PowerShell n'apparaissent nulle part ailleurs : ni au registre, ni dans winget. |
 | `licences-fichier` | `WinRAR\rarreg.key` et équivalents | Un fichier de licence perdu, c'est un logiciel à racheter. |
+
+## Fait depuis la relecture
+
+| Famille | Ce qui a changé |
+|---|---|
+| `licences` | `SoftwareLicensingProduct` dit si la licence Windows ou Office est OEM — attachée à la carte mère, elle **ne suit pas** — ou Retail. Les licences qui ne suivent pas passent en tête de l'onglet Données. |
+| liens officiels | `URLInfoAbout` et `HelpLink` étaient déjà dans le registre et personne ne les lisait. La checklist ouvre le vrai site de l'éditeur au lieu de lancer une recherche. Ça ne demande aucun accès à Internet pendant le scan. |
+| `apps` | `winget export` remplace `winget list` comme source d'identifiants. Voir le commentaire de `Read-Winget` : un relevé à zéro identifiant n'est pas forcément un bug. |
 
 ## Hors de portée
 
@@ -99,9 +106,12 @@ faire croire qu'un scan les couvrira un jour.
 
 | | Avant la relecture des autres inventaires | Après |
 |---|---|---|
-| Familles couvertes | 11 | 10 + 1 partielle |
+| Familles couvertes | 11 | 11 + 1 nouvelle (`licences`), dont `configs` partielle |
 | En attente, sans méthode | 14 | 10 |
 | En attente, méthode trouvée | 0 | 4 |
-| Nouvelles familles repérées | — | 11 |
+| Nouvelles familles repérées | — | 11, dont 2 faites |
 | Hors de portée | 6, jamais écrites | 5, écrites ici |
-| **Total à faire** | **14** | **25** |
+| **Total à faire** | **14** | **23** |
+
+Fait : les licences Windows et Office, et les liens officiels tirés du
+registre. Reste 23 points, listés plus haut.
