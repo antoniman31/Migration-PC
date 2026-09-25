@@ -165,11 +165,11 @@ for(const theme of ['light','dark']){
         ct:+(((Math.max(l1,l2)+0.05)/(Math.min(l1,l2)+0.05)).toFixed(2))});
     });
     const c=l.getBoundingClientRect();
-    return {items:r,sousEntete:c.top>=document.querySelector('.hdr').getBoundingClientRect().top,
+    return {items:r,sousEntete:c.top>=0&&c.bottom<=window.innerHeight+1,
       defile:document.documentElement.scrollWidth>document.documentElement.clientWidth+1};
   });
   ok(theme+' : pas de defilement horizontal',m.defile,false);
-  ok(theme+' : le menu ne remonte pas au-dessus de l\'entete',m.sousEntete,true);
+  ok(theme+' : le menu tient dans la fenetre',m.sousEntete,true);
   m.items.forEach(x=>{
     ok(theme+' : « '+x.t+' » assez haut ('+x.h+'px)',x.h>=40,true);
     ok(theme+' : « '+x.t+' » dans l\'ecran',x.deborde,false);

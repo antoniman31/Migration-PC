@@ -65,7 +65,7 @@ button{cursor:pointer;background:none;border:none}
 a{color:var(--acc-fort);text-decoration:none}
 a:hover{text-decoration:underline}
 code{font-family:"Cascadia Code","Consolas",monospace;font-size:.9em}
-.app{max-width:900px;margin:0 auto;padding:16px}
+.app{max-width:1160px;margin:0 auto;padding:16px}
 
 .card{background:var(--bg);border:.5px solid var(--brd);border-radius:12px;overflow:hidden;margin-bottom:10px}
 
@@ -121,6 +121,7 @@ code{font-family:"Cascadia Code","Consolas",monospace;font-size:.9em}
    en bandeau horizontal, les onglets defilent lateralement comme avant, et
    les commandes du bas s'alignent a cote de la progression. */
 @media (max-width:900px){
+  .app{max-width:900px}
   .shell{display:block}
   .side{position:static;width:auto;height:auto;border-right:none;
     border-bottom:.5px solid var(--brd);overflow:visible}
@@ -135,8 +136,10 @@ code{font-family:"Cascadia Code","Consolas",monospace;font-size:.9em}
   .side-gp{flex:1;min-width:150px;margin-bottom:0;padding:8px 10px}
   .side-act{width:auto}
   /* Le menu redescend : vers le haut, il sortait de l'ecran depuis un bandeau
-     colle en haut de page. */
-  .side-bas .hdr-menu-liste{top:100%;bottom:auto;margin-top:6px;margin-bottom:0}
+     colle en haut de page. Il part d'assez bas pour que ses seize entrees
+     depassent le bas de l'ecran sur un telephone : il defile. */
+  .side-bas .hdr-menu-liste{top:100%;bottom:auto;margin-top:6px;margin-bottom:0;
+    max-height:60vh}
 }
 .hdr{padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:.5px solid var(--brd);background:var(--bg)}
 .hdr-left{flex:1;min-width:200px}
@@ -248,6 +251,62 @@ body.compact .item{padding:5px 0}
 .cat-winget:hover{color:var(--acc-fort);border-color:var(--accb);background:var(--accl)}
 
 /* ITEMS */
+/* ═══ Onglet Apps : filtres a gauche, liste a droite ═══
+   La rangee de puces de categorie doublait les titres de section juste en
+   dessous, et le menu deroulant « Par categorie » doublait la rangee. Les
+   trois deviennent un panneau, ou les categories se cumulent. */
+.apps-wrap{display:flex;align-items:flex-start;gap:0}
+.apps-filtres{width:206px;flex-shrink:0;padding:14px 14px 20px;
+  border-right:.5px solid var(--brd);align-self:stretch}
+.apps-col{flex:1;min-width:0}
+.af-t{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--tx2);margin-bottom:8px}
+.af-sep{height:.5px;background:var(--brd);margin:12px 0}
+.af-c{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx);
+  padding:5px 0;cursor:pointer;line-height:1.3}
+.af-c input{width:18px;height:18px;flex-shrink:0;cursor:pointer}
+.af-tri{display:block;font-size:11px;color:var(--tx2)}
+.af-tri select{display:block;width:100%;margin-top:5px}
+.apps-filtres .fbs{display:block}
+.apps-act{display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  padding:12px 20px;border-bottom:.5px solid var(--brd)}
+.apps-act .search-wrap{flex:1;min-width:150px}
+/* La commande a copier est longue : elle s'enroule au lieu d'etre coupee. */
+.app-det .b-winget{white-space:normal;text-align:left;word-break:break-all}
+@media (max-width:900px){
+  .apps-wrap{display:block}
+  .apps-filtres{width:auto;border-right:none;border-bottom:.5px solid var(--brd);padding:12px 16px}
+  .apps-filtres .fbs{display:flex;flex-wrap:wrap;gap:4px 14px}
+}
+/* ═══ Liste des applications, en colonnes ═══
+   Un logiciel se choisit sur son nom, sa version et le temps qu'il prend.
+   Le reste — description, commande, avertissement — s'ouvre au clic. */
+.app-l{border-bottom:.5px solid var(--brd)}
+.app-r{display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer}
+.app-n{font-size:13px;font-weight:500;color:var(--tx);flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.app-m{font-size:12px;color:var(--tx2);white-space:nowrap;
+  max-width:190px;overflow:hidden;text-overflow:ellipsis}
+.app-t{font-size:12px;color:var(--tx2);white-space:nowrap;
+  display:flex;align-items:center;gap:4px;min-width:46px;justify-content:flex-end}
+.app-plus{width:30px;height:30px;border:none;background:transparent;color:var(--tx2);
+  cursor:pointer;border-radius:6px;font-size:12px;flex-shrink:0}
+.app-plus:hover{background:var(--bg3);color:var(--tx)}
+.app-l.done .app-n{text-decoration:line-through;color:var(--tx3)}
+.app-det{padding:2px 0 12px 34px;cursor:default}
+.app-det-d{font-size:12px;color:var(--tx2);line-height:1.5;margin-bottom:8px}
+/* Sur un ecran etroit, sept colonnes ne tiennent pas : la version et la
+   provenance passent sous le nom plutot que de le comprimer a trois lettres. */
+@media (max-width:640px){
+  .app-r{flex-wrap:wrap;row-gap:2px;gap:12px}
+  .app-plus{width:44px;height:44px}
+  .af-c{padding:0;min-height:44px;align-items:center}
+  /* Au doigt, la case fait la taille reglementaire. Elle est grosse, mais une
+     case qu'on rate deux fois sur trois est pire qu'une case voyante. */
+  .af-c input{width:44px;height:44px;margin:0}
+  .app-n{flex:1 1 100%;white-space:normal;order:1}
+  .app-r .chkbox{order:0}
+  .app-m,.app-t,.app-plus,.note-btn,.item-link{order:2}
+}
 .item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:.5px solid var(--brd);cursor:pointer;border-radius:4px}
 .item:hover{background:rgba(0,0,0,.025)}
 [data-theme=dark] .item:hover{background:rgba(255,255,255,.04)}
@@ -778,9 +837,10 @@ body.guide-actif .history-bar{display:none}
 }
 @media (min-width:1400px){
   /* Une description tenait sur trois lignes dans 900 px ; elle en prend une ou
-     deux ici. On ne va pas au-delà de 1200 px : une ligne de texte trop longue
-     se relit mal, et la checklist est faite pour être parcourue. */
-  .app{max-width:1200px;padding:20px}
+     deux ici. On ne va pas au-delà de 1460 px : une ligne de texte trop longue
+     se relit mal, et la checklist est faite pour être parcourue. Les 260 px
+     ajoutés depuis la refonte sont ceux que la barre latérale occupe. */
+  .app{max-width:1460px;padding:20px}
 }
 </style>
 </head>
@@ -1021,30 +1081,37 @@ if(location.protocol==='file:'){
 </div>
 
 <div class="panel" id="panel-apps" role="tabpanel" aria-labelledby="tab-apps" tabindex="0">
-  <div class="tbar">
-    <div class="search-wrap">
-      <input type="search" id="apps-search" aria-label="Rechercher une application" placeholder="🔍 Rechercher une app..." oninput="renderApps()">
-    </div>
-    <select class="sort-sel" id="apps-sort" aria-label="Trier les applications" onchange="renderApps()">
-      <option value="cat">Par catégorie</option>
-      <option value="prio">Par priorité</option>
-      <option value="time">Par durée</option>
-      <option value="order">Ordre conseillé</option>
-    </select>
-    <div class="tbar-right">
-      <button class="sm-btn" id="btn-no-winget" onclick="toggleNoWinget()">Sans winget</button>
-      <button class="sm-btn warn-btn" onclick="exportWingetRemaining()">⬇️ Script restant</button>
-      <button class="sm-btn warn-btn" onclick="exportWingetJSON(true)" title="Format officiel winget import — idempotent et rejouable">⬇️ winget .json</button>
-    </div>
-  </div>
-  <div class="tbar" style="padding-top:0;border-top:none">
-    <div class="fbs" id="cat-filters"></div>
-  </div>
-  <div class="sec-content" id="list-apps"></div>
+  <div class="apps-wrap">
+    <aside class="apps-filtres" aria-label="Filtres">
+      <div class="af-t">Filtres</div>
+      <div class="fbs" id="cat-filters"></div>
+      <div class="af-sep" aria-hidden="true"></div>
+      <label class="af-c"><input type="checkbox" id="btn-no-winget" onchange="toggleNoWinget()"> Sans winget seulement</label>
+      <div class="af-sep" aria-hidden="true"></div>
+      <label class="af-tri">Trier par
+        <select class="sort-sel" id="apps-sort" onchange="renderApps()">
+          <option value="cat">Catégorie</option>
+          <option value="prio">Priorité</option>
+          <option value="time">Durée</option>
+          <option value="order">Ordre conseillé</option>
+        </select>
+      </label>
+    </aside>
+    <div class="apps-col">
+      <div class="apps-act">
+        <div class="search-wrap">
+          <input type="search" id="apps-search" aria-label="Rechercher une application" placeholder="🔍 Filtrer cette liste..." oninput="renderApps()">
+        </div>
+        <button class="sm-btn warn-btn" onclick="exportWingetRemaining()" title="Un script qui installe tout ce qui n'est pas encore coché">⬇️ Script des restants</button>
+        <button class="sm-btn warn-btn" onclick="exportWingetJSON(true)" title="Format officiel winget import — idempotent et rejouable">⬇️ winget .json</button>
+      </div>
+      <div class="sec-content" id="list-apps"></div>
   <div class="next-tab-btn" id="next-apps">
     <button class="next-btn" onclick="switchTab('data')" id="next-apps-btn">Données <span id="next-apps-count"></span> →</button>
   </div>
-  <div id="apps-empty" style="display:none;padding:24px;text-align:center;color:var(--tx2);font-size:13px">Aucune app trouvée</div>
+      <div id="apps-empty" style="display:none;padding:24px;text-align:center;color:var(--tx2);font-size:13px">Aucune app trouvée</div>
+    </div>
+  </div>
 </div>
 
 <div class="panel" id="panel-data" role="tabpanel" aria-labelledby="tab-data" tabindex="0">
@@ -2275,7 +2342,7 @@ function changerScenario(cle){
   scenario=cle;
   try{localStorage.setItem(CLE_SCENARIO,cle);}catch(e){}
   majSelecteurScenario();
-  curCat='all';
+  curCats=[];
   renderAll();updateGlobal();
 }
 
@@ -2359,7 +2426,7 @@ function appliquerProfil(p,memoriser){
   majEnteteProfil();
   construireFiltresCats();
   majSelecteurScenario();
-  curCat='all';
+  curCats=[];
   renderAll();updateGlobal();
 }
 
@@ -2370,9 +2437,14 @@ function majEnteteProfil(){
 
 function construireFiltresCats(){
   const c=document.getElementById('cat-filters');if(!c)return;
-  let html='<button class="fb active" data-cat="all" onclick="setCat(\'all\')">Tout</button>';
+  // Des cases plutot que des boutons exclusifs : avec 271 logiciels, vouloir
+  // voir « developpement ET bureautique » est la demande normale, et le
+  // bouton unique obligeait a regarder une categorie a la fois.
+  let html='';
   Object.keys(CATS).forEach(function(k){
-    html+='<button class="fb" data-cat="'+esc(k)+'" onclick="setCat(\''+escJS(k)+'\')">'+esc(CATS[k])+'</button>';
+    const coche=curCats.indexOf(k)>=0?' checked':'';
+    html+='<label class="af-c"><input type="checkbox" data-cat="'+esc(k)+'"'+coche
+      +' onchange="basculerCat(\''+escJS(k)+'\')"> '+esc(CATS[k])+'</label>';
   });
   c.innerHTML=html;
 }
@@ -2498,6 +2570,10 @@ function inventaireVersProfil(inv){
       c:cat,
       src:a.winget?'winget':(a.source||'Inconnu'),
       w:a.winget||undefined,
+      ver:a.version||undefined,
+      // La taille sur disque decide de ce qu'on remet ou pas, surtout pour les
+      // jeux : elle reste visible sur la ligne au lieu de partir dans le detail.
+      go:(Number(a.tailleGo)||0)||undefined,
       // Adresse officielle relevée dans le registre de l'ancien PC. Quand elle
       // est là, la checklist ouvre le vrai site au lieu de lancer une recherche.
       u:a.lien||undefined,
@@ -2902,7 +2978,8 @@ function handleImport(evt){
 // ═══ STATE ═══
 const PRIO = {high:0,med:1,ok:2};
 let S = {checked:{},notes:{},dates:{},lastSave:null,lic:{},env:{}};
-let curTab='quitter',curCat='all',noWinget=false,viewMode='normal',isDark=false;
+let curCats=[];
+let curTab='quitter',noWinget=false,viewMode='normal',isDark=false;
 // « journal » et non « history » : une globale nommée history masque
 // window.history, ce qui piégerait le jour où l'on voudra gérer le bouton
 // Retour du navigateur.
@@ -3241,14 +3318,25 @@ function renderNPC(){
 }
 
 // ═══ RENDER APPS ═══
-function setCat(cat){curCat=cat;document.querySelectorAll('#cat-filters .fb').forEach(function(b){b.classList.toggle('active',b.dataset.cat===cat);});renderApps();}
-function toggleNoWinget(){noWinget=!noWinget;document.getElementById('btn-no-winget').classList.toggle('active',noWinget);renderApps();}
+// curCats vit avec les autres etats d'affichage, plus haut : declare ici, il
+// etait dans sa zone morte quand renderCatFilters tournait au demarrage.
+function basculerCat(cat){
+  const i=curCats.indexOf(cat);
+  if(i>=0)curCats.splice(i,1);else curCats.push(cat);
+  renderApps();
+}
+function setCat(cat){curCats=(cat==='all'||!cat)?[]:[cat];renderCatFilters();renderApps();}
+function toggleNoWinget(){
+  const c=document.getElementById('btn-no-winget');
+  noWinget=c&&c.type==='checkbox'?c.checked:!noWinget;
+  renderApps();
+}
 
 function renderApps(){
   const q=(document.getElementById('apps-search').value||'').toLowerCase();
   const sort=document.getElementById('apps-sort').value;
   let items=visiblesDe('apps').filter(function(a){
-    const catOk=curCat==='all'||a.c===curCat;
+    const catOk=!curCats.length||curCats.indexOf(a.c)>=0;
     const qOk=!q||a.n.toLowerCase().indexOf(q)>=0||(a.w&&a.w.toLowerCase().indexOf(q)>=0);
     const wOk=!noWinget||!a.w;
     return catOk&&qOk&&wOk;
@@ -3305,32 +3393,67 @@ function renderApps(){
   updateSecProg('apps',visiblesDe('apps'));
 }
 
+// Une ligne d'application tenait sur trois etages : le nom, quatre etiquettes
+// empilees dessous, puis la description. Avec 271 logiciels releves sur une
+// vraie machine, l'onglet devenait un mur.
+//
+// La ligne se lit maintenant en colonnes, comme une liste de paquets : la case,
+// le nom, la version et la provenance, la duree, le lien. La description, la
+// commande a copier, l'avertissement et les dependances ne disparaissent pas —
+// ils s'ouvrent au clic sur le chevron. On montre ce qu'il faut pour choisir,
+// et le detail quand on l'a choisi.
+//
+// L'identifiant winget sort de la vue : il ne veut rien dire pour la plupart
+// des gens et il est deja dans le bouton qui copie la commande. La priorite ne
+// s'affiche que haute : une etiquette presente sur chaque ligne n'informe plus.
 function mkAppItem(a){
   const ck=!!S.checked[a.id];
+  const ouvert=!!appsOuverts[a.id];
   const dt=ck&&S.dates[a.id]?'<span class="item-date">✓ '+fmtDate(S.dates[a.id])+'</span>':'';
-  // Un span cliquable n'est ni focusable ni annonce : c'est un bouton.
-  // `w` est un identifiant winget, dont on fabrique la commande. `cmd` est une
-  // commande deja ecrite : un paquet de scoop, de npm ou du SDK Android ne
-  // s'installe pas par winget, et deviner sa commande serait servir un ordre
-  // faux qui a l'air vrai. Le scanner la fournit, on la recopie telle quelle.
-  const wBadge=a.w?'<button type="button" class="badge b-winget" onclick="copyWinget(\''+escJS(a.w)+'\',event)" title="Copier la commande d\'installation" aria-label="Copier la commande winget '+esc(a.w)+'">📋 '+esc(a.w)+'</button>'
-    :(a.cmd?'<button type="button" class="badge b-winget" onclick="copierCommande(\''+escJS(a.cmd)+'\',event)" title="Copier la commande d\'installation" aria-label="Copier la commande '+esc(a.cmd)+'">📋 '+esc(a.cmd)+'</button>':'');
-  const pBadge=a.p==='high'?'<span class="badge b-high">⚡ Haute</span>':'';
-  const tBadge=a.t?'<span class="badge b-time">⏱ '+fmtTime(a.t)+'</span>':'';
-  const warn=a.warn?'<div class="warn-badge">⚠️ '+esc(a.warn)+'</div>':'';
-  const depBadge=a.dep?mkDepBadge(a.dep):'';
-  const srcBadge=a.src?'<span class="badge b-src">'+esc(a.src)+'</span>':'';
-  return '<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(a)+'">'
-    +mkChkbox()
-    +'<div class="item-body">'
-      +'<div class="item-name-row"><span class="item-name">'+esc(libelleDe(a))+'</span>'+dt+mkNoteBtn(a.id)+'</div>'
-      +'<div class="item-badges">'+srcBadge+wBadge+tBadge+pBadge+depBadge+'</div>'
-      +'<div class="item-desc">'+esc(texte(descDe(a)))+'</div>'
-      +warn
+  const pBadge=a.p==='high'?'<span class="badge b-high">⚡</span>':'';
+  const meta=[];
+  if(a.ver)meta.push(esc(String(a.ver)));
+  if(a.go)meta.push(esc(fmtTaille(a.go)));
+  if(a.src)meta.push(esc(String(a.src)));
+  const cmd=a.w?'winget install --id '+a.w+' -e':(a.cmd||'');
+
+  let detail='';
+  if(ouvert){
+    const d=texte(descDe(a));
+    detail='<div class="app-det" onclick="event.stopPropagation()">'
+      +(d?'<p class="app-det-d">'+esc(d)+'</p>':'')
+      +(a.warn?'<div class="warn-badge">⚠️ '+esc(a.warn)+'</div>':'')
+      +(a.dep?mkDepBadge(a.dep):'')
+      +(cmd?'<button type="button" class="badge b-winget" onclick="'
+        +(a.w?'copyWinget(\''+escJS(a.w)+'\',event)':'copierCommande(\''+escJS(a.cmd)+'\',event)')
+        +'" title="Copier la commande d\'installation">📋 '+esc(cmd)+'</button>':'')
       +mkNoteArea(a.id)
+      +'</div>';
+  }
+
+  return '<div class="app-l'+(ck?' done':'')+'">'
+    +'<div class="app-r" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(a)+'">'
+      +mkChkbox()
+      +'<span class="app-n">'+esc(libelleDe(a))+dt+'</span>'
+      +'<span class="app-m">'+meta.join(' · ')+'</span>'
+      +'<span class="app-t">'+(a.t?fmtTime(a.t):'')+pBadge+'</span>'
+      +'<button type="button" class="app-plus" aria-expanded="'+ouvert+'" '
+        +'aria-label="'+(ouvert?'Masquer':'Afficher')+' le détail de '+esc(libelleDe(a))+'" '
+        +'onclick="basculerDetailApp(\''+escJS(a.id)+'\',event)">'+(ouvert?'▴':'▾')+'</button>'
+      +mkNoteBtn(a.id)
+      +mkLink(libelleDe(a),a)
     +'</div>'
-    +mkLink(libelleDe(a),a)
+    +detail
   +'</div>';
+}
+
+// Quelles lignes sont depliees. Volontairement hors de S : c'est un etat
+// d'affichage du moment, il n'a rien a faire dans la progression sauvegardee.
+let appsOuverts={};
+function basculerDetailApp(id,evt){
+  evt.stopPropagation();
+  if(appsOuverts[id])delete appsOuverts[id];else appsOuverts[id]=true;
+  renderApps();
 }
 
 function checkAllCat(cat,evt){
@@ -4401,6 +4524,14 @@ function basculerMenu(){
     const p=Array.prototype.find.call(l.querySelectorAll('button'),
       function(x){return x.offsetParent!==null;});
     if(p)p.focus();
+    // Depuis que le menu s'ancre au bas de la barre laterale, il s'ouvrait
+    // sous le bord de l'ecran quand la page etait defilee : les entrees
+    // existaient mais personne ne les voyait. On le ramene dans la vue.
+    try{
+      const r=l.getBoundingClientRect();
+      if(r.bottom>window.innerHeight||r.top<0)
+        l.scrollIntoView({block:'nearest',inline:'nearest'});
+    }catch(e){}
   }
 }
 function fermerMenu(){

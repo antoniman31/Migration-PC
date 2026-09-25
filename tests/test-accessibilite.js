@@ -136,7 +136,7 @@ ok('pas de défilement parasite',await pg.evaluate(()=>window.scrollY),y);
 console.log('\n--- un bouton dans la ligne garde son rôle propre ---');
 await pg.click('#tab-apps');await pg.waitForTimeout(200);
 const av=await pg.evaluate(()=>Object.keys(S.checked).length);
-await pg.evaluate(()=>{document.querySelector('#list-apps .note-btn').focus();});
+await pg.evaluate(()=>{document.querySelector('#list-apps .app-plus').click();document.querySelector('#list-apps .note-btn').focus();});
 await pg.keyboard.press('Enter');await pg.waitForTimeout(200);
 ok('Entrée sur 📝 ne coche pas la tâche',await pg.evaluate(()=>Object.keys(S.checked).length),av);
 ok('la zone de note s\'ouvre',await pg.evaluate(()=>!!document.querySelector('#list-apps .note-area.open')),true);

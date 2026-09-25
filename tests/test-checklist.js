@@ -60,7 +60,7 @@ eq('données',G('DATA_SAVES').length,DEF.data.length);
 eq('pwa',G('PWA_DATA').length,DEF.pwa.length);
 eq('titre du profil',G('PROFIL_NOM'),DEF.meta.nom);
 eq('entête rendue',els['profil-titre'].textContent,DEF.meta.nom);
-eq('filtres générés',els['cat-filters'].innerHTML.split('<button').length-1,Object.keys(DEF.cats).length+1);
+eq('filtres générés',els['cat-filters'].innerHTML.split('<label').length-1,Object.keys(DEF.cats).length);
 eq('liste apps rendue',els['list-apps'].innerHTML.length>500,true);
 eq('liste npc rendue',els['list-npc'].innerHTML.length>500,true);
 // Somme de toutes les sections du profil, y compris celles ajoutées depuis.
@@ -137,6 +137,9 @@ if(fs.existsSync(fInv)){
   G('appliquerProfil')(pr,true);
   eq('apps importees',G('APPS_DATA').length,reel.apps.length);
   eq('liste rendue',els['list-apps'].innerHTML.length>200,true);
+  // La commande vit dans le detail, qu'on deplie : la ligne repliee ne
+  // montre plus l'identifiant winget, qui ne dit rien a personne.
+  G('APPS_DATA').forEach(a=>{G('appsOuverts')[a.id]=true;});G('renderApps')();
   eq('badge winget present',els['list-apps'].innerHTML.indexOf('7zip.7zip')>=0,true);
   eq('app sans winget toleree',G('APPS_DATA').filter(a=>!a.w).length,1);
   eq('categories deduites',Object.keys(G('CATS')).length>=2,true);

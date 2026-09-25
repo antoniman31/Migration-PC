@@ -34,6 +34,13 @@ async function ouvrirSituation(pg){
   await pg.waitForSelector('#scen',{state:'visible'});
 }
 
+
+// Commandes, dependances et avertissements vivent dans le detail d'une ligne,
+// qui s'ouvre au clic. On le deplie avant de les chercher.
+async function deplierApps(pg){
+  await pg.evaluate(()=>{APPS_DATA.forEach(a=>{appsOuverts[a.id]=true;});renderApps();});
+}
+
 (async()=>{
 const lancement={args:['--no-sandbox']};
 if(process.env.CHROME)lancement.executablePath=process.env.CHROME;
@@ -60,7 +67,7 @@ ok('aucune erreur JS',erreurs.length===0?'oui':'NON : '+erreurs.join(' | '),'oui
 ok('titre onglet',await pg.title());
 ok('en-tête',await pg.textContent('#profil-titre'),'Migration Windows — profil type');
 ok('total affiché',await pg.textContent('#gp-total'),String(TOTAL));
-ok('filtres catégories',(await pg.$$('#cat-filters .fb')).length,8);
+ok('filtres catégories',(await pg.$$('#cat-filters input[type=checkbox]')).length,7);
 
 // Les quatre panneaux doivent etre freres : imbriques, les onglets deviennent
 // invisibles des qu'on quitte le premier. On compare les parents entre eux
@@ -80,16 +87,17 @@ ok('badge étape visible',await pg.isVisible('#list-npc .b-num'));
 
 console.log('\n--- onglet Apps (celui qui était cassé en v6) ---');
 await pg.click('#tab-apps');
-ok('items rendus',(await pg.$$('#list-apps .item')).length,18);
-const boite=await (await pg.$('#list-apps .item')).boundingBox();
+ok('items rendus',(await pg.$$('#list-apps .app-l')).length,18);
+const boite=await (await pg.$('#list-apps .app-r')).boundingBox();
 ok('items réellement visibles',boite&&boite.height>0&&boite.width>0,true);
+await deplierApps(pg);
 ok('badges winget rendus',(await pg.$$('#list-apps .b-winget')).length,17);
 ok('badge dépendance rendu',(await pg.$$('#list-apps .b-dep')).length>0);
 ok('lien recherche',(await pg.getAttribute('#list-apps .lnk-btn','href')).startsWith('https://www.google.com/search'));
 
 console.log('\n--- interaction ---');
-await pg.click('#list-apps .item');
-ok('case cochée',(await pg.$$('#list-apps .item.done')).length,1);
+await pg.click('#list-apps .app-r');
+ok('case cochée',(await pg.$$('#list-apps .app-l.done')).length,1);
 ok('compteur global',await pg.textContent('#gp-done'),'1');
 const persiste=await pg.evaluate(()=>{const s=JSON.parse(localStorage.getItem('mpc_state_v1'));return Object.keys(s.checked).length;});
 ok('persisté en localStorage',persiste,1);
@@ -123,9 +131,9 @@ const inv=fs.readFileSync(path.join(__dirname,'inventaire-exemple.json'),'utf8')
 pg.on('dialog',d=>d.accept());
 await pg.setInputFiles('#json-file',{name:'inventaire-pc.json',mimeType:'application/json',buffer:Buffer.from(inv)});
 await pg.waitForTimeout(400);
-ok('apps remplacées',(await pg.$$('#list-apps .item')).length,4);
+ok('apps remplacées',(await pg.$$('#list-apps .app-l')).length,4);
 ok('en-tête mis à jour',await pg.textContent('#profil-titre'),'Migration PC — inventaire importé');
-ok('progression conservée',(await pg.$$('#list-apps .item.done')).length>=0);
+ok('progression conservée',(await pg.$$('#list-apps .app-l.done')).length>=0);
 
 // Un profil local, s'il y en a un : permet de verifier son propre fichier.
 const profilLocal=process.env.PROFIL||path.join(racine,'profil-local.json');
@@ -136,7 +144,7 @@ if(fs.existsSync(profilLocal)){
   await pg.setInputFiles('#json-file',{name:'profil.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(p))});
   await pg.waitForTimeout(500);
   ok('items chargés',await pg.textContent('#gp-total'),String(attendu));
-  ok('apps rendues',(await pg.$$('#list-apps .item')).length,p.apps.length);
+  ok('apps rendues',(await pg.$$('#list-apps .app-l')).length,p.apps.length);
   ok('en-tête',await pg.textContent('#profil-titre'),p.meta.nom);
 }
 
@@ -144,13 +152,14 @@ console.log('\n--- import d\'un export winget ---');
 const wg=fs.readFileSync(path.join(__dirname,'winget-export-exemple.json'),'utf8');
 await pg.setInputFiles('#json-file',{name:'apps.json',mimeType:'application/json',buffer:Buffer.from(wg)});
 await pg.waitForTimeout(400);
-ok('paquets importés',(await pg.$$('#list-apps .item')).length,7);
+ok('paquets importés',(await pg.$$('#list-apps .app-l')).length,7);
 ok('en-tête winget',await pg.textContent('#profil-titre'),'Migration PC — export winget');
+await deplierApps(pg);
 ok('badge identifiant rendu',(await pg.textContent('#list-apps')).indexOf('Mozilla.Firefox')>=0,true);
 ok('bouton winget .json présent',await pg.isVisible('button[onclick="exportWingetJSON(true)"]'),true);
 await pg.reload({waitUntil:'networkidle'});
 await pg.click('#tab-apps');
-ok('profil winget mémorisé après rechargement',(await pg.$$('#list-apps .item')).length,7);
+ok('profil winget mémorisé après rechargement',(await pg.$$('#list-apps .app-l')).length,7);
 
 console.log('\n--- filet d\'erreur ---');
 // Une exception pendant un rendu doit devenir visible, et ne pas emporter les autres onglets.

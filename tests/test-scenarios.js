@@ -26,6 +26,14 @@ async function ouvrirSituation(pg){
   await pg.waitForSelector('#scen',{state:'visible'});
 }
 
+
+// Le detail d'une application (description, commande, avertissement) s'ouvre
+// au clic. Ces assertions le deplient d'abord au lieu de chercher dans une
+// ligne repliee ce qui n'y est plus.
+async function deplierApps(pg){
+  await pg.evaluate(()=>{APPS_DATA.forEach(a=>{appsOuverts[a.id]=true;});renderApps();});
+}
+
 (async()=>{
 const b=await chromium.launch(lancement);
 const pg=await (await b.newContext({viewport:{width:1200,height:900},deviceScaleFactor:2})).newPage();
@@ -149,10 +157,13 @@ const parOnglet=await pg.evaluate(()=>{
   viderIndex();
   changerScenario('reinstall');
   Object.keys(cibles).forEach(k=>{
+    if(k==='apps'){APPS_DATA.forEach(a=>{appsOuverts[a.id]=true;});renderApps();}
     const l=document.getElementById('list-'+k);
     const t=l?l.textContent:'';
     resultat[k]={nom:t.indexOf('LIBELLE-'+k.toUpperCase())>=0,
-      // Seuls npc, apps et pwa affichent une description dans la liste.
+      // Seuls npc, apps et pwa affichent une description. Dans « apps » elle
+      // vit dans le detail depliable : on l'ouvre au lieu de la chercher dans
+      // la ligne repliee, ou elle n'a plus sa place.
       desc:t.indexOf('DESCRIPTION-'+k.toUpperCase())>=0};
   });
   // Le libelle memorise dans l'historique doit suivre lui aussi. On clique la
@@ -253,7 +264,7 @@ ok('et ce sont bien eux',npcVus.every(n=>/ilote/.test(n)),true);
 ok('aucun reglage BIOS',npcVus.some(n=>/BIOS|Secure Boot|CSM|XMP|EXPO/.test(n)),false);
 ok('ni l\'installation de Windows',npcVus.some(n=>/Installer Windows|NON-RETOUR/.test(n)),false);
 ok('les applications sont toutes la',
-  (await pg.$$('#list-apps .item')).length,appsAff);
+  (await pg.$$('#list-apps .app-l')).length,appsAff);
 ok('les donnees aussi',(await pg.$$('#list-data .item')).length,dataAff);
 ok('les PWA aussi',(await pg.$$('#list-pwa .item')).length,pwaAff);
 

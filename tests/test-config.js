@@ -14,6 +14,14 @@ const HTML='file://'+path.join(racine,'index.html');
 const lancement={args:['--no-sandbox']};
 if(process.env.CHROME)lancement.executablePath=process.env.CHROME;
 
+
+// Le detail d'une application (description, commande, avertissement) s'ouvre
+// au clic. Ces assertions le deplient d'abord au lieu de chercher dans une
+// ligne repliee ce qui n'y est plus.
+async function deplierApps(pg){
+  await pg.evaluate(()=>{APPS_DATA.forEach(a=>{appsOuverts[a.id]=true;});renderApps();});
+}
+
 (async()=>{
 const b=await chromium.launch(lancement);
 const ctx=await b.newContext({viewport:{width:1400,height:900}});
@@ -288,6 +296,7 @@ ok('ils ont leur catégorie à eux',
   await pg.evaluate(()=>!!CATS.outils),true);
 // La commande est recopiee telle quelle : deviner celle d'un paquet scoop ou
 // du SDK servirait un ordre faux qui a l'air vrai.
+await deplierApps(pg);
 ok('la commande est celle du scanner',await pg.evaluate(()=>{
   const b=[...document.querySelectorAll('#list-apps .b-winget')]
     .find(x=>x.textContent.indexOf('sdkmanager')>=0);
