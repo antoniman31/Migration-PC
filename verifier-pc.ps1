@@ -60,6 +60,12 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+# La console de Windows n'ecrit pas en UTF-8 par defaut : les accents de ce
+# script y arriveraient en charabia. Les .bat font un « chcp 65001 », mais on
+# peut aussi lancer ce fichier directement, et sous Windows PowerShell 5.1
+# chcp ne suffit pas toujours. On le fixe ici, sans rien casser si l'hote
+# refuse (redirection, console absente).
+try { [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new() } catch { }
 
 $lib = Join-Path $PSScriptRoot 'lib-detection.ps1'
 if (-not (Test-Path $lib)) {

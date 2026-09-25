@@ -78,7 +78,9 @@ $texte = $parcours -join ' '
 # Les trois situations que la page sait traiter doivent y figurer : c'est la
 # question posee par le lanceur, et la reponse doit couvrir les trois.
 ok 'il couvre le changement de PC' ($texte -match "d'un PC vers un autre") $true
-ok 'la reinstallation sur place'   ($texte -match 'reinstallez Windows') $true
+# Le motif tolere les deux graphies : ce qui compte est que le cas soit
+# couvert, pas la facon dont le mot est accentue.
+ok 'la reinstallation sur place'   ($texte -match 'r[eé]installez Windows') $true
 ok 'et le cas des deux PC'         ($texte -match 'gardez les deux') $true
 # Le piege le plus couteux du parcours : formater avant d'avoir verifie la copie.
 ok 'il previent avant le formatage' ($texte -match 'AVANT de formater') $true
@@ -90,7 +92,7 @@ ok 'emporter ecrit vers Destination' $emporter.argument 'Destination'
 ok 'remettre lit depuis Source'      $remettre.argument 'Source'
 ok 'les deux demandent un dossier'   (@($emporter.dossier, $remettre.dossier) -contains $false) $false
 # L'ordre compte : installer les logiciels d'abord, reposer les reglages apres.
-ok 'remettre previent sur l ordre'   ((@($remettre.suite) -join ' ') -match 'APRES avoir installe') $true
+ok 'remettre previent sur l ordre'   ((@($remettre.suite) -join ' ') -match 'APR[EÈ]S avoir install[eé]') $true
 
 "`n--- les fichiers du lanceur ---"
 foreach ($f in @('migration-pc.ps1', 'lanceur-actions.ps1', 'Migration PC.bat')) {
@@ -107,9 +109,38 @@ foreach ($f in @('Migration PC.bat', '1-scanner-ce-pc.bat', '2-verifier-ce-pc.ba
 # a pas d'interface graphique, et une fenetre qui ne s'ouvre pas sans rien dire
 # serait pire que pas de fenetre.
 $source = Get-Content (Join-Path $racine 'migration-pc.ps1') -Raw
-ok 'un repli texte existe'         ($source -match 'Show-MenuTexte') $true
-ok 'l interface est testee, pas supposee' ($source -match 'Test-InterfaceGraphique') $true
-ok 'et forcable en ligne de commande' ($source -match '\[switch\]\$Console') $true
+ok 'le menu texte est le seul mode' ($source -match 'Show-MenuTexte') $true
+# La fenetre graphique a ete retiree : elle etait le seul morceau du projet
+# qu'aucun test ne pouvait exercer, WinForms ne se pilotant pas sur une machine
+# sans ecran. Ce qui la remplacerait doit rester dehors.
+$avecFenetre = @()
+foreach ($f in @(Get-ChildItem -Path $racine -Filter '*.ps1' -File)) {
+    $t = [System.IO.File]::ReadAllText($f.FullName)
+    if ($t -match 'System\.Windows\.Forms|System\.Drawing') { $avecFenetre += $f.Name }
+}
+ok 'aucune dependance graphique'   ($avecFenetre -join ', ') ''
+
+# Les accents des textes affiches n'arrivent en clair que si la sortie est en
+# UTF-8 : sans cela la console de Windows rend du charabia.
+$sansUtf8 = @()
+foreach ($f in @('scan-pc.ps1', 'verifier-pc.ps1', 'sauvegarder-configs.ps1',
+                 'verifier-sauvegardes.ps1', 'restaurer-configs.ps1', 'migration-pc.ps1')) {
+    $t = [System.IO.File]::ReadAllText((Join-Path $racine $f))
+    if ($t -notmatch 'OutputEncoding') { $sansUtf8 += $f }
+}
+ok 'la sortie console est en UTF-8' ($sansUtf8 -join ', ') ''
+
+# Le menu est ce que les gens lisent : il doit etre en francais correct.
+. (Join-Path $racine 'lanceur-actions.ps1')
+$textes = @()
+foreach ($a in @(Get-ActionsMigration -Racine $racine)) {
+    $textes += $a.titre
+    $textes += $a.detail
+}
+$textes += (Get-Parcours)
+ok 'le menu porte des accents'     (@($textes | Where-Object { $_ -match '[éèêàçùôû]' }).Count -gt 0) $true
+# Mojibake : la marque d'un UTF-8 relu comme de l'ANSI.
+ok 'et aucun n est abime'          (@($textes | Where-Object { $_ -match 'Ã|Â|â€' }).Count) 0
 # $args est la variable automatique des arguments non lies : l'ecraser dans un
 # script est un piege classique, et le parseur le voit.
 $ecrases = @()

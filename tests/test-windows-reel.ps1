@@ -112,9 +112,8 @@ try {
     ok 'chaque element verifiable est rapporte' (@($v.trouves).Count + @($v.absents).Count) $verifiables
 
     "`n--- le lanceur demarre et rend la main ---"
-    # Sans -Console il ouvrirait une fenetre : sur une machine d integration,
-    # personne ne la fermerait. En mode texte et sans rien a lire sur l'entree,
-    # il doit afficher son menu puis sortir — pas tourner en rond.
+    # Il n'y a plus que le menu texte. Sans rien a lire sur l'entree, il doit
+    # afficher ses actions puis sortir — pas tourner en rond.
     $jl = Join-Path $bac 'lanceur.txt'
     # Une entree vide, sous forme de vrai fichier : « NUL » est resolu comme un
     # chemin relatif par Start-Process, qui refuse alors la commande entiere.
@@ -122,14 +121,14 @@ try {
     Set-Content -LiteralPath $rien -Value '' -NoNewline
     $exe = (Get-Process -Id $PID).Path
     $p = Start-Process -FilePath $exe `
-        -ArgumentList @('-NoProfile', '-File', ('"' + (Join-Path $racine 'migration-pc.ps1') + '"'), '-Console') `
+        -ArgumentList @('-NoProfile', '-File', ('"' + (Join-Path $racine 'migration-pc.ps1') + '"')) `
         -RedirectStandardOutput $jl -RedirectStandardInput $rien -NoNewWindow -PassThru
     $fini = $p.WaitForExit(60000)
     if (-not $fini) { $p.Kill() }
     ok 'il ne reste pas bloque'      $fini $true
     $l = if (Test-Path -LiteralPath $jl) { Get-Content -LiteralPath $jl -Raw } else { '' }
     ok 'il a liste ses actions'      ($l -match "Cet ordinateur est l'ANCIEN") $true
-    ok 'et le parcours complet'      ($l -match 'Par ou commencer') $true
+    ok 'et le parcours complet'      ($l -match 'Par o[uù] commencer') $true
 }
 finally {
     Remove-Item -LiteralPath $bac -Recurse -Force -ErrorAction SilentlyContinue

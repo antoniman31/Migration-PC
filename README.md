@@ -66,21 +66,23 @@ quel, et vous pouvez écrire le vôtre.
 
 ## Le parcours en deux double-clics
 
-Posez le dossier entier sur une clé USB et double-cliquez **`Migration PC.bat`**. Une
-fenêtre demande sur quelle machine vous êtes — la seule question à laquelle personne ne
-peut répondre à votre place — et lance le bon script. Elle n'ajoute aucune capacité :
-elle appelle les mêmes scripts, qu'on peut toujours lancer à la main. Une action dont il
-manque un fichier reste affichée, grisée, avec la raison : plus utile qu'une action
-absente dont on ignore pourquoi.
+Posez le dossier entier sur une clé USB et double-cliquez **`Migration PC.bat`**. Un menu
+demande sur quelle machine vous êtes — la seule question à laquelle personne ne peut
+répondre à votre place — et lance le bon script. Il n'ajoute aucune capacité : il appelle
+les mêmes scripts, qu'on peut toujours lancer à la main. Une action dont il manque un
+fichier reste affichée, grisée, avec la raison : plus utile qu'une action absente dont on
+ignore pourquoi.
 
-Après chaque action, elle dit quoi faire ensuite sur le site — quel onglet, quel bouton.
+Après chaque action, il dit quoi faire ensuite sur le site — quel onglet, quel bouton.
 Et une entrée **Par où commencer ?** décrit le parcours complet des trois situations :
 changer de PC, réinstaller sur place, garder les deux machines.
 
-Sans interface graphique — PowerShell 7 sans Windows Desktop, session distante — elle
-bascule sur un menu texte qui propose exactement les mêmes choix. `-Console` le force.
+Il y a eu une fenêtre graphique ici. Elle a été retirée : elle était le seul morceau du
+projet qu'aucun test ne pouvait exercer — `System.Windows.Forms` ne se pilote pas sur une
+machine d'intégration sans écran — alors que le menu texte, lui, est lancé et vérifié à
+chaque publication. Moins de code, et plus rien qui échappe aux tests.
 
-Si vous préférez sauter la fenêtre : sur l'ancien PC, double-cliquez
+Si vous préférez sauter le menu : sur l'ancien PC, double-cliquez
 **`1-scanner-ce-pc.bat`** : il inventorie la machine, écrit son résultat à côté de la
 page et l'ouvre. La checklist s'affiche **déjà remplie de vos logiciels** — rien à
 importer. Vous ajustez, vous exportez votre profil sur la clé.
@@ -766,7 +768,7 @@ comme un jeu Xbox, aucun certificat n'est recopié à la place d'un éditeur. Ho
 ce fichier s'arrête en le disant plutôt que de prétendre avoir vérifié quoi que ce soit.
 
 Ce que même ça ne teste pas : votre carte mère, vos pilotes, Steam, Epic, GOG, et
-l'interface graphique du lanceur. Un runner est un Windows Server nu.
+le lanceur sur une vraie session. Un runner est un Windows Server nu.
 
 Ça a payé au premier passage utile. `Get-ChildItem -Include` combiné à `-LiteralPath`
 est **ignoré par Windows PowerShell 5.1**, qui rend alors tous les fichiers au lieu des
@@ -866,9 +868,10 @@ fichier proposé au téléchargement existe réellement dans le dépôt.
 `tests/test-lanceur.ps1` couvre ce que le lanceur propose et ce qu'il vérifie avant : que
 chaque action mène à un fichier qui existe, qu'un dossier incomplet grise les actions
 concernées en nommant ce qui manque, et que les `.bat` portent bien des fins de ligne
-Windows — en fins de ligne Unix, ils ne s'exécutent pas. L'interface graphique elle-même
-n'est pas testée ici : `System.Windows.Forms` n'existe pas hors de Windows Desktop. C'est
-pourquoi la liste des actions vit dans `lanceur-actions.ps1`, séparée de l'affichage :
+Windows — en fins de ligne Unix, ils ne s'exécutent pas. Il vérifie aussi qu'aucun script
+ne réintroduit de dépendance graphique, que la sortie console est forcée en UTF-8 — sans
+quoi les accents arriveraient en charabia — et que les textes du menu en portent, sans
+être abîmés. La liste des actions vit dans `lanceur-actions.ps1`, séparée de l'affichage :
 c'est elle qui décide de tout, et elle se teste partout.
 
 `tests/test-powershell-compatibility.ps1` garde un piège fermé : Windows PowerShell 5.1 —
@@ -900,12 +903,12 @@ Migration-PC/
 ├── index.html                    # la checklist (tout est dedans)
 │
 │   # Par où commencer, en double-cliquant
-├── Migration PC.bat              # ouvre la fenêtre qui demande quoi faire
+├── Migration PC.bat              # ouvre le menu qui demande quoi faire
 ├── 1-scanner-ce-pc.bat           # raccourci : inventorier, sans passer par le menu
 ├── 2-verifier-ce-pc.bat          # raccourci : vérifier le nouveau PC
 │
 │   # Ce que ces raccourcis appellent
-├── migration-pc.ps1              # le lanceur : fenêtre, ou menu texte en repli
+├── migration-pc.ps1              # le lanceur : le menu qui aiguille
 ├── lanceur-actions.ps1           # ce qu'il propose et ce qu'il vérifie avant
 ├── lib-detection.ps1             # détection partagée par tous les scripts
 ├── ecrire-resultat.ps1           # pose le résultat à côté de la page et l'ouvre

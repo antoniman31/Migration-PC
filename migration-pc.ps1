@@ -1,21 +1,20 @@
 ﻿<#
 .SYNOPSIS
-    Le point d'entree : une fenetre qui demande ce qu'on veut faire, et lance
-    le script correspondant.
+    Le point d'entree : un menu qui demande ce qu'on veut faire, et lance le
+    script correspondant.
 
 .DESCRIPTION
-    Trois scripts font le travail, et il fallait savoir lequel lancer, dans
-    quel ordre, sur quelle machine. Cette fenetre pose la question a la place.
+    Plusieurs scripts font le travail, et il fallait savoir lequel lancer, dans
+    quel ordre, sur quelle machine. Ce menu pose la question a la place.
 
-    Elle n'ajoute aucune capacite : elle appelle les memes scripts, qu'on peut
+    Il n'ajoute aucune capacite : il appelle les memes scripts, qu'on peut
     toujours lancer a la main. C'est un aiguillage, pas une couche de plus.
 
-    Sans interface graphique disponible (PowerShell 7 sans Windows Desktop,
-    session distante, Linux), elle bascule sur un menu texte qui propose
-    exactement les memes choix.
-
-.PARAMETER Console
-    Force le menu texte, meme quand la fenetre est possible.
+    Il y a eu une fenetre graphique ici. Elle a ete retiree : elle etait le
+    seul morceau du projet qu'aucun test ne pouvait exercer — WinForms ne se
+    pilote pas sur une machine d'integration sans ecran — alors que le menu
+    texte, lui, est lance et verifie a chaque publication. Moins de code, et
+    plus rien qui echappe aux tests.
 
 .NOTES
     Windows. PowerShell 5.1 ou superieur.
@@ -24,17 +23,23 @@
 #>
 
 [CmdletBinding()]
-param([switch]$Console)
+param()
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+# La console de Windows n'ecrit pas en UTF-8 par defaut : les accents de ce
+# script y arriveraient en charabia. Les .bat font un « chcp 65001 », mais on
+# peut aussi lancer ce fichier directement, et sous Windows PowerShell 5.1
+# chcp ne suffit pas toujours. On le fixe ici, sans rien casser si l'hote
+# refuse (redirection, console absente).
+try { [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new() } catch { }
 
 $Racine = $PSScriptRoot
 if (-not $Racine) { $Racine = (Get-Location).Path }
 
 $actionsFichier = Join-Path $Racine 'lanceur-actions.ps1'
 if (-not (Test-Path -LiteralPath $actionsFichier)) {
-    Write-Error "lanceur-actions.ps1 est introuvable a cote de ce script. Copiez le dossier entier."
+    Write-Error "lanceur-actions.ps1 est introuvable à côté de ce script. Copiez le dossier entier."
     exit 1
 }
 . $actionsFichier
@@ -61,7 +66,7 @@ function Invoke-Action {
 
     if ($Action.PSObject.Properties['dossier'] -and $Action.dossier) {
         $dossier = Read-DossierSauvegarde -Invite $Action.titre
-        if (-not $dossier) { return @{ ok = $false; message = "Annule." } }
+        if (-not $dossier) { return @{ ok = $false; message = "Annulé." } }
         # Le nom du parametre varie : on copie VERS un dossier, on restaure
         # DEPUIS un dossier. Se tromper de sens serait le pire defaut possible.
         $nomParam = if ($Action.PSObject.Properties['argument'] -and $Action.argument) {
@@ -73,42 +78,27 @@ function Invoke-Action {
     # Une nouvelle fenetre : le script ecrit beaucoup, et on veut pouvoir lire
     # sa sortie apres coup meme si le lanceur est referme.
     Start-Process -FilePath 'powershell.exe' -ArgumentList (Get-LigneCommande $parametres) -Wait
-    return @{ ok = $true; message = "Termine."; suite = $Action.suite }
+    return @{ ok = $true; message = "Terminé."; suite = $Action.suite }
 }
 
+# Il y a eu un selecteur de dossier graphique ici. Il est parti avec la
+# fenetre : le garder aurait maintenu la dependance a WinForms qu'on venait
+# d'enlever, pour un seul champ. Dans une console on colle un chemin par un
+# clic droit, et l'explorateur Windows sait copier celui d'un dossier.
 function Read-DossierSauvegarde {
     param([string]$Invite = "Quel dossier ?")
-    # Le selecteur de dossier n'existe qu'avec l'interface graphique.
-    if (Test-InterfaceGraphique) {
-        $boite = New-Object System.Windows.Forms.FolderBrowserDialog
-        $boite.Description = $Invite
-        if ($boite.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
-            return $boite.SelectedPath
-        }
-        return $null
-    }
-    $saisi = Read-Host ("{0} — chemin du dossier (vide pour annuler)" -f $Invite)
+    Write-Host ""
+    Write-Host "  $Invite" -ForegroundColor Cyan
+    Write-Host "  Collez le chemin du dossier (clic droit dans cette fenêtre), ou laissez"
+    Write-Host "  vide pour annuler."
+    $saisi = Read-Host "  Dossier"
     if ([string]::IsNullOrWhiteSpace($saisi)) { return $null }
-    return $saisi
+    # Un chemin colle depuis l'explorateur arrive parfois entoure de
+    # guillemets : les laisser ferait chercher un dossier qui n'existe pas.
+    return $saisi.Trim().Trim('"').Trim()
 }
 
-# ---------------------------------------------------------------- interface
-
-$script:GraphiqueTeste = $null
-function Test-InterfaceGraphique {
-    if ($null -ne $script:GraphiqueTeste) { return $script:GraphiqueTeste }
-    $script:GraphiqueTeste = $false
-    if ($Console) { return $false }
-    try {
-        Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
-        Add-Type -AssemblyName System.Drawing -ErrorAction Stop
-        [System.Windows.Forms.Application]::EnableVisualStyles()
-        $script:GraphiqueTeste = $true
-    } catch {
-        $script:GraphiqueTeste = $false
-    }
-    return $script:GraphiqueTeste
-}
+# ---------------------------------------------------------------- menu
 
 function Show-MenuTexte {
     param($Actions)
@@ -129,7 +119,7 @@ function Show-MenuTexte {
             }
         }
         Write-Host ""
-        Write-Host ("  {0}. Par ou commencer ?" -f (@($Actions).Count + 1))
+        Write-Host ("  {0}. Par où commencer ?" -f (@($Actions).Count + 1))
         Write-Host "     Le parcours complet, selon ce que vous voulez faire." -ForegroundColor DarkGray
         Write-Host ""
         Write-Host "  0. Quitter"
@@ -158,80 +148,7 @@ function Show-MenuTexte {
     }
 }
 
-function Show-Fenetre {
-    param($Actions)
-
-    $f = New-Object System.Windows.Forms.Form
-    $f.Text = "Migration PC"
-    $f.Size = New-Object System.Drawing.Size(620, 520)
-    $f.StartPosition = 'CenterScreen'
-    $f.FormBorderStyle = 'FixedDialog'
-    $f.MaximizeBox = $false
-    $f.BackColor = [System.Drawing.Color]::FromArgb(250, 250, 250)
-    $f.Font = New-Object System.Drawing.Font("Segoe UI", 9)
-
-    $titre = New-Object System.Windows.Forms.Label
-    $titre.Text = "Que voulez-vous faire ?"
-    $titre.Font = New-Object System.Drawing.Font("Segoe UI", 14, [System.Drawing.FontStyle]::Bold)
-    $titre.Location = New-Object System.Drawing.Point(24, 20)
-    $titre.Size = New-Object System.Drawing.Size(560, 30)
-    $f.Controls.Add($titre)
-
-    $sous = New-Object System.Windows.Forms.Label
-    $sous.Text = "Les memes scripts que vous pouvez lancer a la main. Cette fenetre choisit lequel."
-    $sous.ForeColor = [System.Drawing.Color]::FromArgb(100, 100, 100)
-    $sous.Location = New-Object System.Drawing.Point(24, 50)
-    $sous.Size = New-Object System.Drawing.Size(560, 20)
-    $f.Controls.Add($sous)
-
-    $etat = New-Object System.Windows.Forms.Label
-    $etat.Location = New-Object System.Drawing.Point(24, 430)
-    $etat.Size = New-Object System.Drawing.Size(560, 40)
-    $etat.ForeColor = [System.Drawing.Color]::FromArgb(70, 70, 70)
-    $f.Controls.Add($etat)
-
-    $y = 86
-    foreach ($a in $Actions) {
-        $b = New-Object System.Windows.Forms.Button
-        $b.Location = New-Object System.Drawing.Point(24, $y)
-        $b.Size = New-Object System.Drawing.Size(560, 74)
-        $b.TextAlign = 'MiddleLeft'
-        $b.FlatStyle = 'Flat'
-        $b.BackColor = [System.Drawing.Color]::White
-        $b.Padding = New-Object System.Windows.Forms.Padding(14, 0, 14, 0)
-        $detail = if ($a.possible) { $a.detail } else { (Get-MessageManquants $a.manquants) }
-        $b.Text = "$($a.titre)`r`n$detail"
-        $b.Enabled = [bool]$a.possible
-        $b.Tag = $a
-        $b.Add_Click({
-            $act = $this.Tag
-            $this.FindForm().Cursor = [System.Windows.Forms.Cursors]::WaitCursor
-            try {
-                $r = Invoke-Action -Action $act
-                $texte = $r.message
-                if ($r.ok -and $r.ContainsKey('suite') -and $r.suite) {
-                    $texte = $r.message + "  Ensuite : " + ($r.suite -join '  ')
-                }
-                $etat.Text = $texte
-            } catch {
-                $etat.Text = "Erreur : $($_.Exception.Message)"
-            } finally {
-                $this.FindForm().Cursor = [System.Windows.Forms.Cursors]::Default
-            }
-        }.GetNewClosure())
-        $f.Controls.Add($b)
-        $y += 82
-    }
-
-    [void]$f.ShowDialog()
-}
-
 # ---------------------------------------------------------------- lancement
 
 $actions = @(Get-ActionsMigration -Racine $Racine)
-
-if (Test-InterfaceGraphique) {
-    Show-Fenetre -Actions $actions
-} else {
-    Show-MenuTexte -Actions $actions
-}
+Show-MenuTexte -Actions $actions

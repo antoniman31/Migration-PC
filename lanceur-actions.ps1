@@ -36,72 +36,72 @@ function Get-ActionsMigration {
         [ordered]@{
             id      = 'ancien'
             titre   = "Cet ordinateur est l'ANCIEN"
-            detail  = "Fait la liste de tout ce qui est installe, releve ou vivent les reglages, et ouvre la checklist deja remplie."
+            detail  = "Fait la liste de tout ce qui est installé, relève où vivent les réglages, et ouvre la checklist déjà remplie."
             script  = 'scan-pc.ps1'
             requis  = @('scan-pc.ps1', 'lib-detection.ps1')
             duree   = "1 a 3 minutes"
             suite   = @(
-                "La checklist s'ouvre deja remplie de vos logiciels.",
-                "Onglet « Apps » : decochez ce que vous ne voulez pas reprendre.",
-                "Onglet « Donnees » : les dossiers de reglages reperes s'y trouvent.",
-                "Menu (...) Plus > Exporter le profil, et posez le fichier sur la cle."
+                "La checklist s'ouvre déjà remplie de vos logiciels.",
+                "Onglet « Apps » : décochez ce que vous ne voulez pas reprendre.",
+                "Onglet « Données » : les dossiers de réglages repérés s'y trouvent.",
+                "Menu (…) Plus > Exporter le profil, et posez le fichier sur la clé."
             )
         },
         [ordered]@{
             id      = 'nouveau'
             titre   = "Cet ordinateur est le NOUVEAU"
-            detail  = "Regarde ce qui est deja installe et le propose a cocher. Ne coche rien tout seul : un rapprochement par nom peut se tromper."
+            detail  = "Regarde ce qui est déjà installé et le propose à cocher. Ne coche rien tout seul : un rapprochement par nom peut se tromper."
             script  = 'verifier-pc.ps1'
             requis  = @('verifier-pc.ps1', 'lib-detection.ps1')
             duree   = "1 a 2 minutes"
             suite   = @(
-                "La page propose de cocher ce qui est deja installe : verifiez avant.",
-                "Les peripheriques sans pilote sont listes, avec de quoi chercher.",
-                "Onglet « Nouveau PC » : les pilotes portent le modele de votre carte.",
+                "La page propose de cocher ce qui est déjà installé : vérifiez avant.",
+                "Les périphériques sans pilote sont listés, avec de quoi chercher.",
+                "Onglet « Nouveau PC » : les pilotes portent le modèle de votre carte.",
                 "Puis onglet « Apps » : le bouton winget copie la commande d'installation."
             )
         },
         [ordered]@{
             id      = 'emporter'
-            titre   = "Emporter mes reglages"
-            detail  = "Copie les dossiers de configuration de vos logiciels vers la cle. Installer un logiciel prend une commande ; retrouver ses reglages prend une soiree."
+            titre   = "Emporter mes réglages"
+            detail  = "Copie les dossiers de configuration de vos logiciels vers la clé. Installer un logiciel prend une commande ; retrouver ses réglages prend une soirée."
             script  = 'sauvegarder-configs.ps1'
             requis  = @('sauvegarder-configs.ps1', 'lib-detection.ps1')
             dossier = $true
             argument = 'Destination'
             duree   = "selon la taille"
             suite   = @(
-                "Un index est ecrit a cote de la copie : c'est lui qui permettra",
+                "Un index est écrit à côté de la copie : c'est lui qui permettra",
                 "de tout remettre en place, sans deviner un seul chemin.",
-                "Sur le nouveau PC, choisissez « Remettre mes reglages »."
+                "Sur le nouveau PC, choisissez « Remettre mes réglages »."
             )
         },
         [ordered]@{
             id      = 'remettre'
-            titre   = "Remettre mes reglages"
-            detail  = "Repose les dossiers copies a leur place. Refuse d'ecraser quoi que ce soit par defaut, et met l'existant de cote sinon."
+            titre   = "Remettre mes réglages"
+            detail  = "Repose les dossiers copiés à leur place. Refuse d'écraser quoi que ce soit par défaut, et met l'existant de côté sinon."
             script  = 'restaurer-configs.ps1'
             requis  = @('restaurer-configs.ps1')
             dossier = $true
             argument = 'Source'
             duree   = "quelques secondes"
             suite   = @(
-                "A faire APRES avoir installe les logiciels : la plupart creent",
-                "leur dossier de reglages au premier demarrage.",
-                "Fermez-les avant, sinon ils reecriront par-dessus en se fermant."
+                "À faire APRÈS avoir installé les logiciels : la plupart créent",
+                "leur dossier de réglages au premier démarrage.",
+                "Fermez-les avant, sinon ils réécriront par-dessus en se fermant."
             )
         },
         [ordered]@{
             id      = 'sauvegardes'
-            titre   = "Verifier une sauvegarde"
-            detail  = "Compare une copie a son original, fichier par fichier. Une sauvegarde qu'on n'a jamais relue n'est pas une sauvegarde."
+            titre   = "Vérifier une sauvegarde"
+            detail  = "Compare une copie à son original, fichier par fichier. Une sauvegarde qu'on n'a jamais relue n'est pas une sauvegarde."
             script  = 'verifier-sauvegardes.ps1'
             requis  = @('verifier-sauvegardes.ps1')
             dossier = $true
             duree   = "selon la taille"
             suite   = @(
-                "Le rapport dit fichier par fichier ce qui manque ou differe.",
-                "Une copie incomplete se voit ici, pas le jour ou on en a besoin."
+                "Le rapport dit fichier par fichier ce qui manque ou diffère.",
+                "Une copie incomplète se voit ici, pas le jour où on en a besoin."
             )
         },
         [ordered]@{
@@ -112,8 +112,8 @@ function Get-ActionsMigration {
             requis  = @('index.html')
             duree   = "immediat"
             suite   = @(
-                "Au premier lancement, deux questions adaptent la liste a votre cas.",
-                "Le selecteur en haut de page permet d'en changer a tout moment."
+                "Au premier lancement, deux questions adaptent la liste à votre cas.",
+                "Le sélecteur en haut de page permet d'en changer à tout moment."
             )
         }
     ) | ForEach-Object {
@@ -132,22 +132,22 @@ function Get-Parcours {
     @(
         "  Vous partez d'un PC vers un autre",
         "    1. Sur l'ANCIEN : inventorier. La page s'ouvre remplie, vous ajustez,",
-        "       vous exportez votre profil sur la cle.",
-        "    2. Emportez vos reglages sur la cle, et sauvegardez vos dossiers.",
-        "       Verifiez la copie avant d'aller plus loin.",
-        "    3. Sur le NOUVEAU : verifier. La page coche ce qui est deja la et",
-        "       signale les peripheriques sans pilote.",
-        "    4. Installez vos logiciels, PUIS remettez vos reglages.",
+        "       vous exportez votre profil sur la clé.",
+        "    2. Emportez vos réglages sur la clé, et sauvegardez vos dossiers.",
+        "       Vérifiez la copie avant d'aller plus loin.",
+        "    3. Sur le NOUVEAU : vérifier. La page coche ce qui est déjà là et",
+        "       signale les périphériques sans pilote.",
+        "    4. Installez vos logiciels, PUIS remettez vos réglages.",
         "",
-        "  Vous reinstallez Windows sur CETTE machine",
-        "    1. Inventorier d'abord : apres le formatage, il n'y a plus de source.",
-        "    2. Emportez vos reglages, sauvegardez, et verifiez la copie",
-        "       AVANT de formater. Apres, il est trop tard.",
-        "    3. Apres reinstallation : verifier, sur la meme machine.",
+        "  Vous réinstallez Windows sur CETTE machine",
+        "    1. Inventorier d'abord : après le formatage, il n'y a plus de source.",
+        "    2. Emportez vos réglages, sauvegardez, et vérifiez la copie",
+        "       AVANT de formater. Après, il est trop tard.",
+        "    3. Après réinstallation : vérifier, sur la même machine.",
         "",
         "  Vous gardez les deux PC",
-        "    Meme chose, mais ne deliez rien sur l'ancien : il reste en service.",
-        "    La page a un cas « Deux PC » qui retire ces etapes et ajoute la",
+        "    Même chose, mais ne déliez rien sur l'ancien : il reste en service.",
+        "    La page a un cas « Deux PC » qui retire ces étapes et ajoute la",
         "    synchronisation des dossiers."
     )
 }
@@ -157,7 +157,7 @@ function Get-MessageManquants {
     if (-not $Manquants -or $Manquants.Count -eq 0) { return '' }
     $liste = ($Manquants -join ', ')
     if ($Manquants -contains 'lib-detection.ps1') {
-        return "Fichier(s) absent(s) : $liste. Copiez le dossier entier, pas un fichier isole."
+        return "Fichier(s) absent(s) : $liste. Copiez le dossier entier, pas un fichier isolé."
     }
     return "Fichier(s) absent(s) : $liste."
 }
