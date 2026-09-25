@@ -1000,6 +1000,9 @@ function Format-Portables {
                 chemin = $d.FullName
                 modele = if ($Modele) { ($Modele.TrimEnd('\', '/') + '\' + $rel) } else { '' }
                 exes   = @($utiles | ForEach-Object { $_.Name })
+                # Mesure pour que le total a prevoir ne mente pas par omission :
+                # un dossier propose a la copie sans sa taille fausse le compte.
+                tailleMo = Get-TailleDossier -Chemin $d.FullName
             }
         }
     }
@@ -1257,8 +1260,21 @@ $ConfigsConnues = @(
     @{ cle='obsidian';         nom='Obsidian';                chemins=@('%APPDATA%\obsidian');                            quoi='Réglages. Les notes vivent dans vos coffres, ailleurs.' }
     @{ cle='powertoys';        nom='PowerToys';               chemins=@('%LOCALAPPDATA%\Microsoft\PowerToys');            quoi='Réglages de chaque module.' }
     @{ cle='windowsterminal';  nom='Windows Terminal';        chemins=@('%LOCALAPPDATA%\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState'); quoi='settings.json : profils, thèmes, raccourcis.' }
-    @{ cle='mozillafirefox';   nom='Profils Firefox';         chemins=@('%APPDATA%\Mozilla\Firefox\Profiles');            quoi='Marque-pages, extensions, cookies. Volumineux.' }
-    @{ cle='mozillathunderbird';nom='Thunderbird';            chemins=@('%APPDATA%\Thunderbird\Profiles');                quoi='Comptes et courriels locaux. Volumineux.' }
+    # Ce qui est ecarte ici est volontairement etroit : des rapports de plantage,
+    # de la telemetrie, des sauvegardes de session et des index qui se
+    # reconstruisent au premier demarrage. On ne touche NI a « storage », qui
+    # porte les donnees des applications web, NI aux courriels : un cache mal
+    # identifie qu'on jette est une perte, pas une economie.
+    @{ cle='mozillafirefox';   nom='Profils Firefox';         chemins=@('%APPDATA%\Mozilla\Firefox\Profiles');
+       exclure=@('*\minidumps', '*\crashes', '*\datareporting', '*\saved-telemetry-pings',
+                 '*\sessionstore-backups', '*\startupCache', '*\shader-cache',
+                 '*\thumbnails', '*\weave\logs', '*\gmp-*\*\*.log');
+       quoi='Marque-pages, mots de passe, extensions, cookies. Volumineux. Les rapports de plantage et la telemetrie ne suivent pas.' }
+    @{ cle='mozillathunderbird';nom='Thunderbird';            chemins=@('%APPDATA%\Thunderbird\Profiles');
+       exclure=@('*\minidumps', '*\crashes', '*\datareporting', '*\saved-telemetry-pings',
+                 '*\sessionstore-backups', '*\startupCache',
+                 '*\global-messages-db.sqlite');
+       quoi='Comptes et courriels locaux. Volumineux. L''index de recherche se reconstruit tout seul et ne suit pas.' }
     @{ cle='filezilla';        nom='FileZilla';               chemins=@('%APPDATA%\FileZilla');                           quoi='Sites enregistrés. Contient des mots de passe.' }
     @{ cle='winscp';           nom='WinSCP';                  chemins=@('%APPDATA%\WinSCP.ini');                          quoi='Sessions enregistrées.' }
     @{ cle='qbittorrent';      nom='qBittorrent';             chemins=@('%APPDATA%\qBittorrent','%LOCALAPPDATA%\qBittorrent'); quoi='Réglages et torrents en cours.' }
@@ -1356,6 +1372,46 @@ function Get-Nombre {
     if ($null -eq $Valeur) { return 0 }
     if ($Valeur -is [System.Collections.IDictionary]) { return $Valeur.Count }
     return @($Valeur).Count
+}
+
+# Vrai si $Enfant est sous $Parent. Comparaison sur les segments, pas sur le
+# texte : « D:\Outils2 » n'est pas sous « D:\Outils », meme si la chaine
+# commence pareil.
+function Test-SousChemin {
+    param([string]$Parent, [string]$Enfant)
+    if ([string]::IsNullOrWhiteSpace($Parent) -or [string]::IsNullOrWhiteSpace($Enfant)) { return $false }
+    $p = (($Parent -replace '/', '\').TrimEnd('\')).ToLowerInvariant()
+    $e = (($Enfant -replace '/', '\').TrimEnd('\')).ToLowerInvariant()
+    if ($p -eq $e) { return $false }
+    return $e.StartsWith($p + '\')
+}
+
+# Le total de ce qu'il y a a emporter, sans compter deux fois. Un gros dossier
+# signale peut contenir un logiciel portable ou une cle : additionner les deux
+# gonflerait le chiffre, et un chiffre presente comme « prevois tant » doit
+# etre juste ou ne pas etre affiche.
+function Get-TotalAPrevoirMo {
+    param($Groupes)
+    $tout = @()
+    foreach ($g in @($Groupes)) {
+        foreach ($e in @($g)) {
+            if ($null -eq $e -or -not ($e -is [System.Collections.IDictionary])) { continue }
+            if (-not $e.Contains('chemin')) { continue }
+            $mo = 0
+            if ($e.Contains('tailleMo') -and $null -ne $e['tailleMo']) { $mo = [double]$e['tailleMo'] }
+            elseif ($e.Contains('tailleKo') -and $null -ne $e['tailleKo']) { $mo = [double]$e['tailleKo'] / 1024 }
+            $tout += [ordered]@{ chemin = [string]$e['chemin']; mo = $mo }
+        }
+    }
+    $total = [double]0
+    foreach ($e in $tout) {
+        $couvert = $false
+        foreach ($autre in $tout) {
+            if (Test-SousChemin -Parent $autre.chemin -Enfant $e.chemin) { $couvert = $true; break }
+        }
+        if (-not $couvert) { $total += $e.mo }
+    }
+    return [math]::Round($total, 1)
 }
 
 function Get-Somme {

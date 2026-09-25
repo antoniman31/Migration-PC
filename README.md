@@ -574,9 +574,45 @@ du dépôt winget.
       "source": "registre, winget", "winget": "7zip.7zip",
       "cat": "system", "priorite": "med", "duree": 5, "tailleGo": 0.02 }
   ],
-  "variables": { "JAVA_HOME": "C:\\Program Files\\Java\\jdk-21" }
+  "variables": { "JAVA_HOME": "C:\\Program Files\\Java\\jdk-21" },
+  "configs": [
+    { "nom": "Visual Studio Code", "chemin": "C:\\Users\\a\\AppData\\Roaming\\Code\\User",
+      "modele": "%APPDATA%\\Code\\User", "quoi": "Réglages, raccourcis, extraits.",
+      "exclure": [], "tailleMo": 4.2, "logiciel": "visualstudiocode" }
+  ],
+  "materiel": { "cm": "ASUSTeK ROG STRIX B850-A", "cpu": "AMD Ryzen 7 9800X3D",
+                "gpu": "NVIDIA GeForce RTX 5070 Ti", "ram": "32 Go DDR5 6000 MT/s",
+                "ssd": "Samsung SSD 9100 PRO 2TB" },
+  "outils": [
+    { "famille": "SDK Android", "id": "platforms;android-34", "nom": "platforms;android-34",
+      "version": "", "commande": "sdkmanager \"platforms;android-34\"" }
+  ],
+  "dossiers": [
+    { "nom": "Projets", "chemin": "D:\\Projets", "modele": "",
+      "tailleMo": 82000, "complet": true }
+  ],
+  "precieux": [
+    { "nom": "release.jks", "chemin": "D:\\dev\\app\\release.jks",
+      "modele": "", "tailleKo": 2.3 }
+  ],
+  "portables": [
+    { "nom": "ffmpeg", "chemin": "D:\\Outils\\ffmpeg", "modele": "",
+      "exes": ["ffmpeg.exe"], "tailleMo": 120 }
+  ],
+  "aPrevoirMo": 82126
 }
 ```
+
+`configs` porte les dossiers de réglages repérés, `materiel` remplit le bloc « Ma
+configuration », `outils` les chaînes d'outils qu'aucun installateur n'enregistre,
+`dossiers` les gros dossiers du disque, `precieux` les clés de signature, `portables` les
+dossiers qui ressemblent à des logiciels posés sans installateur. `aPrevoirMo` est le
+total de ce que le scan a **mesuré** — pas de ce que la checklist réclame par ailleurs,
+puisque les chemins écrits à la main n'ont pas de taille. Rien n'y est compté deux fois :
+un gros dossier qui contient un portable ou une clé ne les additionne pas.
+
+Tous ces champs sont facultatifs : un inventaire qui n'en porte aucun reste valide, et la
+page ne montre que ce qu'elle a reçu.
 
 **Profil** — les listes des cinq onglets. C'est le format de `presets/exemple.json`,
 et celui que produit le bouton 🧩.
@@ -984,6 +1020,13 @@ entiers, sans exception possible : une entrée `.gradle` aurait emporté dix Go 
 régénérables pour deux kilo-octets de réglages. Chaque règle peut maintenant nommer ce
 qu'elle écarte, et la taille annoncée est celle de ce qui part réellement — annoncer
 10 Go pour en écrire 2 Mo se remarquerait, l'inverse se remarquerait au pire moment.
+
+Ce que les règles écartent est volontairement étroit : des rapports de plantage, de la
+télémétrie, des sauvegardes de session, des index qui se reconstruisent au premier
+démarrage. Un profil Firefox laisse derrière lui ses `minidumps` et sa télémétrie, jamais
+son `storage` — qui porte les données des applications web — ni ses mots de passe.
+Thunderbird laisse son index de recherche, jamais ses courriels. Un cache mal identifié
+qu'on jette est une perte, pas une économie.
 
 Un chemin peut aussi porter un joker, parce qu'Android Studio et les IDE JetBrains
 rangent leurs réglages dans un dossier qui porte leur version. Le modèle enregistré dans

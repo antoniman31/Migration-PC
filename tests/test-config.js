@@ -152,6 +152,28 @@ ok('mais comble ce qui manquait',await pg.evaluate(()=>CONFIG.ssd),'Un SSD');
 await pg.evaluate(()=>{CONFIG={};saveConfig();construireConfig();
   appliquerProfil(PROFIL_DEFAUT,false);});
 
+console.log('\n--- ce qu\'il faut prévoir sur la clé ---');
+// Le scan connaissait la taille de tout ce qu'il propose d'emporter et ne
+// faisait jamais la somme.
+for(const [mo,attendu] of [[62000,'prévoir 60,5 Go sur la clé'],[350,'prévoir 350 Mo sur la clé']]){
+  await pg.evaluate(v=>traiterDonnees({type:'inventaire-migration-pc',machine:{},
+    apps:[{nom:'A',cat:'system',source:'registre'}],variables:{},configs:[],
+    materiel:{},outils:[],dossiers:[],precieux:[],portables:[],aPrevoirMo:v},''),mo);
+  await pg.waitForTimeout(250);
+  ok(mo+' Mo annoncés',(await pg.textContent('#profil-sous')).indexOf(attendu)>=0,true);
+}
+// Rien de mesuré : on n'annonce pas « 0 Go », on se tait.
+for(const v of [0,undefined,'beaucoup']){
+  await pg.evaluate(x=>traiterDonnees({type:'inventaire-migration-pc',machine:{},
+    apps:[{nom:'A',cat:'system',source:'registre'}],variables:{},configs:[],
+    materiel:{},outils:[],dossiers:[],precieux:[],portables:[],aPrevoirMo:x},''),v);
+  await pg.waitForTimeout(250);
+  ok(JSON.stringify(v)+' : on se tait',
+    (await pg.textContent('#profil-sous')).indexOf('prévoir')>=0,false);
+}
+await pg.evaluate(()=>{appliquerProfil(PROFIL_DEFAUT,false);});
+await pg.waitForTimeout(300);
+
 console.log('\n--- les logiciels portables ---');
 // Le mot « ressemble » compte : rien ne permet de distinguer à coup sûr un
 // logiciel posé sans installateur d'un dossier qui contient un .exe. La page

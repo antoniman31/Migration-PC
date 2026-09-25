@@ -2464,6 +2464,11 @@ function inventaireVersProfil(inv){
   if(oublies.length)desc.push(oublies.length+' gros dossier'+(oublies.length>1?'s':'')+' hors liste');
   if(cles.length)desc.push(cles.length+' clé'+(cles.length>1?'s':'')+' de signature');
   if(suspects.length)desc.push(suspects.length+' portable'+(suspects.length>1?'s':'')+' à relire');
+  // Ce que le scan a mesuré, pas ce que la checklist réclame par ailleurs :
+  // les chemins écrits à la main n'ont pas de taille. Découvrir la clé pleine
+  // au milieu de la copie coûte une soirée.
+  const aPrevoir=Number(inv.aPrevoirMo);
+  if(isFinite(aPrevoir)&&aPrevoir>0)desc.push('prévoir '+fmtMo(aPrevoir)+' sur la clé');
   return {
     meta:{version:1,nom:'Migration PC — inventaire importé',soustitre:desc.join(' · ')},
     cats:cats,

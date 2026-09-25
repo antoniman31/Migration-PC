@@ -141,6 +141,30 @@ ok 'sans code, rien'                 (@($pil | Where-Object { $_.nom -eq 'Sans c
 ok 'le probleme est nomme'           (@($pil | Where-Object { $_.nom -match 'Ethernet' })[0].probleme) 'aucun pilote installe'
 ok 'liste vide, rien'                (@(Format-Pilotes -Peripheriques @())).Count 0
 
+"--- ce qu il faut prevoir sur la cle ---"
+# Le scan connaissait la taille de tout ce qu il propose d emporter et ne
+# faisait jamais la somme. Decouvrir la cle pleine au milieu de la copie coute
+# une soiree.
+ok 'D:\Outils contient D:\Outils\ffmpeg' (Test-SousChemin -Parent 'D:\Outils' -Enfant 'D:\Outils\ffmpeg') $true
+# Comparaison sur les segments, pas sur le texte, sinon « Outils2 » passerait
+# pour un enfant de « Outils ».
+ok 'mais pas D:\Outils2'          (Test-SousChemin -Parent 'D:\Outils' -Enfant 'D:\Outils2') $false
+ok 'ni lui-meme'                   (Test-SousChemin -Parent 'D:\Outils' -Enfant 'D:\Outils') $false
+ok 'la casse ne change rien'       (Test-SousChemin -Parent 'd:\outils' -Enfant 'D:\OUTILS\x') $true
+ok 'une barre finale non plus'     (Test-SousChemin -Parent 'D:\Outils\' -Enfant 'D:\Outils\x') $true
+
+# Un gros dossier signale contient parfois un portable ou une cle : les
+# additionner gonflerait le chiffre.
+$gros = @([ordered]@{ chemin = 'D:\Outils'; tailleMo = 100 })
+$port = @([ordered]@{ chemin = 'D:\Outils\ffmpeg'; tailleMo = 40 },
+          [ordered]@{ chemin = 'E:\Ailleurs'; tailleMo = 7 })
+$cles = @([ordered]@{ chemin = 'D:\Outils\a.jks'; tailleKo = 2048 })
+ok 'rien n est compte deux fois'   (Get-TotalAPrevoirMo @($gros, $port, $cles)) 107
+# Les kilo-octets d une cle comptent aussi, une fois convertis.
+ok 'une cle isolee compte'         (Get-TotalAPrevoirMo @(@([ordered]@{ chemin = 'X:\a.jks'; tailleKo = 2048 }))) 2
+ok 'sans rien, zero'               (Get-TotalAPrevoirMo @()) 0
+ok 'une entree sans taille vaut 0' (Get-TotalAPrevoirMo @(@([ordered]@{ chemin = 'X:\a' }))) 0
+
 "--- les logiciels portables, qu aucune source ne voit ---"
 # Un .exe dezippe dans un dossier n a aucune entree de desinstallation, aucun
 # identifiant winget, rien dans le Store. Ce releve est une liste de suspects,

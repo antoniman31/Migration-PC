@@ -172,6 +172,11 @@ $inventaire = [ordered]@{
     # Reprises telles quelles dans les champs prevus par la checklist.
     variables = $variables
     configs   = @($configs)
+    # Ce que le scan a MESURE et propose d'emporter. Pas ce que la checklist
+    # reclame par ailleurs : les chemins ecrits a la main n'ont pas de taille,
+    # et pretendre le contraire donnerait un chiffre faux. Decouvrir la cle
+    # pleine au milieu de la copie coute une soiree.
+    aPrevoirMo = Get-TotalAPrevoirMo @($configs, $dossiers, $portables, $precieux)
     materiel  = $materiel
     outils    = @($outils)
     dossiers  = @($dossiers)
@@ -198,6 +203,13 @@ if ($totalGo) {
 if (@($configs).Count) {
     $mo = Get-Somme $configs 'tailleMo'
     Write-Host "$(@($configs).Count) dossiers de configuration reperes$(if ($mo) { " ($([math]::Round($mo,0)) Mo)" })."
+}
+if ($inventaire.aPrevoirMo -gt 0) {
+    $p = $inventaire.aPrevoirMo
+    $lisible = if ($p -ge 1024) { "$([math]::Round($p / 1024, 1)) Go" } else { "$([math]::Round($p, 0)) Mo" }
+    Write-Host ""
+    Write-Host "A prevoir sur la cle : environ $lisible." -ForegroundColor Cyan
+    Write-Host "  Ce que le scan a mesure. Ce que vous listez a la main s'ajoute."
 }
 if (@($portables).Count) {
     Write-Host "$(@($portables).Count) dossier(s) qui ressemblent a des logiciels portables."
