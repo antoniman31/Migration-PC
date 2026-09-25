@@ -187,6 +187,15 @@ $inventaire = [ordered]@{
 $json = $inventaire | ConvertTo-Json -Depth 6
 Set-Content -Path $Sortie -Value $json -Encoding UTF8
 
+# Sans ce fichier a cote, la page ne se remplit pas toute seule. C'est un
+# confort, pas le resultat — le JSON est ecrit dans tous les cas — mais son
+# absence se taisait, et on cherchait longtemps pourquoi la page restait vide.
+if (-not (Get-Command Write-ResultatPourSite -ErrorAction SilentlyContinue)) {
+    Write-Host ""
+    Write-Host "ecrire-resultat.ps1 n'est pas a cote de ce script : la page ne se" -ForegroundColor Yellow
+    Write-Host "remplira pas toute seule. Importez le fichier JSON a la main, ou" -ForegroundColor Yellow
+    Write-Host "reprenez le dossier complet depuis le site." -ForegroundColor Yellow
+}
 if (Get-Command Write-ResultatPourSite -ErrorAction SilentlyContinue) {
     Write-ResultatPourSite -Donnees $inventaire -DossierScript $PSScriptRoot -NePasOuvrir:$PasDOuverture
 }

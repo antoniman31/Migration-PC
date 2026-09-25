@@ -23,6 +23,22 @@ await pg.goto('file://'+path.join(racine,'index.html'),{waitUntil:'networkidle'}
 await pg.evaluate(()=>{try{localStorage.setItem('mpc_debut_v1','1');}catch(e){}});
 const proposes=await pg.evaluate(()=>OUTILS.map(o=>o.f));
 proposes.forEach(f=>ok('« '+f+' » est dans le dépôt',fs.existsSync(path.join(racine,f)),true));
+
+// Ce test ne vérifiait qu'un sens : que ce qui est proposé existe. Jamais
+// l'inverse — que ce qui existe soit proposé. C'est par là que ça a dérivé :
+// ecrire-resultat.ps1 manquait à la liste, et comme les deux scanners
+// sautaient l'étape en silence, la page ne se remplissait jamais toute seule
+// pour qui avait téléchargé fichier par fichier, sans qu'aucun message le dise.
+const surDisque=fs.readdirSync(racine).filter(f=>/\.(ps1|bat)$/i.test(f)).sort();
+ok('des scripts existent sur le disque',surDisque.length>0,true);
+ok('aucun script publié n\'est absent de la liste',
+  surDisque.filter(f=>proposes.indexOf(f)<0).join(', '),'');
+
+// Et quand le fichier manque quand même, ça doit se dire.
+for(const f of ['scan-pc.ps1','verifier-pc.ps1']){
+  ok(f+' signale son absence',
+    /ecrire-resultat\.ps1 n'est pas a cote/.test(fs.readFileSync(path.join(racine,f),'utf8')),true);
+}
 // Le compte changera encore : ce qui doit tenir, c'est qu'un lanceur a
 // double-cliquer soit propose, et qu'il vienne en premier.
 ok('des lanceurs a double-cliquer sont proposes',
