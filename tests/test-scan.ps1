@@ -714,4 +714,53 @@ ok 'tailleGo serialisee'     $relu2.apps[0].tailleGo 2.5
 ok 'variables serialisees'   $relu2.variables.JAVA_HOME 'C:/java'
 ok 'nom de variable avec espace' $relu2.variables.'PATH (utilisateur)' 'C:/bin'
 
+
+"--- winget : identifiants installables ---"
+ok 'catalogue accepte'      (Test-IdWingetInstallable -Id 'Mozilla.Firefox') $true
+ok 'ARP refuse'             (Test-IdWingetInstallable -Id 'ARP\Machine\X64\{1234-5678}') $false
+ok 'MSIX refuse'            (Test-IdWingetInstallable -Id 'MSIX\Microsoft.Paint_8wekyb3d8bbwe') $false
+ok 'minuscules refusees aussi' (Test-IdWingetInstallable -Id 'arp\Machine\X64\{9}') $false
+ok 'sans point refuse'      (Test-IdWingetInstallable -Id 'Firefox') $false
+ok 'vide refuse'            (Test-IdWingetInstallable -Id '') $false
+
+"--- winget : lecture de l'export ---"
+$exp = Read-ExportWinget -Json (Get-Content -LiteralPath "$PSScriptRoot/winget-export-exemple.json" -Raw)
+# Le fichier d'exemple contient 8 entrees dont un doublon de 7zip : la lecture
+# ne deduplique pas, c'est Merge-IdsWinget qui s'en charge.
+ok 'export lu'              (Get-Nombre $exp) 8
+ok 'premier identifiant'    $exp[0].id '7zip.7zip'
+ok 'version quand presente' (@($exp | Where-Object { $_.id -eq 'Mozilla.Firefox' })[0].version) '142.0'
+ok 'JSON vide sans erreur'  (Get-Nombre (Read-ExportWinget -Json '')) 0
+ok 'JSON casse sans erreur' (Get-Nombre (Read-ExportWinget -Json '{pas du json')) 0
+ok 'ARP filtre a la lecture' (Get-Nombre (Read-ExportWinget -Json '{"Sources":[{"Packages":[{"PackageIdentifier":"ARP\\Machine\\X64\\{1}"}]}]}')) 0
+
+"--- winget : rapprochement des identifiants ---"
+ok 'editeur+produit'        ((Get-ClesCandidatesWinget -Id 'Mozilla.Firefox') -contains (Get-Cle -Nom 'Mozilla Firefox')) $true
+ok 'produit seul'           ((Get-ClesCandidatesWinget -Id '7zip.7zip') -contains (Get-Cle -Nom '7-Zip')) $true
+ok 'couple complet en premier' (Get-ClesCandidatesWinget -Id 'Mozilla.Firefox')[0] (Get-Cle -Nom 'Mozilla Firefox')
+
+# Un inventaire neuf : deux logiciels connus du registre, sans identifiant.
+$resultats = @{}
+Add-App -Nom 'Mozilla Firefox (x64 fr)' -Editeur 'Mozilla' -Version '142.0' -Source 'registre' -Winget ''
+Add-App -Nom '7-Zip 24.08 (x64)' -Editeur 'Igor Pavlov' -Version '24.08' -Source 'registre' -Winget ''
+$avant = $resultats.Count
+$r = Merge-IdsWinget -Entrees @(
+    [ordered]@{ id = 'Mozilla.Firefox'; version = '142.0' },
+    [ordered]@{ id = '7zip.7zip';       version = '24.08' },
+    [ordered]@{ id = 'Valve.Steam';     version = '' }
+)
+ok 'deux identifiants poses' $r.poses 2
+ok 'une ligne ajoutee'       $r.crees 1
+ok 'Firefox a son id'        $resultats[(Get-Cle -Nom 'Mozilla Firefox')].winget 'Mozilla.Firefox'
+ok '7-Zip a son id'          $resultats[(Get-Cle -Nom '7-Zip')].winget '7zip.7zip'
+ok 'Steam cree'              $resultats[(Get-Cle -Nom 'Steam')].winget 'Valve.Steam'
+ok 'Steam nomme lisiblement' $resultats[(Get-Cle -Nom 'Steam')].nom 'Steam'
+ok 'une seule ligne en plus' ($resultats.Count - $avant) 1
+ok 'source completee'        ($resultats[(Get-Cle -Nom 'Mozilla Firefox')].source -like '*winget*') $true
+
+# Rejouer le meme export ne doit rien reposer ni rien recreer.
+$r2 = Merge-IdsWinget -Entrees @([ordered]@{ id = 'Mozilla.Firefox'; version = '142.0' })
+ok 'rejeu sans effet (pose)' $r2.poses 0
+ok 'rejeu sans effet (cree)' $r2.crees 0
+
 if($script:ko){"`n$($script:ko) TEST(S) EN ECHEC"; exit 1} else {"`nTOUS LES TESTS POWERSHELL PASSENT"}

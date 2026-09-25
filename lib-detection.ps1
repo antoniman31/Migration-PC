@@ -256,6 +256,115 @@ function Add-App {
 }
 
 # --- source 1 : winget -------------------------------------------------
+
+# « winget list » melange deux choses qui n'ont rien a voir. Les paquets connus
+# du catalogue portent un identifiant « Editeur.Produit » qui se reinstalle
+# d'une commande. Les autres, ceux que winget a seulement apercus dans
+# Ajout/Suppression de programmes, recoivent un identifiant fabrique sur place :
+# « ARP\Machine\X64\{GUID} » ou « MSIX\... ». Celui-la ne s'installe pas, il ne
+# sert qu'a la deduplication interne de winget.
+#
+# Notre ancien filtre rejetait bien ces identifiants — il exigeait un point et
+# pas d'antislash — mais il ne le disait pas, et un relevé ou la moitie des
+# lignes ressortait sans identifiant passait pour un bug de lecture de colonnes.
+# Ce n'en etait pas forcement un : sur une machine ou peu de logiciels ont ete
+# poses par winget, il est normal que presque aucun n'ait d'identifiant.
+function Test-IdWingetInstallable {
+    param([string]$Id)
+    if ([string]::IsNullOrWhiteSpace($Id)) { return $false }
+    $t = $Id.Trim()
+    # Identifiants fabriques par winget pour ce qu'il n'a fait que decouvrir.
+    if ($t -like 'ARP\*' -or $t -like 'MSIX\*' -or $t -like 'arp\*' -or $t -like 'msix\*') { return $false }
+    if ($t.Contains('\')) { return $false }
+    return ($t -match '^[A-Za-z0-9][A-Za-z0-9._-]*\.[A-Za-z0-9._-]+$')
+}
+
+# « winget export » ne sort que les paquets du catalogue, en JSON, sans colonne
+# a largeur fixe ni accent a decaler. C'est la source d'identifiants la plus
+# fiable dont on dispose, et le fichier se rejoue tel quel avec
+# « winget import ». Il ne donne pas les noms d'affichage : c'est le registre
+# qui les porte, et Merge-IdsWinget se charge du rapprochement.
+function Read-ExportWinget {
+    param([string]$Json)
+    $ids = @()
+    if ([string]::IsNullOrWhiteSpace($Json)) { return $ids }
+    try { $d = $Json | ConvertFrom-Json } catch { return $ids }
+    if (-not $d -or -not $d.PSObject.Properties['Sources']) { return $ids }
+    foreach ($src in @($d.Sources)) {
+        if (-not $src -or -not $src.PSObject.Properties['Packages']) { continue }
+        foreach ($pkg in @($src.Packages)) {
+            if (-not $pkg -or -not $pkg.PSObject.Properties['PackageIdentifier']) { continue }
+            $id = [string]$pkg.PackageIdentifier
+            if (-not (Test-IdWingetInstallable -Id $id)) { continue }
+            $v = ''
+            if ($pkg.PSObject.Properties['Version']) { $v = [string]$pkg.Version }
+            $ids += [ordered]@{ id = $id.Trim(); version = $v }
+        }
+    }
+    return $ids
+}
+
+# Un identifiant winget doit rejoindre la ligne d'inventaire du logiciel qu'il
+# designe, pas en creer une deuxieme a cote. « Mozilla.Firefox » et la ligne du
+# registre « Mozilla Firefox (x64 fr) » sont le meme logiciel.
+#
+# Deux rapprochements suffisent en pratique. Editeur et produit colles donnent
+# « mozillafirefox », exactement ce que Get-Cle tire de « Mozilla Firefox ».
+# Le produit seul donne « 7zip », ce que Get-Cle tire de « 7-Zip ». On essaie
+# le plus specifique d'abord : le produit seul rapproche « Git.Git » de
+# n'importe quel logiciel nomme « Git », le couple complet est plus sur.
+function Get-ClesCandidatesWinget {
+    param([string]$Id)
+    $cles = @()
+    if ([string]::IsNullOrWhiteSpace($Id)) { return $cles }
+    $t = $Id.Trim()
+    $i = $t.IndexOf('.')
+    if ($i -le 0 -or $i -ge ($t.Length - 1)) { return @(Get-Cle -Nom $t) }
+    $editeur = $t.Substring(0, $i)
+    $produit = $t.Substring($i + 1)
+    $cles += Get-Cle -Nom "$editeur $produit"
+    $cles += Get-Cle -Nom $produit
+    return @($cles | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique)
+}
+
+# Pose les identifiants de l'export sur les lignes deja connues, et cree une
+# ligne pour ceux qui ne correspondent a rien : un paquet installe par winget
+# mais absent du registre existe bel et bien, le perdre serait pire que
+# l'afficher sous un nom approximatif.
+function Merge-IdsWinget {
+    param($Entrees)
+    $poses = 0
+    $crees = 0
+    foreach ($e in @($Entrees)) {
+        if (-not $e) { continue }
+        $id = [string]$e.id
+        if ([string]::IsNullOrWhiteSpace($id)) { continue }
+
+        # Deja porte par une ligne : rien a faire.
+        $deja = $false
+        foreach ($v in $resultats.Values) { if ($v.winget -eq $id) { $deja = $true; break } }
+        if ($deja) { continue }
+
+        $trouve = $null
+        foreach ($c in (Get-ClesCandidatesWinget -Id $id)) {
+            if ($resultats.ContainsKey($c)) { $trouve = $resultats[$c]; break }
+        }
+        if ($trouve) {
+            if ([string]::IsNullOrWhiteSpace($trouve.winget)) { $trouve.winget = $id; $poses++ }
+            if ($trouve.source -notlike '*winget*') { $trouve.source = "$($trouve.source), winget" }
+            continue
+        }
+
+        # Rien ne correspond : on fabrique un nom lisible a partir du produit.
+        $i = $id.IndexOf('.')
+        $nom = if ($i -gt 0 -and $i -lt ($id.Length - 1)) { $id.Substring($i + 1) } else { $id }
+        Add-App -Nom $nom -Editeur $(if ($i -gt 0) { $id.Substring(0, $i) } else { '' }) `
+                -Version ([string]$e.version) -Source 'winget' -Winget $id
+        $crees++
+    }
+    return [ordered]@{ poses = $poses; crees = $crees }
+}
+
 function Read-Winget {
     Write-Host "  winget..." -NoNewline
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
@@ -264,8 +373,10 @@ function Read-Winget {
     }
     $n = 0
     try {
-        # --accept-source-agreements evite l'invite au premier lancement.
-        $lignes = & winget list --accept-source-agreements 2>$null | Out-String
+        # --disable-interactivity coupe les indicateurs de progression. Sans
+        # lui, winget ecrit des retours arriere (0x08) au milieu de sa sortie
+        # et le decoupage en colonnes a largeur fixe part de travers.
+        $lignes = & winget list --accept-source-agreements --disable-interactivity 2>$null | Out-String
         $lignes = $lignes -split "`r?`n"
 
         # La sortie est un tableau a colonnes fixes : on lit la ligne d'entete
@@ -283,6 +394,8 @@ function Read-Winget {
             if ($l -match '^-{5,}') { $debut = $true; continue }
             if (-not $debut) { continue }
             if ($l.Trim().Length -eq 0) { continue }
+            # Restes d'indicateur de progression malgre --disable-interactivity.
+            if ($l.Contains([char]8)) { continue }
             if ($l.Length -le $posId) { continue }
 
             $nom = $l.Substring(0, $posId).Trim()
@@ -296,8 +409,7 @@ function Read-Winget {
                 $ver = ''
             }
             if ([string]::IsNullOrWhiteSpace($nom)) { continue }
-            # Une entree sans identifiant exploitable n'apporte rien de plus que le registre.
-            $idValide = ($id -match '^[A-Za-z0-9][A-Za-z0-9._-]*\.[A-Za-z0-9._-]+$')
+            $idValide = Test-IdWingetInstallable -Id $id
             Add-App -Nom $nom -Editeur '' -Version $ver -Source 'winget' -Winget $(if ($idValide) { $id } else { '' })
             $n++
         }
@@ -306,6 +418,26 @@ function Read-Winget {
         return $n
     }
     Write-Host " $n entrees"
+
+    # Deuxieme passe, autoritaire : l'export ne contient que des identifiants
+    # reellement reinstallables. Une panne ici ne doit pas perdre la premiere.
+    try {
+        $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("mpc-winget-" + [guid]::NewGuid().ToString('N') + ".json")
+        & winget export --output $tmp --include-versions --accept-source-agreements --disable-interactivity 2>$null | Out-Null
+        if (Test-Path -LiteralPath $tmp) {
+            $json = Get-Content -LiteralPath $tmp -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue
+            $entrees = @(Read-ExportWinget -Json $json)
+            if ($entrees.Count) {
+                $r = Merge-IdsWinget -Entrees $entrees
+                Write-Host "  winget export... $($entrees.Count) identifiant(s), $($r.poses) pose(s), $($r.crees) ligne(s) ajoutee(s)"
+            } else {
+                Write-Host "  winget export... aucun paquet du catalogue" -ForegroundColor Yellow
+            }
+        }
+    } catch {
+        Write-Host "  winget export... erreur ignoree : $($_.Exception.Message)" -ForegroundColor Yellow
+    }
     return $n
 }
 
