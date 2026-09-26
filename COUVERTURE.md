@@ -16,7 +16,7 @@ couverture inconnue. Les noms de famille utilisés ici sont ceux de
 |---|---|---|
 | `apps` | `Read-Registre`, `Read-Winget`, `Read-Store` | — |
 | `jeux` | `Read-Steam`, `Read-Epic`, `Read-GOG`, `Read-Xbox`, `Read-Ubisoft`, `Read-Ea` | — |
-| `configs` | `Read-Configs` | **partiel**, voir plus bas |
+| `configs` | `Read-Configs` | registre inclus depuis peu ; reste la question des fichiers verrouillés, voir plus bas |
 | `variables` | `Read-Variables` | — |
 | `materiel` | `Read-Materiel` | — |
 | `outils` | `Read-SdkAndroid`, `Read-Wsl`, `Read-GestionnairesPaquets`, `Read-OutilsLangages` | scoop, Chocolatey, npm, pip seulement |
@@ -26,20 +26,27 @@ couverture inconnue. Les noms de famille utilisés ici sont ceux de
 | `portables` | `Read-Portables` | — |
 | `web` | `Read-Registre` (applications web du navigateur) | — |
 | `licences` | `Read-Licences` | Windows et Office seulement, via `SoftwareLicensingProduct` |
+| `payants` | `Get-LicenceAPrevoir`, `Read-FichiersLicence` | Liste tenue à la main : une ligne absente veut dire « je ne sais pas », pas « gratuit » |
 | `controles` | `Read-Controles` | Machine **neuve** uniquement (`verifier-pc.ps1`) : XMP, TRIM, Secure Boot/TPM, heures du SSD |
 
-### Pourquoi `configs` n'est que partiel
+### Les deux trous de `configs`, et où ils en sont
 
-Deux trous connus, tous les deux silencieux — rien n'échoue visiblement :
-
-1. **Le registre n'est pas lu.** `$ConfigsConnues` n'a qu'un champ `chemins`.
-   Or PuTTY range ses sessions SSH entièrement dans
-   `HKCU\Software\SimonTatham`, sans le moindre fichier. Même chose pour 7-Zip,
-   WinRAR, WinZip et TeamViewer.
-2. **Les fichiers verrouillés échouent.** `sauvegarder-configs.ps1` copie avec
-   `Copy-Item`. Si Firefox ou Thunderbird tourne pendant la sauvegarde,
-   `places.sqlite`, `cookies.sqlite` et `key4.db` sont verrouillés — c'est-à-dire
-   précisément les marque-pages et les mots de passe.
+1. **Le registre — comblé.** `$ConfigsConnues` porte maintenant un champ
+   `registre` à côté de `chemins`. PuTTY range ses sessions SSH entièrement
+   dans `HKCU\Software\SimonTatham`, sans le moindre fichier ; 7-Zip, WinRAR,
+   WinZip et TeamViewer font pareil. La sauvegarde les exporte en `.reg`, la
+   restauration les réimporte. Une réimportation **fusionne** dans le registre
+   au lieu de remplacer : c'est la seule chose du projet qui écrit sans filet,
+   et le script le dit au moment de le faire.
+2. **Les fichiers verrouillés — atténué, pas résolu.**
+   `sauvegarder-configs.ps1` copie avec `Copy-Item`, qui échoue sur un fichier
+   ouvert. Firefox ou Thunderbird en marche gardent la main sur
+   `places.sqlite`, `cookies.sqlite` et `key4.db` — les marque-pages et les
+   mots de passe, exactement ce qu'on vient chercher. Le script prévient
+   maintenant **avant** de copier et demande confirmation, au lieu de signaler
+   des échecs fichier par fichier une fois la copie finie. Il ne ferme rien à
+   la place de l'utilisateur. La vraie solution serait un instantané VSS, qui
+   demande les droits administrateur.
 
 ## Détectable, pas encore fait
 
@@ -79,7 +86,6 @@ Kozphy/installed-software-inventory.
 | `chassis` | `Win32_SystemEnclosure` | Portable ou fixe : change ce qu'on conseille. |
 | `pilotes` | `Win32_PnPSignedDriver` | Matériel exotique dont le pilote ne sera pas retrouvé tout seul. |
 | `outils` (extension) | `dotnet tool list -g`, `Get-InstalledModule`, `cargo install --list` | Les modules PowerShell n'apparaissent nulle part ailleurs : ni au registre, ni dans winget. |
-| `licences-fichier` | `WinRAR\rarreg.key` et équivalents | Un fichier de licence perdu, c'est un logiciel à racheter. |
 
 ## Fait depuis la relecture
 
@@ -88,6 +94,7 @@ Kozphy/installed-software-inventory.
 | `licences` | `SoftwareLicensingProduct` dit si la licence Windows ou Office est OEM — attachée à la carte mère, elle **ne suit pas** — ou Retail. Les licences qui ne suivent pas passent en tête de l'onglet Données. |
 | liens officiels | `URLInfoAbout` et `HelpLink` étaient déjà dans le registre et personne ne les lisait. La checklist ouvre le vrai site de l'éditeur au lieu de lancer une recherche. Ça ne demande aucun accès à Internet pendant le scan. |
 | `apps` | `winget export` remplace `winget list` comme source d'identifiants. Voir le commentaire de `Read-Winget` : un relevé à zéro identifiant n'est pas forcément un bug. |
+| `payants` | Deux choses qui n'ont rien à voir et se complètent. Une liste tenue à la main marque les logiciels connus pour réclamer une clé (Office, Adobe, WinRAR, antivirus payants, JetBrains…) : la ligne porte un badge « licence » et le champ où noter la clé. Et `Read-FichiersLicence` relève les fichiers qui **sont** la licence — `rarreg.key`, `wincmd.key`, `BCLicense` — dont on remonte le **chemin** et jamais le contenu : l'inventaire voyage sur une clé USB. La limite est assumée et écrite dans la page : rien ne distingue un logiciel payant d'un gratuit dans le registre, donc l'absence de badge ne prouve rien. |
 | `controles` | Quatre contrôles de la machine neuve, repris de ce que fait SPECS : la mémoire tourne-t-elle à sa vitesse nominale (XMP/EXPO non activé = 10 à 15 % de performances perdues en silence), TRIM actif, Secure Boot et TPM, et surtout le compteur d'heures du SSD — un disque « neuf » à 400 heures ne l'est pas. |
 
 ## Hors de portée
@@ -108,12 +115,13 @@ faire croire qu'un scan les couvrira un jour.
 
 | | Avant la relecture des autres inventaires | Après |
 |---|---|---|
-| Familles couvertes | 11 | 11 + 1 nouvelle (`licences`), dont `configs` partielle |
+| Familles couvertes | 11 | 14 (`licences`, `controles`, `payants` en plus), `configs` réparée |
 | En attente, sans méthode | 14 | 10 |
 | En attente, méthode trouvée | 0 | 4 |
-| Nouvelles familles repérées | — | 11, dont 2 faites |
+| Nouvelles familles repérées | — | 9, dont 1 faite (`licences-fichier`), 8 restantes |
 | Hors de portée | 6, jamais écrites | 5, écrites ici |
-| **Total à faire** | **14** | **23** |
+| **Total à faire** | **14** | **22** |
 
-Fait : les licences Windows et Office, et les liens officiels tirés du
-registre. Reste 23 points, listés plus haut.
+Fait : les licences Windows et Office, les liens officiels tirés du registre,
+les quatre contrôles de la machine neuve, le registre des configurations, et le
+marquage des logiciels payants. Reste 22 points, listés plus haut.

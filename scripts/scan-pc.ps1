@@ -124,6 +124,11 @@ $materiel = Invoke-Detecteur -Nom 'materiel' -Bloc { Read-Materiel }
 # le prix d'une licence.
 $licences = Invoke-Detecteur -Nom 'licences' -Bloc { Read-Licences }
 
+# Un logiciel payant se reinstalle comme les autres, puis refuse de demarrer.
+# Certains rangent leur licence dans un fichier, en clair, a un endroit connu :
+# on releve le chemin, jamais le contenu. L'inventaire voyage sur une cle USB.
+$fichiersLicence = Invoke-Detecteur -Nom 'fichiers de licence' -Bloc { Read-FichiersLicence }
+
 # Une machine de developpement porte des chaines d'outils qu'aucun installateur
 # n'enregistre : ni le registre, ni winget, ni le Store n'en savent rien. On ne
 # les copie pas — elles pesent des dizaines de Go et se retelechargent — on
@@ -190,6 +195,7 @@ $inventaire = [ordered]@{
     aPrevoirMo = Get-TotalAPrevoirMo @($configs, $dossiers, $portables, $precieux)
     materiel  = $materiel
     licences  = @($licences)
+    fichiersLicence = @($fichiersLicence)
     outils    = @($outils)
     dossiers  = @($dossiers)
     precieux  = @($precieux)

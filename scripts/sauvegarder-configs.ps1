@@ -73,6 +73,27 @@ if (-not $Simuler) {
     }
 }
 
+# Un navigateur ouvert verrouille ses marque-pages et ses mots de passe : la
+# copie echouait fichier par fichier, noye au milieu du reste, et personne ne
+# faisait le lien avec Firefox reste ouvert derriere. On le dit avant, pas
+# apres — et on ne ferme rien a la place de l'utilisateur.
+$aFermer = @(Get-LogicielsAFermer -NomsConfigs @($configs | ForEach-Object { $_.nom }))
+if ($aFermer.Count) {
+    Write-Host ""
+    Write-Host "Ferme ces logiciels avant de continuer :" -ForegroundColor Yellow
+    foreach ($l in $aFermer) { Write-Host "  - $l" -ForegroundColor Yellow }
+    Write-Host "  Ouverts, ils verrouillent leurs propres fichiers — marque-pages, mots de"
+    Write-Host "  passe, cookies. Ce sont justement ceux qu'on vient chercher."
+    if (-not $Simuler) {
+        Write-Host ""
+        $rep = Read-Host "  Continuer quand meme ? (o/N)"
+        if ($rep -notmatch '^(o|O|y|Y)') {
+            Write-Host "  Interrompu. Ferme-les et relance."
+            exit 0
+        }
+    }
+}
+
 Write-Host ""
 $index = @()
 $copies = 0
@@ -85,12 +106,49 @@ foreach ($c in $configs) {
     $taille = if ($c.tailleMo) { "{0} Mo" -f [math]::Round($c.tailleMo, 0) } else { "vide" }
 
     if ($Simuler) {
-        Write-Host ("  [simulation] {0,-28} {1,10}  <- {2}" -f $c.nom, $taille, $c.chemin)
+        $quoiCopie = if ($c.Contains('registre') -and $c.registre) { 'registre' } else { $taille }
+        Write-Host ("  [simulation] {0,-28} {1,10}  <- {2}" -f $c.nom, $quoiCopie, $c.chemin)
         continue
     }
 
     $exclure = @()
     if ($c.Contains('exclure') -and $c.exclure) { $exclure = @($c.exclure) }
+
+    # Une cle de registre ne se copie pas, elle s'exporte. PuTTY range ses
+    # sessions SSH entieres la, 7-Zip et WinRAR leurs reglages : sans cette
+    # branche ils partaient en silence, parce que rien n'echouait — la table
+    # ne les decrivait simplement pas.
+    if ($c.Contains('registre') -and $c.registre) {
+        try {
+            $null = New-Item -ItemType Directory -Path $cible -Force
+            $fichierReg = Join-Path $cible ($sousDossier + '.reg')
+            # reg.exe veut la forme « HKCU\... », pas le lecteur PowerShell
+            # « HKCU:\... » : le deux-points fait echouer l'export sans que
+            # reg.exe explique pourquoi.
+            $pourReg = ($c.chemin -replace '^([A-Z_]+):', '$1')
+            $sortie = & reg.exe export $pourReg $fichierReg /y 2>&1
+            if ($LASTEXITCODE -ne 0) { throw "reg export a echoue : $sortie" }
+            Write-Host ("  export  {0,-28} {1,10}" -f $c.nom, 'registre') -ForegroundColor Green
+            $copies++
+            $index += [ordered]@{
+                nom      = $c.nom
+                origine  = $c.chemin
+                modele   = if ($c.Contains('modele')) { $c.modele } else { $c.chemin }
+                dossier  = $sousDossier
+                quoi     = $c.quoi
+                exclu    = @()
+                tailleMo = $null
+                # La restauration lit ce marqueur pour reimporter au lieu de
+                # recopier des fichiers.
+                registre = $true
+                fichier  = ($sousDossier + '.reg')
+            }
+        } catch {
+            Write-Host ("  echec   {0,-28} {1}" -f $c.nom, $_.Exception.Message) -ForegroundColor Yellow
+            $echecs++
+        }
+        continue
+    }
 
     try {
         $source = Get-Item -LiteralPath $c.chemin -Force -ErrorAction Stop

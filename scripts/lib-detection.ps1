@@ -117,6 +117,7 @@ $CouverturesScan = [ordered]@{
     variables  = 'Read-Variables'
     materiel   = 'Read-Materiel'
     licences   = 'Read-Licences'
+    payants    = 'Get-LicenceAPrevoir, Read-FichiersLicence'
     controles  = 'Read-Controles'
     outils     = 'Read-SdkAndroid, Read-Wsl, Read-GestionnairesPaquets, Read-OutilsLangages'
     extensions = 'Read-Extensions'
@@ -242,6 +243,7 @@ function Add-App {
         if ([string]::IsNullOrWhiteSpace($exist.editeur) -and $Editeur) { $exist.editeur = $Editeur }
         if ([string]::IsNullOrWhiteSpace($exist.version) -and $Version) { $exist.version = $Version }
         if ($null -eq $exist.tailleGo -and $null -ne $TailleGo) { $exist.tailleGo = $TailleGo }
+        if ([string]::IsNullOrWhiteSpace($exist.payant)) { $exist.payant = Get-LicenceAPrevoir -Nom $Nom -Editeur $Editeur }
         if ($exist.source -notlike "*$Source*") { $exist.source = "$($exist.source), $Source" }
         return
     }
@@ -258,6 +260,9 @@ function Add-App {
         priorite = Get-Priorite -Categorie $cat
         duree    = Get-Duree -Nom $Nom -Categorie $cat
         tailleGo = $TailleGo
+        # Vide quand on ne sait pas, ce qui est le cas le plus courant : la
+        # liste est tenue a la main. Vide ne veut pas dire gratuit.
+        payant   = Get-LicenceAPrevoir -Nom $Nom -Editeur $Editeur
     }
 }
 
@@ -1527,6 +1532,26 @@ $ConfigsConnues = @(
        quoi='Comptes et courriels locaux. Volumineux. L''index de recherche se reconstruit tout seul et ne suit pas.' }
     @{ cle='filezilla';        nom='FileZilla';               chemins=@('%APPDATA%\FileZilla');                           quoi='Sites enregistrés. Contient des mots de passe.' }
     @{ cle='winscp';           nom='WinSCP';                  chemins=@('%APPDATA%\WinSCP.ini');                          quoi='Sessions enregistrées.' }
+    # Ces cinq-la ne posent aucun fichier de reglages : tout vit dans le
+    # registre. PuTTY est le cas le plus couteux — ses sessions SSH entieres,
+    # hotes, ports, cles associees, sont sous SimonTatham et nulle part
+    # ailleurs. La table ne connaissait que des chemins, donc ils partaient
+    # en silence.
+    @{ cle='putty';            nom='Sessions PuTTY';          chemins=@();
+       registre=@('HKCU:\Software\SimonTatham');
+       quoi='Sessions SSH enregistrées : hôtes, ports, clés associées. Rien n''est stocké en fichier.' }
+    @{ cle='7zip';             nom='7-Zip';                   chemins=@();
+       registre=@('HKCU:\Software\7-Zip');
+       quoi='Associations de fichiers et réglages de compression.' }
+    @{ cle='winrar';           nom='WinRAR';                  chemins=@('%APPDATA%\WinRAR');
+       registre=@('HKCU:\Software\WinRAR');
+       quoi='Réglages, et le fichier de licence rarreg.key s''il est posé à côté.' }
+    @{ cle='winzip';           nom='WinZip';                  chemins=@();
+       registre=@('HKCU:\Software\Nico Mak Computing\WinZip');
+       quoi='Réglages et enregistrement.' }
+    @{ cle='teamviewer';       nom='TeamViewer';              chemins=@();
+       registre=@('HKCU:\Software\TeamViewer');
+       quoi='Ordinateurs enregistrés et préférences.' }
     @{ cle='qbittorrent';      nom='qBittorrent';             chemins=@('%APPDATA%\qBittorrent','%LOCALAPPDATA%\qBittorrent'); quoi='Réglages et torrents en cours.' }
     @{ cle='obsstudio';        nom='OBS Studio';              chemins=@('%APPDATA%\obs-studio');                          quoi='Scènes, sources, profils d''encodage.' }
     @{ cle='vlcmediaplayer';   nom='VLC';                     chemins=@('%APPDATA%\vlc');                                 quoi='Réglages et équaliseur.' }
@@ -1794,6 +1819,24 @@ function Get-TailleDossier {
     } catch { return $null }
 }
 
+# Certains logiciels ne posent aucun fichier de reglages : tout vit dans le
+# registre. PuTTY y range ses sessions SSH entieres, sous
+# HKCU\Software\SimonTatham ; 7-Zip, WinRAR, WinZip et TeamViewer font pareil.
+# La table ne connaissait que des chemins de fichiers, donc ces reglages
+# partaient en silence : rien n'echouait, ils n'etaient simplement jamais vus.
+#
+# On ne lit pas la cle ici — sa copie est le travail de sauvegarder-configs.ps1,
+# qui l'exporte en .reg. On constate seulement qu'elle existe, pour ne pas
+# proposer d'emporter les reglages d'un logiciel qui n'en a jamais pose.
+function Test-CleRegistre {
+    param([string]$Cle)
+    if ([string]::IsNullOrWhiteSpace($Cle)) { return $false }
+    # Hors de Windows il n'y a pas de registre : le lecteur HKCU: n'existe pas,
+    # et Test-Path rend $false sans jeter. C'est ce qu'on veut.
+    try { return [bool](Test-Path -LiteralPath $Cle -ErrorAction SilentlyContinue) }
+    catch { return $false }
+}
+
 function Read-Configs {
     param([string[]]$ClesInstallees = @())
     Write-Host "  dossiers de configuration..." -NoNewline
@@ -1823,9 +1866,87 @@ function Read-Configs {
                 }
             }
         }
+
+        # Les cles de registre declarees par la regle. Une entree de registre
+        # n'a ni taille ni contenu mesurable a ce stade : on la marque, et
+        # sauvegarder-configs.ps1 l'exportera en .reg.
+        if ($regle.Contains('registre') -and $regle.registre) {
+            foreach ($cleReg in @($regle.registre)) {
+                if (-not (Test-CleRegistre -Cle $cleReg)) { continue }
+                $trouves += [ordered]@{
+                    nom      = $regle.nom
+                    chemin   = $cleReg
+                    modele   = $cleReg
+                    quoi     = $regle.quoi
+                    exclure  = @()
+                    tailleMo = $null
+                    logiciel = $regle.cle
+                    # Ce marqueur dit a la sauvegarde d'exporter plutot que de
+                    # copier, et a la page d'afficher une cle et non un dossier.
+                    registre = $true
+                }
+            }
+        }
     }
     Write-Host " $(@($trouves).Count) trouve(s)"
     return $trouves
+}
+
+# ---------------------------------------------------------- fichiers ouverts
+#
+# Copy-Item echoue sur un fichier verrouille. Firefox et Thunderbird en
+# ouverture gardent la main sur places.sqlite, cookies.sqlite et key4.db —
+# c'est-a-dire les marque-pages et les mots de passe, exactement ce qu'on
+# venait chercher. La sauvegarde signalait l'echec fichier par fichier, noye
+# au milieu du reste, et personne ne faisait le lien avec le navigateur reste
+# ouvert derriere.
+#
+# On ne ferme rien a la place de l'utilisateur : fermer un navigateur sous les
+# doigts de quelqu'un est le genre d'initiative qu'un script n'a pas a prendre.
+# On le previent avant de copier.
+
+# Quels processus tiennent quels reglages. Le nom est celui du processus, sans
+# .exe, tel que Get-Process le rend.
+$ProcessusVerrouillants = @{
+    'firefox'     = 'Profils Firefox'
+    'thunderbird' = 'Thunderbird'
+    'chrome'      = 'Google Chrome'
+    'msedge'      = 'Microsoft Edge'
+    'Code'        = 'Visual Studio Code'
+    'obsidian'    = 'Obsidian'
+    'qbittorrent' = 'qBittorrent'
+    'Discord'     = 'Discord'
+}
+
+# Rend les noms lisibles des logiciels ouverts qui verrouillent une des
+# configurations qu'on s'apprete a copier. Prend la liste des noms de
+# configurations retenues, pour ne prevenir que de ce qui concerne cette copie.
+function Get-LogicielsAFermer {
+    param(
+        [string[]]$NomsConfigs = @(),
+        # Injectable pour le test : sans ca, il faudrait lancer Firefox.
+        $Processus = $null
+    )
+    $ouverts = @()
+    if ($null -eq $Processus) {
+        try { $Processus = @(Get-Process -ErrorAction SilentlyContinue) } catch { $Processus = @() }
+    }
+    $nomsVus = @{}
+    foreach ($p in @($Processus)) {
+        if (-not $p) { continue }
+        $n = ''
+        $pn = $p.PSObject.Properties['ProcessName']
+        if ($pn) { $n = [string]$pn.Value }
+        if ([string]::IsNullOrWhiteSpace($n)) { continue }
+        if (-not $ProcessusVerrouillants.ContainsKey($n)) { continue }
+        $config = $ProcessusVerrouillants[$n]
+        # On ne previent que pour ce qui est effectivement dans la copie.
+        if ($NomsConfigs.Count -and ($NomsConfigs -notcontains $config)) { continue }
+        if ($nomsVus.ContainsKey($config)) { continue }
+        $nomsVus[$config] = $true
+        $ouverts += $config
+    }
+    return @($ouverts)
 }
 
 # ---------------------------------------------------------------- materiel
@@ -2233,6 +2354,114 @@ function Read-Licences {
     $out = @(Format-Licences -Produits $produits)
     if (-not $out.Count) { Write-Host " aucune licence lisible" -ForegroundColor Yellow; return @() }
     Write-Host " $($out.Count) licence(s)"
+    return $out
+}
+
+# ------------------------------------------------ logiciels sous licence
+#
+# Un logiciel gratuit se reinstalle d'une commande. Un logiciel payant se
+# reinstalle de la meme commande, et refuse ensuite de demarrer sans sa cle.
+# Rien dans le registre ne distingue les deux : ni le prix, ni la licence n'y
+# figurent. Ce qu'on peut faire, c'est tenir la liste des logiciels dont on
+# sait qu'ils reclament quelque chose, et le dire avant le formatage plutot
+# qu'apres.
+#
+# La liste est ecrite a la main, donc incomplete par construction. Elle ne
+# mentira pas pour autant : une ligne absente ne veut pas dire « gratuit »,
+# elle veut dire « je ne sais pas », et la page le formule ainsi. On ne marque
+# que ce dont on est sur, jamais par famille d'editeur — « Microsoft » couvre
+# aussi bien Office que le Visual C++ Redistributable.
+$LogicielsPayants = @(
+    @{ motif = 'microsoft (office|365)|^office (professional|home|standard|famille)|\bmicrosoft (word|excel|powerpoint|outlook|access|publisher|visio|project)\b'
+       quoi  = "Cle Office ou abonnement Microsoft 365. Elle est dans ton compte Microsoft : verifie que tu y as acces avant de formater." }
+    @{ motif = 'adobe|acrobat pro|photoshop|illustrator|premiere pro|after effects|lightroom|indesign'
+       quoi  = "Abonnement Adobe : la reinstallation passe par Creative Cloud et ton identifiant. Le nombre de postes est limite, deconnecte l'ancien avant de le demonter." }
+    @{ motif = 'winrar'
+       quoi  = "Licence WinRAR : un fichier rarreg.key a recopier, sinon la version d'essai reprend." }
+    @{ motif = 'kaspersky|bitdefender|\beset\b|norton|mcafee|avast premium|avg internet|f-secure|trend micro|malwarebytes premium'
+       quoi  = "Antivirus payant : l'abonnement se rattache a un compte ou a une cle, et souvent a un nombre de postes. Retrouve-la avant de desinstaller." }
+    @{ motif = 'jetbrains|intellij idea ultimate|pycharm professional|phpstorm|webstorm|rider|clion|datagrip|rubymine'
+       quoi  = "Licence JetBrains : rattachee a ton compte, elle se recupere en te connectant. Verifie que tu connais le compte." }
+    @{ motif = 'sublime text|sublime merge'
+       quoi  = "Licence Sublime : une cle de texte, dans le courriel d'achat. Elle ne se retrouve pas autrement." }
+    @{ motif = 'vmware workstation|vmware fusion|parallels desktop'
+       quoi  = "Licence de virtualisation : une cle par machine. Note-la avant, les machines virtuelles ne s'ouvriront pas sans." }
+    @{ motif = 'autodesk|autocad|revit|3ds max|\bmaya\b'
+       quoi  = "Abonnement Autodesk : rattache a un compte, avec un nombre de postes limite. Delie l'ancien poste." }
+    @{ motif = 'matlab|mathematica|\bstata\b|\bspss\b'
+       quoi  = "Licence scientifique, souvent nominative ou fournie par une ecole : verifie comment tu la reactives avant de formater." }
+    @{ motif = 'beyond compare|araxis merge'
+       quoi  = "Licence de comparaison de fichiers : une cle dans le courriel d'achat, parfois un fichier a recopier." }
+    @{ motif = 'affinity (photo|designer|publisher)|\bcapture one\b|\bdxo\b'
+       quoi  = "Licence achetee une fois : elle vit dans un espace client. Verifie que tu peux encore t'y connecter." }
+    @{ motif = 'camtasia|snagit|techsmith'
+       quoi  = "Licence TechSmith : une cle par produit, dans ton compte TechSmith." }
+    @{ motif = 'ableton|fl studio|cubase|\bstudio one\b|reaper|\bnative instruments\b'
+       quoi  = "Licence audio : souvent liee a un compte ou a une cle materielle. Les projets ne s'ouvriront pas sans les memes extensions." }
+    @{ motif = 'total commander|directory opus|xyplorer'
+       quoi  = "Licence de gestionnaire de fichiers : une cle ou un fichier de licence a recopier." }
+    @{ motif = 'internet download manager|\bidm\b|\bwinzip\b|\bnitro pro\b|pdf-xchange'
+       quoi  = "Licence achetee : une cle a retrouver dans le courriel d'achat ou l'espace client." }
+)
+
+function Get-LicenceAPrevoir {
+    param([string]$Nom, [string]$Editeur = '')
+    if ([string]::IsNullOrWhiteSpace($Nom)) { return '' }
+    $sujet = ("$Nom $Editeur").ToLowerInvariant()
+    foreach ($r in $LogicielsPayants) {
+        if ($sujet -match $r.motif) { return $r.quoi }
+    }
+    return ''
+}
+
+# Certains de ces logiciels rangent leur licence dans un fichier, en clair, a
+# un endroit connu. Ce fichier ne se reconstitue pas : perdu, il faut repasser
+# par l'editeur. On releve son CHEMIN, jamais son contenu — l'inventaire voyage
+# sur une cle USB, et une cle de licence lisible dedans serait une cle de
+# licence perdue. Le nom dans l'inventaire, le secret dans le fichier que
+# l'utilisateur copie lui-meme : c'est la regle du projet partout ailleurs.
+$FichiersLicence = @(
+    @{ nom = 'WinRAR'; quoi = "Sans ce fichier, WinRAR redevient une version d'essai."
+       chemins = @('%APPDATA%\WinRAR\rarreg.key', '%PROGRAMFILES%\WinRAR\rarreg.key', '%PROGRAMFILES(X86)%\WinRAR\rarreg.key') }
+    @{ nom = 'Total Commander'; quoi = 'Le fichier de licence, a reposer a cote du programme.'
+       chemins = @('%PROGRAMFILES%\totalcmd\wincmd.key', '%PROGRAMFILES(X86)%\totalcmd\wincmd.key') }
+    @{ nom = 'Beyond Compare'; quoi = 'Le fichier de licence, a reposer au meme endroit.'
+       chemins = @('%APPDATA%\Scooter Software\Beyond Compare *\BCLicense') }
+    @{ nom = 'Sublime Text'; quoi = 'La licence, dans un fichier que la reinstallation ne recree pas.'
+       chemins = @('%APPDATA%\Sublime Text*\Local\License.sublime_license') }
+    @{ nom = 'Sublime Merge'; quoi = 'La licence, dans un fichier que la reinstallation ne recree pas.'
+       chemins = @('%APPDATA%\Sublime Merge\Local\License.sublime_license') }
+    @{ nom = 'XYplorer'; quoi = 'Le fichier de licence, a cote du programme.'
+       chemins = @('%APPDATA%\XYplorer\*.lic') }
+)
+
+function Read-FichiersLicence {
+    Write-Host "  fichiers de licence..." -NoNewline
+    $out = @()
+    foreach ($regle in $FichiersLicence) {
+        foreach ($modele in @($regle.chemins)) {
+            foreach ($r in @(Expand-CheminModele -Modele $modele)) {
+                if (Test-Path -LiteralPath $r.chemin -PathType Container) { continue }
+                $ko = $null
+                try {
+                    $f = Get-Item -LiteralPath $r.chemin -Force -ErrorAction Stop
+                    $ko = [math]::Round($f.Length / 1KB, 1)
+                } catch { }
+                $out += [ordered]@{
+                    nom      = $regle.nom
+                    chemin   = $r.chemin
+                    modele   = $r.modele
+                    quoi     = $regle.quoi
+                    tailleKo = $ko
+                    # Ce fichier EST la licence : il n'a pas sa place sur une cle
+                    # USB qui se perd. La page le dit au lieu de le supposer.
+                    secret   = $true
+                }
+            }
+        }
+    }
+    if (-not $out.Count) { Write-Host " aucun"; return @() }
+    Write-Host " $($out.Count) fichier(s)"
     return $out
 }
 

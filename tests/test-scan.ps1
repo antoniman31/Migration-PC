@@ -865,5 +865,83 @@ ok 'aucun compteur, inconnu' (Format-ControleDisques -Compteurs @()).etat 'incon
 ok 'compteur absent, inconnu' (Format-ControleDisques -Compteurs @((Obj @{ DeviceId='X' }))).etat 'inconnu'
 ok 'controles declares'      ($CouverturesScan.Contains('controles')) $true
 
+"--- les reglages qui vivent dans le registre ---"
+# PuTTY ne pose aucun fichier : ses sessions SSH entieres sont dans
+# HKCU\Software\SimonTatham. La table ne connaissait que des chemins, donc
+# elles partaient en silence — rien n'echouait, elles n'etaient jamais vues.
+$avecReg = @($ConfigsConnues | Where-Object { $_.Contains('registre') -and $_.registre })
+ok 'des regles designent le registre' ($avecReg.Count -ge 5) $true
+ok 'PuTTY en fait partie' (@($avecReg | Where-Object { $_.nom -like '*PuTTY*' }).Count) 1
+ok 'et il n a aucun fichier'  (@(@($ConfigsConnues | Where-Object { $_.nom -like '*PuTTY*' })[0].chemins).Count) 0
+# Une cle mal ecrite ne se verrait qu'au moment de l'export, sur Windows.
+$malEcrites = @($avecReg | ForEach-Object { $_.registre } |
+    Where-Object { $_ -notmatch '^HK(CU|LM|CR|U|CC):\\' })
+ok 'toutes les cles sont des chemins PowerShell' ($malEcrites -join ', ') ''
+# Hors de Windows, le lecteur HKCU: n'existe pas : la lecture doit rendre
+# $false sans jeter, sinon le scan tomberait sur une machine de test.
+ok 'une cle absente ne jette pas' (Test-CleRegistre -Cle 'HKCU:\Software\NExistePas7734') $false
+ok 'une cle vide non plus'        (Test-CleRegistre -Cle '') $false
+ok 'un null non plus'             (Test-CleRegistre -Cle $null) $false
+
+"--- prevenir avant de copier, pas apres ---"
+# Firefox ouvert verrouille places.sqlite, cookies.sqlite et key4.db : les
+# marque-pages et les mots de passe, exactement ce qu'on vient chercher.
+function Proc($n){ return [pscustomobject]@{ ProcessName = $n } }
+$ouverts = @(Get-LogicielsAFermer -NomsConfigs @('Profils Firefox','Thunderbird') `
+    -Processus @((Proc 'firefox'), (Proc 'bash'), (Proc 'thunderbird')))
+ok 'Firefox signale'         ($ouverts -contains 'Profils Firefox') $true
+ok 'Thunderbird aussi'       ($ouverts -contains 'Thunderbird') $true
+ok 'et rien d autre'         (Get-Nombre $ouverts) 2
+# On ne previent que de ce qui est vraiment dans la copie : un Chrome ouvert
+# n'a pas a inquieter quelqu'un qui n'emporte que ses cles SSH.
+$horsCopie = @(Get-LogicielsAFermer -NomsConfigs @('Clés SSH') -Processus @((Proc 'chrome')))
+ok 'un logiciel hors copie se tait' (Get-Nombre $horsCopie) 0
+# Deux fenetres du meme navigateur ne doivent pas donner deux lignes.
+$deuxFois = @(Get-LogicielsAFermer -NomsConfigs @('Profils Firefox') `
+    -Processus @((Proc 'firefox'), (Proc 'firefox')))
+ok 'un seul avertissement par logiciel' (Get-Nombre $deuxFois) 1
+ok 'aucun processus, aucun avertissement' (Get-Nombre (Get-LogicielsAFermer -NomsConfigs @('Profils Firefox') -Processus @())) 0
+# Sans liste de configs, on previent de tout ce qui est ouvert : c'est le cas
+# ou le script ne sait pas encore ce qu'il va copier.
+ok 'sans filtre, tout remonte' (Get-Nombre (Get-LogicielsAFermer -Processus @((Proc 'chrome')))) 1
+
+
+"--- logiciels sous licence ---"
+# Ce qu'on affirme ici est modeste : une liste tenue a la main. Le test verifie
+# surtout qu'elle ne deborde pas — un faux « prevois une licence » sur un
+# logiciel gratuit ferait chercher une cle qui n'existe pas.
+ok 'Office marque payant'    ([bool](Get-LicenceAPrevoir -Nom 'Microsoft 365 Apps for enterprise')) $true
+ok 'et explique quoi faire'  ((Get-LicenceAPrevoir -Nom 'Microsoft Office Professional Plus 2021') -like '*compte Microsoft*') $true
+ok 'WinRAR marque payant'    ((Get-LicenceAPrevoir -Nom 'WinRAR 6.24 (64-bit)') -like '*rarreg.key*') $true
+ok 'Photoshop marque payant' ([bool](Get-LicenceAPrevoir -Nom 'Adobe Photoshop 2024')) $true
+ok 'un antivirus payant'     ([bool](Get-LicenceAPrevoir -Nom 'Bitdefender Total Security')) $true
+# Le piege : « Microsoft » ne suffit pas. Un poste Windows porte une dizaine de
+# Visual C++ Redistributable, aucun ne reclame de cle.
+ok 'Visual C++ reste gratuit' (Get-LicenceAPrevoir -Nom 'Microsoft Visual C++ 2015-2022 Redistributable (x64)') ''
+ok 'Edge reste gratuit'       (Get-LicenceAPrevoir -Nom 'Microsoft Edge' -Editeur 'Microsoft Corporation') ''
+ok '7-Zip reste gratuit'      (Get-LicenceAPrevoir -Nom '7-Zip 23.01') ''
+ok 'Firefox reste gratuit'    (Get-LicenceAPrevoir -Nom 'Mozilla Firefox' -Editeur 'Mozilla') ''
+ok 'VLC reste gratuit'        (Get-LicenceAPrevoir -Nom 'VLC media player') ''
+ok 'PyCharm Community gratuit' (Get-LicenceAPrevoir -Nom 'PyCharm Community Edition 2024.1') ''
+ok 'un nom vide ne dit rien'  (Get-LicenceAPrevoir -Nom '') ''
+# Vide veut dire « je ne sais pas », jamais « gratuit » : c'est la page qui le
+# formule, mais la liste doit rester courte et sure pour que ce soit vrai.
+ok 'la liste reste explicite' ($LogicielsPayants.Count -ge 10) $true
+ok 'chaque regle explique'    (@($LogicielsPayants | Where-Object { -not $_.quoi }).Count) 0
+ok 'payants declares'         ($CouverturesScan.Contains('payants')) $true
+
+# Les fichiers de licence : on releve le chemin, jamais le contenu.
+ok 'des fichiers connus'      ($FichiersLicence.Count -ge 5) $true
+ok 'rarreg.key en fait partie' ([bool](@($FichiersLicence | Where-Object { $_.nom -eq 'WinRAR' }).Count)) $true
+$champsLicence = @($FichiersLicence | Where-Object { -not $_.nom -or -not $_.chemins })
+ok 'chaque fichier a nom et chemins' (Get-Nombre $champsLicence) 0
+# Aucune regle ne doit lire le fichier : le mot « Get-Content » ne doit pas
+# apparaitre dans le detecteur, sinon la cle finirait dans l'inventaire.
+$srcLic = (Get-Content -Raw -Encoding UTF8 (Join-Path $racineScan 'scripts/lib-detection.ps1'))
+$blocLic = ($srcLic -split 'function Read-FichiersLicence')[1]
+$blocLic = ($blocLic -split '# ---')[0]
+ok 'le detecteur ne lit pas le contenu' ($blocLic -notmatch 'Get-Content') $true
+ok 'et marque le secret'                ($blocLic -match 'secret\s*=\s*\$true') $true
+
 
 if($script:ko){"`n$($script:ko) TEST(S) EN ECHEC"; exit 1} else {"`nTOUS LES TESTS POWERSHELL PASSENT"}

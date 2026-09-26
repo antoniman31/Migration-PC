@@ -120,6 +120,39 @@ foreach ($e in $entrees) {
     }
     $depuis = Join-Path $Source ([string]$e.dossier)
 
+    # Une cle de registre exportee se reimporte, elle ne se recopie pas. Et
+    # elle se reimporte SANS le garde-fou d'ecrasement des dossiers : une
+    # entree de registre n'a pas de « dossier existant » a mettre de cote, et
+    # reg import fusionne au lieu de remplacer. On le dit, parce que c'est la
+    # seule chose ici qui ecrit sans filet.
+    $estRegistre = $e.PSObject.Properties['registre'] -and $e.registre
+    if ($estRegistre) {
+        $fichierReg = ''
+        if ($e.PSObject.Properties['fichier']) { $fichierReg = [string]$e.fichier }
+        if (-not $fichierReg) { $fichierReg = ([string]$e.dossier) + '.reg' }
+        $cheminReg = Join-Path $depuis $fichierReg
+        if (-not (Test-Path -LiteralPath $cheminReg)) {
+            Write-Host ("  absent  {0,-28} le fichier .reg manque dans la copie" -f $nom) -ForegroundColor Yellow
+            $sautes++
+            continue
+        }
+        if ($Simuler) {
+            Write-Host ("  [simulation] {0,-24} <- {1}" -f $nom, $cheminReg)
+            continue
+        }
+        try {
+            $sortie = & reg.exe import $cheminReg 2>&1
+            if ($LASTEXITCODE -ne 0) { throw "reg import a echoue : $sortie" }
+            Write-Host ("  importe {0,-28} {1}" -f $nom, $origine) -ForegroundColor Green
+            Write-Host ("          (fusionne dans le registre : les valeurs deja presentes sous cette cle sont ecrasees)") -ForegroundColor DarkGray
+            $faits++
+        } catch {
+            Write-Host ("  echec   {0,-28} {1}" -f $nom, $_.Exception.Message) -ForegroundColor Yellow
+            $echecs++
+        }
+        continue
+    }
+
     if (-not (Test-Path -LiteralPath $depuis)) {
         Write-Host ("  absent  {0,-28} la copie ne contient pas ce dossier" -f $nom) -ForegroundColor Yellow
         $sautes++
