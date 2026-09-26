@@ -89,9 +89,17 @@ function Find-Profil {
     # Le profil personnel prime sur l'exemple : c'est celui qu'on veut verifier.
     # profil-migration-pc.json est le nom que la page donne a son export : sans
     # lui, exporter son profil puis le poser a cote du script ne suffisait pas.
-    foreach ($c in @('profil-local.json', 'profil-migration-pc.json', 'presets\exemple.json')) {
-        $p = Join-Path $PSScriptRoot $c
-        if (Test-Path $p) { return $p }
+    # Les scripts vivent dans scripts\ et le profil exporte se pose a la racine,
+    # a cote de la page. On regarde a cote d'abord — un dossier decompresse a
+    # plat reste possible — puis un cran au-dessus.
+    $racines = @($PSScriptRoot)
+    $parent = Split-Path $PSScriptRoot -Parent
+    if ($parent) { $racines += $parent }
+    foreach ($r in $racines) {
+        foreach ($c in @('profil-local.json', 'profil-migration-pc.json', 'presets\exemple.json')) {
+            $p = Join-Path $r $c
+            if (Test-Path $p) { return $p }
+        }
     }
     throw "Aucun profil trouve. Passez -Profil <chemin>."
 }
