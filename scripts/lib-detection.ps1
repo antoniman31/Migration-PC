@@ -1781,6 +1781,22 @@ function Test-SousChemin {
 # signale peut contenir un logiciel portable ou une cle : additionner les deux
 # gonflerait le chiffre, et un chiffre presente comme « prevois tant » doit
 # etre juste ou ne pas etre affiche.
+# Tout ce qui porte un chemin ne se copie pas pour autant. Un cache se
+# reconstruit tout seul : le compter dans le total reserverait des
+# gigaoctets sur la cle pour un fichier qu'on ne copiera pas. La regle vit
+# ici plutot que dans une expression au milieu de scan-pc.ps1, pour qu'elle
+# soit verifiable.
+function Select-AEmporter {
+    param($Entrees)
+    $out = @()
+    foreach ($e in @($Entrees)) {
+        if ($null -eq $e -or -not ($e -is [System.Collections.IDictionary])) { continue }
+        if ($e.Contains('cache') -and $e['cache']) { continue }
+        $out += $e
+    }
+    return $out
+}
+
 function Get-TotalAPrevoirMo {
     param($Groupes)
     $tout = @()

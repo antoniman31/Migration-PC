@@ -211,6 +211,12 @@ communes à toute réinstallation Windows, aucun script n'est nécessaire.
 | Variables d'environnement | Les variables personnalisées de l'utilisateur |
 | SDK Android, WSL, scoop, Chocolatey, npm, pip | Les chaînes d'outils qu'aucun installateur n'enregistre |
 | Profil et disques fixes | Les gros dossiers que la checklist ne réclame pas, les clés de signature, les logiciels portables |
+| WMI et registre | La machine elle-même : fabricant, modèle, n° de série, portable ou fixe, écrans branchés |
+| `SoftwareLicensingProduct` | Les licences Windows et Office, et surtout si elles suivent la machine |
+| `Get-VpnConnection`, `Get-VM`, `Get-BitLockerVolume` | Les VPN, les machines virtuelles, l'état de chiffrement des disques |
+| Profils de navigateur, `%LOCALAPPDATA%\Microsoft\Outlook` | Les favoris et les archives mail locales |
+| `netsh wlan`, `cmdkey`, `Win32_Printer`, clés `Fonts` | Réseaux Wi-Fi, identifiants, imprimantes, polices ajoutées |
+| `Get-SmbMapping`, `Win32_StartupCommand`, `Get-ScheduledTask`, `Get-NetFirewallRule`, `FileExts` | Lecteurs réseau, démarrage, tâches, pare-feu, associations de fichiers |
 
 Une entrée vue par plusieurs sources est fusionnée : le nom vient du registre,
 l'identifiant winget de winget, la taille sur disque de celle qui la connaît, et rien
@@ -302,6 +308,51 @@ recréées par Windows et les installateurs.
 Les redistribuables Visual C++, les mises à jour et les composants système sont écartés
 par défaut, sinon la liste dépasse largement ce qu'on réinstalle vraiment.
 
+**Trois endroits où le scan s'arrête volontairement.** La clé de récupération
+BitLocker, les clés Wi-Fi et les mots de passe du gestionnaire d'identification
+Windows sont tous lisibles : `Get-BitLockerVolume` rend le mot de passe à 48
+chiffres, `netsh wlan export profile key=clear` écrit les clés en clair, et le
+gestionnaire est fait pour restituer ce qu'il garde. Le scan ne les relève
+pas, et c'est un choix — cet inventaire voyage sur une clé USB, et une clé de
+récupération lisible dedans annulerait le chiffrement qu'on vient de
+constater. On relève donc le **nom** des réseaux, la **cible** des
+identifiants, l'**état** des volumes, et la page dit où aller chercher le
+secret soi-même. Un test passe une fausse clé à 48 chiffres dans le détecteur
+BitLocker et vérifie qu'elle ne ressort nulle part.
+
+**Les logiciels payants sont marqués, sans prétendre à l'exhaustivité.** Rien
+dans le registre ne distingue un logiciel payant d'un gratuit : ni le prix, ni
+la licence n'y figurent. Une liste tenue à la main marque ceux qu'on connaît —
+Office, Adobe, WinRAR, les antivirus payants, JetBrains, Autodesk — et la ligne
+porte alors un badge « licence » avec le champ où noter la clé. L'absence de
+badge ne veut donc **pas** dire « gratuit », elle veut dire « je ne sais
+pas », et la page le formule ainsi. À côté, les fichiers qui *sont* une
+licence — `rarreg.key`, `wincmd.key`, `BCLicense` — sont relevés par leur
+**chemin**, jamais par leur contenu.
+
+**Ce qui ne se transporte pas est quand même listé.** Les règles de pare-feu
+ajoutées à la main, les associations « ouvrir avec », les tâches planifiées, ce
+qui se lance au démarrage : rien de tout cela ne se rejoue d'une machine à
+l'autre — Windows signe même le choix d'association avec un condensé lié au
+compte et à la machine. La liste sert à **re-décider**, pas à restaurer, et
+chaque ligne le dit plutôt que de promettre ce qu'elle ne peut pas tenir. Le
+filtrage compte autant que le relevé : Windows pose plusieurs centaines de
+tâches planifiées, donc on ne garde que celles rangées à la racine avec un
+auteur qui n'est pas Microsoft ; les installateurs posent des centaines de
+règles de pare-feu, donc on ne garde que les entrantes sans groupe, celles
+qu'un humain a créées.
+
+**Ce que le total « à prévoir sur la clé » compte, et ce qu'il ne compte
+pas.** Les dossiers mesurés, les configurations, les clés de signature, les
+fichiers de licence et les archives Outlook `.pst` y entrent. Les caches
+`.ost` non : ils se reconstruisent seuls à la première connexion, et les
+compter réserverait des gigaoctets pour rien. Les machines virtuelles non plus
+— en emporter 96 Go est une décision, pas un choix par défaut, et le chiffre
+annoncerait une clé qu'on n'a pas.
+
+`COUVERTURE.md` tient la liste complète de ce que le scan couvre, de ce qu'il
+refuse de relever et de ce qui reste hors de portée.
+
 | Option | Effet |
 |---|---|
 | `-Sortie <chemin>` | Change le fichier produit (défaut : `inventaire-pc.json`) |
@@ -309,6 +360,10 @@ par défaut, sinon la liste dépasse largement ce qu'on réinstalle vraiment.
 | `-SansStore` | Ignore les applications du Microsoft Store |
 | `-SansJeux` | Ignore les bibliothèques de jeux (Steam, Epic, GOG, Xbox) |
 | `-SansVariables` | Ne relève pas les variables d'environnement |
+| `-SansConfigs` | Ne cherche pas les dossiers de réglages des logiciels |
+| `-SansOutils` | Ne relève pas les chaînes d'outils ni les extensions |
+| `-SansGrosDossiers` | Saute les mesures lentes : gros dossiers, clés de signature, portables, machines virtuelles |
+| `-SeuilGo <n>` | Seuil à partir duquel un dossier est signalé (défaut : 1) |
 
 Le script n'a pas besoin des droits administrateur, mais sans eux les logiciels
 installés par d'autres comptes utilisateurs peuvent manquer. Il n'écrit qu'un fichier
@@ -751,6 +806,16 @@ navigateur, les exports sont des téléchargements ordinaires.
 L'inventaire produit par le scan décrit précisément votre machine. Ne le publiez pas,
 et faites attention à ce que vous écrivez dans les notes et les champs de licence — ils
 partent dans le fichier de progression exporté.
+
+Le scan applique une règle constante : **le nom dans l'inventaire, le secret
+ailleurs.** Il relève les noms des réseaux Wi-Fi mais pas leurs clés, les
+cibles du gestionnaire d'identification mais pas les mots de passe, l'état des
+volumes BitLocker mais pas la clé de récupération, le chemin d'un fichier de
+licence mais pas son contenu, et les cinq derniers caractères d'une clé de
+produit — ce que Windows affiche lui-même — mais jamais la clé complète. Dans
+chacun de ces cas la commande qui donnerait le secret existe : ne pas s'en
+servir est le choix, et il tient à une seule raison — ce fichier voyage sur
+une clé USB qui se perd.
 
 Le stockage local est lié au navigateur **et** au chemin du fichier. Si la lettre de
 lecteur de la clé USB change d'un PC à l'autre, la progression ne suit pas : l'export

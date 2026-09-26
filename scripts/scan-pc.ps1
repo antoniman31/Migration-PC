@@ -227,7 +227,13 @@ $inventaire = [ordered]@{
     # reclame par ailleurs : les chemins ecrits a la main n'ont pas de taille,
     # et pretendre le contraire donnerait un chiffre faux. Decouvrir la cle
     # pleine au milieu de la copie coute une soiree.
-    aPrevoirMo = Get-TotalAPrevoirMo @($configs, $dossiers, $portables, $precieux)
+    # Les archives Outlook comptent, les caches .ost non : un .ost se
+    # reconstruit tout seul a la premiere connexion, le faire tenir sur la cle
+    # reviendrait a reserver huit gigaoctets pour rien. Les machines
+    # virtuelles non plus : emporter 96 Go de VM est une decision, pas un
+    # choix par defaut, et le chiffre annoncerait une cle qu'on n'a pas.
+    aPrevoirMo = Get-TotalAPrevoirMo @($configs, $dossiers, $portables, $precieux,
+        $fichiersLicence, (Select-AEmporter -Entrees $mail))
     materiel  = $materiel
     licences  = @($licences)
     fichiersLicence = @($fichiersLicence)
