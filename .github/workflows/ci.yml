@@ -66,6 +66,9 @@ jobs:
       - name: Dépendances entre éléments
         run: node tests/test-dependances.js
 
+      - name: Réconciliation source → cible
+        run: node tests/test-reconciliation.js
+
       # pwsh est preinstalle sur les runners ubuntu-latest.
       - name: Scanner — classement, fusion, parsing
         run: pwsh -File tests/test-scan.ps1

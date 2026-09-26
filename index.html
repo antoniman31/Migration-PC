@@ -3853,6 +3853,195 @@ function fichiersLicenceVersDonnees(fichiers,dejaReclames){
   return out;
 }
 
+// ═══ RÉCONCILIATION : ce qui est arrivé sur le PC cible ═══
+//
+// Le projet savait capturer un PC et cocher une liste. Il ne savait pas dire
+// « sur les 47 applications de l'instantané, 31 sont là et 16 manquent ».
+// C'est pourtant la seule question qui compte une fois devant la machine
+// neuve, et la raison d'être du projet : déplacer un état d'un PC à un autre.
+//
+// La comparaison vit ici, dans la page, et pas dans PowerShell. Trois raisons.
+// Le partage des rôles du projet est déjà celui-là — le script mesure, la page
+// décide. Elle ne demande aucun fichier supplémentaire à emporter sur la clé.
+// Et surtout elle porte sur deux fichiers JSON, donc elle ne dépend pas de
+// Windows : elle se teste pour de vrai au lieu d'être supposée juste.
+
+// Ce qui se compare, et comment. Chaque famille déclare ce qui fait l'identité
+// d'un élément — le seul point délicat de tout ce fichier.
+//
+// Pour les chemins, l'identité est le MODÈLE (« %APPDATA%\Code\User ») et non
+// le chemin réel : le nom d'utilisateur diffère souvent d'une machine à
+// l'autre, et comparer « C:\Users\antoni\... » à « C:\Users\Antoni\... »
+// rendrait tout manquant.
+const FAMILLES_COMPARABLES=[
+  {cle:'apps',nom:'Applications',id:function(e){return cleNom(e.nom);},
+   lib:function(e){return e.nom;},ver:function(e){return e.version;}},
+  {cle:'outils',nom:'Chaînes d\'outils',id:function(e){return String(e.id||'').toLowerCase();},
+   lib:function(e){return e.nom||e.id;},ver:function(e){return e.version;}},
+  {cle:'configs',nom:'Dossiers de réglages',id:cleChemin,lib:function(e){return e.nom;}},
+  {cle:'dossiers',nom:'Gros dossiers',id:cleChemin,lib:function(e){return e.nom;}},
+  {cle:'precieux',nom:'Clés de signature',id:cleChemin,lib:function(e){return e.nom;}},
+  {cle:'portables',nom:'Logiciels portables',id:cleChemin,lib:function(e){return e.nom;}},
+  {cle:'fichiersLicence',nom:'Fichiers de licence',id:cleChemin,lib:function(e){return e.nom;}},
+  {cle:'mail',nom:'Archives mail',id:cleChemin,lib:function(e){return e.nom;},
+   // Un cache .ost se refait tout seul : l'attendre sur la cible ferait
+   // compter comme manquant un fichier que personne ne doit copier.
+   garder:function(e){return !e.cache;}},
+  {cle:'vm',nom:'Machines virtuelles',id:function(e){return String(e.nom||'').toLowerCase();},
+   lib:function(e){return e.nom;}},
+  {cle:'favoris',nom:'Favoris',id:function(e){return (String(e.navigateur||'')+'|'+String(e.profil||'')).toLowerCase();},
+   lib:function(e){return 'Favoris '+String(e.navigateur||'');}},
+  {cle:'vpn',nom:'Connexions VPN',id:function(e){return String(e.nom||'').toLowerCase();},
+   lib:function(e){return e.nom;}},
+  {cle:'wifi',nom:'Réseaux Wi-Fi',id:function(e){return String(e.nom||'').toLowerCase();},
+   lib:function(e){return e.nom;}},
+  {cle:'identifiants',nom:'Identifiants Windows',id:function(e){return String(e.cible||'').toLowerCase();},
+   lib:function(e){return e.cible;}},
+  {cle:'polices',nom:'Polices ajoutées',id:function(e){return String(e.nom||'').toLowerCase();},
+   lib:function(e){return e.nom;}},
+  {cle:'imprimantes',nom:'Imprimantes',id:function(e){return String(e.nom||'').toLowerCase();},
+   lib:function(e){return e.nom;}},
+  {cle:'lecteurs',nom:'Lecteurs réseau',id:function(e){return String(e.cible||'').toLowerCase();},
+   lib:function(e){return (e.lettre?e.lettre+' ':'')+String(e.cible||'');}},
+  {cle:'demarrage',nom:'Lancés au démarrage',id:function(e){return String(e.nom||'').toLowerCase();},
+   lib:function(e){return e.nom;}},
+  {cle:'taches',nom:'Tâches planifiées',id:function(e){return String(e.nom||'').toLowerCase();},
+   lib:function(e){return e.nom;}},
+  {cle:'pareFeu',nom:'Règles de pare-feu',id:function(e){return String(e.nom||'').toLowerCase();},
+   lib:function(e){return e.nom;}},
+  {cle:'associations',nom:'Associations de fichiers',id:function(e){return String(e.extension||'').toLowerCase();},
+   lib:function(e){return e.extension+' → '+String(e.programme||'');}}
+];
+
+// Mêmes règles que Get-Cle côté PowerShell : sans ça « Mozilla Firefox (x64
+// fr) » sur la source et « Mozilla Firefox » sur la cible ne se retrouvent
+// pas, et la page annonce manquant un logiciel qui est là.
+function cleNom(nom){
+  let n=String(nom==null?'':nom).toLowerCase();
+  n=n.replace(/\([^)]*\)/g,'');
+  n=n.replace(/\bversion\b|\bv?\d+(\.\d+)+\b/g,'');
+  n=n.replace(/\b(update|build|release|rev|patch|sp)\s*\d+\b/g,'');
+  n=n.replace(/\s+-\s+.*$/,'');
+  n=n.replace(/\+/g,'p').replace(/#/g,'d');
+  return n.replace(/[^a-z0-9]/g,'');
+}
+
+// Le modèle d'abord, le chemin réel en dernier recours.
+function cleChemin(e){
+  const m=String((e&&(e.modele||e.chemin))||'').toLowerCase();
+  return m.replace(/[\\/]+$/,'');
+}
+
+// « 1.2.10 » est plus récent que « 1.2.9 » : une comparaison de texte dirait
+// l'inverse. Rend -1, 0 ou 1, et null quand l'une des deux n'est pas lisible.
+function comparerVersions(a,b){
+  const decoupe=function(v){
+    const t=String(v==null?'':v).trim().match(/\d+/g);
+    return t?t.map(Number):null;
+  };
+  const x=decoupe(a),y=decoupe(b);
+  if(!x||!y)return null;
+  for(let i=0;i<Math.max(x.length,y.length);i++){
+    const p=x[i]||0,q=y[i]||0;
+    if(p!==q)return p<q?-1:1;
+  }
+  return 0;
+}
+
+// Les familles qui décrivent la machine plutôt que ce qu'on transporte. Les
+// comparer n'aurait pas de sens : personne n'attend que le PC neuf ait la même
+// carte mère, ni la même licence OEM, que celui qu'on quitte.
+const FAMILLES_ETAT=['machine','materiel','licences','bitlocker','antivirus',
+  'pilotesTiers','controles','web','jeux'];
+
+function listeDe(inv,cle){
+  const v=inv&&inv[cle];
+  return Array.isArray(v)?v.filter(function(e){return e&&typeof e==='object';}):[];
+}
+
+// Le cœur. Prend deux instantanés, rend un rapport. Ne touche à rien et
+// n'affiche rien : c'est ce qui la rend testable sans Windows et sans DOM.
+function comparerInstantanes(source,cible){
+  const vide={ok:false,raison:'',familles:[],total:{attendu:0,arrive:0},
+    source:null,cible:null};
+  if(!source||typeof source!=='object')
+    return Object.assign({},vide,{raison:'Aucun instantané du PC source.'});
+  if(!cible||typeof cible!=='object')
+    return Object.assign({},vide,{raison:'Aucun scan du PC cible. Lance le même script sur la machine d\'arrivée.'});
+
+  const familles=[];
+  let attendu=0,arrive=0;
+  FAMILLES_COMPARABLES.forEach(function(f){
+    let src=listeDe(source,f.cle);
+    let cib=listeDe(cible,f.cle);
+    if(f.garder){src=src.filter(f.garder);cib=cib.filter(f.garder);}
+    if(!src.length)return;
+
+    // Index de la cible par identité, pour ne pas repartir en boucle par
+    // élément : une machine de développement porte des centaines d'entrées.
+    const parId={};
+    cib.forEach(function(e){
+      const id=f.id(e);
+      if(id)parId[id]=e;
+    });
+
+    // Un élément sans identité — un objet vide dans un fichier reçu — ne peut
+    // être ni retrouvé ni déclaré manquant. Il faut donc l'écarter AVANT de
+    // compter : le laisser dans le total ferait un compte qui ne boucle pas,
+    // « 2 attendus, 1 arrivé, 0 manquant », sans que rien ne l'explique.
+    const retenus=src.filter(function(e){return !!f.id(e);});
+    const manquants=[],differents=[];
+    let presents=0;
+    retenus.forEach(function(e){
+      const id=f.id(e);
+      const chez=parId[id];
+      if(!chez){
+        manquants.push({id:id,libelle:String(f.lib(e)||id),source:e});
+        return;
+      }
+      presents++;
+      if(!f.ver)return;
+      const cmp=comparerVersions(f.ver(chez),f.ver(e));
+      // Seule la version PLUS ANCIENNE qu'avant est un signal : sur une
+      // machine neuve presque tout sera plus récent, et le dire à chaque
+      // ligne noierait les quelques-unes qui ont régressé.
+      if(cmp===-1)differents.push({id:id,libelle:String(f.lib(e)||id),
+        avant:String(f.ver(e)||''),apres:String(f.ver(chez)||''),source:e});
+    });
+
+    if(!retenus.length)return;
+    attendu+=retenus.length;
+    arrive+=presents;
+    familles.push({cle:f.cle,nom:f.nom,total:retenus.length,arrives:presents,
+      manquants:manquants,differents:differents});
+  });
+
+  // Les variables d'environnement sont un dictionnaire, pas une liste.
+  const vsrc=(source.variables&&typeof source.variables==='object')?source.variables:{};
+  const vcib=(cible.variables&&typeof cible.variables==='object')?cible.variables:{};
+  const nomsVar=Object.keys(vsrc);
+  if(nomsVar.length){
+    const manquants=[];
+    let presents=0;
+    nomsVar.forEach(function(n){
+      if(vcib[n])presents++;else manquants.push({id:n,libelle:n});
+    });
+    attendu+=nomsVar.length;
+    arrive+=presents;
+    familles.push({cle:'variables',nom:'Variables d\'environnement',
+      total:nomsVar.length,arrives:presents,manquants:manquants,differents:[]});
+  }
+
+  const decrire=function(inv){
+    const m=(inv&&inv.machine)||{};
+    return {date:String(inv&&inv.genere||'').slice(0,10),
+      nom:String(m.nom||''),os:String(m.os||'')};
+  };
+  return {ok:true,raison:'',familles:familles,
+    total:{attendu:attendu,arrive:arrive},
+    source:decrire(source),cible:decrire(cible)};
+}
+
 // ═══ Les cinq familles que la checklist réclamait sans détecteur ═══
 
 // Les connexions VPN. Windows rend le nom et le serveur, jamais le mot de
