@@ -1895,7 +1895,7 @@ const PROFIL_DEFAUT = {
       "p": "Compte Microsoft ou impression",
       "note": "Si le disque de l'ancien PC est chiffré et que vous comptez y revenir chercher quelque chose, sans cette clé il sera illisible.",
       "pr": "high",
-      "scan": "attendu:bitlocker"
+      "scan": "bitlocker"
     },
     {
       "id": "s16",
@@ -1903,7 +1903,7 @@ const PROFIL_DEFAUT = {
       "p": "Gestionnaire de favoris → Exporter",
       "note": "La synchronisation les couvre si elle est active. Sinon, un export HTML prend dix secondes et évite de tout reconstruire.",
       "pr": "med",
-      "scan": "attendu:favoris"
+      "scan": "favoris"
     },
     {
       "id": "s17",
@@ -1927,7 +1927,7 @@ const PROFIL_DEFAUT = {
       "p": "Paramètres → Réseau → VPN",
       "note": "Adresses de serveurs, certificats et fichiers de configuration. Un client VPN réinstallé ne retrouve rien tout seul.",
       "pr": "med",
-      "scan": "attendu:vpn"
+      "scan": "vpn"
     },
     {
       "id": "s20",
@@ -1935,7 +1935,7 @@ const PROFIL_DEFAUT = {
       "p": "Fichiers .pst et .ost, dossiers de profil",
       "note": "Les messages restés en local n'existent nulle part ailleurs. Vérifier aussi les signatures, les règles et les carnets d'adresses.",
       "pr": "med",
-      "scan": "attendu:mail"
+      "scan": "mail"
     },
     {
       "id": "s21",
@@ -1943,7 +1943,7 @@ const PROFIL_DEFAUT = {
       "p": "Selon l'hyperviseur utilisé",
       "note": "Des dizaines de gigaoctets faciles à oublier, et impossibles à recréer à l'identique. Les arrêter proprement avant de copier.",
       "pr": "ok",
-      "scan": "attendu:vm"
+      "scan": "vm"
     },
     {
       "id": "sy1",
@@ -3566,6 +3566,35 @@ function inventaireVersProfil(inv){
   const licf=fichiersLicenceVersDonnees(inv.fichiersLicence,
     donnees.map(function(d){return d.p;}));
   if(licf.length)donnees=licf.concat(donnees);
+  // Les cinq familles ajoutées depuis. Les favoris, les VM et les archives
+  // mail portent un chemin réel : ils remplacent la ligne écrite d'avance qui
+  // désignait le même endroit, au lieu de doubler.
+  const dejaLa=function(){return donnees.map(function(d){return d.p;});};
+  const favs=favorisVersDonnees(inv.favoris,dejaLa());
+  const vms=vmVersDonnees(inv.vm,dejaLa());
+  const mails=mailVersDonnees(inv.mail,dejaLa());
+  const vpns=vpnVersDonnees(inv.vpn);
+  // Une ligne écrite d'avance qui déclare une famille — « Favoris du
+  // navigateur », scan:'favoris' — est un pense-bête en attendant le
+  // détecteur. Dès que celui-ci rapporte quelque chose de concret, avec des
+  // chemins réels, le pense-bête fait doublon : on le retire plutôt que
+  // d'afficher les deux. S'il n'a rien trouvé, la ligne reste, parce que la
+  // chose est toujours à faire à la main.
+  const remplacees={};
+  if(favs.length)remplacees.favoris=true;
+  if(vms.length)remplacees.vm=true;
+  if(mails.length)remplacees.mail=true;
+  if(vpns.length)remplacees.vpn=true;
+  donnees=donnees.filter(function(d){return !remplacees[d.scan];});
+  donnees=donnees.concat(favs).concat(vms).concat(vpns);
+  if(mails.length)donnees=mails.concat(donnees);
+  // BitLocker passe tout devant, avec les licences : c'est la panne la plus
+  // définitive de la migration, et elle se prévient avant de démonter.
+  const blk=bitlockerVersDonnees(inv.bitlocker);
+  if(blk.length){
+    donnees=donnees.filter(function(d){return d.scan!=='bitlocker';});
+    donnees=blk.concat(donnees);
+  }
   // Les licences passent tout devant : une licence qui ne suit pas change ce
   // qu'il faut acheter, donc elle doit se lire avant de commander la machine.
   const lics=licencesVersDonnees(inv.licences);
@@ -3576,6 +3605,12 @@ function inventaireVersProfil(inv){
   if(licf.length)desc.push(licf.length+' fichier'+(licf.length>1?'s':'')+' de licence');
   const payants=out.filter(function(a){return a.pay;}).length;
   if(payants)desc.push(payants+' licence'+(payants>1?'s':'')+' à prévoir');
+  const pst=mails.filter(function(m){return m.pr==='high';}).length;
+  if(pst)desc.push(pst+' archive'+(pst>1?'s':'')+' Outlook');
+  if(vms.length)desc.push(vms.length+' machine'+(vms.length>1?'s':'')+' virtuelle'+(vms.length>1?'s':''));
+  if(vpns.length)desc.push(vpns.length+' VPN');
+  const chiffres=blk.filter(function(b){return b.pr==='high';}).length;
+  if(chiffres)desc.push('disque chiffré');
   const licsOem=lics.filter(function(l){return l.pr==='high';}).length;
   if(licsOem)desc.push(licsOem+' licence'+(licsOem>1?'s':'')+' qui ne suivra'+(licsOem>1?'ient':'')+' pas');
   // Ce que le scan a mesuré, pas ce que la checklist réclame par ailleurs :
@@ -3760,6 +3795,157 @@ function fichiersLicenceVersDonnees(fichiers,dejaReclames){
       scan:'payants',
       warn:'Ce fichier est la licence elle-même : qui l\'a, l\'a. À copier sur un support que tu ne perds pas, pas sur la clé USB qui se balade.'
     });
+  });
+  return out;
+}
+
+// ═══ Les cinq familles que la checklist réclamait sans détecteur ═══
+
+// Les connexions VPN. Windows rend le nom et le serveur, jamais le mot de
+// passe ; les clients tiers ne rendent qu'un chemin de fichier, et ce fichier
+// contient la clé en clair — d'où l'avertissement.
+function vpnVersDonnees(vpns){
+  if(!Array.isArray(vpns)||!vpns.length)return [];
+  const out=[];
+  vpns.forEach(function(v,i){
+    if(!v||typeof v!=='object')return;
+    const nom=String(v.nom==null?'':v.nom).trim();
+    if(!nom)return;
+    const bouts=[];
+    if(v.quoi)bouts.push(String(v.quoi));
+    if(v.type)bouts.push(String(v.type));
+    bouts.push('relevé par le scan');
+    const e={
+      id:'vpn'+(i+1),
+      n:'VPN : '+nom,
+      pr:v.secret?'high':'med',
+      p:String(v.source&&v.source!=='Windows'?v.source:(v.serveur||'Paramètres → Réseau → VPN')),
+      note:bouts.join(' · '),
+      scan:'vpn'
+    };
+    if(v.secret)e.warn='Ce fichier contient la clé de la connexion en clair : à traiter comme un mot de passe, pas comme un réglage.';
+    out.push(e);
+  });
+  return out;
+}
+
+// Les marque-pages. Un nombre rend la ligne vérifiable : « 412 favoris » se
+// recompte après la migration, « les favoris » ne se vérifie pas.
+function favorisVersDonnees(favoris,dejaReclames){
+  if(!Array.isArray(favoris)||!favoris.length)return [];
+  const reclames=Array.isArray(dejaReclames)?dejaReclames:[];
+  const out=[];
+  favoris.forEach(function(f,i){
+    if(!f||typeof f!=='object')return;
+    const chemin=String(f.chemin==null?'':f.chemin).trim();
+    if(!chemin)return;
+    if(reclames.some(function(q){return recouvre(q,chemin);}))return;
+    const bouts=[];
+    const n=Number(f.nombre);
+    if(isFinite(n)&&n>0)bouts.push(n+' favori'+(n>1?'s':''));
+    if(f.quoi)bouts.push(String(f.quoi));
+    bouts.push('relevé par le scan');
+    const profil=String(f.profil||'');
+    out.push({
+      id:'fav'+(i+1),
+      n:'Favoris '+String(f.navigateur||'')+(profil&&profil!=='Default'?' ('+profil+')':''),
+      pr:'med',
+      p:chemin,
+      note:bouts.join(' · '),
+      scan:'favoris'
+    });
+  });
+  return out;
+}
+
+// Les archives mail. Toute la valeur de cette ligne tient dans une
+// distinction : le .pst n'existe nulle part ailleurs, le .ost se reconstruit
+// tout seul. Les deux vivent côte à côte et se ressemblent.
+function mailVersDonnees(mails,dejaReclames){
+  if(!Array.isArray(mails)||!mails.length)return [];
+  const reclames=Array.isArray(dejaReclames)?dejaReclames:[];
+  const out=[];
+  mails.forEach(function(m,i){
+    if(!m||typeof m!=='object')return;
+    const chemin=String(m.chemin==null?'':m.chemin).trim();
+    if(!chemin)return;
+    if(reclames.some(function(q){return recouvre(q,chemin);}))return;
+    const cache=!!m.cache;
+    const bouts=[];
+    if(m.quoi)bouts.push(String(m.quoi));
+    if(m.tailleMo!=null&&m.tailleMo!=='')bouts.push(fmtMo(m.tailleMo));
+    bouts.push('trouvé sur le disque');
+    const e={
+      id:'mail'+(i+1),
+      n:(cache?'Cache Outlook ':'Archive Outlook ')+String(m.nom||''),
+      pr:cache?'low':'high',
+      p:chemin,
+      note:bouts.join(' · '),
+      scan:'mail'
+    };
+    if(!cache)e.warn='Ces messages ne sont que là. Une fois le disque effacé, aucune reconnexion ne les ramène.';
+    out.push(e);
+  });
+  return out;
+}
+
+// Les machines virtuelles. Elles ne se réinstallent pas, elles se copient —
+// ou se refont. Leur poids décide de la taille du disque à commander, et
+// c'est pour ça qu'on le mesure. Il n'entre pas dans le total « à prévoir sur
+// la clé » : emporter 96 Go de VM est une décision, pas un choix par défaut.
+function vmVersDonnees(vms,dejaReclames){
+  if(!Array.isArray(vms)||!vms.length)return [];
+  const reclames=Array.isArray(dejaReclames)?dejaReclames:[];
+  const out=[];
+  vms.forEach(function(v,i){
+    if(!v||typeof v!=='object')return;
+    const chemin=String(v.chemin==null?'':v.chemin).trim();
+    if(!chemin)return;
+    if(reclames.some(function(q){return recouvre(q,chemin);}))return;
+    const bouts=[];
+    if(v.hyperviseur)bouts.push(String(v.hyperviseur));
+    if(v.tailleMo!=null&&v.tailleMo!=='')bouts.push(fmtMo(v.tailleMo));
+    bouts.push('à copier ou à refaire, pas à réinstaller');
+    out.push({
+      id:'vm'+(i+1),
+      n:'Machine virtuelle '+String(v.nom||chemin),
+      pr:'med',
+      p:chemin,
+      mo:(Number(v.tailleMo)||0)||undefined,
+      note:bouts.join(' · '),
+      scan:'vm'
+    });
+  });
+  return out;
+}
+
+// BitLocker. La seule famille où le scan s'arrête volontairement avant la
+// fin : il dit qu'un volume est chiffré et qu'une clé existe, jamais laquelle.
+// Un mot de passe de récupération dans un inventaire qui voyage sur une clé
+// USB annulerait le chiffrement qu'on vient de constater.
+function bitlockerVersDonnees(volumes){
+  if(!Array.isArray(volumes)||!volumes.length)return [];
+  const out=[];
+  volumes.forEach(function(v,i){
+    if(!v||typeof v!=='object')return;
+    const vol=String(v.volume||'').trim();
+    const bouts=[];
+    if(v.quoi)bouts.push(String(v.quoi));
+    const prot=Array.isArray(v.protecteurs)?v.protecteurs.filter(function(p){return p;}):[];
+    if(prot.length)bouts.push('protecteurs : '+prot.join(', '));
+    const e={
+      id:'blk'+(i+1),
+      n:'BitLocker'+(vol?' — '+vol:''),
+      // Un volume chiffré dont la clé n'est notée nulle part est la panne la
+      // plus définitive de toute la migration.
+      pr:(v.chiffre===false)?'low':'high',
+      p:'Compte Microsoft, ou Panneau de configuration → BitLocker',
+      note:bouts.join(' · '),
+      scan:'bitlocker'
+    };
+    if(v.chiffre!==false)
+      e.warn='Le scan ne relève pas la clé de récupération, et ne la relèvera jamais : elle ouvre le disque à qui la lit. Va la chercher toi-même et note-la ailleurs que sur la clé USB.';
+    out.push(e);
   });
   return out;
 }

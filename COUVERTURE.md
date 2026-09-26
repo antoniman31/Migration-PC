@@ -27,6 +27,11 @@ couverture inconnue. Les noms de famille utilisés ici sont ceux de
 | `web` | `Read-Registre` (applications web du navigateur) | — |
 | `licences` | `Read-Licences` | Windows et Office seulement, via `SoftwareLicensingProduct` |
 | `payants` | `Get-LicenceAPrevoir`, `Read-FichiersLicence` | Liste tenue à la main : une ligne absente veut dire « je ne sais pas », pas « gratuit » |
+| `vpn` | `Read-Vpn` | Connexions Windows par `Get-VpnConnection` ; les clients tiers sont constatés, jamais lus |
+| `favoris` | `Read-Favoris` | Comptés chez Chrome, Edge, Brave, Vivaldi, Opera ; constatés seulement chez Firefox |
+| `vm` | `Read-MachinesVirtuelles` | VirtualBox, VMware, Hyper-V si la fonctionnalité est là |
+| `mail` | `Read-ArchivesMail` | `.pst` et `.ost`, avec la distinction qui décide de tout |
+| `bitlocker` | `Read-Bitlocker` | État et types de protecteurs. **Jamais** la clé de récupération. Demande les droits administrateur |
 | `controles` | `Read-Controles` | Machine **neuve** uniquement (`verifier-pc.ps1`) : XMP, TRIM, Secure Boot/TPM, heures du SSD |
 
 ### Les deux trous de `configs`, et où ils en sont
@@ -59,11 +64,6 @@ ou sont encore marquées `manuel` faute de détecteur.
 | `wifi` | `HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Profiles` pour la liste ; `netsh wlan export profile key=clear` pour les clés |
 | `identifiants` | `cmdkey /list` donne les noms, jamais les secrets |
 | `polices` | clé `Fonts` du registre + `%LOCALAPPDATA%\Microsoft\Windows\Fonts` |
-| `vpn` | pas de méthode arrêtée |
-| `vm` | pas de méthode arrêtée |
-| `mail` | pas de méthode arrêtée |
-| `favoris` | pas de méthode arrêtée |
-| `bitlocker` | pas de méthode arrêtée |
 | `lecteurs-reseau` | pas de méthode arrêtée |
 | `pare-feu` | pas de méthode arrêtée |
 | `demarrage` | pas de méthode arrêtée |
@@ -95,6 +95,11 @@ Kozphy/installed-software-inventory.
 | liens officiels | `URLInfoAbout` et `HelpLink` étaient déjà dans le registre et personne ne les lisait. La checklist ouvre le vrai site de l'éditeur au lieu de lancer une recherche. Ça ne demande aucun accès à Internet pendant le scan. |
 | `apps` | `winget export` remplace `winget list` comme source d'identifiants. Voir le commentaire de `Read-Winget` : un relevé à zéro identifiant n'est pas forcément un bug. |
 | `payants` | Deux choses qui n'ont rien à voir et se complètent. Une liste tenue à la main marque les logiciels connus pour réclamer une clé (Office, Adobe, WinRAR, antivirus payants, JetBrains…) : la ligne porte un badge « licence » et le champ où noter la clé. Et `Read-FichiersLicence` relève les fichiers qui **sont** la licence — `rarreg.key`, `wincmd.key`, `BCLicense` — dont on remonte le **chemin** et jamais le contenu : l'inventaire voyage sur une clé USB. La limite est assumée et écrite dans la page : rien ne distingue un logiciel payant d'un gratuit dans le registre, donc l'absence de badge ne prouve rien. |
+| `vpn` | `Get-VpnConnection` rend le nom, le serveur et le type de tunnel des connexions Windows, sans droits particuliers et sans secret. Les clients tiers ne se lisent pas — chacun son format — mais leurs fichiers de configuration se constatent, en disant lesquels contiennent une clé en clair : un `.ovpn` en porte une. Et les VPN par abonnement (Nord, Proton, Mullvad, Tailscale) n'ont rien à copier, c'est un compte, la ligne le dit plutôt que d'envoyer chercher un fichier qui n'existe pas. |
+| `favoris` | Les navigateurs Chromium rangent leurs marque-pages dans un `Bookmarks` qui est du JSON en clair : on en donne le **nombre**, ce qui rend la ligne vérifiable après la migration. Firefox les met dans `places.sqlite`, verrouillé quand le navigateur tourne et illisible sans SQLite : là on constate le fichier sans le compter, et on le dit, plutôt que d'embarquer une dépendance. |
+| `vm` | Une machine virtuelle ne se réinstalle pas, elle se copie ou se refait — et elle pèse des dizaines de gigaoctets, ce qui décide de la taille du disque à commander. `VirtualBox.xml`, `inventory.vmls` et `Get-VM` donnent le nom et le chemin ; la taille est mesurée après coup. Elle n'entre **pas** dans le total « à prévoir sur la clé » : emporter 96 Go de VM est une décision, pas un choix par défaut. |
+| `mail` | Toute la valeur de cette famille tient dans une distinction que personne ne fait spontanément : un `.pst` est une archive qui n'existe nulle part ailleurs, un `.ost` est le cache d'un compte en ligne qui se reconstruit tout seul. Ils se ressemblent, vivent côte à côte, et ne valent pas la même chose. Le `.pst` passe en priorité haute avec son avertissement, le `.ost` en priorité basse. |
+| `bitlocker` | La seule famille où le scan s'arrête **volontairement** avant la fin. `Get-BitLockerVolume` rend aussi le mot de passe de récupération à 48 chiffres, et ce mot de passe *est* la sécurité du disque : l'écrire dans un inventaire qui voyage sur une clé USB annulerait le chiffrement qu'on vient de constater. On relève donc l'état et les types de protecteurs, jamais leur contenu, et un test vérifie qu'aucune clé ne ressort. Demande les droits administrateur ; sans eux, le script le dit au lieu de se taire. |
 | `controles` | Quatre contrôles de la machine neuve, repris de ce que fait SPECS : la mémoire tourne-t-elle à sa vitesse nominale (XMP/EXPO non activé = 10 à 15 % de performances perdues en silence), TRIM actif, Secure Boot et TPM, et surtout le compteur d'heures du SSD — un disque « neuf » à 400 heures ne l'est pas. |
 
 ## Hors de portée
@@ -115,13 +120,16 @@ faire croire qu'un scan les couvrira un jour.
 
 | | Avant la relecture des autres inventaires | Après |
 |---|---|---|
-| Familles couvertes | 11 | 14 (`licences`, `controles`, `payants` en plus), `configs` réparée |
-| En attente, sans méthode | 14 | 10 |
+| Familles couvertes | 11 | 19 |
+| En attente, sans méthode | 14 | 5 |
 | En attente, méthode trouvée | 0 | 4 |
-| Nouvelles familles repérées | — | 9, dont 1 faite (`licences-fichier`), 8 restantes |
+| Nouvelles familles repérées | — | 9, dont 1 faite, 8 restantes |
 | Hors de portée | 6, jamais écrites | 5, écrites ici |
-| **Total à faire** | **14** | **22** |
+| **Total à faire** | **14** | **17** |
 
-Fait : les licences Windows et Office, les liens officiels tirés du registre,
-les quatre contrôles de la machine neuve, le registre des configurations, et le
-marquage des logiciels payants. Reste 22 points, listés plus haut.
+Fait depuis : les licences Windows et Office, les liens officiels tirés du
+registre, les quatre contrôles de la machine neuve, le registre des
+configurations, le marquage des logiciels payants, puis les cinq familles que
+la checklist réclamait sans que rien n'aille les chercher — VPN, favoris,
+machines virtuelles, archives mail et BitLocker. Reste 17 points, listés plus
+haut : quatre avec une méthode connue, cinq sans, huit repérés ailleurs.

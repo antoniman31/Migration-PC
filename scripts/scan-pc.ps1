@@ -172,6 +172,21 @@ $configs = if ($SansConfigs) { @() } else {
     @(Invoke-Detecteur -Nom 'configurations' -Bloc { Read-Configs -ClesInstallees @($resultats.Keys) })
 }
 
+# Cinq familles que la checklist reclamait sans que rien n'aille les chercher.
+# Les trois premieres se lisent sans droits particuliers ; BitLocker non, et il
+# le dit au lieu de se taire.
+$vpn = Invoke-Detecteur -Nom 'VPN' -Bloc { Read-Vpn -ClesInstallees @($resultats.Keys) }
+$favoris = Invoke-Detecteur -Nom 'favoris' -Bloc { Read-Favoris }
+$mail = Invoke-Detecteur -Nom 'archives mail' -Bloc { Read-ArchivesMail }
+# Une machine virtuelle pese des dizaines de Go : c'est elle qui decide de la
+# taille du disque a commander. La mesure est lente, d'ou le meme interrupteur
+# que les gros dossiers.
+$vm = @()
+if (-not $SansGrosDossiers) {
+    $vm = @(Invoke-Detecteur -Nom 'machines virtuelles' -Bloc { Read-MachinesVirtuelles })
+}
+$bitlocker = Invoke-Detecteur -Nom 'BitLocker' -Bloc { Read-Bitlocker }
+
 $apps = $resultats.Values | Sort-Object { $_.nom }
 
 $os = try { (Get-CimInstance Win32_OperatingSystem -ErrorAction Stop).Caption } catch { 'Windows' }
@@ -196,6 +211,11 @@ $inventaire = [ordered]@{
     materiel  = $materiel
     licences  = @($licences)
     fichiersLicence = @($fichiersLicence)
+    vpn       = @($vpn)
+    favoris   = @($favoris)
+    mail      = @($mail)
+    vm        = @($vm)
+    bitlocker = @($bitlocker)
     outils    = @($outils)
     dossiers  = @($dossiers)
     precieux  = @($precieux)

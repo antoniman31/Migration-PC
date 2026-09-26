@@ -708,7 +708,7 @@
       "p": "Compte Microsoft ou impression",
       "note": "Si le disque de l'ancien PC est chiffré et que vous comptez y revenir chercher quelque chose, sans cette clé il sera illisible.",
       "pr": "high",
-      "scan": "attendu:bitlocker"
+      "scan": "bitlocker"
     },
     {
       "id": "s16",
@@ -716,7 +716,7 @@
       "p": "Gestionnaire de favoris → Exporter",
       "note": "La synchronisation les couvre si elle est active. Sinon, un export HTML prend dix secondes et évite de tout reconstruire.",
       "pr": "med",
-      "scan": "attendu:favoris"
+      "scan": "favoris"
     },
     {
       "id": "s17",
@@ -740,7 +740,7 @@
       "p": "Paramètres → Réseau → VPN",
       "note": "Adresses de serveurs, certificats et fichiers de configuration. Un client VPN réinstallé ne retrouve rien tout seul.",
       "pr": "med",
-      "scan": "attendu:vpn"
+      "scan": "vpn"
     },
     {
       "id": "s20",
@@ -748,7 +748,7 @@
       "p": "Fichiers .pst et .ost, dossiers de profil",
       "note": "Les messages restés en local n'existent nulle part ailleurs. Vérifier aussi les signatures, les règles et les carnets d'adresses.",
       "pr": "med",
-      "scan": "attendu:mail"
+      "scan": "mail"
     },
     {
       "id": "s21",
@@ -756,7 +756,7 @@
       "p": "Selon l'hyperviseur utilisé",
       "note": "Des dizaines de gigaoctets faciles à oublier, et impossibles à recréer à l'identique. Les arrêter proprement avant de copier.",
       "pr": "ok",
-      "scan": "attendu:vm"
+      "scan": "vm"
     },
     {
       "id": "sy1",

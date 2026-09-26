@@ -944,4 +944,104 @@ ok 'le detecteur ne lit pas le contenu' ($blocLic -notmatch 'Get-Content') $true
 ok 'et marque le secret'                ($blocLic -match 'secret\s*=\s*\$true') $true
 
 
+"--- VPN ---"
+# Ce qui sort d'une connexion Windows : le nom, le serveur, le type. Jamais le
+# mot de passe, et le test le verifie sur la sortie entiere.
+$vpns = @(Format-Vpn -Connexions @(
+    (Obj @{ Name='Bureau'; ServerAddress='vpn.exemple.fr'; TunnelType='Ikev2' }),
+    (Obj @{ Name='Maison'; ServerAddress='10.0.0.1'; TunnelType='L2tp' })))
+ok 'deux connexions'         (Get-Nombre $vpns) 2
+ok 'le serveur est repris'   $vpns[0].serveur 'vpn.exemple.fr'
+ok 'le type est lisible'     $vpns[0].type 'IKEv2'
+ok 'L2TP aussi'              $vpns[1].type 'L2TP/IPsec'
+ok 'et rien de secret'       $vpns[0].secret $false
+ok 'la ligne le dit'         ($vpns[0].quoi -like '*mot de passe*') $true
+# StrictMode : une connexion sans type ne doit pas faire tomber le scan.
+$partiel = @(Format-Vpn -Connexions @((Obj @{ Name='Minimal' })))
+ok 'sans serveur ni type'    (Get-Nombre $partiel) 1
+ok 'type vide'               $partiel[0].type ''
+ok 'sans nom, rien'          (Get-Nombre (Format-Vpn -Connexions @((Obj @{ ServerAddress='x' })))) 0
+ok 'liste vide'              (Get-Nombre (Format-Vpn -Connexions @())) 0
+ok 'null'                    (Get-Nombre (Format-Vpn -Connexions $null)) 0
+# Les VPN par abonnement n'ont pas de fichier : la ligne doit le dire au lieu
+# d'envoyer chercher une configuration qui n'existe pas.
+$abo = @(Get-VpnAbonnement -ClesInstallees @('nordvpn', 'mozillafirefox', 'tailscale'))
+ok 'deux abonnements reperes' (Get-Nombre $abo) 2
+ok 'rien a copier'            ($abo[0].quoi -like '*dans le compte*') $true
+ok 'un logiciel quelconque ne compte pas' (Get-Nombre (Get-VpnAbonnement -ClesInstallees @('7zip'))) 0
+ok 'vpn declare'              ($CouverturesScan.Contains('vpn')) $true
+
+"--- favoris ---"
+$jsonFav = '{"roots":{"bookmark_bar":{"type":"folder","children":[' +
+  '{"type":"url","url":"https://a.example"},' +
+  '{"type":"folder","children":[{"type":"url","url":"https://b.example"},{"type":"url","url":"https://c.example"}]}' +
+  ']},"other":{"type":"folder","children":[{"type":"url","url":"https://d.example"}]}}}'
+ok 'quatre favoris comptes'  (Measure-FavorisChromium -Json $jsonFav) 4
+ok 'les dossiers ne comptent pas' (Measure-FavorisChromium -Json '{"roots":{"bookmark_bar":{"type":"folder","children":[]}}}') 0
+ok 'un JSON casse ne jette pas'   (Measure-FavorisChromium -Json '{pas du json') $null
+ok 'un JSON sans roots'           (Measure-FavorisChromium -Json '{"autre":1}') $null
+ok 'une chaine vide'              (Measure-FavorisChromium -Json '') $null
+ok 'favoris declares'             ($CouverturesScan.Contains('favoris')) $true
+
+"--- machines virtuelles ---"
+$xmlVbox = '<?xml version="1.0"?><VirtualBox><Global><MachineRegistry>' +
+  '<MachineEntry uuid="{1}" src="C:\VMs\Debian\Debian.vbox"/>' +
+  '<MachineEntry uuid="{2}" src="C:\VMs\Windows 11\Windows 11.vbox"/>' +
+  '</MachineRegistry></Global></VirtualBox>'
+$vbox = @(Format-VmVirtualBox -Xml $xmlVbox)
+ok 'deux machines VirtualBox' (Get-Nombre $vbox) 2
+ok 'le nom vient du dossier'  $vbox[0].nom 'Debian'
+ok 'le chemin est le dossier' $vbox[0].chemin 'C:\VMs\Debian'
+ok 'un espace dans le nom'    $vbox[1].nom 'Windows 11'
+ok 'un XML casse ne jette pas' (Get-Nombre (Format-VmVirtualBox -Xml '<pas')) 0
+ok 'un XML vide non plus'      (Get-Nombre (Format-VmVirtualBox -Xml '')) 0
+
+$vmls = "vmlist1.config = `"C:\VMs\Ubuntu\Ubuntu.vmx`"`r`nvmlist1.DisplayName = `"Ubuntu`"`r`nvmlist2.config = `"D:\VM\Kali\Kali.vmx`"`r`n"
+$vmw = @(Format-VmVmware -Inventaire $vmls)
+ok 'deux machines VMware'     (Get-Nombre $vmw) 2
+ok 'le nom vient du .vmx'     $vmw[0].nom 'Ubuntu'
+ok 'le chemin est le dossier' $vmw[1].chemin 'D:\VM\Kali'
+ok 'les autres lignes sont ignorees' (Get-Nombre (Format-VmVmware -Inventaire 'vmlist1.DisplayName = "x"')) 0
+ok 'un inventaire vide'       (Get-Nombre (Format-VmVmware -Inventaire '')) 0
+
+$hv = @(Format-VmHyperV -Machines @((Obj @{ Name='Serveur'; Path='C:\Hyper-V\Serveur' })))
+ok 'Hyper-V repris'           $hv[0].nom 'Serveur'
+ok 'sans nom, rien'           (Get-Nombre (Format-VmHyperV -Machines @((Obj @{ Path='x' })))) 0
+ok 'vm declare'               ($CouverturesScan.Contains('vm')) $true
+
+"--- archives mail ---"
+ok 'mail declare'             ($CouverturesScan.Contains('mail')) $true
+ok 'quatre emplacements connus' ($DossiersMail.Count -ge 4) $true
+ok 'le .pst est cherche'      ([bool](@($DossiersMail | Where-Object { $_ -like '*.pst' }).Count)) $true
+ok 'le .ost aussi'            ([bool](@($DossiersMail | Where-Object { $_ -like '*.ost' }).Count)) $true
+
+"--- BitLocker ---"
+# Le point entier de cette famille : la cle de recuperation ne doit JAMAIS
+# sortir. Le protecteur en porte une, la sortie n'en porte que le type.
+function Prot($t, $mdp){ return (Obj @{ KeyProtectorType=$t; RecoveryPassword=$mdp }) }
+$chiffre = @(Format-Bitlocker -Volumes @((Obj @{
+    MountPoint='C:'; ProtectionStatus='On'
+    KeyProtector=@((Prot 'Tpm' ''), (Prot 'RecoveryPassword' '123456-654321-111111-222222-333333-444444-555555-666666')) })))
+ok 'un volume chiffre'        (Get-Nombre $chiffre) 1
+ok 'le volume est nomme'      $chiffre[0].volume 'C:'
+ok 'chiffre'                  $chiffre[0].chiffre $true
+ok 'une cle existe'           $chiffre[0].cleExiste $true
+ok 'le type est lisible'      ($chiffre[0].protecteurs -contains 'mot de passe de recuperation') $true
+# La verification qui compte : les 48 chiffres ne sont nulle part.
+$texte = ($chiffre | ConvertTo-Json -Depth 5)
+ok 'la cle n est PAS relevee' ($texte -notmatch '123456-654321') $true
+ok 'et la page le dit'        ($chiffre[0].quoi -like '*ne la relevera jamais*') $true
+
+$sansCle = @(Format-Bitlocker -Volumes @((Obj @{ MountPoint='D:'; ProtectionStatus='On'; KeyProtector=@((Prot 'Tpm' '')) })))
+ok 'chiffre sans cle de secours' $sansCle[0].cleExiste $false
+ok 'et on previent'              ($sansCle[0].quoi -like '*carte mere*') $true
+
+$clair = @(Format-Bitlocker -Volumes @((Obj @{ MountPoint='E:'; ProtectionStatus='Off'; KeyProtector=@() })))
+ok 'un volume en clair'       $clair[0].chiffre $false
+ok 'rien a prevoir'           ($clair[0].quoi -like '*rien a prevoir*') $true
+ok 'sans lettre, rien'        (Get-Nombre (Format-Bitlocker -Volumes @((Obj @{ ProtectionStatus='On' })))) 0
+ok 'liste vide'               (Get-Nombre (Format-Bitlocker -Volumes @())) 0
+ok 'bitlocker declare'        ($CouverturesScan.Contains('bitlocker')) $true
+
+
 if($script:ko){"`n$($script:ko) TEST(S) EN ECHEC"; exit 1} else {"`nTOUS LES TESTS POWERSHELL PASSENT"}
