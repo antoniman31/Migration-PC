@@ -118,6 +118,11 @@ $CouverturesScan = [ordered]@{
     materiel   = 'Read-Materiel'
     licences   = 'Read-Licences'
     payants    = 'Get-LicenceAPrevoir, Read-FichiersLicence'
+    vpn        = 'Read-Vpn'
+    favoris    = 'Read-Favoris'
+    vm         = 'Read-MachinesVirtuelles'
+    mail       = 'Read-ArchivesMail'
+    bitlocker  = 'Read-Bitlocker'
     controles  = 'Read-Controles'
     outils     = 'Read-SdkAndroid, Read-Wsl, Read-GestionnairesPaquets, Read-OutilsLangages'
     extensions = 'Read-Extensions'
@@ -2462,6 +2467,454 @@ function Read-FichiersLicence {
     }
     if (-not $out.Count) { Write-Host " aucun"; return @() }
     Write-Host " $($out.Count) fichier(s)"
+    return $out
+}
+
+# ------------------------------------------------------------------- VPN
+#
+# Windows tient ses propres connexions VPN dans un annuaire que le module
+# VpnClient sait lire, sans droits administrateur : nom, serveur, type de
+# tunnel. Aucun secret n'en sort, et c'est voulu — un mot de passe ou une cle
+# pre-partagee n'a rien a faire dans un inventaire qui voyage sur une cle USB.
+#
+# Les clients tiers, eux, ne se lisent pas : chacun a son format. On constate
+# la presence de leurs fichiers de configuration, en disant lesquels
+# contiennent une cle. Et les VPN par abonnement (Nord, Proton, Mullvad,
+# Tailscale) n'ont rien a copier du tout : c'est un compte, pas un fichier.
+
+$TypesTunnel = @{
+    'Pptp' = 'PPTP'; 'L2tp' = 'L2TP/IPsec'; 'Sstp' = 'SSTP'
+    'Ikev2' = 'IKEv2'; 'Automatic' = 'automatique'
+}
+
+function Format-Vpn {
+    param($Connexions)
+    $out = @()
+    foreach ($c in @($Connexions)) {
+        if (-not $c) { continue }
+        $nom = ''
+        $pn = $c.PSObject.Properties['Name']
+        if ($pn) { $nom = [string]$pn.Value }
+        if ([string]::IsNullOrWhiteSpace($nom)) { continue }
+
+        $serveur = ''
+        $ps = $c.PSObject.Properties['ServerAddress']
+        if ($ps) { $serveur = ([string]$ps.Value).Trim() }
+
+        $type = ''
+        $pt = $c.PSObject.Properties['TunnelType']
+        if ($pt -and $pt.Value) {
+            $brut = [string]$pt.Value
+            $type = if ($TypesTunnel.ContainsKey($brut)) { $TypesTunnel[$brut] } else { $brut }
+        }
+
+        $out += [ordered]@{
+            nom      = $nom.Trim()
+            serveur  = $serveur
+            type     = $type
+            source   = 'Windows'
+            # Le mot de passe et la cle pre-partagee restent sur l'ancienne
+            # machine : la connexion se recree a la main, en trois champs.
+            quoi     = "Connexion VPN de Windows. A recreer a la main sur la machine neuve : le mot de passe n'est pas relevé."
+            secret   = $false
+        }
+    }
+    return $out
+}
+
+# Les fichiers de configuration des clients tiers. On ne les lit jamais : un
+# .ovpn porte la cle privee en clair, une conf WireGuard aussi.
+$ConfigsVpnTierces = @(
+    @{ nom = 'OpenVPN'; chemins = @('%USERPROFILE%\OpenVPN\config\*.ovpn', '%PROGRAMFILES%\OpenVPN\config\*.ovpn')
+       quoi = "Profil OpenVPN : il contient la cle privee en clair. A traiter comme un mot de passe." }
+    @{ nom = 'WireGuard'; chemins = @('%PROGRAMFILES%\WireGuard\Data\Configurations\*')
+       quoi = "Tunnel WireGuard. Le fichier est chiffre pour cette machine-ci : il ne se recopie pas, il faut le reexporter depuis l'application avant de formater." }
+)
+
+# Ceux-la n'ont aucun fichier a emporter : le compte suffit. Le dire evite de
+# chercher une configuration qui n'existe pas.
+$VpnParAbonnement = @('nordvpn', 'protonvpn', 'mullvad', 'tailscale', 'expressvpn', 'cyberghost', 'surfshark', 'windscribe')
+
+function Get-VpnAbonnement {
+    param([string[]]$ClesInstallees = @())
+    $out = @()
+    foreach ($cle in @($ClesInstallees)) {
+        if ([string]::IsNullOrWhiteSpace($cle)) { continue }
+        foreach ($m in $VpnParAbonnement) {
+            if ($cle -like "*$m*") {
+                $out += [ordered]@{
+                    nom = $m; serveur = ''; type = 'abonnement'; source = 'application installee'
+                    quoi = "VPN par abonnement : rien a copier, tout est dans le compte. Verifie que tu peux encore t'y connecter."
+                    secret = $false
+                }
+                break
+            }
+        }
+    }
+    return $out
+}
+
+function Read-Vpn {
+    param([string[]]$ClesInstallees = @())
+    Write-Host "  VPN..." -NoNewline
+    $out = @()
+    try {
+        $cx = Get-VpnConnection -ErrorAction Stop
+        $out += @(Format-Vpn -Connexions $cx)
+    } catch { }
+    # Les connexions posees pour toute la machine vivent ailleurs.
+    try {
+        $cx = Get-VpnConnection -AllUserConnection -ErrorAction Stop
+        $out += @(Format-Vpn -Connexions $cx)
+    } catch { }
+
+    foreach ($regle in $ConfigsVpnTierces) {
+        foreach ($modele in @($regle.chemins)) {
+            foreach ($r in @(Expand-CheminModele -Modele $modele)) {
+                $out += [ordered]@{
+                    nom = $regle.nom; serveur = ''; type = 'fichier'
+                    source = $r.chemin; modele = $r.modele
+                    quoi = $regle.quoi
+                    secret = $true
+                }
+            }
+        }
+    }
+    $out += @(Get-VpnAbonnement -ClesInstallees $ClesInstallees)
+
+    if (-not $out.Count) { Write-Host " aucun"; return @() }
+    Write-Host " $($out.Count) connexion(s)"
+    return $out
+}
+
+# --------------------------------------------------------------- favoris
+#
+# Les navigateurs Chromium rangent leurs marque-pages dans un fichier
+# « Bookmarks » qui est du JSON en clair : on peut donc en donner le nombre,
+# ce qui rend la ligne verifiable au lieu de vague. Firefox les met dans
+# places.sqlite, verrouille quand le navigateur tourne et illisible sans
+# SQLite : la, on se contente du chemin et de la taille. Dire « je ne sais pas
+# combien » vaut mieux que d'embarquer une dependance pour le savoir.
+
+function Measure-FavorisChromium {
+    param([string]$Json)
+    if ([string]::IsNullOrWhiteSpace($Json)) { return $null }
+    try { $d = $Json | ConvertFrom-Json } catch { return $null }
+    if (-not $d -or -not $d.PSObject.Properties['roots']) { return $null }
+    $n = 0
+    $pile = New-Object System.Collections.Stack
+    foreach ($p in $d.roots.PSObject.Properties) { $pile.Push($p.Value) }
+    while ($pile.Count) {
+        $noeud = $pile.Pop()
+        if ($null -eq $noeud) { continue }
+        $type = ''
+        if ($noeud.PSObject.Properties['type']) { $type = [string]$noeud.type }
+        if ($type -eq 'url') { $n++; continue }
+        if ($noeud.PSObject.Properties['children']) {
+            foreach ($e in @($noeud.children)) { $pile.Push($e) }
+        }
+    }
+    return $n
+}
+
+$NavigateursFavoris = @(
+    @{ nom = 'Chrome';   base = 'LOCALAPPDATA'; chemin = 'Google\Chrome\User Data' }
+    @{ nom = 'Edge';     base = 'LOCALAPPDATA'; chemin = 'Microsoft\Edge\User Data' }
+    @{ nom = 'Brave';    base = 'LOCALAPPDATA'; chemin = 'BraveSoftware\Brave-Browser\User Data' }
+    @{ nom = 'Vivaldi';  base = 'LOCALAPPDATA'; chemin = 'Vivaldi\User Data' }
+    @{ nom = 'Opera';    base = 'APPDATA';      chemin = 'Opera Software\Opera Stable' }
+)
+
+function Read-Favoris {
+    Write-Host "  favoris..." -NoNewline
+    $out = @()
+    foreach ($nav in $NavigateursFavoris) {
+        $racine = Join-CheminSur (Get-Item "env:$($nav.base)" -ErrorAction SilentlyContinue).Value $nav.chemin
+        if (-not $racine -or -not (Test-Path -LiteralPath $racine)) { continue }
+        # Opera range ses marque-pages a la racine ; Chrome les met par profil.
+        $candidats = @(Join-Path $racine 'Bookmarks')
+        foreach ($d in @(Get-ChildItem -LiteralPath $racine -Directory -Force -ErrorAction SilentlyContinue)) {
+            if ($d.Name -ne 'Default' -and $d.Name -notlike 'Profile *') { continue }
+            $candidats += (Join-Path $d.FullName 'Bookmarks')
+        }
+        foreach ($f in $candidats) {
+            if (-not (Test-Path -LiteralPath $f -PathType Leaf)) { continue }
+            $n = $null
+            try { $n = Measure-FavorisChromium -Json (Get-Content -LiteralPath $f -Raw -Encoding UTF8) } catch { }
+            $out += [ordered]@{
+                navigateur = $nav.nom
+                profil     = (Split-Path (Split-Path $f -Parent) -Leaf)
+                chemin     = $f
+                nombre     = $n
+                quoi       = "Marque-pages $($nav.nom). Fichier unique, se recopie tel quel dans le meme profil."
+            }
+        }
+    }
+    # Firefox : on constate, on ne compte pas.
+    $profils = Join-CheminSur $env:APPDATA 'Mozilla\Firefox\Profiles'
+    if ($profils -and (Test-Path -LiteralPath $profils)) {
+        foreach ($p in @(Get-ChildItem -LiteralPath $profils -Directory -Force -ErrorAction SilentlyContinue)) {
+            $f = Join-Path $p.FullName 'places.sqlite'
+            if (-not (Test-Path -LiteralPath $f -PathType Leaf)) { continue }
+            $out += [ordered]@{
+                navigateur = 'Firefox'
+                profil     = $p.Name
+                chemin     = $f
+                nombre     = $null
+                quoi       = "Marque-pages et historique Firefox. Verrouille tant que Firefox tourne, et illisible sans SQLite : le scan constate le fichier sans le compter."
+            }
+        }
+    }
+    if (-not $out.Count) { Write-Host " aucun"; return @() }
+    Write-Host " $($out.Count) jeu(x) de favoris"
+    return $out
+}
+
+# --------------------------------------------- machines virtuelles
+#
+# Une machine virtuelle ne se reinstalle pas : elle se copie, ou elle se
+# refait de zero. Et elle pese des dizaines de gigaoctets, ce qui change la
+# taille du disque a commander. C'est la seule chose que le scan peut dire
+# honnetement : quelles machines existent, ou, et combien elles pesent.
+#
+# VirtualBox tient un registre XML lisible sans droits particuliers. VMware
+# Workstation tient un inventaire texte. Hyper-V repond a Get-VM, mais
+# seulement si la fonctionnalite est installee, et le plus souvent en
+# administrateur : son absence n'est pas une erreur.
+
+# Split-Path et [System.IO.Path] suivent le separateur de la machine qui lit.
+# Sous Linux — ou tournent les tests — « C:\VMs\Debian\Debian.vbox » n'a aucun
+# separateur a leurs yeux : Split-Path rend le chemin entier, et
+# GetFileNameWithoutExtension aussi. Ces chemins-la viennent de fichiers de
+# configuration Windows : ils s'analysent avec la regle de Windows, pas avec
+# celle de l'hote.
+function Split-CheminWindows {
+    param([string]$Chemin)
+    $c = ([string]$Chemin).TrimEnd('\', '/')
+    if ([string]::IsNullOrWhiteSpace($c)) { return [ordered]@{ parent = ''; feuille = '' } }
+    $i = $c.LastIndexOfAny([char[]]@('\', '/'))
+    if ($i -lt 0) { return [ordered]@{ parent = ''; feuille = $c } }
+    return [ordered]@{ parent = $c.Substring(0, $i); feuille = $c.Substring($i + 1) }
+}
+function Get-NomSansExtension {
+    param([string]$Chemin)
+    $f = (Split-CheminWindows -Chemin $Chemin).feuille
+    $i = $f.LastIndexOf('.')
+    if ($i -le 0) { return $f }
+    return $f.Substring(0, $i)
+}
+
+function Format-VmVirtualBox {
+    param([string]$Xml)
+    $out = @()
+    if ([string]::IsNullOrWhiteSpace($Xml)) { return $out }
+    try { $d = [xml]$Xml } catch { return $out }
+    foreach ($m in @($d.SelectNodes('//*[local-name()="MachineEntry"]'))) {
+        if (-not $m) { continue }
+        $src = [string]$m.src
+        if ([string]::IsNullOrWhiteSpace($src)) { continue }
+        # Le .vbox vit dans le dossier de la machine : c'est ce dossier qui pese.
+        $decoupe = Split-CheminWindows -Chemin $src
+        $dossier = $decoupe.parent
+        $out += [ordered]@{
+            nom          = if ($dossier) { (Split-CheminWindows -Chemin $dossier).feuille } else { $src }
+            hyperviseur  = 'VirtualBox'
+            chemin       = if ($dossier) { $dossier } else { $src }
+            tailleMo     = $null
+        }
+    }
+    return $out
+}
+
+function Format-VmVmware {
+    param([string]$Inventaire)
+    $out = @()
+    if ([string]::IsNullOrWhiteSpace($Inventaire)) { return $out }
+    foreach ($ligne in ($Inventaire -split "`r?`n")) {
+        # vmlist1.config = "C:\VMs\Debian\Debian.vmx"
+        if ($ligne -notmatch '^\s*vmlist\d+\.config\s*=\s*"(.+?)"\s*$') { continue }
+        $vmx = $Matches[1]
+        $dossier = (Split-CheminWindows -Chemin $vmx).parent
+        $out += [ordered]@{
+            nom         = Get-NomSansExtension -Chemin $vmx
+            hyperviseur = 'VMware'
+            chemin      = if ($dossier) { $dossier } else { $vmx }
+            tailleMo    = $null
+        }
+    }
+    return $out
+}
+
+function Format-VmHyperV {
+    param($Machines)
+    $out = @()
+    foreach ($m in @($Machines)) {
+        if (-not $m) { continue }
+        $nom = ''
+        $pn = $m.PSObject.Properties['Name']
+        if ($pn) { $nom = [string]$pn.Value }
+        if ([string]::IsNullOrWhiteSpace($nom)) { continue }
+        $chemin = ''
+        $pc = $m.PSObject.Properties['Path']
+        if ($pc) { $chemin = [string]$pc.Value }
+        $out += [ordered]@{
+            nom = $nom.Trim(); hyperviseur = 'Hyper-V'; chemin = $chemin; tailleMo = $null
+        }
+    }
+    return $out
+}
+
+function Read-MachinesVirtuelles {
+    Write-Host "  machines virtuelles..." -NoNewline
+    $out = @()
+    $vbox = Join-CheminSur $env:USERPROFILE '.VirtualBox\VirtualBox.xml'
+    if ($vbox -and (Test-Path -LiteralPath $vbox -PathType Leaf)) {
+        try { $out += @(Format-VmVirtualBox -Xml (Get-Content -LiteralPath $vbox -Raw -Encoding UTF8)) } catch { }
+    }
+    $vmw = Join-CheminSur $env:APPDATA 'VMware\inventory.vmls'
+    if ($vmw -and (Test-Path -LiteralPath $vmw -PathType Leaf)) {
+        try { $out += @(Format-VmVmware -Inventaire (Get-Content -LiteralPath $vmw -Raw -Encoding UTF8)) } catch { }
+    }
+    try { $out += @(Format-VmHyperV -Machines (Get-VM -ErrorAction Stop)) } catch { }
+
+    # La taille est ce qui compte ici : on la mesure apres coup, une seule fois
+    # par dossier, parce que c'est l'operation lente de tout le scan.
+    foreach ($vm in $out) {
+        if ($vm.chemin -and (Test-Path -LiteralPath $vm.chemin)) {
+            $vm.tailleMo = Get-TailleDossier -Chemin $vm.chemin
+        }
+    }
+    if (-not $out.Count) { Write-Host " aucune"; return @() }
+    Write-Host " $($out.Count) machine(s)"
+    return $out
+}
+
+# ------------------------------------------------- archives mail locales
+#
+# Une distinction que personne ne fait spontanement, et qui decide de tout :
+# un .pst est une archive qui n'existe nulle part ailleurs — perdu, perdu. Un
+# .ost est le cache local d'un compte IMAP ou Exchange : il se reconstruit
+# tout seul a la premiere connexion, et le copier ne sert a rien. Ils se
+# ressemblent, ils vivent cote a cote, et ils ne valent pas la meme chose.
+
+$DossiersMail = @(
+    '%LOCALAPPDATA%\Microsoft\Outlook\*.pst', '%LOCALAPPDATA%\Microsoft\Outlook\*.ost',
+    '%USERPROFILE%\Documents\Fichiers Outlook\*.pst',
+    '%USERPROFILE%\Documents\Outlook Files\*.pst'
+)
+
+function Read-ArchivesMail {
+    Write-Host "  archives mail..." -NoNewline
+    $out = @()
+    foreach ($modele in $DossiersMail) {
+        foreach ($r in @(Expand-CheminModele -Modele $modele)) {
+            $feuille = (Split-CheminWindows -Chemin $r.chemin).feuille
+            $ext = ''
+            $pt = $feuille.LastIndexOf('.')
+            if ($pt -gt 0) { $ext = $feuille.Substring($pt).ToLowerInvariant() }
+            $mo = $null
+            try { $mo = [math]::Round((Get-Item -LiteralPath $r.chemin -Force -ErrorAction Stop).Length / 1MB, 1) } catch { }
+            $cache = ($ext -eq '.ost')
+            $out += [ordered]@{
+                nom      = $feuille
+                chemin   = $r.chemin
+                modele   = $r.modele
+                cache    = $cache
+                tailleMo = $mo
+                quoi     = if ($cache) {
+                    "Cache local d'un compte en ligne (.ost). Il se reconstruit tout seul a la premiere connexion : rien a copier."
+                } else {
+                    "Archive Outlook (.pst) : ces messages n'existent nulle part ailleurs. Perdue, elle ne revient pas."
+                }
+            }
+        }
+    }
+    if (-not $out.Count) { Write-Host " aucune"; return @() }
+    Write-Host " $($out.Count) fichier(s)"
+    return $out
+}
+
+# ------------------------------------------------------------ BitLocker
+#
+# Ici le scan s'arrete volontairement avant la fin. Get-BitLockerVolume rend
+# aussi le mot de passe de recuperation a 48 chiffres — et ce mot de passe EST
+# la securite du disque. L'ecrire dans un inventaire qui voyage sur une cle USB
+# annulerait le chiffrement qu'on vient de constater. On releve donc quels
+# volumes sont chiffres et quels types de protecteurs existent, jamais leur
+# contenu, et la checklist rappelle de noter la cle ailleurs, a la main.
+#
+# La lecture demande les droits administrateur. Sans eux, on le dit, comme
+# pour Secure Boot et le compteur d'heures des disques.
+
+$TypesProtecteur = @{
+    'RecoveryPassword' = 'mot de passe de recuperation'
+    'Tpm'              = 'TPM'
+    'TpmPin'           = 'TPM + code PIN'
+    'TpmStartupKey'    = 'TPM + cle de demarrage'
+    'ExternalKey'      = 'cle externe (USB)'
+    'Password'         = 'mot de passe'
+    'RecoveryKey'      = 'fichier de cle de recuperation'
+}
+
+function Format-Bitlocker {
+    param($Volumes)
+    $out = @()
+    foreach ($v in @($Volumes)) {
+        if (-not $v) { continue }
+        $lettre = ''
+        $pl = $v.PSObject.Properties['MountPoint']
+        if ($pl) { $lettre = [string]$pl.Value }
+        if ([string]::IsNullOrWhiteSpace($lettre)) { continue }
+
+        $etat = ''
+        $pe = $v.PSObject.Properties['ProtectionStatus']
+        if ($pe) { $etat = [string]$pe.Value }
+
+        $types = @()
+        $pp = $v.PSObject.Properties['KeyProtector']
+        if ($pp) {
+            foreach ($k in @($pp.Value)) {
+                if (-not $k) { continue }
+                $t = ''
+                $pt = $k.PSObject.Properties['KeyProtectorType']
+                if ($pt) { $t = [string]$pt.Value }
+                if ([string]::IsNullOrWhiteSpace($t)) { continue }
+                $lisible = if ($TypesProtecteur.ContainsKey($t)) { $TypesProtecteur[$t] } else { $t }
+                if ($types -notcontains $lisible) { $types += $lisible }
+            }
+        }
+        $chiffre = ($etat -eq 'On' -or $etat -eq '1')
+        $aCle = ($types -contains 'mot de passe de recuperation' -or $types -contains 'fichier de cle de recuperation')
+        $out += [ordered]@{
+            volume       = $lettre
+            chiffre      = $chiffre
+            protecteurs  = $types
+            cleExiste    = $aCle
+            quoi         = if (-not $chiffre) {
+                "Volume non chiffre : rien a prevoir."
+            } elseif ($aCle) {
+                "Volume chiffre, avec une cle de recuperation. Le scan ne la releve pas, et ne la relevera jamais : elle ouvre le disque a qui la lit. Va la chercher dans ton compte Microsoft ou imprime-la, avant de toucher au materiel."
+            } else {
+                "Volume chiffre, sans cle de recuperation declaree. Un changement de carte mere ou de TPM rendrait le disque illisible : cree une cle de recuperation et note-la ailleurs avant de demonter quoi que ce soit."
+            }
+        }
+    }
+    return $out
+}
+
+function Read-Bitlocker {
+    Write-Host "  BitLocker..." -NoNewline
+    $volumes = $null
+    try { $volumes = Get-BitLockerVolume -ErrorAction Stop } catch {
+        Write-Host " indisponible (droits administrateur requis)" -ForegroundColor Yellow
+        return @([ordered]@{
+            volume = ''; chiffre = $null; protecteurs = @(); cleExiste = $null
+            quoi = "Impossible de savoir si les disques sont chiffres : relance ce script en tant qu'administrateur. Si BitLocker est actif, sa cle de recuperation doit etre notee ailleurs avant de toucher au materiel."
+        })
+    }
+    $out = @(Format-Bitlocker -Volumes $volumes)
+    if (-not $out.Count) { Write-Host " aucun volume"; return @() }
+    Write-Host " $($out.Count) volume(s)"
     return $out
 }
 

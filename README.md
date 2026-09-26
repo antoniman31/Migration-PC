@@ -9,7 +9,41 @@ vérifient que les sauvegardes ont bien été copiées ; la page orchestre le to
 construction. Il s'ouvre depuis une clé USB sur un PC fraîchement installé, sans réseau.
 Les scripts sont facultatifs.
 
-![La checklist, onglet Apps](captures/checklist-clair.png)
+## Aperçu
+
+L'onglet **Apps** : la liste des logiciels relevés sur l'ancien PC, regroupés par
+catégorie, avec leur version, leur poids et la commande qui les réinstalle. Un badge
+« licence » marque ceux qu'on sait payants, et ouvre le champ où noter la clé.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="captures/checklist-sombre.png">
+  <img alt="La checklist, onglet Apps" src="captures/checklist-clair.png">
+</picture>
+
+L'onglet **Données** : ce qu'il faut copier avant d'effacer, par ordre de priorité.
+Les lignes écrites d'avance et celles que le scan a mesurées se mélangent, chacune avec
+son chemin réel — y compris les clés de registre et les fichiers qui *sont* une licence.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="captures/donnees-sombre.png">
+  <img alt="La checklist, onglet Données" src="captures/donnees-clair.png">
+</picture>
+
+Le **mode guidé**, pour le jour de l'installation : une tâche à l'écran, « c'est fait »
+ou « passer », et rien d'autre.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="captures/mode-guide-sombre.png">
+  <img alt="Le mode guidé, une tâche à la fois" src="captures/mode-guide-clair.png">
+</picture>
+
+Et sur **téléphone**, parce que la page sert aussi à cocher d'une main pendant que
+l'autre branche un câble.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="captures/mobile-sombre.png">
+  <img alt="La checklist sur téléphone" src="captures/mobile-clair.png" width="320">
+</picture>
 
 ## En trois lignes
 
@@ -550,8 +584,6 @@ appartiennent à la préparation.
 « C'est fait » coche et avance. « Passer » remet la tâche en fin de file sans la cocher.
 Un bouton fait l'aller et le retour avec la vue liste, qui reste le défaut ; la
 progression est la même des deux côtés.
-
-![Le mode guidé](captures/mode-guide.png)
 
 ### Accessibilité
 

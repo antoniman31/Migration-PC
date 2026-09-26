@@ -253,6 +253,98 @@ console.log('\n--- comparaison de chemins ---');
     p3.data.filter(function(d){return /^Licence /.test(d.n);}).length,0);
 }
 
+// ── Les cinq familles ajoutées : VPN, favoris, VM, mail, BitLocker ──
+{
+  console.log('\n--- vpn, favoris, machines virtuelles, mail, bitlocker ---');
+  const inv={type:'inventaire-migration-pc',apps:[{nom:'VLC',cat:'media'}],
+    vpn:[
+      {nom:'Bureau',serveur:'vpn.exemple.fr',type:'IKEv2',source:'Windows',secret:false,
+       quoi:"Connexion VPN de Windows. A recreer a la main."},
+      {nom:'OpenVPN',serveur:'',type:'fichier',secret:true,
+       source:'C:\\Users\\a\\OpenVPN\\config\\bureau.ovpn',
+       quoi:'Profil OpenVPN : il contient la cle privee en clair.'}
+    ],
+    favoris:[
+      {navigateur:'Chrome',profil:'Default',chemin:'C:\\Users\\a\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Bookmarks',
+       nombre:412,quoi:'Marque-pages Chrome.'},
+      {navigateur:'Firefox',profil:'abc.default',chemin:'C:\\Users\\a\\AppData\\Roaming\\Mozilla\\Firefox\\Profiles\\abc.default\\places.sqlite',
+       nombre:null,quoi:'Verrouille tant que Firefox tourne.'}
+    ],
+    vm:[{nom:'Debian',hyperviseur:'VirtualBox',chemin:'C:\\VMs\\Debian',tailleMo:42800}],
+    mail:[
+      {nom:'archive2019.pst',chemin:'C:\\Users\\a\\Documents\\Fichiers Outlook\\archive2019.pst',
+       cache:false,tailleMo:3200,quoi:"Archive Outlook (.pst) : ces messages n'existent nulle part ailleurs."},
+      {nom:'compte.ost',chemin:'C:\\Users\\a\\AppData\\Local\\Microsoft\\Outlook\\compte.ost',
+       cache:true,tailleMo:8100,quoi:'Cache local : il se reconstruit tout seul.'}
+    ],
+    bitlocker:[
+      {volume:'C:',chiffre:true,cleExiste:true,protecteurs:['TPM','mot de passe de recuperation'],
+       quoi:'Volume chiffre, avec une cle de recuperation. Le scan ne la releve pas.'},
+      {volume:'E:',chiffre:false,cleExiste:false,protecteurs:[],quoi:'Volume non chiffre : rien a prevoir.'}
+    ]};
+  const p=G('inventaireVersProfil')(inv);
+  const par=n=>p.data.filter(function(d){return n.test(d.n);});
+
+  const vpns=par(/^VPN : /);
+  ok('deux lignes VPN',vpns.length,2);
+  ok('la connexion Windows renvoie au serveur',/vpn\.exemple\.fr/.test(vpns[0].p),true);
+  ok('sans avertissement',vpns[0].warn,undefined);
+  const ovpn=vpns.filter(function(v){return /OpenVPN/.test(v.n);})[0];
+  ok('le fichier .ovpn est en priorité haute',ovpn.pr,'high');
+  ok('et prévient que la clé est dedans',/mot de passe/.test(ovpn.warn||''),true);
+  ok('couverture vpn',vpns[0].scan,'vpn');
+
+  const favs=par(/^Favoris (Chrome|Firefox)/);
+  ok('deux jeux de favoris',favs.length,2);
+  // Le pense-bête « Favoris du navigateur » du profil livré disparaît dès que
+  // le détecteur rapporte de vrais chemins : deux lignes, pas trois.
+  ok('le pense-bête est remplacé',par(/^Favoris du navigateur/).length,0);
+  ok('le nombre est affiché',/412 favoris/.test(favs[0].note),true);
+  // Firefox n'est pas comptable sans SQLite : la ligne ne doit pas inventer un
+  // nombre, elle doit dire pourquoi elle n'en a pas.
+  const ff=favs.filter(function(f){return /Firefox/.test(f.n);})[0];
+  ok('Firefox sans nombre',/\d+ favoris/.test(ff.note),false);
+  ok('et le profil est nommé',/abc\.default/.test(ff.n),true);
+
+  const vms=par(/^Machine virtuelle /);
+  ok('une machine virtuelle',vms.length,1);
+  ok('son poids est là',/41\.8 Go|42800|Go/.test(vms[0].note),true);
+  ok('à copier, pas à réinstaller',/copier ou à refaire/.test(vms[0].note),true);
+
+  const pst=par(/^Archive Outlook /);
+  const ost=par(/^Cache Outlook /);
+  ok('une archive et un cache',pst.length+'/'+ost.length,'1/1');
+  ok('le .pst est en priorité haute',pst[0].pr,'high');
+  ok('et prévient',/aucune reconnexion/.test(pst[0].warn||''),true);
+  // Le .ost se reconstruit : le mettre en haut de la liste ferait copier
+  // huit gigaoctets pour rien.
+  ok('le .ost est en priorité basse',ost[0].pr,'low');
+  ok('et sans avertissement',ost[0].warn,undefined);
+
+  const blk=par(/^BitLocker/);
+  ok('deux volumes',blk.length,2);
+  ok('le volume chiffré passe en tête',blk[0].pr,'high');
+  ok('les protecteurs sont listés',/TPM/.test(blk[0].note),true);
+  ok('le volume en clair reste bas',blk[1].pr,'low');
+  ok('et sans avertissement',blk[1].warn,undefined);
+  ok('l\'avertissement dit pourquoi la clé n\'y est pas',
+    /ouvre le disque/.test(blk[0].warn||''),true);
+  // La règle du projet : le nom dans l'inventaire, le secret ailleurs.
+  ok('aucune ligne ne porte de clé à 48 chiffres',
+    /\d{6}-\d{6}-\d{6}/.test(JSON.stringify(p.data)),false);
+
+  const soust=p.meta.soustitre||'';
+  ok('le résumé compte l\'archive',/1 archive Outlook/.test(soust),true);
+  ok('et la machine virtuelle',/1 machine virtuelle/.test(soust),true);
+  ok('et le disque chiffré',/disque chiffré/.test(soust),true);
+
+  // Rien de relevé : rien ne s'affiche, rien ne plante.
+  const p2=G('inventaireVersProfil')({type:'inventaire-migration-pc',apps:[{nom:'VLC'}],
+    vpn:[{}],favoris:[{}],vm:[{}],mail:[{}],bitlocker:[]});
+  ok('entrées vides ignorées',
+    p2.data.filter(function(d){return /^VPN : |^Favoris (Chrome|Firefox)|^Machine virtuelle |^(Archive|Cache) Outlook /.test(d.n);}).length,0);
+}
+
 // ── Les quatre contrôles de la machine neuve ──
 {
   console.log('\n--- contrôles de la machine neuve ---');
