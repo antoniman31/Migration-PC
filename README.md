@@ -853,6 +853,7 @@ Données. `tests/test-profil-hostile.js` rejoue un profil piégé à chaque publ
 
 ```bash
 npm install                       # une seule fois
+./verifier-comme-ci.sh            # les 26 étapes du job Linux, dans l'ordre
 npm test                          # les cinq suites sans navigateur, en 2 s
 npm run test:scan                 # les sept suites PowerShell
 npm run test:navigateur           # rendu réel dans Chromium
@@ -1057,8 +1058,12 @@ Migration-PC/
 ├── presets/demonstration.json    # l'exemple garni, chargé à la demande
 ├── scripts-sync.js               # recopie le profil et le nom de cache du sw
 ├── captures/                     # images du README
+├── resultat-scan.js              # écrit par les scripts, lu par la page en file://
 ├── tests/                        # suites Node, PowerShell et navigateur
+├── verifier-comme-ci.sh          # rejoue localement les 26 étapes du job Linux
 ├── package.json                  # scripts de test uniquement
+├── COUVERTURE.md                 # ce que le scan détecte, refuse et ne peut pas
+├── LICENSE                       # GNU AGPL v3
 └── .github/workflows/ci.yml      # tests, puis publication si tout est vert
 ```
 
