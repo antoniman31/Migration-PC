@@ -152,7 +152,7 @@ const ordreInconnu=(fichier.ordre||[]).filter(function(id){return !ids.has(id);}
 //   « manuel »                 — personne ne scannera ça, et c'est assumé
 const lib=fs.readFileSync(path.join(racine,'scripts','lib-detection.ps1'),'utf8');
 const blocCouv=(lib.match(/\$CouverturesScan\s*=\s*\[ordered\]@\{([\s\S]*?)\n\}/)||[,''])[1];
-const couvertures=(blocCouv.match(/^\s*([a-z]+)\s*=/gm)||[]).map(m=>m.trim().replace(/\s*=$/,''));
+const couvertures=(blocCouv.match(/^\s*([A-Za-z]+)\s*=/gm)||[]).map(m=>m.trim().replace(/\s*=$/,''));
 ok('les couvertures sont déclarées dans lib-detection.ps1',couvertures.length>0,true);
 
 const sansDeclaration=[],couvInconnue=[],attendus=[];

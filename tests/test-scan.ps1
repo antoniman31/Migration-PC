@@ -1044,4 +1044,179 @@ ok 'liste vide'               (Get-Nombre (Format-Bitlocker -Volumes @())) 0
 ok 'bitlocker declare'        ($CouverturesScan.Contains('bitlocker')) $true
 
 
+"--- la machine elle-meme ---"
+$m = Format-Machine `
+    -Systeme @((Obj @{ Manufacturer='Dell Inc.'; Model='XPS 15 9530' })) `
+    -Bios    @((Obj @{ SerialNumber='7QK2X13' })) `
+    -Chassis @((Obj @{ ChassisTypes=@(10) })) `
+    -Ecrans  @((Obj @{ UserFriendlyName=@(68,101,108,108,0,0) }), (Obj @{ UserFriendlyName=@(76,71,0) }))
+ok 'fabricant repris'        $m.fabricant 'Dell Inc.'
+ok 'modele repris'           $m.modele 'XPS 15 9530'
+ok 'numero de serie'         $m.serie '7QK2X13'
+ok 'chassis portable'        $m.chassis 'portable'
+ok 'deux ecrans'             $m.ecrans 2
+ok 'le nom d ecran est decode' $m.modelesEcrans[0] 'Dell'
+# Une machine assemblee ne remplit pas le SMBIOS : afficher « System Product
+# Name » comme un modele ferait chercher un pilote qui n'existe pas.
+$assemble = Format-Machine -Systeme @((Obj @{ Manufacturer='System manufacturer'; Model='System Product Name' })) `
+    -Bios @((Obj @{ SerialNumber='To Be Filled By O.E.M.' })) -Chassis @((Obj @{ ChassisTypes=@(3) })) -Ecrans @()
+ok 'le faux fabricant est ecarte' ($assemble.Contains('fabricant')) $false
+ok 'le faux modele aussi'         ($assemble.Contains('modele')) $false
+ok 'le faux numero aussi'         ($assemble.Contains('serie')) $false
+ok 'mais le chassis fixe reste'   $assemble.chassis 'fixe'
+ok 'tout vide ne jette pas'  (@((Format-Machine -Systeme $null -Bios $null -Chassis $null -Ecrans $null).Keys).Count) 0
+ok 'machine declaree'        ($CouverturesScan.Contains('machine')) $true
+
+"--- antivirus ---"
+$av = @(Format-Antivirus -Produits @(
+    (Obj @{ displayName='Windows Defender' }), (Obj @{ displayName='Bitdefender Antivirus Plus' })))
+ok 'deux produits'           (Get-Nombre $av) 2
+ok 'Defender est integre'    $av[0].integre $true
+ok 'et revient tout seul'    ($av[0].quoi -like '*tout seul*') $true
+ok 'le tiers ne l est pas'   $av[1].integre $false
+ok 'et parle de licence'     ($av[1].quoi -like '*abonnement*') $true
+ok 'sans nom, rien'          (Get-Nombre (Format-Antivirus -Produits @((Obj @{ })))) 0
+
+"--- pilotes qui ne viennent pas de Microsoft ---"
+$pil = @(Format-PilotesTiers -Pilotes @(
+    (Obj @{ DriverProviderName='Microsoft'; DeviceClass='System'; DeviceName='Bus PCI' }),
+    (Obj @{ DriverProviderName='Realtek'; DeviceClass='MEDIA'; DeviceName='Realtek Audio' }),
+    (Obj @{ DriverProviderName='Realtek'; DeviceClass='MEDIA'; DeviceName='Realtek Audio 2' }),
+    (Obj @{ DriverProviderName='NVIDIA'; DeviceClass='Display'; DeviceName='RTX 4070' }),
+    (Obj @{ DriverProviderName='Brother'; DeviceClass='Printer'; DeviceName='Brother DCP' })))
+ok 'Microsoft est ecarte'    (@($pil | Where-Object { $_.fournisseur -eq 'Microsoft' }).Count) 0
+ok 'les imprimantes aussi'   (@($pil | Where-Object { $_.fournisseur -eq 'Brother' }).Count) 0
+# Une carte mere declare vingt peripheriques du meme fournisseur : une ligne
+# par couple fournisseur/classe suffit a savoir quoi chercher.
+ok 'deux fournisseurs, pas quatre' (Get-Nombre $pil) 2
+ok 'les appareils sont regroupes'  ($pil[0].appareils.Count) 2
+ok 'liste vide'              (Get-Nombre (Format-PilotesTiers -Pilotes @())) 0
+
+"--- date d installation ---"
+ok 'une date normale'        (Format-DateInstallation -Brut '20240317') '2024-03-17'
+ok 'une date absurde'        (Format-DateInstallation -Brut '20241345') ''
+ok 'une annee impossible'    (Format-DateInstallation -Brut '18010101') ''
+ok 'du texte'                (Format-DateInstallation -Brut 'mars 2024') ''
+ok 'vide'                    (Format-DateInstallation -Brut '') ''
+
+"--- gestionnaires de paquets ---"
+$dn = @(Format-PaquetsDotnet -Lignes @(
+    'Package Id      Version      Commands',
+    '--------------------------------------',
+    'dotnet-ef       9.0.1        dotnet-ef',
+    'csharpier       0.30.2       csharpier'))
+ok 'deux outils dotnet'      (Get-Nombre $dn) 2
+ok 'la commande est ecrite'  ($dn[0].commande -like 'dotnet tool install -g dotnet-ef*') $true
+ok 'l entete est ignoree'    (@($dn | Where-Object { $_.id -eq 'Package' }).Count) 0
+
+$ps = @(Format-ModulesPowerShell -Modules @((Obj @{ Name='PSReadLine'; Version='2.3.5' })))
+ok 'un module PowerShell'    $ps[0].id 'PSReadLine'
+ok 'avec sa commande'        ($ps[0].commande -like 'Install-Module PSReadLine*') $true
+
+$cg = @(Format-PaquetsCargo -Lignes @('ripgrep v14.1.0:', '    rg', 'bat v0.24.0:', '    bat'))
+ok 'deux paquets cargo'      (Get-Nombre $cg) 2
+# Les binaires fournis sont indentes : les compter ferait doubler la liste.
+ok 'les binaires sont ignores' (@($cg | Where-Object { $_.id -eq 'rg' }).Count) 0
+ok 'la version est lue'      $cg[0].version '14.1.0'
+
+"--- imprimantes ---"
+$imp = @(Format-Imprimantes -Imprimantes @(
+    (Obj @{ Name='Microsoft Print to PDF'; DriverName='x'; PortName='PORTPROMPT:' }),
+    (Obj @{ Name='Brother DCP-L2530DW'; DriverName='Brother DCP'; PortName='IP_192.168.1.50' }),
+    (Obj @{ Name='Canon MG3600'; DriverName='Canon Inkjet'; PortName='USB001' })))
+ok 'les virtuelles sont ecartees' (Get-Nombre $imp) 2
+ok 'la reseau est reconnue'  $imp[0].reseau $true
+ok 'la locale non'           $imp[1].reseau $false
+ok 'le pilote est garde'     $imp[1].pilote 'Canon Inkjet'
+ok 'et la ligne le dit'      ($imp[1].quoi -like '*pilote*') $true
+ok 'imprimantes declarees'   ($CouverturesScan.Contains('imprimantes')) $true
+
+"--- Wi-Fi : les noms, jamais les cles ---"
+$wf = @(Format-ProfilsWifi -Lignes @(
+    'Profils sur l interface Wi-Fi :',
+    '    Profil Tous les utilisateurs     : Livebox-1234',
+    '    Profil Tous les utilisateurs     : Bureau-5G',
+    '    Profil Tous les utilisateurs     : Livebox-1234'))
+ok 'deux reseaux, sans doublon' (Get-Nombre $wf) 2
+ok 'le nom est propre'       $wf[0].nom 'Livebox-1234'
+ok 'et la ligne dit pourquoi pas la cle' ($wf[0].quoi -like '*jamais la cle*') $true
+$wfEn = @(Format-ProfilsWifi -Lignes @('    All User Profile     : HomeNet'))
+ok 'l anglais marche aussi'  $wfEn[0].nom 'HomeNet'
+ok 'liste vide'              (Get-Nombre (Format-ProfilsWifi -Lignes @())) 0
+ok 'wifi declare'            ($CouverturesScan.Contains('wifi')) $true
+
+"--- identifiants : les cibles, jamais les secrets ---"
+$idt = @(Format-Identifiants -Lignes @(
+    '    Cible : Domain:target=nas.local',
+    '    Type : Mot de passe generique',
+    '    Cible : virtualapp/didlogical',
+    '    Cible : Domain:target=nas.local'))
+ok 'une cible, sans doublon' (Get-Nombre $idt) 1
+ok 'Windows est ecarte'      (@($idt | Where-Object { $_.cible -like 'virtualapp*' }).Count) 0
+ok 'et la ligne le dit'      ($idt[0].quoi -like '*jamais le mot de passe*') $true
+ok 'identifiants declares'   ($CouverturesScan.Contains('identifiants')) $true
+
+"--- polices ---"
+$fontes = New-Object PSObject
+$fontes | Add-Member -NotePropertyName 'Arial (TrueType)' -NotePropertyValue 'arial.ttf'
+$fontes | Add-Member -NotePropertyName 'Inter (TrueType)' -NotePropertyValue 'C:\Users\a\AppData\Local\Microsoft\Windows\Fonts\Inter.ttf'
+$fontes | Add-Member -NotePropertyName 'PSPath' -NotePropertyValue 'x'
+$pol = @(Format-Polices -Entrees $fontes -Portee 'machine')
+ok 'les deux sont vues'      (Get-Nombre $pol) 2
+ok 'le suffixe est retire'   $pol[0].nom 'Arial'
+ok 'PSPath est ignore'       (@($pol | Where-Object { $_.nom -eq 'PSPath' }).Count) 0
+ok 'polices declarees'       ($CouverturesScan.Contains('polices')) $true
+
+"--- lecteurs reseau ---"
+$lec = @(Format-LecteursReseau -Lecteurs @(
+    (Obj @{ LocalPath='Z:'; RemotePath='\\nas\partage' }), (Obj @{ LocalPath='Y:'; RemotePath='' })))
+ok 'un lecteur retenu'       (Get-Nombre $lec) 1
+ok 'la cible est reprise'    $lec[0].cible '\\nas\partage'
+ok 'lecteurs declares'       ($CouverturesScan.Contains('lecteurs')) $true
+
+"--- lancement au demarrage ---"
+$dem = @(Format-Demarrage -Entrees @(
+    (Obj @{ Name='Discord'; Command='C:\...\Update.exe'; Location='HKU\...\Run' }),
+    (Obj @{ Command='x' })))
+ok 'une entree nommee'       (Get-Nombre $dem) 1
+ok 'la commande est gardee'  ($dem[0].commande -like '*Update.exe*') $true
+ok 'demarrage declare'       ($CouverturesScan.Contains('demarrage')) $true
+
+"--- taches planifiees ---"
+$tac = @(Format-TachesPlanifiees -Taches @(
+    (Obj @{ TaskPath='\'; TaskName='Sauvegarde perso'; Author='antoni'; State='Ready' }),
+    (Obj @{ TaskPath='\Microsoft\Windows\Defrag\'; TaskName='ScheduledDefrag'; Author='Microsoft'; State='Ready' }),
+    (Obj @{ TaskPath='\'; TaskName='OneDrive'; Author='Microsoft Corporation'; State='Ready' })))
+# Windows en pose plusieurs centaines : n'en garder qu'une est le but.
+ok 'une seule tache a soi'   (Get-Nombre $tac) 1
+ok 'la bonne'                $tac[0].nom 'Sauvegarde perso'
+ok 'taches declarees'        ($CouverturesScan.Contains('taches')) $true
+
+"--- pare-feu ---"
+$pf = @(Format-ReglesPareFeu -Regles @(
+    (Obj @{ DisplayName='Serveur local 8080'; Group=''; Enabled='True'; Direction='Inbound'; Action='Allow' }),
+    (Obj @{ DisplayName='Steam'; Group='Steam'; Enabled='True'; Direction='Inbound'; Action='Allow' }),
+    (Obj @{ DisplayName='Desactivee'; Group=''; Enabled='False'; Direction='Inbound'; Action='Allow' }),
+    (Obj @{ DisplayName='Sortante'; Group=''; Enabled='True'; Direction='Outbound'; Action='Allow' }),
+    (Obj @{ DisplayName='Blocage'; Group=''; Enabled='True'; Direction='Inbound'; Action='Block' })))
+ok 'une seule regle a soi'   (Get-Nombre $pf) 1
+ok 'la bonne'                $pf[0].nom 'Serveur local 8080'
+ok 'et on dit de la relire'  ($pf[0].quoi -like '*relire*') $true
+ok 'pare-feu declare'        ($CouverturesScan.Contains('pareFeu')) $true
+
+"--- associations de fichiers ---"
+$aso = @(Format-Associations -Choix @(
+    (Obj @{ extension='.pdf'; progId='AcroExch.Document' }),
+    (Obj @{ extension='.txt'; progId='notepad' }),
+    (Obj @{ extension='.md';  progId='VSCode.md' }),
+    (Obj @{ extension='.png'; progId='AppX43hnxtbyyps62' })))
+ok 'les banales sont ecartees' (@($aso | Where-Object { $_.extension -eq '.txt' }).Count) 0
+ok 'les AppX aussi'            (@($aso | Where-Object { $_.programme -like 'AppX*' }).Count) 0
+ok 'deux associations a soi'   (Get-Nombre $aso) 2
+# Windows signe ce choix pour la machine : la ligne ne doit pas promettre une
+# restauration qui ne marchera pas.
+ok 'et on dit que ca ne se restaure pas' ($aso[0].quoi -like '*ne se restaure pas*') $true
+ok 'associations declarees'    ($CouverturesScan.Contains('associations')) $true
+
+
 if($script:ko){"`n$($script:ko) TEST(S) EN ECHEC"; exit 1} else {"`nTOUS LES TESTS POWERSHELL PASSENT"}

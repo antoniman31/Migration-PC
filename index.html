@@ -1863,7 +1863,7 @@ const PROFIL_DEFAUT = {
       "p": "C:\\Windows\\Fonts",
       "note": "Seulement celles que tu as ajoutées toi-même.",
       "pr": "ok",
-      "scan": "attendu:polices"
+      "scan": "polices"
     },
     {
       "id": "s12",
@@ -1871,7 +1871,7 @@ const PROFIL_DEFAUT = {
       "p": "Paramètres → Bluetooth et appareils",
       "note": "Noter les modèles et les adresses réseau pour les reconfigurer plus vite.",
       "pr": "ok",
-      "scan": "attendu:imprimantes"
+      "scan": "imprimantes"
     },
     {
       "id": "s13",
@@ -1911,7 +1911,7 @@ const PROFIL_DEFAUT = {
       "p": "Panneau de configuration → Comptes d'utilisateurs",
       "note": "Garde les accès aux partages réseau, aux lecteurs mappés et au bureau à distance. Personne n'y pense, et tout cesse de fonctionner après la réinstallation.",
       "pr": "med",
-      "scan": "attendu:identifiants"
+      "scan": "identifiants"
     },
     {
       "id": "s18",
@@ -1919,7 +1919,7 @@ const PROFIL_DEFAUT = {
       "p": "netsh wlan export profile key=clear",
       "note": "La commande exporte chaque réseau enregistré avec sa clé. Utile pour les réseaux dont personne ne se souvient du mot de passe.",
       "pr": "med",
-      "scan": "attendu:wifi"
+      "scan": "wifi"
     },
     {
       "id": "s19",
@@ -3467,6 +3467,12 @@ function inventaireVersProfil(inv){
     if(a.editeur)bouts.push(a.editeur);
     if(a.version)bouts.push('version '+a.version);
     if(a.tailleGo)bouts.push(fmtTaille(a.tailleGo));
+    // La date d'installation ne dit pas depuis quand le logiciel n'a pas
+    // servi — Windows ne le sait pas — mais « posé il y a quatre ans » suffit
+    // souvent à se souvenir pourquoi, ou à constater qu'on ne s'en souvient
+    // plus. C'est la question qui décide de ne pas le réinstaller.
+    if(typeof a.installe==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(a.installe))
+      bouts.push('installé le '+a.installe);
     if(a.source)bouts.push('détecté via '+a.source);
     out.push({
       id:'inv'+(i+1),
@@ -3530,6 +3536,14 @@ function inventaireVersProfil(inv){
   const desc=[];
   if(machine.os)desc.push(machine.os);
   if(machine.nom)desc.push(machine.nom);
+  // Le modèle de l'ancienne machine, quand le SMBIOS le porte : c'est ce
+  // qu'on cite au SAV, et ce qui dit s'il s'agit d'un portable ou d'un fixe.
+  const modele=[machine.fabricant,machine.modele]
+    .filter(function(x){return typeof x==='string'&&x.trim();})
+    .join(' ').trim();
+  if(modele)desc.push(modele+(machine.chassis?' ('+machine.chassis+')':''));
+  const nbEcrans=Number(machine.ecrans);
+  if(isFinite(nbEcrans)&&nbEcrans>0)desc.push(nbEcrans+' écran'+(nbEcrans>1?'s':''));
   desc.push(apps.length+' applications détectées');
   if(outilsRetenus)desc.push(outilsRetenus+' outil'+(outilsRetenus>1?'s':'')+' de développement');
   const total=apps.reduce(function(s,a){return s+(Number(a.tailleGo)||0);},0);
@@ -3563,6 +3577,14 @@ function inventaireVersProfil(inv){
   donnees=cles.concat(donnees);
   // Un fichier de licence pèse quelques centaines d'octets et ne se
   // reconstitue pas : même traitement que les clés de signature.
+  // Le numéro de série de l'ancien PC. Ce n'est pas un secret — il est
+  // imprimé sous la machine — mais il ne se retrouve plus une fois le disque
+  // effacé, et c'est lui qu'on cite au SAV ou dans une annonce de revente.
+  if(typeof machine.serie==='string'&&machine.serie.trim()){
+    donnees=donnees.concat([{id:'ser1',n:'Numéro de série de l\'ancien PC',
+      pr:'low',p:String(machine.serie).trim(),
+      note:'Relevé dans le BIOS · utile pour le SAV ou la revente',scan:'machine'}]);
+  }
   const licf=fichiersLicenceVersDonnees(inv.fichiersLicence,
     donnees.map(function(d){return d.p;}));
   if(licf.length)donnees=licf.concat(donnees);
@@ -3595,6 +3617,32 @@ function inventaireVersProfil(inv){
     donnees=donnees.filter(function(d){return d.scan!=='bitlocker';});
     donnees=blk.concat(donnees);
   }
+  // Le dernier lot. Chaque famille remplace son pense-bête écrit d'avance,
+  // comme les précédentes : une ligne qui annonçait « à faire à la main »
+  // n'a plus lieu d'être quand le scan a rapporté la vraie liste.
+  const dernieres=[]
+    .concat(antivirusVersDonnees(inv.antivirus))
+    .concat(compteVersDonnees(inv.compte))
+    .concat(pilotesTiersVersDonnees(inv.pilotesTiers))
+    .concat(wifiVersDonnees(inv.wifi))
+    .concat(identifiantsVersDonnees(inv.identifiants))
+    .concat(policesVersDonnees(inv.polices))
+    .concat(lecteursVersDonnees(inv.lecteurs))
+    .concat(imprimantesVersDonnees(inv.imprimantes))
+    .concat(demarrageVersDonnees(inv.demarrage))
+    .concat(tachesVersDonnees(inv.taches))
+    .concat(pareFeuVersDonnees(inv.pareFeu))
+    .concat(associationsVersDonnees(inv.associations));
+  if(dernieres.length){
+    const familles={};
+    dernieres.forEach(function(d){familles[d.scan]=true;});
+    donnees=donnees.filter(function(d){return !familles[d.scan];});
+    // Les urgentes devant, le reste derrière : une licence d'antivirus se
+    // décide avant de démonter, une association de fichiers se refait après.
+    const devant=dernieres.filter(function(d){return d.pr==='high';});
+    const apres=dernieres.filter(function(d){return d.pr!=='high';});
+    donnees=devant.concat(donnees).concat(apres);
+  }
   // Les licences passent tout devant : une licence qui ne suit pas change ce
   // qu'il faut acheter, donc elle doit se lire avant de commander la machine.
   const lics=licencesVersDonnees(inv.licences);
@@ -3611,6 +3659,12 @@ function inventaireVersProfil(inv){
   if(vpns.length)desc.push(vpns.length+' VPN');
   const chiffres=blk.filter(function(b){return b.pr==='high';}).length;
   if(chiffres)desc.push('disque chiffré');
+  const nbWifi=(Array.isArray(inv.wifi)?inv.wifi.length:0);
+  if(nbWifi)desc.push(nbWifi+' réseau'+(nbWifi>1?'x':'')+' Wi-Fi');
+  const nbPol=(Array.isArray(inv.polices)?inv.polices.length:0);
+  if(nbPol)desc.push(nbPol+' police'+(nbPol>1?'s':'')+' ajoutée'+(nbPol>1?'s':''));
+  const nbImp=(Array.isArray(inv.imprimantes)?inv.imprimantes.length:0);
+  if(nbImp)desc.push(nbImp+' imprimante'+(nbImp>1?'s':''));
   const licsOem=lics.filter(function(l){return l.pr==='high';}).length;
   if(licsOem)desc.push(licsOem+' licence'+(licsOem>1?'s':'')+' qui ne suivra'+(licsOem>1?'ient':'')+' pas');
   // Ce que le scan a mesuré, pas ce que la checklist réclame par ailleurs :
@@ -3948,6 +4002,195 @@ function bitlockerVersDonnees(volumes){
     out.push(e);
   });
   return out;
+}
+
+// ═══ Les treize familles du dernier lot ═══
+//
+// Trois sortes de lignes, et la distinction compte parce qu'elle change ce
+// qu'on promet. Celles qui se copient portent un chemin. Celles qui se
+// ressaisissent portent un nom et disent que le secret reste sur l'ancien PC.
+// Celles qui ne se transportent pas du tout — pare-feu, associations — le
+// disent aussi : la liste sert à re-décider, pas à restaurer.
+
+// Fabrique une ligne de Données à partir d'une entrée quelconque du scan.
+function ligneScan(id,nom,chemin,note,famille,priorite,avert){
+  const e={id:id,n:nom,pr:priorite||'med',p:chemin||'',note:note,scan:famille};
+  if(avert)e.warn=avert;
+  return e;
+}
+
+function imprimantesVersDonnees(imprimantes){
+  if(!Array.isArray(imprimantes)||!imprimantes.length)return [];
+  const out=[];
+  imprimantes.forEach(function(i,n){
+    if(!i||typeof i!=='object')return;
+    const nom=String(i.nom==null?'':i.nom).trim();
+    if(!nom)return;
+    const bouts=[];
+    if(i.quoi)bouts.push(String(i.quoi));
+    if(i.pilote)bouts.push('pilote : '+String(i.pilote));
+    bouts.push('relevé par le scan');
+    out.push(ligneScan('imp'+(n+1),'Imprimante '+nom,
+      String(i.port||''),bouts.join(' · '),'imprimantes','low'));
+  });
+  return out;
+}
+
+// Les noms des réseaux Wi-Fi, jamais les clés. Un nom de réseau est diffusé
+// à la ronde par la box elle-même : ce n'est pas un secret. La clé, si.
+function wifiVersDonnees(reseaux){
+  if(!Array.isArray(reseaux)||!reseaux.length)return [];
+  const noms=reseaux.map(function(r){return r&&r.nom?String(r.nom).trim():'';})
+    .filter(function(n){return n;});
+  if(!noms.length)return [];
+  // Une ligne par réseau ferait vingt lignes pour une seule action : les
+  // reconnecter. Une seule ligne, avec la liste dans la note.
+  return [ligneScan('wifi1','Réseaux Wi-Fi à reconnecter',
+    'Paramètres → Réseau → Wi-Fi',
+    noms.slice(0,12).join(', ')+(noms.length>12?' et '+(noms.length-12)+' autres':'')
+      +' · '+noms.length+' réseau'+(noms.length>1?'x':'')+' relevé'+(noms.length>1?'s':''),
+    'wifi','med',
+    'Le scan relève les noms, jamais les clés : « netsh wlan export profile key=clear » les écrirait en clair, et cet inventaire voyage sur une clé USB. Note les mots de passe ailleurs.')];
+}
+
+function identifiantsVersDonnees(cibles){
+  if(!Array.isArray(cibles)||!cibles.length)return [];
+  const noms=cibles.map(function(c){return c&&c.cible?String(c.cible).trim():'';})
+    .filter(function(n){return n;});
+  if(!noms.length)return [];
+  return [ligneScan('idw1','Identifiants enregistrés dans Windows',
+    'Panneau de configuration → Gestionnaire d\'identification',
+    noms.slice(0,8).join(', ')+(noms.length>8?' et '+(noms.length-8)+' autres':'')
+      +' · '+noms.length+' cible'+(noms.length>1?'s':''),
+    'identifiants','med',
+    'Le scan relève les cibles, jamais les mots de passe. Chacun sera à ressaisir une fois sur la machine neuve.')];
+}
+
+// Une police manquante ne fait pas planter : elle remplace le texte par une
+// autre, et le document ne ressemble plus à rien. C'est la panne silencieuse
+// par excellence.
+function policesVersDonnees(polices){
+  if(!Array.isArray(polices)||!polices.length)return [];
+  const noms=polices.map(function(p){return p&&p.nom?String(p.nom).trim():'';})
+    .filter(function(n){return n;});
+  if(!noms.length)return [];
+  return [ligneScan('pol1','Polices ajoutées à Windows',
+    '%LOCALAPPDATA%\\Microsoft\\Windows\\Fonts',
+    noms.slice(0,10).join(', ')+(noms.length>10?' et '+(noms.length-10)+' autres':'')
+      +' · '+noms.length+' police'+(noms.length>1?'s':'')+' hors Windows',
+    'polices','med',
+    'Une police absente ne provoque aucune erreur : Windows la remplace en silence, et les documents qui s\'en servaient changent d\'allure sans prévenir.')];
+}
+
+function lecteursVersDonnees(lecteurs){
+  if(!Array.isArray(lecteurs)||!lecteurs.length)return [];
+  const out=[];
+  lecteurs.forEach(function(l,i){
+    if(!l||typeof l!=='object')return;
+    const cible=String(l.cible==null?'':l.cible).trim();
+    if(!cible)return;
+    out.push(ligneScan('lec'+(i+1),
+      'Lecteur réseau'+(l.lettre?' '+String(l.lettre):''),
+      cible,String(l.quoi||'')+' · relevé par le scan','lecteurs','med'));
+  });
+  return out;
+}
+
+// Deux usages opposés et aussi utiles : remettre ce qu'on veut retrouver, et
+// ne pas remettre ce qui traînait là depuis trois ans.
+function demarrageVersDonnees(entrees){
+  if(!Array.isArray(entrees)||!entrees.length)return [];
+  const noms=entrees.map(function(e){return e&&e.nom?String(e.nom).trim():'';})
+    .filter(function(n){return n;});
+  if(!noms.length)return [];
+  return [ligneScan('dem1','Programmes lancés au démarrage',
+    'Gestionnaire des tâches → Démarrage',
+    noms.slice(0,10).join(', ')+(noms.length>10?' et '+(noms.length-10)+' autres':'')
+      +' · '+noms.length+' programme'+(noms.length>1?'s':''),
+    'demarrage','low',
+    'À lire dans les deux sens : ce qu\'on veut retrouver, et ce qui traînait là sans qu\'on s\'en souvienne. Une réinstallation est la seule occasion de trancher.')];
+}
+
+function tachesVersDonnees(taches){
+  if(!Array.isArray(taches)||!taches.length)return [];
+  const noms=taches.map(function(t){return t&&t.nom?String(t.nom).trim():'';})
+    .filter(function(n){return n;});
+  if(!noms.length)return [];
+  return [ligneScan('tac1','Tâches planifiées créées sur cette machine',
+    'Planificateur de tâches',
+    noms.slice(0,8).join(', ')+(noms.length>8?' et '+(noms.length-8)+' autres':'')
+      +' · '+noms.length+' tâche'+(noms.length>1?'s':''),
+    'taches','low',
+    'Elles ne suivent pas la migration. Celles de Windows et des logiciels ne sont pas comptées : seules celles rangées à la racine, là où atterrit ce qu\'on crée soi-même.')];
+}
+
+// La liste sert à re-décider, pas à rejouer. Recopier des ouvertures de
+// pare-feu sans les relire est exactement la mauvaise façon de s'en servir.
+function pareFeuVersDonnees(regles){
+  if(!Array.isArray(regles)||!regles.length)return [];
+  const noms=regles.map(function(r){return r&&r.nom?String(r.nom).trim():'';})
+    .filter(function(n){return n;});
+  if(!noms.length)return [];
+  return [ligneScan('pfw1','Ouvertures de pare-feu ajoutées à la main',
+    'Pare-feu Windows → Règles de trafic entrant',
+    noms.slice(0,8).join(', ')+(noms.length>8?' et '+(noms.length-8)+' autres':'')
+      +' · '+noms.length+' règle'+(noms.length>1?'s':'')+' entrante'+(noms.length>1?'s':''),
+    'pareFeu','low',
+    'À relire, pas à recopier : une ouverture entrante qu\'on ne sait plus expliquer ne se refait pas les yeux fermés. Les règles posées par Windows et les installateurs ne sont pas comptées.')];
+}
+
+// Windows signe le choix « ouvrir avec » pour cette machine-ci : il ne se
+// restaure pas, même à la main sur le registre. La ligne ne promet donc que
+// de rappeler quoi refaire.
+function associationsVersDonnees(assos){
+  if(!Array.isArray(assos)||!assos.length)return [];
+  const exts=assos.map(function(a){return a&&a.extension?String(a.extension).trim():'';})
+    .filter(function(e){return e;});
+  if(!exts.length)return [];
+  return [ligneScan('aso1','Associations « ouvrir avec » à refaire',
+    'Paramètres → Applications → Applications par défaut',
+    exts.slice(0,14).join(' ')+(exts.length>14?' et '+(exts.length-14)+' autres':'')
+      +' · '+exts.length+' extension'+(exts.length>1?'s':''),
+    'associations','low',
+    'Windows signe ce choix pour cette machine : il ne se restaure pas, même en recopiant le registre. Cette liste sert à les refaire une fois les logiciels réinstallés.')];
+}
+
+function antivirusVersDonnees(produits){
+  if(!Array.isArray(produits)||!produits.length)return [];
+  const tiers=produits.filter(function(a){return a&&!a.integre&&a.nom;});
+  if(!tiers.length)return [];
+  return tiers.map(function(a,i){
+    return ligneScan('av'+(i+1),'Licence antivirus — '+String(a.nom),
+      'Compte de l\'éditeur',String(a.quoi||''),'antivirus','high',
+      'Presque toujours un abonnement, avec un nombre de postes limité : délie l\'ancien poste avant de le démonter.');
+  });
+}
+
+function compteVersDonnees(compte){
+  const c=String(compte==null?'':compte).trim();
+  if(!c||c.indexOf('@')<0)return [];
+  return [ligneScan('cms1','Ouvrir la session avec ce compte Microsoft',
+    c,'Relevé sur l\'ancien PC · évite de créer un compte local puis de tout refaire',
+    'compte','med')];
+}
+
+// Ce qu'on NE fait PAS : dire quel pilote installer. Il faudrait une table
+// que personne ne tient à jour, et on servirait des liens faux qui ont l'air
+// vrais. Ce qu'on fait : dire quel matériel n'a pas un pilote Microsoft,
+// donc lequel Windows Update ne retrouvera pas forcément tout seul.
+function pilotesTiersVersDonnees(pilotes){
+  if(!Array.isArray(pilotes)||!pilotes.length)return [];
+  const noms=pilotes.map(function(p){
+    if(!p||!p.fournisseur)return '';
+    return String(p.fournisseur)+(p.classe?' ('+String(p.classe)+')':'');
+  }).filter(function(n){return n;});
+  if(!noms.length)return [];
+  return [ligneScan('pil1','Pilotes qui ne viennent pas de Microsoft',
+    'Site du constructeur de la carte mère',
+    noms.slice(0,10).join(', ')+(noms.length>10?' et '+(noms.length-10)+' autres':'')
+      +' · '+noms.length+' fournisseur'+(noms.length>1?'s':''),
+    'pilotesTiers','med',
+    'Windows Update ne les retrouvera pas tous. La liste dit quel matériel chercher, pas quel pilote installer : personne ne tient à jour la table qui ferait ça sans se tromper.')];
 }
 
 function configsVersDonnees(configs){
