@@ -9,7 +9,7 @@ vérifient que les sauvegardes ont bien été copiées ; la page orchestre le to
 construction. Il s'ouvre depuis une clé USB sur un PC fraîchement installé, sans réseau.
 Les scripts sont facultatifs.
 
-![La checklist, onglet Apps](captures/checklist.png)
+![La checklist, onglet Apps](captures/checklist-clair.png)
 
 ## En trois lignes
 
