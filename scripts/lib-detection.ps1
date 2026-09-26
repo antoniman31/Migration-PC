@@ -123,6 +123,19 @@ $CouverturesScan = [ordered]@{
     vm         = 'Read-MachinesVirtuelles'
     mail       = 'Read-ArchivesMail'
     bitlocker  = 'Read-Bitlocker'
+    machine    = 'Read-Machine'
+    antivirus  = 'Read-Antivirus'
+    pilotesTiers = 'Read-PilotesTiers'
+    compte     = 'Read-CompteMicrosoft'
+    imprimantes = 'Read-Imprimantes'
+    wifi       = 'Read-Wifi'
+    identifiants = 'Read-Identifiants'
+    polices    = 'Read-Polices'
+    lecteurs   = 'Read-LecteursReseau'
+    demarrage  = 'Read-Demarrage'
+    taches     = 'Read-TachesPlanifiees'
+    pareFeu    = 'Read-PareFeu'
+    associations = 'Read-Associations'
     controles  = 'Read-Controles'
     outils     = 'Read-SdkAndroid, Read-Wsl, Read-GestionnairesPaquets, Read-OutilsLangages'
     extensions = 'Read-Extensions'
@@ -230,6 +243,11 @@ function Add-App {
     param(
         [string]$Nom, [string]$Editeur, [string]$Version,
         [string]$Source, [string]$Winget,
+        # Date d'installation, quand le registre la porte. Elle ne dit pas
+        # depuis quand le logiciel n'a pas servi — Windows ne le sait pas —
+        # mais « pose il y a quatre ans » suffit souvent a se souvenir
+        # pourquoi, ou a constater qu'on ne s'en souvient plus.
+        [string]$Installe = '',
         # Adresse officielle de l'editeur, quand le registre la porte.
         [string]$Lien = '',
         # Taille sur disque en Go, quand la source la connait. Sert a dimensionner
@@ -249,6 +267,7 @@ function Add-App {
         if ([string]::IsNullOrWhiteSpace($exist.version) -and $Version) { $exist.version = $Version }
         if ($null -eq $exist.tailleGo -and $null -ne $TailleGo) { $exist.tailleGo = $TailleGo }
         if ([string]::IsNullOrWhiteSpace($exist.payant)) { $exist.payant = Get-LicenceAPrevoir -Nom $Nom -Editeur $Editeur }
+        if ([string]::IsNullOrWhiteSpace($exist.installe) -and $Installe) { $exist.installe = $Installe }
         if ($exist.source -notlike "*$Source*") { $exist.source = "$($exist.source), $Source" }
         return
     }
@@ -268,6 +287,7 @@ function Add-App {
         # Vide quand on ne sait pas, ce qui est le cas le plus courant : la
         # liste est tenue a la main. Vide ne veut pas dire gratuit.
         payant   = Get-LicenceAPrevoir -Nom $Nom -Editeur $Editeur
+        installe = $Installe
     }
 }
 
@@ -479,6 +499,22 @@ function Get-LienEditeur {
 }
 
 # --- source 2 : registre ------------------------------------------------
+# InstallDate est ecrit « 20240317 » par la plupart des installateurs, et
+# n'importe comment par les autres. On ne rend une date que si elle est
+# plausible : une annee entre 1995 et l'annee prochaine, un mois et un jour
+# qui existent.
+function Format-DateInstallation {
+    param([string]$Brut)
+    if ([string]::IsNullOrWhiteSpace($Brut)) { return '' }
+    $t = $Brut.Trim()
+    if ($t -notmatch '^(\d{4})(\d{2})(\d{2})$') { return '' }
+    $an = [int]$matches[1]; $mois = [int]$matches[2]; $jour = [int]$matches[3]
+    if ($an -lt 1995 -or $an -gt ((Get-Date).Year + 1)) { return '' }
+    if ($mois -lt 1 -or $mois -gt 12 -or $jour -lt 1 -or $jour -gt 31) { return '' }
+    try { return (Get-Date -Year $an -Month $mois -Day $jour).ToString('yyyy-MM-dd') }
+    catch { return '' }
+}
+
 function Read-Registre {
     Write-Host "  registre..." -NoNewline
     $chemins = @(
@@ -508,10 +544,14 @@ function Read-Registre {
                 $go = [math]::Round($es.Value / 1MB, 2)
                 if ($go -gt 0) { $taille = $go }
             }
+            $dateBrute = ''
+            $di = $e.PSObject.Properties['InstallDate']
+            if ($di -and $di.Value) { $dateBrute = [string]$di.Value }
             Add-App -Nom $nom.Value `
                     -Editeur $(if ($ed) { [string]$ed.Value } else { '' }) `
                     -Version $(if ($ver) { [string]$ver.Value } else { '' }) `
                     -Source 'registre' -Winget '' -TailleGo $taille `
+                    -Installe (Format-DateInstallation -Brut $dateBrute) `
                     -Lien (Get-LienEditeur -Entree $e)
             $n++
         }
@@ -1478,8 +1518,67 @@ function Format-PaquetsPip {
     return $out
 }
 
+# « dotnet tool list -g » sort un tableau en colonnes, avec une ligne de tirets
+# sous l'entete. Les colonnes sont separees par au moins deux espaces.
+function Format-PaquetsDotnet {
+    param([string[]]$Lignes)
+    $out = @()
+    foreach ($l in @($Lignes)) {
+        if ([string]::IsNullOrWhiteSpace($l)) { continue }
+        $t = $l.Trim()
+        if ($t -match '^-+') { continue }
+        if ($t -match '^(Package Id|Identifiant)') { continue }
+        $cols = @($t -split '\s{2,}' | Where-Object { $_ })
+        if ($cols.Count -lt 2) { continue }
+        $id = $cols[0].Trim()
+        # Un identifiant de paquet NuGet n'a ni espace ni caractere exotique :
+        # ce filtre ecarte les lignes de texte libre que la commande imprime.
+        if ($id -notmatch '^[A-Za-z0-9._-]+$') { continue }
+        $out += New-Outil -Famille 'dotnet (global)' -Id $id -Version $cols[1].Trim() `
+            -Commande "dotnet tool install -g $id"
+    }
+    return $out
+}
+
+# Les modules PowerShell installes par l'utilisateur n'apparaissent nulle part
+# ailleurs : ni au registre, ni dans winget, ni dans Ajout/Suppression. Sans
+# cette liste, ils se redecouvrent un par un au premier script qui echoue.
+function Format-ModulesPowerShell {
+    param($Modules)
+    $out = @()
+    foreach ($m in @($Modules)) {
+        if (-not $m) { continue }
+        $nom = ''
+        $pn = $m.PSObject.Properties['Name']
+        if ($pn) { $nom = ([string]$pn.Value).Trim() }
+        if ([string]::IsNullOrWhiteSpace($nom)) { continue }
+        $v = ''
+        $pv = $m.PSObject.Properties['Version']
+        if ($pv -and $pv.Value) { $v = [string]$pv.Value }
+        $out += New-Outil -Famille 'PowerShell' -Id $nom -Version $v `
+            -Commande "Install-Module $nom -Scope CurrentUser"
+    }
+    return $out
+}
+
+# « cargo install --list » : « nom v1.2.3:» puis les binaires, indentes.
+function Format-PaquetsCargo {
+    param([string[]]$Lignes)
+    $out = @()
+    foreach ($l in @($Lignes)) {
+        if ([string]::IsNullOrWhiteSpace($l)) { continue }
+        # Les binaires fournis par un paquet sont indentes : seule la ligne de
+        # tete, collee a la marge, nomme le paquet a reinstaller.
+        if ($l -match '^\s') { continue }
+        if ($l -notmatch '^([A-Za-z0-9._-]+)\s+v([^\s:]+)') { continue }
+        $out += New-Outil -Famille 'cargo' -Id $matches[1] -Version $matches[2] `
+            -Commande "cargo install $($matches[1])"
+    }
+    return $out
+}
+
 function Read-OutilsLangages {
-    Write-Host "  outils npm et pip..." -NoNewline
+    Write-Host "  outils npm, pip, dotnet, PowerShell, cargo..." -NoNewline
     $out = @()
     if (Get-Command npm -ErrorAction SilentlyContinue) {
         try { $out += @(Format-PaquetsNpm -Json (& npm ls -g --depth=0 --json 2>$null | Out-String)) } catch { }
@@ -1489,6 +1588,18 @@ function Read-OutilsLangages {
         # transitives — certifi, idna, urllib3 — que personne n'installe
         # volontairement et que pip remettra toutes seules.
         try { $out += @(Format-PaquetsPip -Lignes @(& pip list --user --not-required --format=freeze 2>$null)) } catch { }
+    }
+    if (Get-Command dotnet -ErrorAction SilentlyContinue) {
+        try { $out += @(Format-PaquetsDotnet -Lignes @(& dotnet tool list -g 2>$null)) } catch { }
+    }
+    # Get-InstalledModule ne voit que ce qui vient d'une galerie : c'est
+    # exactement ce qu'on veut, les modules livres avec Windows reviennent
+    # seuls.
+    if (Get-Command Get-InstalledModule -ErrorAction SilentlyContinue) {
+        try { $out += @(Format-ModulesPowerShell -Modules (Get-InstalledModule -ErrorAction SilentlyContinue)) } catch { }
+    }
+    if (Get-Command cargo -ErrorAction SilentlyContinue) {
+        try { $out += @(Format-PaquetsCargo -Lignes @(& cargo install --list 2>$null)) } catch { }
     }
     if (-not $out.Count) { Write-Host " aucun, ignore" -ForegroundColor Yellow; return @() }
     Write-Host " $($out.Count) outil(s)"
@@ -2915,6 +3026,735 @@ function Read-Bitlocker {
     $out = @(Format-Bitlocker -Volumes $volumes)
     if (-not $out.Count) { Write-Host " aucun volume"; return @() }
     Write-Host " $($out.Count) volume(s)"
+    return $out
+}
+
+# ------------------------------------------------- la machine elle-meme
+#
+# Fabricant, modele, numero de serie, portable ou fixe, et combien d'ecrans
+# sont branches. Rien de tout ca ne se copie : ce sont des faits sur l'ancien
+# PC, qui servent a commander le neuf et a reconnaitre la machine au SAV.
+#
+# Le numero de serie n'est pas un secret — il est imprime sous la machine —
+# mais il ne sert qu'a elle : il part dans l'inventaire, pas dans la
+# configuration du PC neuf, ou il designerait la mauvaise machine.
+
+# Win32_SystemEnclosure.ChassisTypes : la liste officielle en compte une
+# trentaine. Seule la distinction portable/fixe change ce qu'on conseille.
+$ChassisPortables = @(8, 9, 10, 11, 12, 14, 18, 21, 30, 31, 32)
+$ChassisFixes     = @(3, 4, 5, 6, 7, 13, 15, 16, 17, 23, 24, 28, 29)
+
+function Format-Machine {
+    param($Systeme, $Bios, $Chassis, $Ecrans)
+    $out = [ordered]@{}
+
+    if ($Systeme) {
+        $s = @($Systeme)[0]
+        $fab = ''
+        $pf = $s.PSObject.Properties['Manufacturer']
+        if ($pf) { $fab = ([string]$pf.Value).Trim() }
+        $mod = ''
+        $pm = $s.PSObject.Properties['Model']
+        if ($pm) { $mod = ([string]$pm.Value).Trim() }
+        # « System manufacturer / System Product Name » est ce que renvoie une
+        # machine assemblee dont personne n'a rempli le SMBIOS : l'afficher
+        # ferait croire a un modele.
+        if ($fab -and $fab -notmatch '^(System manufacturer|To Be Filled|Default string|O\.E\.M\.)') { $out['fabricant'] = $fab }
+        if ($mod -and $mod -notmatch '^(System Product Name|To Be Filled|Default string|O\.E\.M\.)') { $out['modele'] = $mod }
+    }
+
+    if ($Bios) {
+        $b = @($Bios)[0]
+        $sn = ''
+        $ps = $b.PSObject.Properties['SerialNumber']
+        if ($ps) { $sn = ([string]$ps.Value).Trim() }
+        # « To Be Filled By O.E.M. » : l'ancre de fin laissait passer tout ce
+        # qui suit le mot-cle, c'est-a-dire le cas le plus courant.
+        $bidon = ($sn -match '^(To Be Filled|Default string|None|Not Applicable|Chassis Serial)' -or $sn -match '^0+$')
+        if ($sn -and -not $bidon) { $out['serie'] = $sn }
+    }
+
+    if ($Chassis) {
+        $types = @()
+        foreach ($c in @($Chassis)) {
+            if (-not $c) { continue }
+            $pt = $c.PSObject.Properties['ChassisTypes']
+            if ($pt) { foreach ($t in @($pt.Value)) { $types += [int]$t } }
+        }
+        foreach ($t in $types) {
+            if ($ChassisPortables -contains $t) { $out['chassis'] = 'portable'; break }
+            if ($ChassisFixes -contains $t)     { $out['chassis'] = 'fixe'; break }
+        }
+    }
+
+    if ($Ecrans) {
+        $noms = @()
+        foreach ($e in @($Ecrans)) {
+            if (-not $e) { continue }
+            # WmiMonitorID rend des tableaux de codes de caracteres, termines
+            # par des zeros : « 68,101,108,108,0,0 » veut dire « Dell ».
+            $nom = ''
+            $pn = $e.PSObject.Properties['UserFriendlyName']
+            if ($pn -and $pn.Value) {
+                $nom = -join (@($pn.Value) | Where-Object { $_ -gt 0 } | ForEach-Object { [char][int]$_ })
+            }
+            $nom = $nom.Trim()
+            if ($nom) { $noms += $nom }
+        }
+        if ($noms.Count) {
+            $out['ecrans'] = $noms.Count
+            $out['modelesEcrans'] = @($noms)
+        }
+    }
+    return $out
+}
+
+# Le bloc « machine » porte deja l'OS et le nom du poste. Ce qui vient de
+# Format-Machine s'y ajoute sans les ecraser.
+function Merge-Machine {
+    param($Base, $Ajouts)
+    $out = [ordered]@{}
+    foreach ($k in @($Base.Keys)) { $out[$k] = $Base[$k] }
+    if ($Ajouts) { foreach ($k in @($Ajouts.Keys)) { if (-not $out.Contains($k)) { $out[$k] = $Ajouts[$k] } } }
+    return $out
+}
+
+function Read-Machine {
+    Write-Host "  machine..." -NoNewline
+    $out = [ordered]@{}
+    try {
+        $out = Format-Machine `
+            -Systeme (Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue) `
+            -Bios    (Get-CimInstance Win32_BIOS -ErrorAction SilentlyContinue) `
+            -Chassis (Get-CimInstance Win32_SystemEnclosure -ErrorAction SilentlyContinue) `
+            -Ecrans  (Get-CimInstance -Namespace root\wmi -ClassName WmiMonitorID -ErrorAction SilentlyContinue)
+    } catch {
+        Write-Host " indisponible, ignore" -ForegroundColor Yellow
+        return [ordered]@{}
+    }
+    Write-Host " $(@($out.Keys).Count) information(s)"
+    return $out
+}
+
+# ------------------------------------------------------------ antivirus
+#
+# Windows tient la liste des antivirus declares dans un espace de noms a part.
+# Defender y figure aussi : c'est celui qu'on ne compte pas, il revient tout
+# seul. Un antivirus tiers, lui, est presque toujours un abonnement — donc une
+# licence a retrouver avant de formater, pas juste un logiciel a reinstaller.
+
+function Format-Antivirus {
+    param($Produits)
+    $out = @()
+    foreach ($p in @($Produits)) {
+        if (-not $p) { continue }
+        $nom = ''
+        $pn = $p.PSObject.Properties['displayName']
+        if ($pn) { $nom = ([string]$pn.Value).Trim() }
+        if ([string]::IsNullOrWhiteSpace($nom)) { continue }
+        # Defender revient seul apres une reinstallation : rien a prevoir.
+        $integre = ($nom -match 'Windows Defender|Microsoft Defender')
+        $out += [ordered]@{
+            nom     = $nom
+            integre = $integre
+            quoi    = if ($integre) {
+                "Livre avec Windows : il revient tout seul apres la reinstallation."
+            } else {
+                "Antivirus tiers : presque toujours un abonnement, avec un nombre de postes limite. Retrouve la licence et delie l'ancien poste avant de le demonter."
+            }
+        }
+    }
+    return $out
+}
+
+function Read-Antivirus {
+    Write-Host "  antivirus..." -NoNewline
+    try {
+        $p = Get-CimInstance -Namespace 'root\SecurityCenter2' -ClassName AntiVirusProduct -ErrorAction Stop
+        $out = @(Format-Antivirus -Produits $p)
+        if (-not $out.Count) { Write-Host " aucun"; return @() }
+        Write-Host " $($out.Count) produit(s)"
+        return $out
+    } catch {
+        Write-Host " indisponible, ignore" -ForegroundColor Yellow
+        return @()
+    }
+}
+
+# --------------------------------------------------- pilotes a retrouver
+#
+# Ce qu'on NE peut PAS faire : dire « installez le pilote X version Y ». Il
+# faudrait une table reliant chaque modele a son pilote, que personne ne tient
+# a jour. Ce qu'on PEUT faire : dire quels peripheriques ont un pilote qui ne
+# vient PAS de Microsoft. Ceux-la, Windows Update ne les retrouvera pas
+# forcement tout seul — c'est exactement la liste a preparer avant de formater.
+
+# Les classes ou un pilote tiers est la norme et ne pose jamais de probleme :
+# les lister noierait les trois qui comptent.
+$ClassesPilotesBanales = @('Printer', 'Volume', 'DiskDrive', 'CDROM', 'Monitor', 'Keyboard', 'Mouse')
+
+function Format-PilotesTiers {
+    param($Pilotes)
+    $vus = @{}
+    $out = @()
+    foreach ($p in @($Pilotes)) {
+        if (-not $p) { continue }
+        $fournisseur = ''
+        $pf = $p.PSObject.Properties['DriverProviderName']
+        if ($pf) { $fournisseur = ([string]$pf.Value).Trim() }
+        if ([string]::IsNullOrWhiteSpace($fournisseur)) { continue }
+        if ($fournisseur -match '^Microsoft') { continue }
+
+        $classe = ''
+        $pc = $p.PSObject.Properties['DeviceClass']
+        if ($pc) { $classe = ([string]$pc.Value).Trim() }
+        if ($ClassesPilotesBanales -contains $classe) { continue }
+
+        $appareil = ''
+        $pd = $p.PSObject.Properties['DeviceName']
+        if ($pd) { $appareil = ([string]$pd.Value).Trim() }
+        if ([string]::IsNullOrWhiteSpace($appareil)) { continue }
+
+        # Une carte mere declare vingt peripheriques du meme fournisseur dans
+        # la meme classe : une ligne par couple suffit a savoir quoi chercher.
+        $cle = ($fournisseur + '|' + $classe).ToLowerInvariant()
+        if ($vus.ContainsKey($cle)) {
+            if ($vus[$cle].appareils.Count -lt 3 -and $vus[$cle].appareils -notcontains $appareil) {
+                $vus[$cle].appareils += $appareil
+            }
+            continue
+        }
+        $entree = [ordered]@{
+            fournisseur = $fournisseur
+            classe      = if ($classe) { $classe } else { 'Autre' }
+            appareils   = @($appareil)
+        }
+        $vus[$cle] = $entree
+        $out += $entree
+    }
+    return $out
+}
+
+function Read-PilotesTiers {
+    Write-Host "  pilotes tiers..." -NoNewline
+    try {
+        $p = Get-CimInstance Win32_PnPSignedDriver -ErrorAction Stop
+        $out = @(Format-PilotesTiers -Pilotes $p)
+        if (-not $out.Count) { Write-Host " aucun"; return @() }
+        Write-Host " $($out.Count) fournisseur(s)"
+        return $out
+    } catch {
+        Write-Host " indisponible, ignore" -ForegroundColor Yellow
+        return @()
+    }
+}
+
+# ------------------------------------------------------ compte Microsoft
+#
+# Sur quel compte ouvrir la session du PC neuf. Windows le range dans un cache
+# d'identite, sous le SID de l'utilisateur. Ce n'est qu'une adresse de
+# courriel — la meme qui s'affiche dans les Parametres — et elle evite de
+# creer un compte local par defaut puis de tout refaire.
+
+function Read-CompteMicrosoft {
+    Write-Host "  compte Microsoft..." -NoNewline
+    $racine = 'HKLM:\SOFTWARE\Microsoft\IdentityStore\Cache'
+    if (-not (Test-CleRegistre $racine)) { Write-Host " aucun"; return '' }
+    foreach ($sid in @(Get-ChildItem -LiteralPath $racine -ErrorAction SilentlyContinue)) {
+        $cache = Join-Path $sid.PSPath 'IdentityCache'
+        if (-not (Test-Path -LiteralPath $cache)) { continue }
+        foreach ($e in @(Get-ChildItem -LiteralPath $cache -ErrorAction SilentlyContinue)) {
+            $v = Get-ItemProperty -LiteralPath $e.PSPath -ErrorAction SilentlyContinue
+            if (-not $v) { continue }
+            $p = $v.PSObject.Properties['UserName']
+            if ($p -and $p.Value -and ([string]$p.Value) -like '*@*') {
+                Write-Host " trouve"
+                return ([string]$p.Value).Trim()
+            }
+        }
+    }
+    Write-Host " aucun"
+    return ''
+}
+
+# ----------------------------------------------------------- imprimantes
+#
+# Une imprimante reseau se retrouve en deux clics quand on connait son nom et
+# son adresse ; sans eux, on cherche un modele dans une liste de trois cents.
+# Les imprimantes virtuelles — PDF, XPS, OneNote, fax — reviennent avec
+# Windows : les lister ferait croire qu'il y a six choses a reinstaller.
+
+$ImprimantesVirtuelles = @('Microsoft Print to PDF', 'Microsoft XPS Document Writer',
+    'OneNote', 'Fax', 'Envoyer A OneNote', 'Send To OneNote', 'Adobe PDF')
+
+function Format-Imprimantes {
+    param($Imprimantes)
+    $out = @()
+    foreach ($i in @($Imprimantes)) {
+        if (-not $i) { continue }
+        $nom = ''
+        $pn = $i.PSObject.Properties['Name']
+        if ($pn) { $nom = ([string]$pn.Value).Trim() }
+        if ([string]::IsNullOrWhiteSpace($nom)) { continue }
+        $virtuelle = $false
+        foreach ($v in $ImprimantesVirtuelles) { if ($nom -like "*$v*") { $virtuelle = $true; break } }
+        if ($virtuelle) { continue }
+
+        $pilote = ''
+        $pd = $i.PSObject.Properties['DriverName']
+        if ($pd) { $pilote = ([string]$pd.Value).Trim() }
+        $port = ''
+        $pp = $i.PSObject.Properties['PortName']
+        if ($pp) { $port = ([string]$pp.Value).Trim() }
+        $reseau = $false
+        $pr = $i.PSObject.Properties['Network']
+        if ($pr -and $pr.Value) { $reseau = [bool]$pr.Value }
+        # Un port « IP_192.168.1.50 » ou « WSD-... » designe une imprimante
+        # joignable par le reseau, meme quand Network vaut faux.
+        if ($port -match '^(IP_|WSD|\d{1,3}(\.\d{1,3}){3})') { $reseau = $true }
+
+        $out += [ordered]@{
+            nom    = $nom
+            pilote = $pilote
+            port   = $port
+            reseau = $reseau
+            quoi   = if ($reseau) {
+                "Imprimante reseau : elle se rajoute par son adresse, sans toucher au materiel."
+            } else {
+                "Imprimante locale : garde le nom du pilote, c'est lui qu'il faudra retrouver chez le constructeur."
+            }
+        }
+    }
+    return $out
+}
+
+function Read-Imprimantes {
+    Write-Host "  imprimantes..." -NoNewline
+    try {
+        $out = @(Format-Imprimantes -Imprimantes (Get-CimInstance Win32_Printer -ErrorAction Stop))
+        if (-not $out.Count) { Write-Host " aucune"; return @() }
+        Write-Host " $($out.Count) imprimante(s)"
+        return $out
+    } catch {
+        Write-Host " indisponible, ignore" -ForegroundColor Yellow
+        return @()
+    }
+}
+
+# ---------------------------------------------------------------- Wi-Fi
+#
+# Meme regle que BitLocker, et pour la meme raison. « netsh wlan export
+# profile key=clear » ecrit les cles Wi-Fi en clair dans des fichiers XML —
+# et cet inventaire voyage sur une cle USB. On releve donc les NOMS des
+# reseaux, qui ne sont pas des secrets (ils sont diffuses a la ronde), et on
+# dit ou l'utilisateur va chercher les mots de passe lui-meme.
+#
+# Le nom seul est deja la moitie du travail : c'est la liste de ce qu'il
+# faudra reconnecter, et celle qu'on oublie — le reseau du bureau, celui des
+# parents, le partage de connexion du telephone.
+
+function Format-ProfilsWifi {
+    param([string[]]$Lignes)
+    $out = @()
+    foreach ($l in @($Lignes)) {
+        if ([string]::IsNullOrWhiteSpace($l)) { continue }
+        # « Profil Tous les utilisateurs : Livebox-1234 » en francais,
+        # « All User Profile : Livebox-1234 » en anglais.
+        if ($l -notmatch '^\s*(?:Profil|All User|Tous les utilisateurs).*?:\s*(.+?)\s*$') { continue }
+        $nom = $matches[1].Trim()
+        if ([string]::IsNullOrWhiteSpace($nom)) { continue }
+        if ($out | Where-Object { $_.nom -eq $nom }) { continue }
+        $out += [ordered]@{
+            nom  = $nom
+            quoi = "Reseau enregistre sur l'ancien PC. Le scan releve le nom, jamais la cle : « netsh wlan export profile key=clear » l'ecrirait en clair, et cet inventaire voyage sur une cle USB."
+        }
+    }
+    return $out
+}
+
+function Read-Wifi {
+    Write-Host "  reseaux Wi-Fi..." -NoNewline
+    try {
+        $lignes = @(& netsh wlan show profiles 2>$null)
+        $out = @(Format-ProfilsWifi -Lignes $lignes)
+        if (-not $out.Count) { Write-Host " aucun"; return @() }
+        Write-Host " $($out.Count) reseau(x)"
+        return $out
+    } catch {
+        Write-Host " indisponible, ignore" -ForegroundColor Yellow
+        return @()
+    }
+}
+
+# --------------------------------------------- identifiants enregistres
+#
+# Le gestionnaire d'identification de Windows garde les mots de passe des
+# partages reseau, des sessions Bureau a distance et de quelques applications.
+# « cmdkey /list » donne les CIBLES, jamais les secrets — et c'est tout ce
+# qu'on veut : la liste de ce qu'il faudra ressaisir, pas de quoi le faire a
+# la place de quelqu'un.
+
+function Format-Identifiants {
+    param([string[]]$Lignes)
+    $out = @()
+    foreach ($l in @($Lignes)) {
+        if ([string]::IsNullOrWhiteSpace($l)) { continue }
+        if ($l -notmatch '^\s*(?:Cible|Target)\s*:\s*(.+?)\s*$') { continue }
+        $cible = $matches[1].Trim()
+        if ([string]::IsNullOrWhiteSpace($cible)) { continue }
+        # Les entrees posees par Windows lui-meme reviennent toutes seules.
+        if ($cible -like 'virtualapp/*' -or $cible -like '*SSO_POP_Device*' -or
+            $cible -like 'WindowsLive:*') { continue }
+        if ($out | Where-Object { $_.cible -eq $cible }) { continue }
+        $out += [ordered]@{
+            cible = $cible
+            quoi  = "Identifiant enregistre pour cette cible. Le scan releve le nom, jamais le mot de passe : il faudra le ressaisir une fois."
+        }
+    }
+    return $out
+}
+
+function Read-Identifiants {
+    Write-Host "  identifiants enregistres..." -NoNewline
+    try {
+        $out = @(Format-Identifiants -Lignes @(& cmdkey /list 2>$null))
+        if (-not $out.Count) { Write-Host " aucun"; return @() }
+        Write-Host " $($out.Count) cible(s)"
+        return $out
+    } catch {
+        Write-Host " indisponible, ignore" -ForegroundColor Yellow
+        return @()
+    }
+}
+
+# --------------------------------------------------------------- polices
+#
+# Une police manquante ne fait pas planter : elle remplace silencieusement le
+# texte par une autre, et le document ne ressemble plus a rien. Windows garde
+# les siennes au registre ; celles installees pour un seul utilisateur vivent
+# ailleurs et sont precisement celles qu'on a payees ou telechargees.
+#
+# On ne copie pas les polices livrees avec Windows : elles reviennent seules,
+# et les lister noierait les dix qui comptent.
+
+$ClesPolices = @(
+    @{ cle = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts'; portee = 'machine' }
+    @{ cle = 'HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts'; portee = 'utilisateur' }
+)
+
+function Format-Polices {
+    param($Entrees, [string]$Portee = 'machine', [string[]]$Livrees = @())
+    $out = @()
+    if (-not $Entrees) { return $out }
+    foreach ($p in @($Entrees.PSObject.Properties)) {
+        if ($p.Name -like 'PS*') { continue }
+        $nom = ($p.Name -replace '\s*\(TrueType\)$', '' -replace '\s*\(OpenType\)$', '').Trim()
+        if ([string]::IsNullOrWhiteSpace($nom)) { continue }
+        $fichier = [string]$p.Value
+        if ($Livrees -contains $nom) { continue }
+        $out += [ordered]@{
+            nom     = $nom
+            fichier = $fichier
+            portee  = $Portee
+            quoi    = if ($Portee -eq 'utilisateur') {
+                "Police installee pour toi seul : celle-la ne revient pas avec Windows."
+            } else {
+                "Police ajoutee sur cette machine. Windows ne la remettra pas tout seul."
+            }
+        }
+    }
+    return $out
+}
+
+function Read-Polices {
+    Write-Host "  polices..." -NoNewline
+    # La liste des polices d'origine se lit sur la machine meme : celles dont
+    # le fichier vit dans C:\Windows\Fonts et qui sont dans la cle machine
+    # sont, a peu de chose pres, celles livrees avec le systeme. Plutot que de
+    # tenir une liste figee qui vieillirait mal, on garde uniquement les
+    # polices dont le fichier porte un chemin complet, ou celles de la cle
+    # utilisateur : ce sont les ajouts.
+    $out = @()
+    foreach ($regle in $ClesPolices) {
+        if (-not (Test-CleRegistre $regle.cle)) { continue }
+        $e = Get-ItemProperty -LiteralPath $regle.cle -ErrorAction SilentlyContinue
+        foreach ($police in @(Format-Polices -Entrees $e -Portee $regle.portee)) {
+            # Un nom de fichier nu (« arial.ttf ») designe C:\Windows\Fonts,
+            # donc une police du systeme. Un chemin complet designe un ajout.
+            if ($regle.portee -eq 'machine' -and $police.fichier -notmatch '[\\/]') { continue }
+            $out += $police
+        }
+    }
+    if (-not $out.Count) { Write-Host " aucune ajoutee"; return @() }
+    Write-Host " $($out.Count) police(s) ajoutee(s)"
+    return $out
+}
+
+# ------------------------------------------------------- lecteurs reseau
+#
+# Un lecteur reseau est une lettre qui pointe vers un partage. La lettre se
+# recree en dix secondes quand on connait le chemin ; sans lui, on cherche le
+# nom du NAS dans sa memoire.
+
+function Format-LecteursReseau {
+    param($Lecteurs)
+    $out = @()
+    foreach ($l in @($Lecteurs)) {
+        if (-not $l) { continue }
+        $lettre = ''
+        $pl = $l.PSObject.Properties['LocalPath']
+        if ($pl) { $lettre = ([string]$pl.Value).Trim() }
+        $cible = ''
+        $pr = $l.PSObject.Properties['RemotePath']
+        if ($pr) { $cible = ([string]$pr.Value).Trim() }
+        if ([string]::IsNullOrWhiteSpace($cible)) { continue }
+        $out += [ordered]@{
+            lettre = $lettre
+            cible  = $cible
+            quoi   = "Lecteur reseau. Se recree par son chemin ; le mot de passe du partage, lui, se ressaisit."
+        }
+    }
+    return $out
+}
+
+function Read-LecteursReseau {
+    Write-Host "  lecteurs reseau..." -NoNewline
+    $out = @()
+    try { $out += @(Format-LecteursReseau -Lecteurs (Get-SmbMapping -ErrorAction Stop)) } catch { }
+    # Les lecteurs memorises mais non connectes n'apparaissent pas dans
+    # Get-SmbMapping : ils vivent au registre, et ce sont souvent ceux qu'on
+    # oublie precisement parce qu'ils ne sont pas montes aujourd'hui.
+    if (-not $out.Count -and (Test-CleRegistre 'HKCU:\Network')) {
+        foreach ($d in @(Get-ChildItem -LiteralPath 'HKCU:\Network' -ErrorAction SilentlyContinue)) {
+            $v = Get-ItemProperty -LiteralPath $d.PSPath -ErrorAction SilentlyContinue
+            if (-not $v) { continue }
+            $p = $v.PSObject.Properties['RemotePath']
+            if (-not $p -or [string]::IsNullOrWhiteSpace([string]$p.Value)) { continue }
+            $out += [ordered]@{
+                lettre = ($d.PSChildName + ':')
+                cible  = ([string]$p.Value).Trim()
+                quoi   = "Lecteur reseau memorise, pas forcement connecte en ce moment."
+            }
+        }
+    }
+    if (-not $out.Count) { Write-Host " aucun"; return @() }
+    Write-Host " $($out.Count) lecteur(s)"
+    return $out
+}
+
+# ----------------------------------------------------- lancement au demarrage
+#
+# Ce qui se lance tout seul a l'ouverture de session. La liste sert a deux
+# choses opposees et aussi utiles : remettre ce qu'on veut retrouver, et NE
+# PAS remettre ce qui trainait la depuis trois ans.
+
+function Format-Demarrage {
+    param($Entrees)
+    $out = @()
+    foreach ($e in @($Entrees)) {
+        if (-not $e) { continue }
+        $nom = ''
+        $pn = $e.PSObject.Properties['Name']
+        if ($pn) { $nom = ([string]$pn.Value).Trim() }
+        if ([string]::IsNullOrWhiteSpace($nom)) { continue }
+        $cmd = ''
+        $pc = $e.PSObject.Properties['Command']
+        if ($pc) { $cmd = ([string]$pc.Value).Trim() }
+        $ou = ''
+        $pl = $e.PSObject.Properties['Location']
+        if ($pl) { $ou = ([string]$pl.Value).Trim() }
+        $out += [ordered]@{
+            nom      = $nom
+            commande = $cmd
+            ou       = $ou
+            quoi     = "Se lance tout seul a l'ouverture de session. A remettre, ou a ne pas remettre : c'est le moment de trancher."
+        }
+    }
+    return $out
+}
+
+function Read-Demarrage {
+    Write-Host "  lancement au demarrage..." -NoNewline
+    try {
+        $out = @(Format-Demarrage -Entrees (Get-CimInstance Win32_StartupCommand -ErrorAction Stop))
+        if (-not $out.Count) { Write-Host " aucun"; return @() }
+        Write-Host " $($out.Count) programme(s)"
+        return $out
+    } catch {
+        Write-Host " indisponible, ignore" -ForegroundColor Yellow
+        return @()
+    }
+}
+
+# -------------------------------------------------------- taches planifiees
+#
+# Windows en pose plusieurs centaines pour son propre compte. Les lister
+# toutes rendrait la liste illisible et inutile : on ne garde que celles
+# rangees a la racine, la ou atterrit ce qu'on cree soi-meme, et on ecarte
+# celles dont l'auteur est Microsoft.
+
+function Format-TachesPlanifiees {
+    param($Taches)
+    $out = @()
+    foreach ($t in @($Taches)) {
+        if (-not $t) { continue }
+        $chemin = ''
+        $pc = $t.PSObject.Properties['TaskPath']
+        if ($pc) { $chemin = ([string]$pc.Value) }
+        # Tout ce qui est range dans un sous-dossier vient d'un logiciel ou de
+        # Windows ; ce qu'on cree a la main atterrit a la racine.
+        if ($chemin -and $chemin.Trim('\') -ne '') { continue }
+        $nom = ''
+        $pn = $t.PSObject.Properties['TaskName']
+        if ($pn) { $nom = ([string]$pn.Value).Trim() }
+        if ([string]::IsNullOrWhiteSpace($nom)) { continue }
+        $auteur = ''
+        $pa = $t.PSObject.Properties['Author']
+        if ($pa) { $auteur = ([string]$pa.Value).Trim() }
+        if ($auteur -match '^Microsoft') { continue }
+        $etat = ''
+        $pe = $t.PSObject.Properties['State']
+        if ($pe) { $etat = ([string]$pe.Value).Trim() }
+        $out += [ordered]@{
+            nom    = $nom
+            auteur = $auteur
+            etat   = $etat
+            quoi   = "Tache planifiee creee sur cette machine. Elle ne suit pas la migration : a recreer si elle sert encore."
+        }
+    }
+    return $out
+}
+
+function Read-TachesPlanifiees {
+    Write-Host "  taches planifiees..." -NoNewline
+    try {
+        $out = @(Format-TachesPlanifiees -Taches (Get-ScheduledTask -ErrorAction Stop))
+        if (-not $out.Count) { Write-Host " aucune a soi"; return @() }
+        Write-Host " $($out.Count) tache(s)"
+        return $out
+    } catch {
+        Write-Host " indisponible, ignore" -ForegroundColor Yellow
+        return @()
+    }
+}
+
+# -------------------------------------------------------- regles de pare-feu
+#
+# Celles qu'on a ajoutees soi-meme, et elles seules. Windows et les
+# installateurs en posent des centaines, toutes rangees dans un groupe : les
+# regles sans groupe sont celles qu'un humain a creees, souvent pour ouvrir un
+# port a un jeu ou a un serveur local.
+#
+# On les liste pour les re-decider, pas pour les rejouer : recopier des
+# ouvertures de pare-feu d'une machine a l'autre sans les relire est
+# exactement la mauvaise facon de s'en servir, et la ligne le dit.
+
+function Format-ReglesPareFeu {
+    param($Regles)
+    $out = @()
+    foreach ($r in @($Regles)) {
+        if (-not $r) { continue }
+        $groupe = ''
+        $pg = $r.PSObject.Properties['Group']
+        if ($pg -and $pg.Value) { $groupe = ([string]$pg.Value).Trim() }
+        if ($groupe) { continue }
+        $actif = $true
+        $pe = $r.PSObject.Properties['Enabled']
+        if ($pe -and $null -ne $pe.Value) { $actif = ([string]$pe.Value -eq 'True' -or [string]$pe.Value -eq '1') }
+        if (-not $actif) { continue }
+        $action = ''
+        $pa = $r.PSObject.Properties['Action']
+        if ($pa) { $action = ([string]$pa.Value).Trim() }
+        $sens = ''
+        $pd = $r.PSObject.Properties['Direction']
+        if ($pd) { $sens = ([string]$pd.Value).Trim() }
+        # Une regle sortante qui autorise ne change rien : Windows autorise
+        # deja tout ce qui sort. Seules les entrantes ouvertes comptent.
+        if ($sens -ne 'Inbound' -or $action -ne 'Allow') { continue }
+        $nom = ''
+        $pn = $r.PSObject.Properties['DisplayName']
+        if ($pn) { $nom = ([string]$pn.Value).Trim() }
+        if ([string]::IsNullOrWhiteSpace($nom)) { continue }
+        $out += [ordered]@{
+            nom  = $nom
+            sens = $sens
+            quoi = "Ouverture entrante ajoutee a la main sur l'ancien PC. A relire avant de la refaire : une ouverture qu'on ne sait plus expliquer ne se recopie pas."
+        }
+    }
+    return $out
+}
+
+function Read-PareFeu {
+    Write-Host "  regles de pare-feu..." -NoNewline
+    try {
+        $out = @(Format-ReglesPareFeu -Regles (Get-NetFirewallRule -ErrorAction Stop))
+        if (-not $out.Count) { Write-Host " aucune a soi"; return @() }
+        Write-Host " $($out.Count) regle(s)"
+        return $out
+    } catch {
+        Write-Host " indisponible, ignore" -ForegroundColor Yellow
+        return @()
+    }
+}
+
+# ------------------------------------------------ associations de fichiers
+#
+# « Ouvrir avec » : quel programme ouvre un .pdf, un .zip, un .md. Windows
+# range le choix de l'utilisateur sous FileExts, signe par un condense lie au
+# compte et a la machine — ce qui veut dire qu'il ne se rejoue PAS d'une
+# machine a l'autre, meme a la main sur le registre. La liste sert donc a
+# refaire les choix en connaissance de cause, pas a les restaurer, et la
+# ligne ne promet rien d'autre.
+
+# Les extensions dont l'association ne surprend personne quand elle revient
+# au defaut : les lister ferait une liste de cent lignes ou trois comptent.
+$ExtensionsBanales = @('.txt', '.log', '.ini', '.url', '.lnk', '.exe', '.dll', '.sys', '.tmp')
+
+function Format-Associations {
+    param($Choix)
+    $out = @()
+    foreach ($c in @($Choix)) {
+        if (-not $c) { continue }
+        $ext = ''
+        $pe = $c.PSObject.Properties['extension']
+        if ($pe) { $ext = ([string]$pe.Value).Trim().ToLowerInvariant() }
+        if ([string]::IsNullOrWhiteSpace($ext) -or $ext -notlike '.*') { continue }
+        if ($ExtensionsBanales -contains $ext) { continue }
+        $prog = ''
+        $pp = $c.PSObject.Properties['progId']
+        if ($pp) { $prog = ([string]$pp.Value).Trim() }
+        if ([string]::IsNullOrWhiteSpace($prog)) { continue }
+        # Les identifiants poses par Windows lui-meme reviennent seuls.
+        if ($prog -like 'AppX*' -or $prog -like 'Applications\\*') { continue }
+        $out += [ordered]@{
+            extension = $ext
+            programme = $prog
+            quoi      = "Ouvert par ce programme sur l'ancien PC. Windows signe ce choix pour cette machine-ci : il ne se restaure pas, il se refait une fois le logiciel reinstalle."
+        }
+    }
+    return $out
+}
+
+function Read-Associations {
+    Write-Host "  associations de fichiers..." -NoNewline
+    $racine = 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\FileExts'
+    if (-not (Test-CleRegistre $racine)) { Write-Host " aucune"; return @() }
+    $choix = @()
+    foreach ($ext in @(Get-ChildItem -LiteralPath $racine -ErrorAction SilentlyContinue)) {
+        $uc = Join-Path $ext.PSPath 'UserChoice'
+        if (-not (Test-Path -LiteralPath $uc)) { continue }
+        $v = Get-ItemProperty -LiteralPath $uc -ErrorAction SilentlyContinue
+        if (-not $v) { continue }
+        $p = $v.PSObject.Properties['ProgId']
+        if (-not $p -or [string]::IsNullOrWhiteSpace([string]$p.Value)) { continue }
+        $o = New-Object PSObject
+        $o | Add-Member -NotePropertyName 'extension' -NotePropertyValue $ext.PSChildName
+        $o | Add-Member -NotePropertyName 'progId' -NotePropertyValue ([string]$p.Value)
+        $choix += $o
+    }
+    $out = @(Format-Associations -Choix $choix)
+    if (-not $out.Count) { Write-Host " aucune a soi"; return @() }
+    Write-Host " $($out.Count) association(s)"
     return $out
 }
 

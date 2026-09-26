@@ -187,6 +187,29 @@ if (-not $SansGrosDossiers) {
 }
 $bitlocker = Invoke-Detecteur -Nom 'BitLocker' -Bloc { Read-Bitlocker }
 
+# Des faits sur l'ancien PC plutot que des choses a copier : ils servent a
+# commander la machine neuve et a la reconnaitre au SAV.
+$machine = Invoke-Detecteur -Nom 'machine' -Bloc { Read-Machine }
+$antivirus = Invoke-Detecteur -Nom 'antivirus' -Bloc { Read-Antivirus }
+$pilotesTiers = Invoke-Detecteur -Nom 'pilotes tiers' -Bloc { Read-PilotesTiers }
+$compte = Invoke-Detecteur -Nom 'compte Microsoft' -Bloc { Read-CompteMicrosoft }
+
+# Ce qui se ressaisit plutot que de se copier : on releve les noms, jamais les
+# secrets. Une cle Wi-Fi ou un mot de passe enregistre n'a rien a faire dans un
+# inventaire qui voyage sur une cle USB.
+$imprimantes = Invoke-Detecteur -Nom 'imprimantes' -Bloc { Read-Imprimantes }
+$wifi = Invoke-Detecteur -Nom 'Wi-Fi' -Bloc { Read-Wifi }
+$identifiants = Invoke-Detecteur -Nom 'identifiants' -Bloc { Read-Identifiants }
+$polices = Invoke-Detecteur -Nom 'polices' -Bloc { Read-Polices }
+
+# Des reglages qui ne se transportent pas, mais qu'on ne veut pas redecouvrir
+# un par un le jour ou quelque chose ne marche plus comme avant.
+$lecteurs = Invoke-Detecteur -Nom 'lecteurs reseau' -Bloc { Read-LecteursReseau }
+$demarrage = Invoke-Detecteur -Nom 'demarrage' -Bloc { Read-Demarrage }
+$taches = Invoke-Detecteur -Nom 'taches planifiees' -Bloc { Read-TachesPlanifiees }
+$pareFeu = Invoke-Detecteur -Nom 'pare-feu' -Bloc { Read-PareFeu }
+$associations = Invoke-Detecteur -Nom 'associations' -Bloc { Read-Associations }
+
 $apps = $resultats.Values | Sort-Object { $_.nom }
 
 $os = try { (Get-CimInstance Win32_OperatingSystem -ErrorAction Stop).Caption } catch { 'Windows' }
@@ -195,10 +218,7 @@ $inventaire = [ordered]@{
     type    = 'inventaire-migration-pc'
     version = 1
     genere  = (Get-Date).ToString('o')
-    machine = [ordered]@{
-        os  = $os
-        nom = $env:COMPUTERNAME
-    }
+    machine = (Merge-Machine -Base ([ordered]@{ os = $os; nom = $env:COMPUTERNAME }) -Ajouts $machine)
     apps    = @($apps)
     # Reprises telles quelles dans les champs prevus par la checklist.
     variables = $variables
@@ -216,6 +236,18 @@ $inventaire = [ordered]@{
     mail      = @($mail)
     vm        = @($vm)
     bitlocker = @($bitlocker)
+    antivirus = @($antivirus)
+    pilotesTiers = @($pilotesTiers)
+    compte    = $compte
+    imprimantes = @($imprimantes)
+    wifi      = @($wifi)
+    identifiants = @($identifiants)
+    polices   = @($polices)
+    lecteurs  = @($lecteurs)
+    demarrage = @($demarrage)
+    taches    = @($taches)
+    pareFeu   = @($pareFeu)
+    associations = @($associations)
     outils    = @($outils)
     dossiers  = @($dossiers)
     precieux  = @($precieux)

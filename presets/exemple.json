@@ -676,7 +676,7 @@
       "p": "C:\\Windows\\Fonts",
       "note": "Seulement celles que tu as ajoutées toi-même.",
       "pr": "ok",
-      "scan": "attendu:polices"
+      "scan": "polices"
     },
     {
       "id": "s12",
@@ -684,7 +684,7 @@
       "p": "Paramètres → Bluetooth et appareils",
       "note": "Noter les modèles et les adresses réseau pour les reconfigurer plus vite.",
       "pr": "ok",
-      "scan": "attendu:imprimantes"
+      "scan": "imprimantes"
     },
     {
       "id": "s13",
@@ -724,7 +724,7 @@
       "p": "Panneau de configuration → Comptes d'utilisateurs",
       "note": "Garde les accès aux partages réseau, aux lecteurs mappés et au bureau à distance. Personne n'y pense, et tout cesse de fonctionner après la réinstallation.",
       "pr": "med",
-      "scan": "attendu:identifiants"
+      "scan": "identifiants"
     },
     {
       "id": "s18",
@@ -732,7 +732,7 @@
       "p": "netsh wlan export profile key=clear",
       "note": "La commande exporte chaque réseau enregistré avec sa clé. Utile pour les réseaux dont personne ne se souvient du mot de passe.",
       "pr": "med",
-      "scan": "attendu:wifi"
+      "scan": "wifi"
     },
     {
       "id": "s19",

@@ -345,6 +345,118 @@ console.log('\n--- comparaison de chemins ---');
     p2.data.filter(function(d){return /^VPN : |^Favoris (Chrome|Firefox)|^Machine virtuelle |^(Archive|Cache) Outlook /.test(d.n);}).length,0);
 }
 
+// ── La date d'installation, dans le détail de l'application ──
+{
+  console.log('\n--- date d\'installation ---');
+  const inv={type:'inventaire-migration-pc',apps:[
+    {nom:'Vieux truc',cat:'system',installe:'2019-04-02'},
+    {nom:'Récent',cat:'system',installe:'2026-09-01'},
+    {nom:'Sans date',cat:'system'},
+    {nom:'Date douteuse',cat:'system',installe:'mars 2019'}]};
+  const p=G('inventaireVersProfil')(inv);
+  const de=n=>p.apps.filter(function(a){return a.n===n;})[0];
+  ok('la date est dans la description',/installé le 2019-04-02/.test(de('Vieux truc').d),true);
+  ok('sans date, rien',/installé le/.test(de('Sans date').d),false);
+  // Une date mal formée vient d'un profil reçu : elle ne doit pas s'afficher
+  // telle quelle au milieu d'une phrase.
+  ok('une date douteuse est ignorée',/installé le/.test(de('Date douteuse').d),false);
+}
+
+// ── Le dernier lot : treize familles de plus ──
+{
+  console.log('\n--- machine, antivirus, pilotes, wifi, polices, et le reste ---');
+  const inv={type:'inventaire-migration-pc',apps:[{nom:'VLC',cat:'media'}],
+    machine:{os:'Windows 11 Pro',nom:'PC-A',fabricant:'Dell Inc.',modele:'XPS 15 9530',
+      serie:'7QK2X13',chassis:'portable',ecrans:2,modelesEcrans:['Dell U2720Q','LG 27GP']},
+    antivirus:[{nom:'Windows Defender',integre:true,quoi:'Livre avec Windows.'},
+               {nom:'Bitdefender Total Security',integre:false,quoi:'Antivirus tiers : abonnement.'}],
+    pilotesTiers:[{fournisseur:'Realtek',classe:'MEDIA',appareils:['Realtek Audio']},
+                  {fournisseur:'NVIDIA',classe:'Display',appareils:['RTX 4070']}],
+    compte:'antoni@example.com',
+    imprimantes:[{nom:'Brother DCP-L2530DW',pilote:'Brother DCP',port:'IP_192.168.1.50',
+      reseau:true,quoi:'Imprimante reseau.'}],
+    wifi:[{nom:'Livebox-1234',quoi:'x'},{nom:'Bureau-5G',quoi:'x'}],
+    identifiants:[{cible:'Domain:target=nas.local',quoi:'x'}],
+    polices:[{nom:'Inter',fichier:'C:\\x\\Inter.ttf',portee:'utilisateur',quoi:'x'}],
+    lecteurs:[{lettre:'Z:',cible:'\\\\nas\\partage',quoi:'Lecteur reseau.'}],
+    demarrage:[{nom:'Discord',commande:'Update.exe',ou:'Run',quoi:'x'}],
+    taches:[{nom:'Sauvegarde perso',auteur:'antoni',etat:'Ready',quoi:'x'}],
+    pareFeu:[{nom:'Serveur local 8080',sens:'Inbound',quoi:'A relire.'}],
+    associations:[{extension:'.pdf',programme:'AcroExch.Document',quoi:'x'},
+                  {extension:'.md',programme:'VSCode.md',quoi:'x'}]};
+  const p=G('inventaireVersProfil')(inv);
+  const par=n=>p.data.filter(function(d){return n.test(d.n);});
+  const soust=p.meta.soustitre||'';
+
+  // Le modèle de l'ancienne machine : c'est ce qu'on cite au SAV.
+  ok('le modèle est au sous-titre',/Dell Inc\. XPS 15 9530/.test(soust),true);
+  ok('portable ou fixe aussi',/\(portable\)/.test(soust),true);
+  ok('le nombre d\'écrans',/2 écrans/.test(soust),true);
+  // Le numéro de série ne se retrouve plus une fois le disque effacé.
+  const ser=par(/^Numéro de série/);
+  ok('le numéro de série est une ligne',ser.length,1);
+  ok('avec sa valeur',ser[0].p,'7QK2X13');
+
+  // Defender revient seul : seul l'antivirus tiers vaut une ligne.
+  const av=par(/^Licence antivirus/);
+  ok('un seul antivirus signalé',av.length,1);
+  ok('le tiers, pas Defender',/Bitdefender/.test(av[0].n),true);
+  ok('en priorité haute',av[0].pr,'high');
+  ok('et il passe devant',/^Licence antivirus/.test(p.data[0].n)||
+    p.data.slice(0,4).some(function(d){return /^Licence antivirus/.test(d.n);}),true);
+
+  const cms=par(/^Ouvrir la session/);
+  ok('le compte Microsoft',cms.length,1);
+  ok('avec l\'adresse',cms[0].p,'antoni@example.com');
+
+  const pil=par(/^Pilotes qui ne viennent pas/);
+  ok('les pilotes tiers',pil.length,1);
+  ok('les fournisseurs sont cités',/Realtek/.test(pil[0].note)&&/NVIDIA/.test(pil[0].note),true);
+  // On ne promet pas de dire QUEL pilote installer.
+  ok('sans promettre le pilote exact',/pas quel pilote/.test(pil[0].warn||''),true);
+
+  // Vingt réseaux feraient vingt lignes pour une seule action.
+  const wf=par(/^Réseaux Wi-Fi/);
+  ok('une seule ligne Wi-Fi',wf.length,1);
+  ok('les noms sont dedans',/Livebox-1234/.test(wf[0].note),true);
+  ok('et l\'avertissement dit pourquoi pas les clés',/jamais les clés/.test(wf[0].warn||''),true);
+  ok('le résumé compte les réseaux',/2 réseaux Wi-Fi/.test(soust),true);
+
+  ok('les identifiants',par(/^Identifiants enregistrés/).length,1);
+  const pol=par(/^Polices ajoutées/);
+  ok('les polices',pol.length,1);
+  ok('et disent la panne silencieuse',/en silence/.test(pol[0].warn||''),true);
+  ok('les lecteurs réseau',par(/^Lecteur réseau/).length,1);
+  ok('les imprimantes',par(/^Imprimante /).length,1);
+  ok('le démarrage',par(/^Programmes lancés au démarrage/).length,1);
+  ok('les tâches',par(/^Tâches planifiées/).length,1);
+
+  const pf=par(/^Ouvertures de pare-feu/);
+  ok('le pare-feu',pf.length,1);
+  ok('à relire, pas à recopier',/pas à recopier/.test(pf[0].warn||''),true);
+  const aso=par(/^Associations/);
+  ok('les associations',aso.length,1);
+  // Windows signe ce choix : la ligne ne doit rien promettre d'autre.
+  ok('sans promettre la restauration',/ne se restaure pas/.test(aso[0].warn||''),true);
+  ok('les extensions sont citées',/\.pdf/.test(aso[0].note),true);
+
+  // Les pense-bêtes écrits d'avance disparaissent quand le scan a la vraie liste.
+  ok('le pense-bête Wi-Fi est remplacé',par(/^Profils Wi-Fi et clés réseau/).length,0);
+  ok('celui des polices aussi',par(/^Polices installées/).length,0);
+  ok('celui des imprimantes aussi',par(/^Imprimantes et périphériques/).length,0);
+
+  // Rien de relevé : les pense-bêtes restent, rien ne plante.
+  const p2=G('inventaireVersProfil')({type:'inventaire-migration-pc',apps:[{nom:'VLC'}]});
+  ok('sans scan, le pense-bête Wi-Fi reste',
+    p2.data.filter(function(d){return d.scan==='wifi';}).length,1);
+  const p3=G('inventaireVersProfil')({type:'inventaire-migration-pc',apps:[{nom:'VLC'}],
+    wifi:[{}],polices:[{}],imprimantes:[{}],antivirus:[{}],lecteurs:[{}],
+    pareFeu:[{}],associations:[{}],taches:[{}],demarrage:[{}],identifiants:[{}],
+    pilotesTiers:[{}],compte:'pas une adresse'});
+  ok('entrées vides ignorées',
+    p3.data.filter(function(d){return /^(Réseaux Wi-Fi|Polices ajoutées|Imprimante |Licence antivirus|Lecteur réseau|Ouvertures|Associations|Tâches|Programmes lancés|Identifiants|Pilotes qui|Ouvrir la session)/.test(d.n);}).length,0);
+}
+
 // ── Les quatre contrôles de la machine neuve ──
 {
   console.log('\n--- contrôles de la machine neuve ---');
