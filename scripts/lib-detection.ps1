@@ -2695,6 +2695,18 @@ function Read-Vpn {
         $out += @(Format-Vpn -Connexions $cx)
     } catch { }
 
+    # Une meme connexion peut figurer dans l'annuaire de l'utilisateur ET dans
+    # celui de la machine : deux lignes identiques dans la checklist.
+    $vus = @{}
+    $uniques = @()
+    foreach ($c in $out) {
+        $cle = (([string]$c.nom) + '|' + ([string]$c.serveur)).ToLowerInvariant()
+        if ($vus.ContainsKey($cle)) { continue }
+        $vus[$cle] = $true
+        $uniques += $c
+    }
+    $out = $uniques
+
     foreach ($regle in $ConfigsVpnTierces) {
         foreach ($modele in @($regle.chemins)) {
             foreach ($r in @(Expand-CheminModele -Modele $modele)) {
@@ -2744,6 +2756,17 @@ function Measure-FavorisChromium {
     return $n
 }
 
+# Sous StrictMode, lire .Value sur le resultat d'un Get-Item qui n'a rien
+# trouve jette « The property 'Value' cannot be found on this object » — et
+# fait tomber le detecteur entier au lieu de sauter un navigateur.
+function Get-CheminEnv {
+    param([string]$Nom)
+    if ([string]::IsNullOrWhiteSpace($Nom)) { return '' }
+    $item = Get-Item -LiteralPath "env:$Nom" -ErrorAction SilentlyContinue
+    if (-not $item) { return '' }
+    return [string]$item.Value
+}
+
 $NavigateursFavoris = @(
     @{ nom = 'Chrome';   base = 'LOCALAPPDATA'; chemin = 'Google\Chrome\User Data' }
     @{ nom = 'Edge';     base = 'LOCALAPPDATA'; chemin = 'Microsoft\Edge\User Data' }
@@ -2756,7 +2779,7 @@ function Read-Favoris {
     Write-Host "  favoris..." -NoNewline
     $out = @()
     foreach ($nav in $NavigateursFavoris) {
-        $racine = Join-CheminSur (Get-Item "env:$($nav.base)" -ErrorAction SilentlyContinue).Value $nav.chemin
+        $racine = Join-CheminSur (Get-CheminEnv -Nom $nav.base) $nav.chemin
         if (-not $racine -or -not (Test-Path -LiteralPath $racine)) { continue }
         # Opera range ses marque-pages a la racine ; Chrome les met par profil.
         $candidats = @(Join-Path $racine 'Bookmarks')
@@ -3376,7 +3399,11 @@ function Format-ProfilsWifi {
         if ([string]::IsNullOrWhiteSpace($l)) { continue }
         # « Profil Tous les utilisateurs : Livebox-1234 » en francais,
         # « All User Profile : Livebox-1234 » en anglais.
-        if ($l -notmatch '^\s*(?:Profil|All User|Tous les utilisateurs).*?:\s*(.+?)\s*$') { continue }
+        #
+        # Le motif doit etre exact. Un prefixe laxiste sur « Profil » attrapait
+        # aussi la ligne d'entete « Profils de groupe : 0 », et le scan
+        # annoncait un reseau qui s'appelait « 0 ».
+        if ($l -notmatch '^\s*(?:Profil Tous les utilisateurs|Profil de tous les utilisateurs|All User Profile)\s*:\s*(.+?)\s*$') { continue }
         $nom = $matches[1].Trim()
         if ([string]::IsNullOrWhiteSpace($nom)) { continue }
         if ($out | Where-Object { $_.nom -eq $nom }) { continue }
@@ -3458,12 +3485,17 @@ $ClesPolices = @(
     @{ cle = 'HKCU:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts'; portee = 'utilisateur' }
 )
 
+$ProprietesPowerShell = @('PSPath', 'PSParentPath', 'PSChildName', 'PSDrive', 'PSProvider')
+
 function Format-Polices {
     param($Entrees, [string]$Portee = 'machine', [string[]]$Livrees = @())
     $out = @()
     if (-not $Entrees) { return $out }
     foreach ($p in @($Entrees.PSObject.Properties)) {
-        if ($p.Name -like 'PS*') { continue }
+        # Les proprietes que PowerShell ajoute a toute entree de registre. Un
+        # « -like 'PS*' » ecartait aussi de vraies polices : « PSL Ornanong »
+        # et « PSL Kittithada » existent.
+        if ($ProprietesPowerShell -contains $p.Name) { continue }
         $nom = ($p.Name -replace '\s*\(TrueType\)$', '' -replace '\s*\(OpenType\)$', '').Trim()
         if ([string]::IsNullOrWhiteSpace($nom)) { continue }
         $fichier = [string]$p.Value

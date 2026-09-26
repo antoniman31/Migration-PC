@@ -1132,11 +1132,19 @@ ok 'et la ligne le dit'      ($imp[1].quoi -like '*pilote*') $true
 ok 'imprimantes declarees'   ($CouverturesScan.Contains('imprimantes')) $true
 
 "--- Wi-Fi : les noms, jamais les cles ---"
+# La sortie reelle de netsh, avec ses lignes d'entete. « Profils de groupe :
+# 0 » ressemble assez a une ligne de profil pour passer un motif laxiste, et
+# le scan annoncait alors un reseau qui s'appelait « 0 ».
 $wf = @(Format-ProfilsWifi -Lignes @(
     'Profils sur l interface Wi-Fi :',
+    '',
+    'Profils de groupe : 0',
+    'Profils utilisateur',
+    '-------------------',
     '    Profil Tous les utilisateurs     : Livebox-1234',
     '    Profil Tous les utilisateurs     : Bureau-5G',
     '    Profil Tous les utilisateurs     : Livebox-1234'))
+ok 'aucune ligne d entete retenue' (@($wf | Where-Object { $_.nom -eq '0' }).Count) 0
 ok 'deux reseaux, sans doublon' (Get-Nombre $wf) 2
 ok 'le nom est propre'       $wf[0].nom 'Livebox-1234'
 ok 'et la ligne dit pourquoi pas la cle' ($wf[0].quoi -like '*jamais la cle*') $true
@@ -1237,6 +1245,40 @@ ok 'et le total l ignore'    (Get-TotalAPrevoirMo @((Select-AEmporter -Entrees $
 ok 'sans champ cache, on garde' (Get-Nombre @(Select-AEmporter -Entrees $archive)) 1
 ok 'une liste vide'          (Get-Nombre @(Select-AEmporter -Entrees @())) 0
 ok 'un null'                 (Get-Nombre @(Select-AEmporter -Entrees $null)) 0
+
+
+"--- ce que les tests precedents ne voyaient pas ---"
+# Sous StrictMode, lire .Value sur un Get-Item qui n'a rien trouve jette et
+# fait tomber le detecteur entier au lieu de sauter un navigateur.
+ok 'une variable absente rend vide' (Get-CheminEnv -Nom 'CE_TRUC_NEXISTE_PAS_DU_TOUT') ''
+ok 'un nom vide aussi'              (Get-CheminEnv -Nom '') ''
+ok 'une variable presente est lue'  ([bool](Get-CheminEnv -Nom 'HOME') -or [bool](Get-CheminEnv -Nom 'USERPROFILE')) $true
+
+# Une meme connexion VPN peut figurer dans l'annuaire de l'utilisateur ET
+# dans celui de la machine : la checklist affichait deux fois la meme ligne.
+$doublons = @(Format-Vpn -Connexions @(
+    (Obj @{ Name='Bureau'; ServerAddress='vpn.exemple.fr'; TunnelType='Ikev2' }),
+    (Obj @{ Name='Bureau'; ServerAddress='vpn.exemple.fr'; TunnelType='Ikev2' })))
+$vusVpn = @{}
+$uniques = @()
+foreach ($c in $doublons) {
+    $cle = (([string]$c.nom) + '|' + ([string]$c.serveur)).ToLowerInvariant()
+    if ($vusVpn.ContainsKey($cle)) { continue }
+    $vusVpn[$cle] = $true
+    $uniques += $c
+}
+ok 'la deduplication des VPN marche' (Get-Nombre $uniques) 1
+$srcVpn = (Get-Content -Raw -Encoding UTF8 (Join-Path $racineScan 'scripts/lib-detection.ps1'))
+ok 'et Read-Vpn la fait'             ($srcVpn -match 'function Read-Vpn[\s\S]{0,2000}\$uniques') $true
+
+# « -like PS* » ecartait aussi de vraies polices : PSL Ornanong existe.
+$fontesPS = New-Object PSObject
+$fontesPS | Add-Member -NotePropertyName 'PSL Ornanong (TrueType)' -NotePropertyValue 'C:\x\psl.ttf'
+$fontesPS | Add-Member -NotePropertyName 'PSPath' -NotePropertyValue 'x'
+$fontesPS | Add-Member -NotePropertyName 'PSChildName' -NotePropertyValue 'y'
+$polPS = @(Format-Polices -Entrees $fontesPS -Portee 'utilisateur')
+ok 'une police en PSL est gardee'   (Get-Nombre $polPS) 1
+ok 'la bonne'                       $polPS[0].nom 'PSL Ornanong'
 
 
 if($script:ko){"`n$($script:ko) TEST(S) EN ECHEC"; exit 1} else {"`nTOUS LES TESTS POWERSHELL PASSENT"}
