@@ -3694,7 +3694,10 @@ function configsVersDonnees(configs){
     const bouts=[];
     if(c.quoi)bouts.push(String(c.quoi));
     if(c.tailleMo!=null&&c.tailleMo!=='')bouts.push(fmtMo(c.tailleMo));
-    bouts.push('repéré par le scan');
+    // Une clé de registre n'est pas un dossier : PuTTY, 7-Zip et WinRAR n'ont
+    // aucun fichier de réglages. Le dire évite de chercher un dossier qui
+    // n'existe pas, et la sauvegarde l'exporte en .reg au lieu de le copier.
+    bouts.push(c.registre?'clé de registre, exportée par le script':'repéré par le scan');
     const e={
       id:'cfg'+(i+1),
       n:nom,

@@ -1527,6 +1527,26 @@ $ConfigsConnues = @(
        quoi='Comptes et courriels locaux. Volumineux. L''index de recherche se reconstruit tout seul et ne suit pas.' }
     @{ cle='filezilla';        nom='FileZilla';               chemins=@('%APPDATA%\FileZilla');                           quoi='Sites enregistrés. Contient des mots de passe.' }
     @{ cle='winscp';           nom='WinSCP';                  chemins=@('%APPDATA%\WinSCP.ini');                          quoi='Sessions enregistrées.' }
+    # Ces cinq-la ne posent aucun fichier de reglages : tout vit dans le
+    # registre. PuTTY est le cas le plus couteux — ses sessions SSH entieres,
+    # hotes, ports, cles associees, sont sous SimonTatham et nulle part
+    # ailleurs. La table ne connaissait que des chemins, donc ils partaient
+    # en silence.
+    @{ cle='putty';            nom='Sessions PuTTY';          chemins=@();
+       registre=@('HKCU:\Software\SimonTatham');
+       quoi='Sessions SSH enregistrées : hôtes, ports, clés associées. Rien n''est stocké en fichier.' }
+    @{ cle='7zip';             nom='7-Zip';                   chemins=@();
+       registre=@('HKCU:\Software\7-Zip');
+       quoi='Associations de fichiers et réglages de compression.' }
+    @{ cle='winrar';           nom='WinRAR';                  chemins=@('%APPDATA%\WinRAR');
+       registre=@('HKCU:\Software\WinRAR');
+       quoi='Réglages, et le fichier de licence rarreg.key s''il est posé à côté.' }
+    @{ cle='winzip';           nom='WinZip';                  chemins=@();
+       registre=@('HKCU:\Software\Nico Mak Computing\WinZip');
+       quoi='Réglages et enregistrement.' }
+    @{ cle='teamviewer';       nom='TeamViewer';              chemins=@();
+       registre=@('HKCU:\Software\TeamViewer');
+       quoi='Ordinateurs enregistrés et préférences.' }
     @{ cle='qbittorrent';      nom='qBittorrent';             chemins=@('%APPDATA%\qBittorrent','%LOCALAPPDATA%\qBittorrent'); quoi='Réglages et torrents en cours.' }
     @{ cle='obsstudio';        nom='OBS Studio';              chemins=@('%APPDATA%\obs-studio');                          quoi='Scènes, sources, profils d''encodage.' }
     @{ cle='vlcmediaplayer';   nom='VLC';                     chemins=@('%APPDATA%\vlc');                                 quoi='Réglages et équaliseur.' }
@@ -1794,6 +1814,24 @@ function Get-TailleDossier {
     } catch { return $null }
 }
 
+# Certains logiciels ne posent aucun fichier de reglages : tout vit dans le
+# registre. PuTTY y range ses sessions SSH entieres, sous
+# HKCU\Software\SimonTatham ; 7-Zip, WinRAR, WinZip et TeamViewer font pareil.
+# La table ne connaissait que des chemins de fichiers, donc ces reglages
+# partaient en silence : rien n'echouait, ils n'etaient simplement jamais vus.
+#
+# On ne lit pas la cle ici — sa copie est le travail de sauvegarder-configs.ps1,
+# qui l'exporte en .reg. On constate seulement qu'elle existe, pour ne pas
+# proposer d'emporter les reglages d'un logiciel qui n'en a jamais pose.
+function Test-CleRegistre {
+    param([string]$Cle)
+    if ([string]::IsNullOrWhiteSpace($Cle)) { return $false }
+    # Hors de Windows il n'y a pas de registre : le lecteur HKCU: n'existe pas,
+    # et Test-Path rend $false sans jeter. C'est ce qu'on veut.
+    try { return [bool](Test-Path -LiteralPath $Cle -ErrorAction SilentlyContinue) }
+    catch { return $false }
+}
+
 function Read-Configs {
     param([string[]]$ClesInstallees = @())
     Write-Host "  dossiers de configuration..." -NoNewline
@@ -1823,9 +1861,87 @@ function Read-Configs {
                 }
             }
         }
+
+        # Les cles de registre declarees par la regle. Une entree de registre
+        # n'a ni taille ni contenu mesurable a ce stade : on la marque, et
+        # sauvegarder-configs.ps1 l'exportera en .reg.
+        if ($regle.Contains('registre') -and $regle.registre) {
+            foreach ($cleReg in @($regle.registre)) {
+                if (-not (Test-CleRegistre -Cle $cleReg)) { continue }
+                $trouves += [ordered]@{
+                    nom      = $regle.nom
+                    chemin   = $cleReg
+                    modele   = $cleReg
+                    quoi     = $regle.quoi
+                    exclure  = @()
+                    tailleMo = $null
+                    logiciel = $regle.cle
+                    # Ce marqueur dit a la sauvegarde d'exporter plutot que de
+                    # copier, et a la page d'afficher une cle et non un dossier.
+                    registre = $true
+                }
+            }
+        }
     }
     Write-Host " $(@($trouves).Count) trouve(s)"
     return $trouves
+}
+
+# ---------------------------------------------------------- fichiers ouverts
+#
+# Copy-Item echoue sur un fichier verrouille. Firefox et Thunderbird en
+# ouverture gardent la main sur places.sqlite, cookies.sqlite et key4.db —
+# c'est-a-dire les marque-pages et les mots de passe, exactement ce qu'on
+# venait chercher. La sauvegarde signalait l'echec fichier par fichier, noye
+# au milieu du reste, et personne ne faisait le lien avec le navigateur reste
+# ouvert derriere.
+#
+# On ne ferme rien a la place de l'utilisateur : fermer un navigateur sous les
+# doigts de quelqu'un est le genre d'initiative qu'un script n'a pas a prendre.
+# On le previent avant de copier.
+
+# Quels processus tiennent quels reglages. Le nom est celui du processus, sans
+# .exe, tel que Get-Process le rend.
+$ProcessusVerrouillants = @{
+    'firefox'     = 'Profils Firefox'
+    'thunderbird' = 'Thunderbird'
+    'chrome'      = 'Google Chrome'
+    'msedge'      = 'Microsoft Edge'
+    'Code'        = 'Visual Studio Code'
+    'obsidian'    = 'Obsidian'
+    'qbittorrent' = 'qBittorrent'
+    'Discord'     = 'Discord'
+}
+
+# Rend les noms lisibles des logiciels ouverts qui verrouillent une des
+# configurations qu'on s'apprete a copier. Prend la liste des noms de
+# configurations retenues, pour ne prevenir que de ce qui concerne cette copie.
+function Get-LogicielsAFermer {
+    param(
+        [string[]]$NomsConfigs = @(),
+        # Injectable pour le test : sans ca, il faudrait lancer Firefox.
+        $Processus = $null
+    )
+    $ouverts = @()
+    if ($null -eq $Processus) {
+        try { $Processus = @(Get-Process -ErrorAction SilentlyContinue) } catch { $Processus = @() }
+    }
+    $nomsVus = @{}
+    foreach ($p in @($Processus)) {
+        if (-not $p) { continue }
+        $n = ''
+        $pn = $p.PSObject.Properties['ProcessName']
+        if ($pn) { $n = [string]$pn.Value }
+        if ([string]::IsNullOrWhiteSpace($n)) { continue }
+        if (-not $ProcessusVerrouillants.ContainsKey($n)) { continue }
+        $config = $ProcessusVerrouillants[$n]
+        # On ne previent que pour ce qui est effectivement dans la copie.
+        if ($NomsConfigs.Count -and ($NomsConfigs -notcontains $config)) { continue }
+        if ($nomsVus.ContainsKey($config)) { continue }
+        $nomsVus[$config] = $true
+        $ouverts += $config
+    }
+    return @($ouverts)
 }
 
 # ---------------------------------------------------------------- materiel

@@ -16,7 +16,7 @@ couverture inconnue. Les noms de famille utilisés ici sont ceux de
 |---|---|---|
 | `apps` | `Read-Registre`, `Read-Winget`, `Read-Store` | — |
 | `jeux` | `Read-Steam`, `Read-Epic`, `Read-GOG`, `Read-Xbox`, `Read-Ubisoft`, `Read-Ea` | — |
-| `configs` | `Read-Configs` | **partiel**, voir plus bas |
+| `configs` | `Read-Configs` | registre inclus depuis peu ; reste la question des fichiers verrouillés, voir plus bas |
 | `variables` | `Read-Variables` | — |
 | `materiel` | `Read-Materiel` | — |
 | `outils` | `Read-SdkAndroid`, `Read-Wsl`, `Read-GestionnairesPaquets`, `Read-OutilsLangages` | scoop, Chocolatey, npm, pip seulement |
@@ -28,18 +28,24 @@ couverture inconnue. Les noms de famille utilisés ici sont ceux de
 | `licences` | `Read-Licences` | Windows et Office seulement, via `SoftwareLicensingProduct` |
 | `controles` | `Read-Controles` | Machine **neuve** uniquement (`verifier-pc.ps1`) : XMP, TRIM, Secure Boot/TPM, heures du SSD |
 
-### Pourquoi `configs` n'est que partiel
+### Les deux trous de `configs`, et où ils en sont
 
-Deux trous connus, tous les deux silencieux — rien n'échoue visiblement :
-
-1. **Le registre n'est pas lu.** `$ConfigsConnues` n'a qu'un champ `chemins`.
-   Or PuTTY range ses sessions SSH entièrement dans
-   `HKCU\Software\SimonTatham`, sans le moindre fichier. Même chose pour 7-Zip,
-   WinRAR, WinZip et TeamViewer.
-2. **Les fichiers verrouillés échouent.** `sauvegarder-configs.ps1` copie avec
-   `Copy-Item`. Si Firefox ou Thunderbird tourne pendant la sauvegarde,
-   `places.sqlite`, `cookies.sqlite` et `key4.db` sont verrouillés — c'est-à-dire
-   précisément les marque-pages et les mots de passe.
+1. **Le registre — comblé.** `$ConfigsConnues` porte maintenant un champ
+   `registre` à côté de `chemins`. PuTTY range ses sessions SSH entièrement
+   dans `HKCU\Software\SimonTatham`, sans le moindre fichier ; 7-Zip, WinRAR,
+   WinZip et TeamViewer font pareil. La sauvegarde les exporte en `.reg`, la
+   restauration les réimporte. Une réimportation **fusionne** dans le registre
+   au lieu de remplacer : c'est la seule chose du projet qui écrit sans filet,
+   et le script le dit au moment de le faire.
+2. **Les fichiers verrouillés — atténué, pas résolu.**
+   `sauvegarder-configs.ps1` copie avec `Copy-Item`, qui échoue sur un fichier
+   ouvert. Firefox ou Thunderbird en marche gardent la main sur
+   `places.sqlite`, `cookies.sqlite` et `key4.db` — les marque-pages et les
+   mots de passe, exactement ce qu'on vient chercher. Le script prévient
+   maintenant **avant** de copier et demande confirmation, au lieu de signaler
+   des échecs fichier par fichier une fois la copie finie. Il ne ferme rien à
+   la place de l'utilisateur. La vraie solution serait un instantané VSS, qui
+   demande les droits administrateur.
 
 ## Détectable, pas encore fait
 

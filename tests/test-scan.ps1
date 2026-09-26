@@ -865,5 +865,45 @@ ok 'aucun compteur, inconnu' (Format-ControleDisques -Compteurs @()).etat 'incon
 ok 'compteur absent, inconnu' (Format-ControleDisques -Compteurs @((Obj @{ DeviceId='X' }))).etat 'inconnu'
 ok 'controles declares'      ($CouverturesScan.Contains('controles')) $true
 
+"--- les reglages qui vivent dans le registre ---"
+# PuTTY ne pose aucun fichier : ses sessions SSH entieres sont dans
+# HKCU\Software\SimonTatham. La table ne connaissait que des chemins, donc
+# elles partaient en silence — rien n'echouait, elles n'etaient jamais vues.
+$avecReg = @($ConfigsConnues | Where-Object { $_.Contains('registre') -and $_.registre })
+ok 'des regles designent le registre' ($avecReg.Count -ge 5) $true
+ok 'PuTTY en fait partie' (@($avecReg | Where-Object { $_.nom -like '*PuTTY*' }).Count) 1
+ok 'et il n a aucun fichier'  (@(@($ConfigsConnues | Where-Object { $_.nom -like '*PuTTY*' })[0].chemins).Count) 0
+# Une cle mal ecrite ne se verrait qu'au moment de l'export, sur Windows.
+$malEcrites = @($avecReg | ForEach-Object { $_.registre } |
+    Where-Object { $_ -notmatch '^HK(CU|LM|CR|U|CC):\\' })
+ok 'toutes les cles sont des chemins PowerShell' ($malEcrites -join ', ') ''
+# Hors de Windows, le lecteur HKCU: n'existe pas : la lecture doit rendre
+# $false sans jeter, sinon le scan tomberait sur une machine de test.
+ok 'une cle absente ne jette pas' (Test-CleRegistre -Cle 'HKCU:\Software\NExistePas7734') $false
+ok 'une cle vide non plus'        (Test-CleRegistre -Cle '') $false
+ok 'un null non plus'             (Test-CleRegistre -Cle $null) $false
+
+"--- prevenir avant de copier, pas apres ---"
+# Firefox ouvert verrouille places.sqlite, cookies.sqlite et key4.db : les
+# marque-pages et les mots de passe, exactement ce qu'on vient chercher.
+function Proc($n){ return [pscustomobject]@{ ProcessName = $n } }
+$ouverts = @(Get-LogicielsAFermer -NomsConfigs @('Profils Firefox','Thunderbird') `
+    -Processus @((Proc 'firefox'), (Proc 'bash'), (Proc 'thunderbird')))
+ok 'Firefox signale'         ($ouverts -contains 'Profils Firefox') $true
+ok 'Thunderbird aussi'       ($ouverts -contains 'Thunderbird') $true
+ok 'et rien d autre'         (Get-Nombre $ouverts) 2
+# On ne previent que de ce qui est vraiment dans la copie : un Chrome ouvert
+# n'a pas a inquieter quelqu'un qui n'emporte que ses cles SSH.
+$horsCopie = @(Get-LogicielsAFermer -NomsConfigs @('Clés SSH') -Processus @((Proc 'chrome')))
+ok 'un logiciel hors copie se tait' (Get-Nombre $horsCopie) 0
+# Deux fenetres du meme navigateur ne doivent pas donner deux lignes.
+$deuxFois = @(Get-LogicielsAFermer -NomsConfigs @('Profils Firefox') `
+    -Processus @((Proc 'firefox'), (Proc 'firefox')))
+ok 'un seul avertissement par logiciel' (Get-Nombre $deuxFois) 1
+ok 'aucun processus, aucun avertissement' (Get-Nombre (Get-LogicielsAFermer -NomsConfigs @('Profils Firefox') -Processus @())) 0
+# Sans liste de configs, on previent de tout ce qui est ouvert : c'est le cas
+# ou le script ne sait pas encore ce qu'il va copier.
+ok 'sans filtre, tout remonte' (Get-Nombre (Get-LogicielsAFermer -Processus @((Proc 'chrome')))) 1
+
 
 if($script:ko){"`n$($script:ko) TEST(S) EN ECHEC"; exit 1} else {"`nTOUS LES TESTS POWERSHELL PASSENT"}
