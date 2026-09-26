@@ -1219,4 +1219,24 @@ ok 'et on dit que ca ne se restaure pas' ($aso[0].quoi -like '*ne se restaure pa
 ok 'associations declarees'    ($CouverturesScan.Contains('associations')) $true
 
 
+"--- ce qui compte dans le total a prevoir ---"
+# Une archive Outlook se copie, un cache .ost non : le compter reserverait
+# des gigaoctets sur la cle pour un fichier qui se refait tout seul.
+$archive = @([ordered]@{ chemin='C:\a\archive.pst'; tailleMo=3200 })
+$cache   = @([ordered]@{ chemin='C:\a\compte.ost'; tailleMo=8100 })
+$licence = @([ordered]@{ chemin='C:\a\rarreg.key'; tailleKo=512 })
+ok 'l archive compte'        (Get-TotalAPrevoirMo @($archive)) 3200
+ok 'le fichier de licence aussi' (Get-TotalAPrevoirMo @($licence)) 0.5
+ok 'les deux ensemble'       (Get-TotalAPrevoirMo @($archive, $licence)) 3200.5
+# Un cache ne se copie pas : Select-AEmporter l'ecarte avant l'addition.
+$melange = @(
+    [ordered]@{ chemin='C:\a\archive.pst'; tailleMo=3200; cache=$false },
+    [ordered]@{ chemin='C:\a\compte.ost';  tailleMo=8100; cache=$true })
+ok 'le cache est ecarte'     (Get-Nombre @(Select-AEmporter -Entrees $melange)) 1
+ok 'et le total l ignore'    (Get-TotalAPrevoirMo @((Select-AEmporter -Entrees $melange))) 3200
+ok 'sans champ cache, on garde' (Get-Nombre @(Select-AEmporter -Entrees $archive)) 1
+ok 'une liste vide'          (Get-Nombre @(Select-AEmporter -Entrees @())) 0
+ok 'un null'                 (Get-Nombre @(Select-AEmporter -Entrees $null)) 0
+
+
 if($script:ko){"`n$($script:ko) TEST(S) EN ECHEC"; exit 1} else {"`nTOUS LES TESTS POWERSHELL PASSENT"}
