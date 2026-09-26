@@ -5,7 +5,7 @@
   "description": "Checklist de reinstallation Windows pilotee par un profil, avec inventaire des logiciels installes",
   "license": "AGPL-3.0-or-later",
   "scripts": {
-    "test": "node tests/test-profil-sync.js && node tests/test-checklist.js && node tests/test-winget.js && node tests/test-inventaire-etendu.js && node tests/test-dependances.js",
+    "test": "node tests/test-profil-sync.js && node tests/test-checklist.js && node tests/test-winget.js && node tests/test-inventaire-etendu.js && node tests/test-dependances.js && node tests/test-reconciliation.js",
     "test:navigateur": "node tests/test-navigateur.js",
     "test:scan": "pwsh -File tests/test-scan.ps1 && pwsh -File tests/test-verification.ps1 && pwsh -File tests/test-sauvegardes.ps1 && pwsh -File tests/test-lanceur.ps1 && pwsh -File tests/test-powershell-compatibility.ps1 && pwsh -File tests/test-configs-aller-retour.ps1 && pwsh -File tests/test-windows-reel.ps1",
     "test:pwa": "node tests/test-pwa.js",
@@ -22,7 +22,8 @@
     "test:sauvegarde": "node tests/test-sauvegarde.js",
     "test:debut": "node tests/test-debut.js",
     "test:config": "node tests/test-config.js",
-    "test:outils": "node tests/test-outils.js"
+    "test:outils": "node tests/test-outils.js",
+    "test:reconciliation": "node tests/test-reconciliation.js"
   },
   "devDependencies": {
     "playwright": "^1.63.0"
