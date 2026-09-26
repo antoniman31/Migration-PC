@@ -206,6 +206,53 @@ console.log('\n--- comparaison de chemins ---');
   ok('entrées vides ignorées',p3.data.filter(function(d){return /^Licence : /.test(d.n);}).length,0);
 }
 
+// ── Logiciels payants : le badge, et le fichier qui EST la licence ──
+{
+  console.log('\n--- logiciels sous licence ---');
+  const inv={type:'inventaire-migration-pc',apps:[
+    {nom:'VLC media player',cat:'media'},
+    {nom:'WinRAR 6.24',cat:'utilitaires',
+     payant:'Licence WinRAR : un fichier rarreg.key a recopier.'}
+  ],fichiersLicence:[
+    {nom:'WinRAR',chemin:'C:\\Users\\a\\AppData\\Roaming\\WinRAR\\rarreg.key',
+     modele:'%APPDATA%\\WinRAR\\rarreg.key',quoi:"Sans ce fichier, WinRAR redevient une version d'essai.",
+     tailleKo:0.5,secret:true}
+  ]};
+  const p=G('inventaireVersProfil')(inv);
+  const winrar=p.apps.filter(function(a){return /WinRAR/.test(a.n);})[0];
+  const vlc=p.apps.filter(function(a){return /VLC/.test(a.n);})[0];
+  ok('le payant porte son motif',/rarreg\.key/.test(winrar.pay||''),true);
+  // Vide veut dire « je ne sais pas », jamais « gratuit » : rien ne s'affiche.
+  ok('le gratuit ne porte rien',vlc.pay,undefined);
+  ok('et le champ clé s\'ouvre',winrar.lic,true);
+  ok('pas de champ clé ailleurs',vlc.lic,undefined);
+  ok('le résumé compte les licences',/1 licence à prévoir/.test(p.meta.soustitre||''),true);
+
+  G('appliquerProfil')(p,true);
+  G('APPS_DATA').forEach(function(a){G('lignesOuvertes')[a.id]=true;});G('renderApps')();
+  const html=document.getElementById('list-apps').innerHTML;
+  ok('le badge licence est rendu',/b-pay/.test(html),true);
+  ok('le motif est dans le détail',/redevient|rarreg/.test(html),true);
+  ok('le champ clé est rendu',/lic-input/.test(html),true);
+
+  const licf=p.data.filter(function(d){return /^Licence WinRAR/.test(d.n);});
+  ok('le fichier de licence est une ligne de données',licf.length,1);
+  ok('avec son chemin réel',/rarreg\.key/.test(licf[0].p),true);
+  ok('en priorité haute',licf[0].pr,'high');
+  ok('et prévient de ne pas le promener',/perds|support/.test(licf[0].warn||''),true);
+  ok('couverture déclarée',licf[0].scan,'payants');
+  ok('le résumé le compte',/1 fichier de licence/.test(p.meta.soustitre||''),true);
+
+  // Rien de relevé : rien ne s'affiche, rien ne plante.
+  const p2=G('inventaireVersProfil')({type:'inventaire-migration-pc',apps:[{nom:'VLC'}]});
+  ok('aucun fichier, aucune ligne',
+    p2.data.filter(function(d){return /^Licence /.test(d.n);}).length,0);
+  const p3=G('inventaireVersProfil')({type:'inventaire-migration-pc',apps:[{nom:'VLC'}],
+    fichiersLicence:[{},{chemin:'   '}]});
+  ok('entrées vides ignorées',
+    p3.data.filter(function(d){return /^Licence /.test(d.n);}).length,0);
+}
+
 // ── Les quatre contrôles de la machine neuve ──
 {
   console.log('\n--- contrôles de la machine neuve ---');

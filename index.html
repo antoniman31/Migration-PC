@@ -348,6 +348,7 @@ body.compact .item{padding:5px 0}
 .b-winget:hover{opacity:.8}
 .b-time{background:var(--bg2);color:var(--tx2);border-color:var(--brd)}
 .b-high{background:var(--bh-bg);color:var(--bh-tx);border-color:var(--bh-bd)}
+.b-pay{background:var(--warn-bg);color:var(--warn-tx);border-color:var(--warn-bd)}
 .b-pwa{background:var(--bpwa-bg);color:var(--bpwa-tx);border-color:var(--bpwa-bd)}
 .b-sync{background:var(--bord-bg);color:var(--bord-tx);border-color:var(--bord-bd);font-weight:600}
 .b-num{width:22px;height:22px;border-radius:50%;background:var(--accl);color:var(--acc-fort);border:.5px solid var(--accb);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -3452,6 +3453,13 @@ function inventaireVersProfil(inv){
       u:a.lien||undefined,
       p:a.priorite||'med',
       t:a.duree||5,
+      // Ce que le scan sait d'une licence : rien de la machine, tout d'une
+      // liste tenue à la main. Vide veut dire « je ne sais pas », pas
+      // « gratuit », et la ligne ne prétend rien de plus.
+      pay:a.payant?String(a.payant):undefined,
+      // Marqué payant : autant offrir tout de suite le champ où noter la clé,
+      // c'est le même mécanisme que sur les lignes de Données.
+      lic:a.payant?true:undefined,
       d:bouts.join(' · ')||'Détecté sur l\'ancien PC.'
     });
   });
@@ -3523,6 +3531,11 @@ function inventaireVersProfil(inv){
   donnees=donnees.concat(suspects);
   const cles=precieuxVersDonnees(inv.precieux,donnees.map(function(d){return d.p;}));
   donnees=cles.concat(donnees);
+  // Un fichier de licence pèse quelques centaines d'octets et ne se
+  // reconstitue pas : même traitement que les clés de signature.
+  const licf=fichiersLicenceVersDonnees(inv.fichiersLicence,
+    donnees.map(function(d){return d.p;}));
+  if(licf.length)donnees=licf.concat(donnees);
   // Les licences passent tout devant : une licence qui ne suit pas change ce
   // qu'il faut acheter, donc elle doit se lire avant de commander la machine.
   const lics=licencesVersDonnees(inv.licences);
@@ -3530,6 +3543,9 @@ function inventaireVersProfil(inv){
   if(oublies.length)desc.push(oublies.length+' gros dossier'+(oublies.length>1?'s':'')+' hors liste');
   if(cles.length)desc.push(cles.length+' clé'+(cles.length>1?'s':'')+' de signature');
   if(suspects.length)desc.push(suspects.length+' portable'+(suspects.length>1?'s':'')+' à relire');
+  if(licf.length)desc.push(licf.length+' fichier'+(licf.length>1?'s':'')+' de licence');
+  const payants=out.filter(function(a){return a.pay;}).length;
+  if(payants)desc.push(payants+' licence'+(payants>1?'s':'')+' à prévoir');
   const licsOem=lics.filter(function(l){return l.pr==='high';}).length;
   if(licsOem)desc.push(licsOem+' licence'+(licsOem>1?'s':'')+' qui ne suivra'+(licsOem>1?'ient':'')+' pas');
   // Ce que le scan a mesuré, pas ce que la checklist réclame par ailleurs :
@@ -3681,6 +3697,39 @@ function licencesVersDonnees(licences){
     if(l.suitLeMateriel===false)
       e.warn='Cette licence ne suivra pas sur la machine neuve : prévois-en une avant de démonter l\'ancienne.';
     out.push(e);
+  });
+  return out;
+}
+
+// Les fichiers qui SONT une licence : rarreg.key pour WinRAR, wincmd.key pour
+// Total Commander. Quelques centaines d'octets, et rien ne les reconstitue —
+// perdus, il faut repasser par l'éditeur. Le scan relève leur chemin, jamais
+// leur contenu : l'inventaire voyage sur une clé USB, et une clé de licence
+// lisible dedans serait une clé de licence perdue. Le même avertissement vaut
+// pour la copie, d'où le warn.
+function fichiersLicenceVersDonnees(fichiers,dejaReclames){
+  if(!Array.isArray(fichiers)||!fichiers.length)return [];
+  const reclames=Array.isArray(dejaReclames)?dejaReclames:[];
+  const out=[];
+  fichiers.forEach(function(f,i){
+    if(!f||typeof f!=='object')return;
+    const chemin=String(f.chemin==null?'':f.chemin).trim();
+    if(!chemin)return;
+    if(reclames.some(function(p){return recouvre(p,chemin);}))return;
+    const bouts=[];
+    if(f.quoi)bouts.push(String(f.quoi));
+    const ko=Number(f.tailleKo);
+    if(isFinite(ko)&&ko>0)bouts.push(ko+' Ko');
+    bouts.push('trouvé sur le disque');
+    out.push({
+      id:'licf'+(i+1),
+      n:'Licence '+String(f.nom||chemin),
+      pr:'high',
+      p:chemin,
+      note:bouts.join(' · '),
+      scan:'payants',
+      warn:'Ce fichier est la licence elle-même : qui l\'a, l\'a. À copier sur un support que tu ne perds pas, pas sur la clé USB qui se balade.'
+    });
   });
   return out;
 }
@@ -4290,6 +4339,7 @@ function mkAppItem(a){
   const ouvert=!!lignesOuvertes[a.id];
   const dt=ck&&S.dates[a.id]?'<span class="item-date">✓ '+fmtDate(S.dates[a.id])+'</span>':'';
   const pBadge=a.p==='high'?'<span class="badge b-high">⚡</span>':'';
+  const payBadge=a.pay?'<span class="badge b-pay" title="'+esc(String(a.pay))+'">licence</span>':'';
   const meta=[];
   if(a.ver)meta.push(esc(String(a.ver)));
   if(a.go)meta.push(esc(fmtTaille(a.go)));
@@ -4302,10 +4352,12 @@ function mkAppItem(a){
     detail='<div class="lg-det" onclick="event.stopPropagation()">'
       +(d?'<p class="lg-det-d">'+esc(d)+'</p>':'')
       +(a.warn?'<div class="warn-badge">⚠️ '+esc(a.warn)+'</div>':'')
+      +(a.pay?'<div class="warn-badge">💳 '+esc(String(a.pay))+'</div>':'')
       +(a.dep?mkDepBadge(a.dep):'')
       +(cmd?'<button type="button" class="badge b-winget" onclick="'
         +(a.w?'copyWinget(\''+escJS(a.w)+'\',event)':'copierCommande(\''+escJS(a.cmd)+'\',event)')
         +'" title="Copier la commande d\'installation">📋 '+esc(cmd)+'</button>':'')
+      +mkLicField(a)
       +mkNoteArea(a.id)
       +'</div>';
   }
@@ -4315,7 +4367,7 @@ function mkAppItem(a){
       +mkChkbox()
       +'<span class="lg-n">'+esc(libelleDe(a))+dt+'</span>'
       +'<span class="lg-m">'+meta.join(' · ')+'</span>'
-      +'<span class="lg-t">'+(a.t?fmtTime(a.t):'')+pBadge+'</span>'
+      +'<span class="lg-t">'+(a.t?fmtTime(a.t):'')+payBadge+pBadge+'</span>'
       +'<button type="button" class="lg-plus" aria-expanded="'+ouvert+'" '
         +'aria-label="'+(ouvert?'Masquer':'Afficher')+' le détail de '+esc(libelleDe(a))+'" '
         +'onclick="basculerDetail(\''+escJS(a.id)+'\',event)">'+(ouvert?'▴':'▾')+'</button>'

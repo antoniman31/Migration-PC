@@ -117,6 +117,7 @@ $CouverturesScan = [ordered]@{
     variables  = 'Read-Variables'
     materiel   = 'Read-Materiel'
     licences   = 'Read-Licences'
+    payants    = 'Get-LicenceAPrevoir, Read-FichiersLicence'
     controles  = 'Read-Controles'
     outils     = 'Read-SdkAndroid, Read-Wsl, Read-GestionnairesPaquets, Read-OutilsLangages'
     extensions = 'Read-Extensions'
@@ -242,6 +243,7 @@ function Add-App {
         if ([string]::IsNullOrWhiteSpace($exist.editeur) -and $Editeur) { $exist.editeur = $Editeur }
         if ([string]::IsNullOrWhiteSpace($exist.version) -and $Version) { $exist.version = $Version }
         if ($null -eq $exist.tailleGo -and $null -ne $TailleGo) { $exist.tailleGo = $TailleGo }
+        if ([string]::IsNullOrWhiteSpace($exist.payant)) { $exist.payant = Get-LicenceAPrevoir -Nom $Nom -Editeur $Editeur }
         if ($exist.source -notlike "*$Source*") { $exist.source = "$($exist.source), $Source" }
         return
     }
@@ -258,6 +260,9 @@ function Add-App {
         priorite = Get-Priorite -Categorie $cat
         duree    = Get-Duree -Nom $Nom -Categorie $cat
         tailleGo = $TailleGo
+        # Vide quand on ne sait pas, ce qui est le cas le plus courant : la
+        # liste est tenue a la main. Vide ne veut pas dire gratuit.
+        payant   = Get-LicenceAPrevoir -Nom $Nom -Editeur $Editeur
     }
 }
 
@@ -2349,6 +2354,114 @@ function Read-Licences {
     $out = @(Format-Licences -Produits $produits)
     if (-not $out.Count) { Write-Host " aucune licence lisible" -ForegroundColor Yellow; return @() }
     Write-Host " $($out.Count) licence(s)"
+    return $out
+}
+
+# ------------------------------------------------ logiciels sous licence
+#
+# Un logiciel gratuit se reinstalle d'une commande. Un logiciel payant se
+# reinstalle de la meme commande, et refuse ensuite de demarrer sans sa cle.
+# Rien dans le registre ne distingue les deux : ni le prix, ni la licence n'y
+# figurent. Ce qu'on peut faire, c'est tenir la liste des logiciels dont on
+# sait qu'ils reclament quelque chose, et le dire avant le formatage plutot
+# qu'apres.
+#
+# La liste est ecrite a la main, donc incomplete par construction. Elle ne
+# mentira pas pour autant : une ligne absente ne veut pas dire « gratuit »,
+# elle veut dire « je ne sais pas », et la page le formule ainsi. On ne marque
+# que ce dont on est sur, jamais par famille d'editeur — « Microsoft » couvre
+# aussi bien Office que le Visual C++ Redistributable.
+$LogicielsPayants = @(
+    @{ motif = 'microsoft (office|365)|^office (professional|home|standard|famille)|\bmicrosoft (word|excel|powerpoint|outlook|access|publisher|visio|project)\b'
+       quoi  = "Cle Office ou abonnement Microsoft 365. Elle est dans ton compte Microsoft : verifie que tu y as acces avant de formater." }
+    @{ motif = 'adobe|acrobat pro|photoshop|illustrator|premiere pro|after effects|lightroom|indesign'
+       quoi  = "Abonnement Adobe : la reinstallation passe par Creative Cloud et ton identifiant. Le nombre de postes est limite, deconnecte l'ancien avant de le demonter." }
+    @{ motif = 'winrar'
+       quoi  = "Licence WinRAR : un fichier rarreg.key a recopier, sinon la version d'essai reprend." }
+    @{ motif = 'kaspersky|bitdefender|\beset\b|norton|mcafee|avast premium|avg internet|f-secure|trend micro|malwarebytes premium'
+       quoi  = "Antivirus payant : l'abonnement se rattache a un compte ou a une cle, et souvent a un nombre de postes. Retrouve-la avant de desinstaller." }
+    @{ motif = 'jetbrains|intellij idea ultimate|pycharm professional|phpstorm|webstorm|rider|clion|datagrip|rubymine'
+       quoi  = "Licence JetBrains : rattachee a ton compte, elle se recupere en te connectant. Verifie que tu connais le compte." }
+    @{ motif = 'sublime text|sublime merge'
+       quoi  = "Licence Sublime : une cle de texte, dans le courriel d'achat. Elle ne se retrouve pas autrement." }
+    @{ motif = 'vmware workstation|vmware fusion|parallels desktop'
+       quoi  = "Licence de virtualisation : une cle par machine. Note-la avant, les machines virtuelles ne s'ouvriront pas sans." }
+    @{ motif = 'autodesk|autocad|revit|3ds max|\bmaya\b'
+       quoi  = "Abonnement Autodesk : rattache a un compte, avec un nombre de postes limite. Delie l'ancien poste." }
+    @{ motif = 'matlab|mathematica|\bstata\b|\bspss\b'
+       quoi  = "Licence scientifique, souvent nominative ou fournie par une ecole : verifie comment tu la reactives avant de formater." }
+    @{ motif = 'beyond compare|araxis merge'
+       quoi  = "Licence de comparaison de fichiers : une cle dans le courriel d'achat, parfois un fichier a recopier." }
+    @{ motif = 'affinity (photo|designer|publisher)|\bcapture one\b|\bdxo\b'
+       quoi  = "Licence achetee une fois : elle vit dans un espace client. Verifie que tu peux encore t'y connecter." }
+    @{ motif = 'camtasia|snagit|techsmith'
+       quoi  = "Licence TechSmith : une cle par produit, dans ton compte TechSmith." }
+    @{ motif = 'ableton|fl studio|cubase|\bstudio one\b|reaper|\bnative instruments\b'
+       quoi  = "Licence audio : souvent liee a un compte ou a une cle materielle. Les projets ne s'ouvriront pas sans les memes extensions." }
+    @{ motif = 'total commander|directory opus|xyplorer'
+       quoi  = "Licence de gestionnaire de fichiers : une cle ou un fichier de licence a recopier." }
+    @{ motif = 'internet download manager|\bidm\b|\bwinzip\b|\bnitro pro\b|pdf-xchange'
+       quoi  = "Licence achetee : une cle a retrouver dans le courriel d'achat ou l'espace client." }
+)
+
+function Get-LicenceAPrevoir {
+    param([string]$Nom, [string]$Editeur = '')
+    if ([string]::IsNullOrWhiteSpace($Nom)) { return '' }
+    $sujet = ("$Nom $Editeur").ToLowerInvariant()
+    foreach ($r in $LogicielsPayants) {
+        if ($sujet -match $r.motif) { return $r.quoi }
+    }
+    return ''
+}
+
+# Certains de ces logiciels rangent leur licence dans un fichier, en clair, a
+# un endroit connu. Ce fichier ne se reconstitue pas : perdu, il faut repasser
+# par l'editeur. On releve son CHEMIN, jamais son contenu — l'inventaire voyage
+# sur une cle USB, et une cle de licence lisible dedans serait une cle de
+# licence perdue. Le nom dans l'inventaire, le secret dans le fichier que
+# l'utilisateur copie lui-meme : c'est la regle du projet partout ailleurs.
+$FichiersLicence = @(
+    @{ nom = 'WinRAR'; quoi = "Sans ce fichier, WinRAR redevient une version d'essai."
+       chemins = @('%APPDATA%\WinRAR\rarreg.key', '%PROGRAMFILES%\WinRAR\rarreg.key', '%PROGRAMFILES(X86)%\WinRAR\rarreg.key') }
+    @{ nom = 'Total Commander'; quoi = 'Le fichier de licence, a reposer a cote du programme.'
+       chemins = @('%PROGRAMFILES%\totalcmd\wincmd.key', '%PROGRAMFILES(X86)%\totalcmd\wincmd.key') }
+    @{ nom = 'Beyond Compare'; quoi = 'Le fichier de licence, a reposer au meme endroit.'
+       chemins = @('%APPDATA%\Scooter Software\Beyond Compare *\BCLicense') }
+    @{ nom = 'Sublime Text'; quoi = 'La licence, dans un fichier que la reinstallation ne recree pas.'
+       chemins = @('%APPDATA%\Sublime Text*\Local\License.sublime_license') }
+    @{ nom = 'Sublime Merge'; quoi = 'La licence, dans un fichier que la reinstallation ne recree pas.'
+       chemins = @('%APPDATA%\Sublime Merge\Local\License.sublime_license') }
+    @{ nom = 'XYplorer'; quoi = 'Le fichier de licence, a cote du programme.'
+       chemins = @('%APPDATA%\XYplorer\*.lic') }
+)
+
+function Read-FichiersLicence {
+    Write-Host "  fichiers de licence..." -NoNewline
+    $out = @()
+    foreach ($regle in $FichiersLicence) {
+        foreach ($modele in @($regle.chemins)) {
+            foreach ($r in @(Expand-CheminModele -Modele $modele)) {
+                if (Test-Path -LiteralPath $r.chemin -PathType Container) { continue }
+                $ko = $null
+                try {
+                    $f = Get-Item -LiteralPath $r.chemin -Force -ErrorAction Stop
+                    $ko = [math]::Round($f.Length / 1KB, 1)
+                } catch { }
+                $out += [ordered]@{
+                    nom      = $regle.nom
+                    chemin   = $r.chemin
+                    modele   = $r.modele
+                    quoi     = $regle.quoi
+                    tailleKo = $ko
+                    # Ce fichier EST la licence : il n'a pas sa place sur une cle
+                    # USB qui se perd. La page le dit au lieu de le supposer.
+                    secret   = $true
+                }
+            }
+        }
+    }
+    if (-not $out.Count) { Write-Host " aucun"; return @() }
+    Write-Host " $($out.Count) fichier(s)"
     return $out
 }
 
