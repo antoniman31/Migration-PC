@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Checklist de reinstallation Windows pilotee par un profil, avec inventaire des logiciels installes",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "scripts": {
     "test": "node tests/test-profil-sync.js && node tests/test-checklist.js && node tests/test-winget.js && node tests/test-inventaire-etendu.js && node tests/test-dependances.js",
     "test:navigateur": "node tests/test-navigateur.js",

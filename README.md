@@ -84,6 +84,7 @@ Un seul fichier à lancer : `Migration PC.bat`. Tout le reste est rangé dans
   - [Accessibilité](#accessibilité)
 - [Formats de fichiers](#formats-de-fichiers)
 - [Écrire son propre profil](#écrire-son-propre-profil)
+- [Licence](#licence)
 - [Vie privée](#vie-privée)
   - [Un profil reçu est une entrée non fiable](#un-profil-reçu-est-une-entrée-non-fiable)
 - [Tests](#tests)
@@ -796,6 +797,23 @@ Les liens de téléchargement sont volontairement des requêtes de recherche res
 au domaine officiel (`site:7-zip.org download`) plutôt que des URL directes : une URL
 de téléchargement est périmée en quelques mois, une requête reste valable et évite les
 faux sites de drivers.
+
+## Licence
+
+**GNU AGPL v3 ou ultérieure.** En clair, et sans jargon : le code est ouvert, vous
+pouvez le lire, l'utiliser, le modifier et le redistribuer. La seule contrainte est
+une réciprocité — si vous distribuez une version modifiée, **ou si vous la faites
+tourner comme service en ligne**, vous devez publier votre code source sous la même
+licence. C'est cette seconde clause qui distingue l'AGPL des autres licences libres,
+et c'est exactement pour elle qu'elle a été choisie ici : quelqu'un peut reprendre ce
+travail et le faire avancer, personne ne peut le refermer.
+
+Le nom de l'auteur reste attaché au code. L'historique git, horodaté et public, en est
+la trace.
+
+Ce projet a d'abord été publié sous licence MIT, du 24 au 26 septembre 2026. Les
+versions distribuées pendant cette période restent sous MIT : un changement de licence
+ne vaut que pour la suite, jamais pour ce qui est déjà parti.
 
 ## Vie privée
 
