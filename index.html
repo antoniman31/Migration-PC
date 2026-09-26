@@ -339,6 +339,32 @@ body.compact .item{padding:5px 0}
      case qu'on rate deux fois sur trois est pire qu'une case voyante. */
   .af-c input{width:44px;height:44px;margin:0}
 }
+/* ═══ Onglet « Reste à faire » ═══ */
+.reste-tete{padding:16px 0 12px}
+.reste-titre{font-size:18px;font-weight:700;color:var(--tx);margin-bottom:6px}
+.reste-sous{font-size:13px;color:var(--tx2);line-height:1.55;margin:0}
+.reste-fam{margin-top:14px}
+.reste-fam-t{font-size:12px;font-weight:600;color:var(--tx2);padding:6px 0 4px;
+  border-top:.5px solid var(--brd);display:flex;align-items:center;gap:8px}
+.reste-cnt{font-size:11px;color:var(--tx3);font-weight:400}
+.reste-l{display:flex;align-items:center;gap:10px;padding:7px 0;
+  border-bottom:.5px solid var(--brd);flex-wrap:wrap}
+.reste-n{font-size:13px;color:var(--tx);flex:1;min-width:0}
+.reste-a{font-size:12px;color:var(--tx2);font-family:"Cascadia Code","Consolas",monospace;
+  word-break:break-all}
+.reste-b{font-size:10px;padding:2px 7px;border-radius:8px;white-space:nowrap;
+  border:.5px solid transparent;flex-shrink:0}
+.reste-b-abs{background:var(--warn-bg);color:var(--warn-tx);border-color:var(--warn-bd)}
+.reste-b-ver{background:var(--accl);color:var(--acc-fort);border-color:var(--accb)}
+.reste-ok{font-size:12px;color:var(--tx2);padding:6px 0;line-height:1.6}
+.reste-pt{padding:10px 0;border-bottom:.5px solid var(--brd)}
+.reste-pt-n{font-size:13px;font-weight:500;color:var(--tx);margin-bottom:3px}
+.reste-pt-q{font-size:12px;color:var(--tx2);line-height:1.55}
+.reste-manque .reste-pt-n{color:var(--warn-tx)}
+.reste-suite{margin-top:16px;padding:12px 14px;border-radius:8px;background:var(--bg2);
+  border:.5px solid var(--brd);font-size:12px;color:var(--tx2);line-height:1.6}
+.reste-suite .sm-btn{margin-left:6px}
+@media print{.reste-suite{display:none!important}}
 .item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:.5px solid var(--brd);cursor:pointer;border-radius:4px}
 .item:hover{background:rgba(0,0,0,.025)}
 [data-theme=dark] .item:hover{background:rgba(255,255,255,.04)}
@@ -1019,6 +1045,11 @@ if(location.protocol==='file:'){
         <span class="snav-bar"><span class="snav-fill" id="bar-data" style="width:0%"></span></span>
         <span class="tab-badge" id="badge-data">0/0</span>
       </button>
+      <button class="snav" type="button" role="tab" aria-selected="false" aria-controls="panel-reste" onclick="switchTab('reste')" id="tab-reste">
+        <span class="snav-t"><span class="snav-i" aria-hidden="true">🎯</span>Reste à faire</span>
+        <span class="snav-bar"><span class="snav-fill" id="bar-reste" style="width:0%"></span></span>
+        <span class="tab-badge" id="badge-reste">—</span>
+      </button>
       <button class="snav" type="button" role="tab" aria-selected="false" aria-controls="panel-pwa" onclick="switchTab('pwa')" id="tab-pwa">
         <span class="snav-t"><span class="snav-i" aria-hidden="true">🌍</span>PWA</span>
         <span class="snav-bar"><span class="snav-fill" id="bar-pwa" style="width:0%"></span></span>
@@ -1037,6 +1068,7 @@ if(location.protocol==='file:'){
       <button class="side-act" type="button" id="menu-btn" onclick="basculerMenu()" aria-expanded="false" aria-haspopup="true" aria-controls="hdr-menu-liste"><span aria-hidden="true">⚙️</span> Réglages</button>
       <div class="hdr-menu-liste" id="hdr-menu-liste" role="menu" aria-label="Réglages">
         <button type="button" role="menuitem" onclick="depuisMenu(importerFichier)"><span class="hdr-menu-ico" aria-hidden="true">📥</span>Importer un fichier…</button>
+        <button type="button" role="menuitem" onclick="depuisMenu(importerScanCible)"><span class="hdr-menu-ico" aria-hidden="true">🎯</span>Importer le scan du PC cible…</button>
         <button type="button" role="menuitem" onclick="depuisMenu(exportJSON)"><span class="hdr-menu-ico" aria-hidden="true">💾</span>Sauvegarder ma progression</button>
         <div class="hdr-menu-sep" role="separator"></div>
         <button type="button" role="menuitem" id="btn-normal" aria-pressed="true" onclick="depuisMenu(function(){setMode('normal');})"><span class="hdr-menu-ico" aria-hidden="true">📋</span>Affichage normal</button>
@@ -1169,6 +1201,10 @@ if(location.protocol==='file:'){
   <div class="next-tab-btn" id="next-data">
     <button class="next-btn" onclick="switchTab('pwa')" id="next-data-btn">PWA <span id="next-data-count"></span> →</button>
   </div>
+</div>
+
+<div class="panel" id="panel-reste" role="tabpanel" aria-labelledby="tab-reste" tabindex="0">
+  <div class="sec-content" id="list-reste"></div>
 </div>
 
 <div class="panel" id="panel-pwa" role="tabpanel" aria-labelledby="tab-pwa" tabindex="0">
@@ -3094,6 +3130,12 @@ const PROFIL_DEMO = {
 };
 
 const CLE_PROFIL='mpc_profil_v1', CLE_ETAT='mpc_state_v1', CLE_THEME='mpc_theme';
+// Le profil est une TRANSFORMATION de l'inventaire : il perd les tailles, les
+// modèles de chemin et les familles que la checklist n'affiche pas. La
+// comparaison a besoin des inventaires bruts, donc on les garde tels quels à
+// côté du profil.
+const CLE_SOURCE='mpc_source_v1', CLE_CIBLE='mpc_cible_v1';
+let INV_SOURCE=null, INV_CIBLE=null;
 
 let CATS={}, NPC_DATA=[], APPS_DATA=[], DATA_SAVES=[], PWA_DATA=[], QUITTER_DATA=[], INSTALL_ORDER=[], SEARCH_QUERIES={};
 
@@ -3275,6 +3317,11 @@ function majSelecteurScenario(){
 // La liste des onglets vivait en sept exemplaires dans le fichier. En ajouter
 // un obligeait à les retrouver tous, et en oublier un ne se voyait pas.
 const ONGLETS=['quitter','npc','apps','data','pwa'];
+// « Reste à faire » n'est pas une liste de tâches : c'est un rapport. Il a
+// son bouton et son panneau, mais il reste hors de ONGLETS pour que la
+// progression globale, le mode guidé et la recherche ne cherchent pas des
+// cases à cocher là où il n'y en a pas.
+const ONGLETS_VUE=ONGLETS.concat(['reste']);
 const NOM_ONGLET={quitter:'Avant de quitter',npc:'Nouveau PC',apps:'Apps',data:'Données',pwa:'PWA'};
 function donneesDe(cle){
   return {quitter:QUITTER_DATA,npc:NPC_DATA,apps:APPS_DATA,data:DATA_SAVES,pwa:PWA_DATA}[cle]||[];
@@ -3851,6 +3898,236 @@ function fichiersLicenceVersDonnees(fichiers,dejaReclames){
     });
   });
   return out;
+}
+
+// ═══ L'ONGLET « RESTE À FAIRE » ═══
+//
+// Deux vies dans le même onglet, parce que la procédure en a deux. Sur le PC
+// source, avant d'effacer, il dit ce qu'il reste à SORTIR. Sur le PC cible,
+// une fois la machine installée, il dit ce qu'il reste à REMETTRE. Un seul
+// endroit où regarder d'un bout à l'autre, au lieu d'un onglet qui ne sert
+// que la moitié du temps.
+
+// Ce qui décide de la vie affichée : l'existence d'un scan du PC cible.
+function surLaCible(){ return !!INV_CIBLE; }
+
+function renderReste(){
+  const cont=document.getElementById('list-reste');
+  if(!cont)return;
+  cont.innerHTML=surLaCible()?vueComparaison():vuePreparation();
+}
+
+// ── Vie 1 : sur le PC source, ce qu'il reste à sortir ────────────────────
+//
+// Ici il n'y a rien à comparer — la machine d'arrivée n'existe pas encore.
+// Ce qu'on peut constater, c'est l'état de la préparation, et c'est ce qui
+// compte : une fois le disque effacé, ce qui n'est pas sorti n'existe plus.
+function etatPreparation(){
+  const points=[];
+  const inv=INV_SOURCE;
+
+  const dateInv=inv&&inv.genere?new Date(inv.genere):null;
+  const heures=dateInv&&!isNaN(dateInv)?((Date.now()-dateInv.getTime())/3600000):null;
+  points.push({
+    cle:'instantane',
+    nom:'L\'instantané du PC source est fait',
+    etat:!inv?'manque':(heures!=null&&heures>24?'vieux':'ok'),
+    quoi:!inv
+      ?'Aucun instantané importé. Lance le script sur cette machine, puis ouvre le fichier produit.'
+      :(heures!=null&&heures>24
+        ?'Il date de plus de vingt-quatre heures : ce que tu as installé ou déplacé depuis n\'y est pas. Relance le scan.'
+        :'Pris le '+String(inv.genere).slice(0,10)+'.')
+  });
+
+  const configs=(inv&&Array.isArray(inv.configs))?inv.configs.length:0;
+  points.push({
+    cle:'configs',
+    nom:'Les dossiers de réglages sont copiés',
+    // Le scan ne copie rien : il liste. La copie est un second script, et
+    // confondre les deux est la seule façon de perdre des données ici.
+    etat:configs?'avérifier':'sansobjet',
+    quoi:configs
+      ?configs+' dossier'+(configs>1?'s':'')+' de réglages repéré'+(configs>1?'s':'')
+        +'. Le scan les a LISTÉS, il ne les a pas copiés : lance sauvegarder-configs.ps1, '
+        +'puis verifier-sauvegardes.ps1 pour les relire depuis la copie.'
+      :'Aucun dossier de réglages repéré sur cette machine.'
+  });
+
+  const aPrevoir=Number(inv&&inv.aPrevoirMo);
+  const gros=(inv&&Array.isArray(inv.dossiers))?inv.dossiers.length:0;
+  points.push({
+    cle:'donnees',
+    nom:'Tes fichiers personnels sont sur un autre support',
+    // Personne ne veut qu'un script décide tout seul de déplacer quatre-vingts
+    // gigaoctets. La page mesure et rappelle ; c'est toi qui copies.
+    etat:'avérifier',
+    quoi:(isFinite(aPrevoir)&&aPrevoir>0
+      ?fmtMo(aPrevoir)+' mesurés à emporter'+(gros?', plus '+gros+' gros dossier'+(gros>1?'s':''):'')+'. '
+      :'')
+      +'Photos, documents, projets, machines virtuelles : aucun script ne les copie à ta place. '
+      +'L\'onglet Données dit lesquels et combien ils pèsent.'
+  });
+
+  return points;
+}
+
+function vuePreparation(){
+  const points=etatPreparation();
+  const restants=points.filter(function(p){return p.etat!=='ok'&&p.etat!=='sansobjet';}).length;
+  const ico={ok:'✅',manque:'⛔',vieux:'⚠️','avérifier':'🔸',sansobjet:'—'};
+
+  let h='<div class="reste-tete">'
+    +'<div class="reste-titre">Avant d\'effacer</div>'
+    +'<p class="reste-sous">Tu es encore sur le PC source. Une fois le disque effacé, '
+    +'ce qui n\'est pas sorti n\'existe plus nulle part : c\'est le seul moment '
+    +'irréversible de toute la procédure.</p>'
+    +'</div>';
+
+  h+='<div class="reste-fam">';
+  points.forEach(function(p){
+    h+='<div class="reste-pt reste-'+esc(p.etat)+'">'
+      +'<div class="reste-pt-n"><span aria-hidden="true">'+(ico[p.etat]||'•')+'</span> '+esc(p.nom)+'</div>'
+      +'<div class="reste-pt-q">'+esc(p.quoi)+'</div>'
+      +'</div>';
+  });
+  h+='</div>';
+
+  h+='<div class="reste-suite"><b>Ensuite :</b> emporte la clé avec cette page et '
+    +'l\'instantané, installe Windows sur la machine d\'arrivée, et relance le même '
+    +'script là-bas. Cet onglet basculera tout seul sur la comparaison.</div>';
+  return h;
+}
+
+// ── Vie 2 : sur le PC cible, ce qu'il reste à remettre ───────────────────
+function vueComparaison(){
+  const r=comparerInstantanes(INV_SOURCE,INV_CIBLE);
+  if(!r.ok){
+    return '<div class="reste-tete"><div class="reste-titre">Rien à comparer</div>'
+      +'<p class="reste-sous">'+esc(r.raison)+'</p></div>';
+  }
+
+  const manque=r.total.attendu-r.total.arrive;
+  const pct=r.total.attendu?Math.round(r.total.arrive/r.total.attendu*100):100;
+  let h='<div class="reste-tete">'
+    +'<div class="reste-titre">'+(manque?manque+' élément'+(manque>1?'s':'')+' à remettre'
+      :'Tout est arrivé')+'</div>'
+    +'<p class="reste-sous">'+r.total.arrive+' sur '+r.total.attendu+' ('+pct+' %) · '
+    +esc(r.source.nom||'PC source')+(r.source.date?' du '+esc(r.source.date):'')
+    +' → '+esc(r.cible.nom||'PC cible')+(r.cible.date?' du '+esc(r.cible.date):'')
+    +'</p></div>';
+
+  // Les familles où il manque quelque chose d'abord, et les plus grosses en
+  // premier : une liste triée par ordre d'apparition dans le code ferait
+  // remonter les associations de fichiers avant les applications.
+  const aFaire=r.familles.filter(function(f){return f.manquants.length||f.differents.length;})
+    .sort(function(a,b){return (b.manquants.length+b.differents.length)-(a.manquants.length+a.differents.length);});
+  const faites=r.familles.filter(function(f){return !f.manquants.length&&!f.differents.length;});
+
+  aFaire.forEach(function(f){
+    h+='<div class="reste-fam"><div class="reste-fam-t">'+esc(f.nom)
+      +' <span class="reste-cnt">'+f.arrives+'/'+f.total+'</span></div>';
+    f.manquants.forEach(function(m){
+      h+='<div class="reste-l"><span class="reste-b reste-b-abs">manque</span>'
+        +'<span class="reste-n">'+esc(m.libelle)+'</span>'+actionDe(f.cle,m)+'</div>';
+    });
+    f.differents.forEach(function(d){
+      h+='<div class="reste-l"><span class="reste-b reste-b-ver">plus ancien</span>'
+        +'<span class="reste-n">'+esc(d.libelle)+'</span>'
+        +'<span class="reste-a">'+esc(d.avant)+' → '+esc(d.apres)+'</span></div>';
+    });
+    h+='</div>';
+  });
+
+  if(faites.length){
+    h+='<div class="reste-fam"><div class="reste-fam-t">Complet '
+      +'<span class="reste-cnt">'+faites.length+' famille'+(faites.length>1?'s':'')+'</span></div>'
+      +'<div class="reste-ok">'+esc(faites.map(function(f){return f.nom+' ('+f.total+')';}).join(' · '))+'</div></div>';
+  }
+
+  // La comparaison sait ce qui est là ; elle ne coche rien dans ton dos. Un
+  // bouton propose de cocher d'un coup ce qu'elle a constaté.
+  const cochables=lignesConstatees().filter(function(id){return !S.checked[id];}).length;
+  if(cochables){
+    h+='<div class="reste-suite">'+cochables+' ligne'+(cochables>1?'s':'')+' de la checklist '
+      +'correspond'+(cochables>1?'ent':'')+' à quelque chose que le scan a trouvé sur cette machine, '
+      +'sans être cochée'+(cochables>1?'s':'')+'. '
+      +'<button type="button" class="sm-btn warn-btn" onclick="cocherLeConstate()">✓ Cocher ce qui est constaté</button></div>';
+  }
+  return h;
+}
+
+// Ce qu'on peut cocher sans rien supposer : une ligne d'application dont le
+// scan de la cible confirme la présence. On ne décoche jamais — une détection
+// ratée effacerait un suivi fait à la main.
+function lignesConstatees(){
+  if(!INV_CIBLE)return [];
+  // On raisonne sur ce que la cible A, jamais sur ce qui manque ailleurs.
+  // La version précédente partait des applications manquantes et cochait tout
+  // le reste : les lignes de chaînes d'outils, qui ne sont pas des
+  // applications, passaient donc pour présentes sans que rien ne l'ait
+  // constaté — un outil absent se retrouvait coché.
+  const presents={};
+  const ajouter=function(v){const c=cleNom(v);if(c)presents[c]=true;};
+  (Array.isArray(INV_CIBLE.apps)?INV_CIBLE.apps:[]).forEach(function(a){
+    if(a&&a.nom)ajouter(a.nom);
+  });
+  (Array.isArray(INV_CIBLE.outils)?INV_CIBLE.outils:[]).forEach(function(o){
+    if(o&&(o.nom||o.id))ajouter(o.nom||o.id);
+  });
+  return APPS_DATA.filter(function(a){return presents[cleNom(a.n)];})
+    .map(function(a){return a.id;});
+}
+
+function cocherLeConstate(){
+  const ids=lignesConstatees().filter(function(id){return !S.checked[id];});
+  if(!ids.length)return;
+  const now=Date.now();
+  ids.forEach(function(id){S.checked[id]=true;S.dates[id]=now;});
+  saveState();renderApps();updateGlobal();renderReste();majBadgeReste();
+  memoriserAnnulation(ids.length+' ligne'+(ids.length>1?'s':'')+' cochée'
+    +(ids.length>1?'s':'')+' d\'après le scan du PC cible.',true);
+}
+
+// L'action qu'on connaît déjà pour cet élément : la commande d'installation
+// pour une application, le chemin pour un dossier. Rien n'est deviné.
+function actionDe(cle,manquant){
+  const e=manquant&&manquant.source;
+  if(!e)return '';
+  // Le badge est coupé à 180 px : écrire la commande entière la tronquait en
+  // plein milieu de l'identifiant — « winget install --id Pyt » n'apprend
+  // rien et ne se copie pas à la main. L'identifiant seul tient, et c'est lui
+  // qui compte ; le bouton copie la commande complète.
+  if(cle==='apps'&&e.winget)
+    return '<button type="button" class="badge b-winget" onclick="copyWinget(\''
+      +escJS(e.winget)+'\',event)" title="Copier winget install --id '+esc(e.winget)
+      +'">📋 '+esc(e.winget)+'</button>';
+  if(cle==='outils'&&e.commande)
+    return '<button type="button" class="badge b-winget" onclick="copierCommande(\''
+      +escJS(e.commande)+'\',event)" title="Copier la commande">📋 '+esc(e.commande)+'</button>';
+  const chemin=e.modele||e.chemin;
+  if(chemin)return '<span class="reste-a">'+esc(chemin)+'</span>';
+  return '';
+}
+
+// Le badge de la barre latérale. « — » tant qu'il n'y a rien à dire : un
+// « 0/0 » laisserait croire que tout est fait.
+function majBadgeReste(){
+  const b=document.getElementById('badge-reste');
+  const barre=document.getElementById('bar-reste');
+  if(!b)return;
+  if(!surLaCible()){
+    const pts=etatPreparation();
+    const reste=pts.filter(function(p){return p.etat!=='ok'&&p.etat!=='sansobjet';}).length;
+    // « 2 » seul se lit mal à côté de « 0/31 » : le dénominateur dit de
+    // combien de points on parle.
+    b.textContent=(pts.length-reste)+'/'+pts.length;
+    if(barre)barre.style.width=(pts.length?Math.round((pts.length-reste)/pts.length*100):0)+'%';
+    return;
+  }
+  const r=comparerInstantanes(INV_SOURCE,INV_CIBLE);
+  if(!r.ok){b.textContent='—';if(barre)barre.style.width='0%';return;}
+  b.textContent=r.total.arrive+'/'+r.total.attendu;
+  if(barre)barre.style.width=(r.total.attendu?Math.round(r.total.arrive/r.total.attendu*100):0)+'%';
 }
 
 // ═══ RÉCONCILIATION : ce qui est arrivé sur le PC cible ═══
@@ -4463,6 +4740,51 @@ const LIBELLES_CATS={
   outils:'⚙️ Chaînes d\'outils'
 };
 
+// ═══ LES DEUX INSTANTANÉS ═══
+// Celui du PC source, pris avant d'effacer, et celui du PC cible, pris une
+// fois la machine installée. La page ne sert à rien tant qu'elle n'a que le
+// premier : c'est la comparaison des deux qui dit ce qu'il reste à faire.
+
+function memoriserInstantane(cle,inv){
+  try{
+    if(inv)localStorage.setItem(cle,JSON.stringify(inv));
+    else localStorage.removeItem(cle);
+  }catch(e){
+    // Un inventaire de machine de développement peut dépasser le quota du
+    // navigateur. On le dit plutôt que de laisser croire qu'il est gardé :
+    // la comparaison marchera pour cette session et pas après un rechargement.
+    console.error(e);
+    informer('L\'instantané est trop gros pour être gardé en mémoire du navigateur. '
+      +'Il reste utilisable maintenant, mais il faudra le réimporter après un rechargement.');
+  }
+}
+function lireInstantane(cle){
+  try{
+    const r=localStorage.getItem(cle);
+    if(!r)return null;
+    const d=JSON.parse(r);
+    return (d&&typeof d==='object')?d:null;
+  }catch(e){console.error(e);return null;}
+}
+function chargerInstantanes(){
+  INV_SOURCE=lireInstantane(CLE_SOURCE);
+  INV_CIBLE=lireInstantane(CLE_CIBLE);
+}
+
+// Quel instantané reçoit le fichier qu'on vient d'ouvrir. Le champ « role »
+// écrit par le script fait foi ; sinon c'est le bouton utilisé qui décide, et
+// à défaut c'est la source — le cas de loin le plus fréquent.
+let attendCible=false;
+function importerScanCible(){
+  attendCible=true;
+  document.getElementById('json-file').click();
+}
+function roleDe(inv){
+  const r=String((inv&&inv.role)||'').toLowerCase();
+  if(r==='cible'||r==='source')return r;
+  return attendCible?'cible':'source';
+}
+
 // ═══ IMPORT UNIFIÉ ═══
 // Un seul bouton avale les trois formats : inventaire, profil, progression.
 function importerFichier(){document.getElementById('json-file').click();}
@@ -4490,17 +4812,44 @@ function traiterDonnees(d,provenance){
       return true;
     }
     if(d && d.type==='inventaire-migration-pc'){
+      const role=roleDe(d);
+      attendCible=false;
+      // Le scan du PC cible ne remplace pas la checklist : il sert à la
+      // comparer. Remplacer le profil par lui ferait disparaître la liste de
+      // ce qu'on voulait justement retrouver.
+      if(role==='cible'){
+        INV_CIBLE=d;
+        memoriserInstantane(CLE_CIBLE,d);
+        appliquerMateriel(d.materiel,true);
+        const r=comparerInstantanes(INV_SOURCE,INV_CIBLE);
+        renderReste();majBadgeReste();
+        if(!INV_SOURCE){
+          informer('Scan du PC cible reçu, mais aucun instantané du PC source '
+            +'à comparer. Importe d\'abord celui que tu as pris avant d\'effacer.');
+        }else{
+          const manque=r.total.attendu-r.total.arrive;
+          memoriserAnnulation('Scan du PC cible reçu : '+r.total.arrive+' sur '
+            +r.total.attendu+' éléments sont déjà là'
+            +(manque>0?', il en reste '+manque:', tout y est')+'.',true);
+          switchTab('reste');
+        }
+        return true;
+      }
       // Un inventaire sans application n'est pas une panne : c'est ce que
       // donne une machine fraîchement installée, ou un scan dont les sources
       // étaient toutes indisponibles. Le dire calmement plutôt que d'ouvrir un
       // panneau rouge — le cas se produit justement sur un PC neuf.
       if(!Array.isArray(d.apps)||!d.apps.length){
+        INV_SOURCE=d;
+        memoriserInstantane(CLE_SOURCE,d);
         const repris=appliquerMateriel(d.materiel,false);
         informer('Scan reçu, mais aucune application détectée.'
           +(repris?' Le matériel a été repris ('+repris+' composant'+(repris>1?'s':'')+').':'')
           +' Sur une machine neuve c\'est normal ; sinon, relancez avec -ToutInclure.');
         return true;
       }
+      INV_SOURCE=d;
+      memoriserInstantane(CLE_SOURCE,d);
       const p=inventaireVersProfil(d);
       // Ce message disait « Nouveau PC, Données et PWA restent ceux du profil
       // d'exemple ». C'est devenu faux : le scan alimente maintenant Données
@@ -4702,18 +5051,21 @@ function setMode(m){
 
 // ═══ TABS ═══
 const LIBELLES_ONGLETS={quitter:'🚪 Avant de quitter',npc:'🖥️ Nouveau PC',
-  apps:'📦 Apps',data:'💾 Données',pwa:'🌍 PWA'};
+  apps:'📦 Apps',data:'💾 Données',reste:'🎯 Reste à faire',pwa:'🌍 PWA'};
 
 function switchTab(t){
   curTab=t;
   const titre=document.getElementById('page-titre');
   if(titre)titre.textContent=LIBELLES_ONGLETS[t]||t;
-  ONGLETS.forEach(x=>{
+  ONGLETS_VUE.forEach(x=>{
     const onglet=document.getElementById('tab-'+x);
+    if(!onglet)return;
     onglet.classList.toggle('active',x===t);
     onglet.setAttribute('aria-selected',x===t?'true':'false');
-    document.getElementById('panel-'+x).classList.toggle('active',x===t);
+    const panneau=document.getElementById('panel-'+x);
+    if(panneau)panneau.classList.toggle('active',x===t);
   });
+  if(t==='reste')renderReste();
 }
 
 // ═══ TOGGLE ITEM ═══
@@ -5251,6 +5603,9 @@ function updateSecProg(sec,data){
 }
 
 function updateGlobal(){
+  // Le compte de « Reste à faire » ne vient pas des cases cochées mais de la
+  // comparaison : il se rafraîchit ici pour rester d'accord avec le reste.
+  try{majBadgeReste();}catch(e){console.error(e);}
   const all=itemsVisibles();
   const done=all.filter(function(x){return S.checked[x.id];}).length;
   const total=all.length;
@@ -6401,6 +6756,7 @@ window.addEventListener('DOMContentLoaded',function(){
   }catch(e){}
   applyTheme();
   loadState();
+  chargerInstantanes();
   chargerConfig();
   document.addEventListener('input',function(e){
     if(e.target.classList.contains('lic-input')){saveLic(e.target.dataset.id,e.target.value);}

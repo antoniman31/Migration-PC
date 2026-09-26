@@ -185,5 +185,62 @@ ok('et sur le total global',
   r.familles.reduce((n,f)=>n+f.total,0),r.total.attendu);
 ok('une famille non-tableau est ignorée',famille(hostile,'apps'),undefined);
 
+console.log('\n--- l\'onglet, vie 1 : sur le PC source ---');
+// Rien à comparer : la machine d'arrivée n'existe pas encore. L'onglet doit
+// dire ce qu'il reste à SORTIR, pas rester vide.
+G('INV_SOURCE=null;INV_CIBLE=null;');
+ok('sans rien, on est côté source',G('surLaCible()'),false);
+vm.runInContext('INV_SOURCE='+JSON.stringify(source)+';INV_CIBLE=null;',ctx);
+const prep=G('etatPreparation()');
+ok('trois points de préparation',prep.length,3);
+ok('l\'instantané est constaté fait',prep[0].etat,'ok');
+// Le scan LISTE, il ne copie pas. Confondre les deux est la seule façon de
+// perdre des données dans ce projet : la ligne doit le dire en toutes lettres.
+ok('la ligne dit que le scan ne copie pas',/il ne les a pas copiés/.test(prep[1].quoi),true);
+ok('et renvoie au bon script',/sauvegarder-configs/.test(prep[1].quoi),true);
+ok('les fichiers perso restent à toi',/aucun script ne les copie/.test(prep[2].quoi),true);
+
+// Un instantané vieux de trois jours ne décrit plus la machine.
+const vieux=Object.assign({},source,{genere:new Date(Date.now()-72*3600000).toISOString()});
+vm.runInContext('INV_SOURCE='+JSON.stringify(vieux)+';',ctx);
+ok('un instantané périmé est signalé',G('etatPreparation()')[0].etat,'vieux');
+ok('et on dit quoi faire',/Relance le scan/.test(G('etatPreparation()')[0].quoi),true);
+
+vm.runInContext('INV_SOURCE=null;',ctx);
+ok('sans instantané, c\'est bloquant',G('etatPreparation()')[0].etat,'manque');
+
+console.log('\n--- l\'onglet, vie 2 : sur le PC cible ---');
+vm.runInContext('INV_SOURCE='+JSON.stringify(source)
+  +';INV_CIBLE='+JSON.stringify(cible)+';',ctx);
+ok('le scan de la cible fait basculer l\'onglet',G('surLaCible()'),true);
+G('renderReste()');
+const vue=els['list-reste'].innerHTML;
+ok('le compte est annoncé',/6 éléments à remettre/.test(vue),true);
+ok('avec les deux machines',/PC-SOURCE/.test(vue)&&/PC-CIBLE/.test(vue),true);
+ok('ce qui manque est nommé',/Krita/.test(vue),true);
+ok('la régression aussi',/1\.98\.2/.test(vue)&&/1\.90\.0/.test(vue),true);
+// Un badge coupé au milieu de l'identifiant ne se copie pas à la main.
+ok('la commande n\'est pas tronquée',/winget install --id/.test(vue),false);
+
+console.log('\n--- cocher ce qui est constaté ---');
+// La comparaison ne coche rien dans ton dos : elle propose. Et surtout elle
+// ne décoche JAMAIS — une détection ratée effacerait un suivi fait à la main.
+G('appliquerProfil')(G('inventaireVersProfil')(source),true);
+vm.runInContext('INV_SOURCE='+JSON.stringify(source)
+  +';INV_CIBLE='+JSON.stringify(cible)+';',ctx);
+const avant=G('lignesConstatees()');
+// Trois applications ET un outil : la cible porte pnpm, pas Ubuntu.
+ok('quatre lignes constatées présentes',avant.length,4);
+// Le piège : une ligne de chaîne d'outils absente de la cible ne doit pas
+// être cochée sous prétexte qu'elle n'est pas une application manquante.
+const ubuntu=G('APPS_DATA').filter(a=>/Ubuntu/.test(a.n))[0];
+ok('l\'outil absent n\'est pas constaté',avant.indexOf(ubuntu.id),-1);
+// Une ligne cochée à la main sur une application absente ne doit pas bouger.
+const absente=G('APPS_DATA').filter(a=>/Krita/.test(a.n))[0];
+G('toggle')(absente.id,absente.n);
+G('cocherLeConstate()');
+ok('les constatées sont cochées',avant.every(id=>G('S').checked[id]),true);
+ok('et la ligne cochée à la main reste cochée',G('S').checked[absente.id],true);
+
 console.log(ko?'\n'+ko+' EN ECHEC':'\nRECONCILIATION OPERATIONNELLE');
 process.exit(ko?1:0);

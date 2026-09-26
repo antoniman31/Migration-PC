@@ -31,7 +31,13 @@ console.log('\n--- totaux ---');
 ok('badge onglet',await pg.textContent('#badge-quitter'),'0/'+PROFIL.quitter.length);
 const total=await pg.evaluate(()=>tousLesItems().length);
 ok('total global inclut la section',await pg.textContent('#gp-total'),String(total));
-ok('cinq onglets',(await pg.$$('.side-nav .snav')).length,5);
+// Le nombre en dur laissait passer un onglet déclaré mais jamais ajouté à la
+// barre — et faisait échouer le test à chaque onglet légitime. On le dérive
+// de ce que la page déclare, comme marquerPositions le fait déjà.
+const declares=await pg.evaluate(()=>ONGLETS_VUE.length);
+ok('un bouton par onglet déclaré',(await pg.$$('.side-nav .snav')).length,declares);
+ok('« Reste à faire » en fait partie',
+  await pg.evaluate(()=>!!document.getElementById('tab-reste')),true);
 
 console.log('\n--- cocher, tout cocher, réinitialiser ---');
 await pg.click('#list-quitter .item');
