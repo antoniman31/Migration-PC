@@ -128,5 +128,25 @@ sansDep.ordre=['a3','a1','a2'];
 G('appliquerProfil')(sansDep,false);
 ok('aDesDependances est faux',G('aDesDependances')(),false);
 
+const troisSansDep=G('APPS_DATA').filter(a=>['a1','a2','a3'].indexOf(a.id)>=0);
+ok('les trois sont bien là',troisSansDep.length,3);
+const range=G('ordreInstallation')(troisSansDep).map(a=>a.id);
+ok('« ordre » sert de repli',range.join(','),'a3,a1,a2');
+// Trier sur place remanierait la liste que l'appelant affiche : c'est une copie.
+ok('la liste d\'origine n\'est pas remaniée',
+  troisSansDep.map(a=>a.id).join(','),'a1,a2,a3');
+// Un élément absent de « ordre » ne disparaît pas : il passe à la fin.
+const avecInconnu=troisSansDep.concat(G('APPS_DATA').filter(a=>a.id==='a4'));
+const rangeInconnu=G('ordreInstallation')(avecInconnu).map(a=>a.id);
+ok('un élément hors « ordre » finit à la fin',
+  rangeInconnu[rangeInconnu.length-1],'a4');
+ok('et personne ne disparaît',rangeInconnu.length,avecInconnu.length);
+// Sans « ordre » ni dépendance, la liste passe telle quelle.
+const sansRien=JSON.parse(JSON.stringify(sansDep));
+delete sansRien.ordre;
+G('appliquerProfil')(sansRien,false);
+ok('sans « ordre », rien ne bouge',
+  G('ordreInstallation')(troisSansDep).map(a=>a.id).join(','),'a1,a2,a3');
+
 console.log(ko?'\n'+ko+' TEST(S) EN ECHEC':'\nDEPENDANCES OPERATIONNELLES');
 process.exit(ko?1:0);
