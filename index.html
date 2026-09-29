@@ -297,6 +297,18 @@ body.compact .item{padding:5px 0}
 /* Une ligne que le scan a constatee : reglee par un fait, pas par une case.
    Le curseur par defaut plutot que la main, pour ne pas promettre un clic. */
 .lg-l.lg-constate .lg-r{cursor:default}
+/* Une ligne ecartee reste VISIBLE : ce qu'on a mis de cote doit rester sous les
+   yeux, sinon on oublie pourquoi la liste est courte. Grisee et barree, elle se
+   lit sans se confondre avec une ligne faite. */
+.lg-l.lg-ignore{opacity:.55}
+.lg-l.lg-ignore .lg-n{text-decoration:line-through}
+.badge.b-ignore{background:var(--bg3);color:var(--tx2);border-color:var(--brd2)}
+.ign-btn{font-size:12px;color:var(--tx3);padding:1px 5px;border-radius:4px;
+  border:none;background:transparent;cursor:pointer;min-width:26px;min-height:24px}
+.ign-btn:hover{color:var(--bh-tx);background:var(--bg3)}
+.ign-btn.actif{color:var(--acc-fort)}
+.pil-item.pil-ignore{opacity:.55}
+.pil-item.pil-ignore .pil-nom{text-decoration:line-through}
 .lg-det{padding:2px 0 12px 34px;cursor:default}
 .lg-det-d{font-size:12px;color:var(--tx2);line-height:1.5;margin-bottom:8px}
 /* Sur un ecran etroit, sept colonnes ne tiennent pas : la version et la
@@ -312,6 +324,8 @@ body.compact .item{padding:5px 0}
   .lg-br{display:block;flex:1 0 100%;height:0;margin:0}
   .lg-n{flex:1 1 auto;white-space:normal}
   .lg-plus{width:44px;height:44px}
+  /* Au doigt : 44x24 est le minimum vise par test-mobile. */
+  .ign-btn{min-width:44px;min-height:34px;font-size:14px}
   .lg-t{white-space:normal}
   /* Les meta prennent toute la largeur : les laisser partager la ligne des
      boutons renvoyait le lien seul sur une quatrieme ligne. Trois lignes
@@ -884,14 +898,14 @@ if(location.protocol==='file:'){
     <div class="reglages-item">
       <div class="reglages-txt">
         <div class="reglages-nom">Décocher toute la checklist</div>
-        <div class="reglages-desc">Remet la progression à zéro sur les trois onglets. Le profil chargé et votre configuration matérielle sont conservés.</div>
+        <div class="reglages-desc">Remet la progression à zéro sur les trois onglets. Le profil chargé, votre configuration matérielle et les lignes que vous avez écartées sont conservés.</div>
       </div>
       <button type="button" onclick="toutDecocher()">Tout décocher</button>
     </div>
     <div class="reglages-item reglages-danger">
       <div class="reglages-txt">
         <div class="reglages-nom">Remettre le site à zéro</div>
-        <div class="reglages-desc">Efface tout ce que ce navigateur a mémorisé — progression, configuration matérielle, profil importé — et revient au profil d'exemple. Vos fichiers exportés ne sont pas touchés.</div>
+        <div class="reglages-desc">Efface tout ce que ce navigateur a mémorisé — progression, configuration matérielle, lignes écartées, profil importé — et revient au profil d'exemple. Vos fichiers exportés ne sont pas touchés.</div>
       </div>
       <button type="button" onclick="remiseAZero()">Tout effacer</button>
     </div>
@@ -1405,6 +1419,13 @@ function visiblesDe(cle){
 function itemsVisibles(){
   return tousLesItems();
 }
+// Ce que les compteurs prennent en compte : tout sauf ce qu'on a ecarte. Une
+// ligne ignoree reste AFFICHEE — c'est le point du mecanisme — mais elle sort du
+// total, sinon la progression ne pourrait jamais atteindre 100 % sur une liste
+// dont on a ecarte trois logiciels.
+function aCompter(liste){
+  return liste.filter(function(e){return !estIgnore(e.id);});
+}
 let PROFIL_NOM='', PROFIL_SOUS='';
 
 // ═══ PROFILS ═══
@@ -1753,6 +1774,61 @@ function lignesConstatees(){
     .map(function(a){return a.id;});
 }
 
+// ═══ IGNORER ═══
+//
+// Tout ce que la source portait n'est pas a reprendre : un logiciel dont on ne
+// veut plus, un peripherique en defaut qu'on n'utilisera jamais — un lecteur de
+// cartes, un port serie. Sans moyen de le dire, ces lignes restaient dans « il
+// manque N » a chaque ouverture, et le seul recours etait de cocher une case qui
+// veut dire « regle », donc de mentir.
+//
+// Une ligne ignoree reste VISIBLE, grisee et barree : ce qu'on a ecarte doit
+// rester sous les yeux, sinon on oublie pourquoi la liste est courte. Elle sort
+// des comptes, du script winget, du mode guide et du badge des pilotes.
+//
+// Dans ce navigateur seulement : c'est une decision personnelle sur une machine,
+// comme la progression. Elle ne voyage donc ni avec le profil ni avec la
+// progression, survit a « Tout decocher » et part avec « Tout effacer ».
+const CLE_IGNORES='mpc_ignores_v1';
+let IGNORES={};
+function chargerIgnores(){
+  try{
+    const r=localStorage.getItem(CLE_IGNORES);
+    if(r){const d=JSON.parse(r);if(d&&typeof d==='object')IGNORES=d;}
+  }catch(e){console.error(e);}
+}
+function saveIgnores(){
+  try{localStorage.setItem(CLE_IGNORES,JSON.stringify(IGNORES));}
+  catch(e){console.error(e);}
+}
+function estIgnore(id){ return !!IGNORES[id]; }
+
+// Les peripheriques en defaut n'ont pas d'identifiant : le scan rend un nom et
+// un probleme. On en fabrique un, stable d'un scan a l'autre parce qu'il ne
+// depend que du nom — la position dans la liste, elle, bouge.
+function idPilote(p){
+  const nom=String((p&&p.nom)||'').trim();
+  if(!nom)return '';
+  return 'pil:'+cleNom(nom);
+}
+
+// Ignorer et cocher disent le contraire l'un de l'autre : « je m'en passe » et
+// « c'est regle ». Les autoriser ensemble produirait des comptes que personne ne
+// peut expliquer, donc l'un chasse l'autre.
+function basculerIgnore(id,libelle){
+  const avant=!!IGNORES[id];
+  memoriserAnnulation(avant
+    ? '« '+libelle+' » revient dans la liste.'
+    : '« '+libelle+' » ignoré : il sort des comptes et du script winget.',false);
+  if(avant){ delete IGNORES[id]; }
+  else{
+    IGNORES[id]=true;
+    if(S.checked[id]){ delete S.checked[id]; delete S.dates[id]; saveState(); }
+  }
+  saveIgnores();
+  renderAll();updateGlobal();
+}
+
 // Une ligne est FAITE de deux façons : quelqu'un l'a cochée, ou le scan du PC
 // cible l'a trouvée sur la machine. Le second est un constat, pas une
 // supposition.
@@ -1827,7 +1903,8 @@ function vuePilotesSource(){
 }
 
 function vuePilotesCible(){
-  const manquants=Array.isArray(INV_CIBLE.pilotes)?INV_CIBLE.pilotes:[];
+  const manquants=(Array.isArray(INV_CIBLE.pilotes)?INV_CIBLE.pilotes:[])
+    .filter(function(p){return !estIgnore(idPilote(p));});
   const mat=(INV_CIBLE&&INV_CIBLE.materiel)||{};
   const machine=(INV_CIBLE&&INV_CIBLE.machine)||{};
   let h='<div class="cmp-tete">'
@@ -1873,7 +1950,8 @@ function majBadgePilotes(){
   const barre=document.getElementById('bar-pilotes');
   if(!b)return;
   if(!surLaCible()){b.textContent='—';if(barre)barre.style.width='0%';return;}
-  const n=Array.isArray(INV_CIBLE.pilotes)?INV_CIBLE.pilotes.length:0;
+  const liste=Array.isArray(INV_CIBLE.pilotes)?INV_CIBLE.pilotes:[];
+  const n=liste.filter(function(p){return !estIgnore(idPilote(p));}).length;
   b.textContent=n?String(n):'✓';
   if(barre)barre.style.width=n?'0%':'100%';
 }
@@ -2378,6 +2456,11 @@ function marquerPositions(){
 function toggle(id,name){
   if(S.checked[id]){delete S.checked[id];delete S.dates[id];}
   else{
+    // Cocher une ligne ecartee la remet dans la liste : « je m'en passe » et
+    // « c'est regle » disent le contraire l'un de l'autre, donc l'un chasse
+    // l'autre — dans les deux sens, sinon une ligne pourrait porter les deux et
+    // les comptes deviendraient inexplicables.
+    if(IGNORES[id]){ delete IGNORES[id]; saveIgnores(); }
     // On prévient, on ne bloque pas : l'ordre est un conseil, et il arrive
     // qu'on coche une tâche faite hors de la checklist.
     const item=indexParId()[id];
@@ -2429,6 +2512,17 @@ function mkChkbox(){return '<div class="chkbox" aria-hidden="true"><span class="
 // parfois un faux installateur. Sans adresse utilisable, on retombe sur la
 // recherche — c'est le cas de la majorité des logiciels, le registre n'oblige
 // personne à renseigner URLInfoAbout.
+// Le bouton qui ecarte une ligne. Presque muet par defaut — la barre d'une liste
+// de soixante lignes ne doit pas crier — et explicite une fois actif.
+function mkBoutonIgnore(id,libelle,ignore){
+  const titre=ignore?'Remettre « '+libelle+' » dans la liste'
+                    :'Ignorer « '+libelle+' » : sort des comptes et du script winget';
+  return '<button type="button" class="ign-btn'+(ignore?' actif':'')+'"'
+    +' title="'+esc(titre)+'" aria-label="'+esc(titre)+'" aria-pressed="'+(ignore?'true':'false')+'"'
+    +' onclick="basculerIgnore(\''+escJS(id)+'\',\''+escJS(libelle)+'\');event.stopPropagation()">'
+    +(ignore?'↩':'⊘')+'</button>';
+}
+
 function mkLink(name,e){
   const u=urlSure(e&&e.u);
   if(u)return '<div class="item-link"><a class="lnk-btn" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 Site officiel</a></div>';
@@ -2492,6 +2586,7 @@ function renderApps(){
   // reste, telle quelle.
   if(etats&&!listeComplete){
     const manquants=items.filter(function(a){
+      if(estIgnore(a.id))return false;
       const e=etats.par[cleNom(a.n)];
       return e&&(e.etat==='manque'||e.etat==='ancienne');
     });
@@ -2571,7 +2666,9 @@ function renderApps(){
 function mkAppItem(a,etats){
   // Le constat du scan et la case cochée arrivent au même endroit, mais pas au
   // même titre : un constat n'est pas une décision, donc il ne se décoche pas.
-  const constate=!!constates()[a.id];
+  // Ecarte : le constat du scan ne s'applique plus, la ligne est hors jeu.
+  const ignore=estIgnore(a.id);
+  const constate=!ignore&&!!constates()[a.id];
   const ck=constate||!!S.checked[a.id];
   const ouvert=!!lignesOuvertes[a.id];
   const dt=(!constate&&ck&&S.dates[a.id])?'<span class="item-date">✓ '+fmtDate(S.dates[a.id])+'</span>':'';
@@ -2597,7 +2694,8 @@ function mkAppItem(a,etats){
   // Une ligne constatée reste annoncée comme cochée aux lecteurs d'écran — elle
   // l'est, en fait — mais désactivée : un contrôle qui ne répond pas au clic
   // sans le dire passe pour un défaut.
-  return '<div class="lg-l'+(ck?' done':'')+(constate?' lg-constate':'')+'">'
+  return '<div class="lg-l'+(ck?' done':'')+(constate?' lg-constate':'')
+      +(ignore?' lg-ignore':'')+'">'
     +'<div class="lg-r" role="checkbox" tabindex="0" aria-checked="'+ck+'"'
       +(constate
         ?' aria-disabled="true" title="Trouvé sur le PC cible par le scan : réglé, rien à cocher."'
@@ -2606,7 +2704,10 @@ function mkAppItem(a,etats){
       +'<span class="lg-n">'+esc(libelleDe(a))+dt+'</span>'
       +'<span class="lg-br" aria-hidden="true"></span>'
       +'<span class="lg-m">'+meta.join(' · ')+'</span>'
-      +'<span class="lg-t">'+badgeComparaison(a,etats)+'</span>'
+      +'<span class="lg-t">'+(ignore
+          ?'<span class="badge b-ignore" title="Écarté : ne compte plus et ne sort pas dans le script winget">ignoré</span>'
+          :badgeComparaison(a,etats))+'</span>'
+      +mkBoutonIgnore(a.id,libelleDe(a),ignore)
       +'<button type="button" class="lg-plus" aria-expanded="'+ouvert+'" '
         +'aria-label="'+(ouvert?'Masquer':'Afficher')+' le détail de '+esc(libelleDe(a))+'" '
         +'onclick="basculerDetail(\''+escJS(a.id)+'\',event)">'+(ouvert?'▴':'▾')+'</button>'
@@ -2728,6 +2829,7 @@ function globalSearch(){
 
 // ═══ PROGRESS ═══
 function updateSecProg(sec,data){
+  data=aCompter(data);
   const done=data.filter(function(x){return estFait(x.id);}).length;
   const total=data.length;
   const pct=total?Math.round(done/total*100):0;
@@ -2741,7 +2843,7 @@ function updateGlobal(){
   // Le badge des pilotes ne vient pas des cases cochées mais du scan de la
   // cible : il se rafraîchit ici pour rester d'accord avec le reste.
   try{majBadgePilotes();}catch(e){console.error(e);}
-  const all=itemsVisibles();
+  const all=aCompter(itemsVisibles());
   const done=all.filter(function(x){return estFait(x.id);}).length;
   const total=all.length;
   const pct=total?Math.round(done/total*100):0;
@@ -2753,7 +2855,7 @@ function updateGlobal(){
 }
 
 function updateTitle(){
-  const all=itemsVisibles();
+  const all=aCompter(itemsVisibles());
   const done=all.filter(function(x){return estFait(x.id);}).length;
   document.title='('+done+'/'+all.length+') '+(PROFIL_NOM||'Migration PC');
 }
@@ -2809,25 +2911,39 @@ function mkPilotesManquants(d){
   const liste=Array.isArray(d&&d.pilotes)?d.pilotes:[];
   if(!liste.length)return '';
   const mat=(d&&d.materiel)||{};
+  // Un peripherique qu'on n'utilisera jamais — lecteur de cartes, port serie —
+  // s'ecarte comme un logiciel. Il reste affiche, grise, et sort du compte.
+  const aRegler=liste.filter(function(p){return !estIgnore(idPilote(p));});
   const lignes=liste.map(function(p){
     const nom=String(p&&p.nom||'Périphérique inconnu');
     const quoi=String(p&&p.probleme||'');
+    const id=idPilote(p);
+    const ignore=!!id&&estIgnore(id);
     // On cherche avec le modèle de la carte mère quand on le connaît : c'est
     // elle qui porte le réseau, l'audio et les contrôleurs.
     const base=mat.cm?String(mat.cm)+' ':'';
     const req=base+nom+' pilote';
-    return '<div class="pil-item">'
+    return '<div class="pil-item'+(ignore?' pil-ignore':'')+'">'
       +'<div class="pil-txt"><div class="pil-nom">'+esc(nom)+'</div>'
-      +'<div class="pil-quoi">'+esc(quoi)+(p&&p.classe?' · '+esc(String(p.classe)):'')+'</div></div>'
-      +'<button type="button" class="sm-btn" onclick="ouvrirAdresse(\''
-      +escJS('https://www.google.com/search?q='+encodeURIComponent(req))+'\')">🔍 Chercher</button>'
+      +'<div class="pil-quoi">'+esc(quoi)+(p&&p.classe?' · '+esc(String(p.classe)):'')
+      +(ignore?' · ignoré':'')+'</div></div>'
+      +(ignore?'':'<button type="button" class="sm-btn" onclick="ouvrirAdresse(\''
+      +escJS('https://www.google.com/search?q='+encodeURIComponent(req))+'\')">🔍 Chercher</button>')
+      +(id?mkBoutonIgnore(id,nom,ignore):'')
       +'</div>';
   }).join('');
-  return '<div class="pilotes"><div class="pil-titre">⚠️ '+liste.length
-    +' périphérique'+(liste.length>1?'s':'')+' sans pilote utilisable</div>'
-    +'<div class="pil-sous">Windows les signale comme mal installés. '
-    +(mat.cm?'Le support de '+esc(String(mat.cm))+' est le bon endroit pour la plupart.'
-           :'Le site du fabricant de la carte mère est le bon endroit pour la plupart.')
+  const n=aRegler.length;
+  const ecartes=liste.length-n;
+  return '<div class="pilotes"><div class="pil-titre">'
+    +(n?'⚠️ '+n+' périphérique'+(n>1?'s':'')+' sans pilote utilisable'
+       :'✓ Plus aucun périphérique à régler')+'</div>'
+    +'<div class="pil-sous">'
+    +(n?'Windows les signale comme mal installés. '
+        +(mat.cm?'Le support de '+esc(String(mat.cm))+' est le bon endroit pour la plupart.'
+               :'Le site du fabricant de la carte mère est le bon endroit pour la plupart.')
+      :'Ceux que Windows signale, vous les avez écartés.')
+    +(ecartes?' '+ecartes+' écarté'+(ecartes>1?'s':'')+', gardé'+(ecartes>1?'s':'')
+       +' à l\'écran pour ne pas l\'oublier.':'')
     +'</div>'+lignes+'</div>';
 }
 
@@ -2950,7 +3066,7 @@ function fileGuide(){
 function tachesRestantes(){
   // Le constat du scan compte ici aussi : proposer d'installer un logiciel que
   // la machine porte deja serait le contraire d'un mode guide.
-  return fileGuide().filter(function(e){return !estFait(e.id);});
+  return fileGuide().filter(function(e){return !estFait(e.id)&&!estIgnore(e.id);});
 }
 
 function basculerGuide(){
@@ -3206,7 +3322,8 @@ function copieEtat(){
   // qui elles etaient bien restaurees.
   return {checked:Object.assign({},S.checked),
     dates:Object.assign({},S.dates),
-    config:Object.assign({},CONFIG)};
+    config:Object.assign({},CONFIG),
+    ignores:Object.assign({},IGNORES)};
 }
 
 // Appelée AVANT l'action destructrice. Le profil n'est mémorisé que lorsque
@@ -3254,6 +3371,7 @@ function annuler(){
     saveConfig();
     try{construireConfig();}catch(e){console.error(e);}
   }
+  if(a.etat.ignores){ IGNORES=a.etat.ignores; saveIgnores(); }
   saveState();renderAll();updateGlobal();
   masquerAnnulation();
 }
@@ -3295,7 +3413,8 @@ function toutDecocher(){
   // ouvert par-dessus le bandeau qui explique pourquoi rien n'a bougé.
   if(!n){fermerReglages();informer('Rien à décocher : aucune case n\'est cochée.');return;}
   memoriserAnnulation(n+' case'+(n>1?'s':'')+' décochée'+(n>1?'s':'')
-    +' sur toute la checklist. Le profil chargé est conservé.',false);
+    +' sur toute la checklist. Le profil, la configuration et les lignes '
+    +'écartées sont conservés.',false);
   S.checked={};S.dates={};
   saveState();renderAll();updateGlobal();
   fermerReglages();
@@ -3304,14 +3423,17 @@ function toutDecocher(){
 function remiseAZero(){
   const avaitProfil=!!chargerProfilMemorise();
   // On mémorise AVANT d'effacer : l'annulation restaure l'état et le profil.
-  memoriserAnnulation('Site remis à zéro : progression, notes, clés et profil importé effacés.',true);
+  memoriserAnnulation('Site remis à zéro : progression, configuration, lignes écartées '
+    +'et profil importé effacés.',true);
   try{
     localStorage.removeItem(CLE_ETAT);
     localStorage.removeItem(CLE_PROFIL);
     localStorage.removeItem(CLE_CONFIG);
     localStorage.removeItem(CLE_SCAN);
+    localStorage.removeItem(CLE_IGNORES);
   }catch(e){console.error(e);}
   S.checked={};S.dates={};S.lastSave=null;
+  IGNORES={};
   sautees={};
   CONFIG={};construireConfig();fermerConfig();
   // Le thème suit les préférences du système, ce n'est pas une donnée de
@@ -3685,7 +3807,7 @@ function construireWingetJSON(apps){
 
 function exportWingetJSON(restantesSeulement){
   var apps=visiblesDe('apps').filter(function(a){
-    return a.w && (!restantesSeulement || !estFait(a.id));
+    return a.w && !estIgnore(a.id) && (!restantesSeulement || !estFait(a.id));
   });
   if(!apps.length){
     informer(restantesSeulement
@@ -3790,6 +3912,7 @@ window.addEventListener('DOMContentLoaded',function(){
   loadState();
   chargerInstantanes();
   chargerConfig();
+  chargerIgnores();
   document.addEventListener('input',function(e){
   });
   document.addEventListener('keydown',clavierGlobal);
@@ -3827,7 +3950,7 @@ function updateNextBtns(){
     var btn=document.getElementById(t.btnId);
     var cnt=document.getElementById(t.cntId);
     if(!btn||!cnt)return;
-    var rem=t.data.filter(function(x){return !estFait(x.id);}).length;
+    var rem=aCompter(t.data).filter(function(x){return !estFait(x.id);}).length;
     if(rem===0){
       btn.classList.remove('incomplete');
       cnt.textContent='✓';

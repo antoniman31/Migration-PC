@@ -16,7 +16,7 @@ lancer() {
   fi
 }
 # Meme ordre que .github/workflows/ci.yml
-for t in profil-sync checklist winget inventaire-etendu dependances reconciliation archive; do
+for t in profil-sync checklist winget inventaire-etendu dependances reconciliation ignorer archive; do
   lancer node "tests/test-$t.js"; done
 for t in scan lanceur powershell-compatibility; do
   lancer pwsh -File "tests/test-$t.ps1"; done

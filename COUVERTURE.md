@@ -31,6 +31,11 @@ de la source, avec un identifiant winget, absents d'ici. C'est ce que le menu
 propose d'installer. Le critère est le même que celui de la page — présent ou
 absent, jamais « une version plus récente existe ».
 
+Ce fichier ne connaît pas les lignes que vous avez écartées dans la page : elles
+vivent dans la mémoire du navigateur, que PowerShell ne peut pas lire. C'est le
+prix de les garder locales. Le menu affiche la liste complète avant d'installer,
+et l'export winget de la page, lui, les respecte.
+
 ### Ce que le volet pilotes ne prétend pas faire
 
 Il ne dit **jamais** « une version plus récente existe ». Le programme ne fait
