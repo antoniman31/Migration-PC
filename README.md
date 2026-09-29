@@ -41,11 +41,19 @@ l'autre branche un câble.
 
 ## En trois lignes
 
-1. Sur le **PC que vous quittez** : double-cliquez `Migration PC.bat`, choisissez
-   « Cet ordinateur est l'ANCIEN ». La page s'ouvre déjà remplie de vos logiciels.
-2. Exportez votre profil sur la clé, et emportez la clé.
-3. Sur le **PC neuf** : rouvrez `index.html` depuis la clé, importez le profil,
-   et suivez la liste.
+1. Clé USB branchée sur le **PC que vous quittez** : double-cliquez
+   `Migration PC.bat`, choisissez **SOURCE**. La page s'ouvre déjà remplie de
+   vos logiciels.
+2. Débranchez la clé, branchez-la sur le **PC cible** — le neuf, ou le même une
+   fois réinstallé.
+3. Double-cliquez `Migration PC.bat`, choisissez **CIBLE**. La page s'ouvre sur
+   ce qu'il reste à installer.
+
+Rien à importer à la main entre les deux. L'instantané de la source voyage sur
+la clé : le scan de la source en dépose une copie à côté de `index.html`, et
+celui de la cible la relit et la joint au résultat. C'est nécessaire parce que
+la mémoire du navigateur ne traverse pas d'une machine à l'autre — sans ce
+relais, le PC neuf recevrait un scan de lui-même et rien à quoi le comparer.
 
 Un seul fichier à lancer : `Migration PC.bat`. Tout le reste est rangé dans
 `scripts/` — c'est là pour être lu, pas pour être lancé à la main.
@@ -158,6 +166,19 @@ Le `.bat` existe pour une seule raison : Windows refuse d'exécuter un `.ps1` pa
 double-clic. Il appelle le script en contournant ce blocage pour ce seul lancement, et
 reste lisible dans le Bloc-notes — contrairement à un `.exe`, qu'il faudrait croire sur
 parole pour un outil qui lit tout votre PC.
+
+**Le relais entre les deux machines.** La procédure tient en trois gestes : on
+scanne la source, on débranche la clé, on scanne la cible. Entre les deux il y a
+un changement de machine, donc un changement de navigateur — et la mémoire
+locale de la page, où vit l'instantané de la source, ne traverse pas. Sur le PC
+neuf, la page recevait donc un scan de cible et rien à quoi le comparer.
+
+Le relais, c'est la clé elle-même. Le scan de la source dépose une copie de son
+instantané à côté de `index.html`, sous le nom fixe `instantane-source.json` ;
+celui de la cible la relit et la joint au résultat. Les deux voyagent alors
+ensemble, et personne n'a de fichier à retrouver. Si la clé ne porte pas la
+page, le scan de la source le dit au lieu de laisser découvrir le problème sur
+l'autre machine.
 
 **Comment la page se remplit toute seule.** Ouverte depuis une clé, elle n'a pas le droit
 d'aller lire un fichier : le navigateur refuse. Mais elle peut charger un fichier
@@ -848,6 +869,7 @@ Migration-PC/
 ├── scripts-sync.js               # recopie le profil et le nom de cache du sw
 ├── captures/                     # images du README
 ├── resultat-scan.js              # écrit par les scripts, lu par la page en file://
+├── instantane-source.json        # le relais : posé par le scan source, relu par le scan cible
 ├── tests/                        # suites Node, PowerShell et navigateur
 ├── verifier-comme-ci.sh          # rejoue localement les 21 étapes du job Linux
 ├── package.json                  # scripts de test uniquement

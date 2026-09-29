@@ -233,5 +233,30 @@ G('cocherLeConstate()');
 ok('les constatées sont cochées',avant.every(id=>G('S').checked[id]),true);
 ok('et la ligne cochée à la main reste cochée',G('S').checked[absente.id],true);
 
+
+console.log('\n--- le relais par la clé USB ---');
+// Le cas qui compte pour la procédure réelle : on scanne la source, on
+// débranche la clé, on la branche sur le PC cible, on scanne. Le navigateur du
+// PC cible n'a JAMAIS vu l'instantané de la source — sa mémoire locale est
+// vide. Sans le relais, la page reçoit un scan de cible et n'a rien à
+// comparer : c'est exactement le moment où l'utilisateur attend une réponse.
+G('INV_SOURCE=null;INV_CIBLE=null;');
+try{Object.keys(store).forEach(k=>delete store[k]);}catch(e){}
+// Le champ « role » est ce qui aiguille : sans lui la page prendrait le scan
+// de la cible pour un nouvel inventaire et remplacerait la checklist par la
+// liste — vide — de la machine neuve. Les vrais instantanés le portent.
+vm.runInContext('window.MIGRATION_PC_SOURCE='+JSON.stringify(Object.assign({},source,{role:'source'}))
+  +';window.MIGRATION_PC_SCAN='+JSON.stringify(Object.assign({},cible,{role:'cible'}))+';',ctx);
+G('appliquerScanLocal()');
+ok('la source est arrivée par la clé',!!G('INV_SOURCE'),true);
+ok('et la cible avec elle',!!G('INV_CIBLE'),true);
+const relais=G('comparerInstantanes(INV_SOURCE,INV_CIBLE)');
+ok('la comparaison se fait sans rien importer à la main',relais.ok,true);
+ok('et elle trouve ce qui manque',relais.total.attendu-relais.total.arrive,1);
+// L'ordre compte : appliquer la cible en premier construirait la checklist
+// depuis le PC neuf, c'est-à-dire depuis une machine vide.
+ok('la checklist vient bien de la source',
+  G('APPS_DATA').some(a=>/Krita/.test(a.n)),true);
+
 console.log(ko?'\n'+ko+' EN ECHEC':'\nRECONCILIATION OPERATIONNELLE');
 process.exit(ko?1:0);

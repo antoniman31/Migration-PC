@@ -172,6 +172,39 @@ if ($raccourci -ne $cheminSortie) {
     catch { Write-Host "  (raccourci inventaire-pc.json non ecrit : $_)" -ForegroundColor DarkGray }
 }
 
+# ------------------------------------------------- le relais par la cle USB
+#
+# La procedure tient en trois gestes : on scanne la source, on debranche la
+# cle, on scanne la cible. Entre les deux il y a un changement de machine, donc
+# un changement de navigateur : la memoire locale de la page, ou vit
+# l'instantane de la source, ne traverse pas. Sur le PC neuf la page recevait
+# donc un scan de cible et rien a quoi le comparer.
+#
+# Le relais, c'est la cle elle-meme. Le scan de la source depose une copie de
+# son instantane a cote de index.html, sous un nom fixe ; celui de la cible la
+# relit et la joint au resultat. Les deux voyagent alors ensemble, sans que
+# personne ait un fichier a retrouver.
+$dossierPage = if (Get-Command Get-DossierPage -ErrorAction SilentlyContinue) {
+    Get-DossierPage -DossierScript $PSScriptRoot
+} else { $null }
+$relais = if ($dossierPage) { Join-Path $dossierPage 'instantane-source.json' } else { $null }
+
+$instantaneSource = $null
+if ($Role -eq 'source') {
+    if ($relais) {
+        try { Write-TexteUtf8 -Chemin $relais -Contenu $json }
+        catch { Write-Host "  (copie pour la cle non ecrite : $_)" -ForegroundColor DarkGray }
+    }
+} elseif ($relais -and (Test-Path -LiteralPath $relais)) {
+    # Un fichier illisible ou abime ne doit pas faire echouer le scan : la page
+    # le dira, et l'instantane de la cible est deja ecrit.
+    try {
+        $instantaneSource = Get-Content -LiteralPath $relais -Raw -Encoding UTF8 | ConvertFrom-Json
+    } catch {
+        Write-Host "  (instantane de la source illisible, ignore)" -ForegroundColor Yellow
+    }
+}
+
 # Sans ce fichier a cote, la page ne se remplit pas toute seule. C'est un
 # confort, pas le resultat — le JSON est ecrit dans tous les cas — mais son
 # absence se taisait, et on cherchait longtemps pourquoi la page restait vide.
@@ -182,7 +215,8 @@ if (-not (Get-Command Write-ResultatPourSite -ErrorAction SilentlyContinue)) {
     Write-Host "reprenez le dossier complet depuis le site." -ForegroundColor Yellow
 }
 if (Get-Command Write-ResultatPourSite -ErrorAction SilentlyContinue) {
-    Write-ResultatPourSite -Donnees $inventaire -DossierScript $PSScriptRoot -NePasOuvrir:$PasDOuverture
+    Write-ResultatPourSite -Donnees $inventaire -DossierScript $PSScriptRoot `
+        -Source $instantaneSource -NePasOuvrir:$PasDOuverture
 }
 
 $avecWinget = @($apps | Where-Object { $_.winget }).Count
@@ -204,10 +238,22 @@ if (@($pilotes).Count) {
 Write-Host "Fichier ecrit : $chemin"
 Write-Host ""
 if ($Role -eq 'source') {
-    Write-Host "Etape suivante : ouvrir index.html, cliquer sur Importer, choisir ce fichier."
+    Write-Host "Etape suivante" -ForegroundColor Cyan
+    Write-Host "  1. Debranchez cette cle USB."
+    Write-Host "  2. Branchez-la sur le PC cible : le neuf, ou celui-ci une fois reinstalle."
+    Write-Host "  3. Lancez « Migration PC.bat » et choisissez CIBLE."
+    if (-not $relais) {
+        Write-Host ""
+        Write-Host "index.html n'est pas a cote des scripts : copiez le dossier entier sur la" -ForegroundColor Yellow
+        Write-Host "cle, sinon le PC cible n'aura rien a comparer." -ForegroundColor Yellow
+    }
 } else {
-    Write-Host "Etape suivante : ouvrir index.html avec l'instantane de la source deja"
-    Write-Host "importe, puis importer celui-ci. La page dira ce qui manque."
+    if ($instantaneSource) {
+        Write-Host "La page s'ouvre sur ce qu'il reste a installer : les deux instantanes y sont."
+    } else {
+        Write-Host "Aucun instantane du PC source sur cette cle : la page n'a rien a comparer." -ForegroundColor Yellow
+        Write-Host "Scannez d'abord le PC source, ou importez son fichier a la main."
+    }
 }
 if (-not $ToutInclure) {
     Write-Host "Une entree manque ? Relancer avec -ToutInclure pour desactiver le filtrage."
