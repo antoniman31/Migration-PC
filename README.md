@@ -43,64 +43,27 @@ l'autre branche un câble.
   <img alt="La checklist sur téléphone" src="captures/mobile-clair.png" width="320">
 </picture>
 
-## En trois lignes
 
-1. Clé USB branchée sur le **PC que vous quittez** : double-cliquez
-   `Migration PC.bat`, choisissez **SOURCE**. La page s'ouvre déjà remplie de
-   vos logiciels.
-2. Débranchez la clé, branchez-la sur le **PC cible** — le neuf, ou le même une
-   fois réinstallé.
-3. Double-cliquez `Migration PC.bat`, choisissez **CIBLE**. La page s'ouvre sur
-   ce qu'il reste à installer.
+## Comment on s'en sert
 
-Rien à importer à la main entre les deux. L'instantané de la source voyage sur
-la clé : le scan de la source en dépose une copie à côté de `index.html`, et
-celui de la cible la relit et la joint au résultat. C'est nécessaire parce que
-la mémoire du navigateur ne traverse pas d'une machine à l'autre — sans ce
-relais, le PC neuf recevrait un scan de lui-même et rien à quoi le comparer.
+Posez le dossier entier sur une clé USB. Un seul fichier se lance,
+**`Migration PC.bat`** ; tout le reste est rangé dans `scripts/`, qui est là pour être lu.
 
-Un seul fichier à lancer : `Migration PC.bat`. Tout le reste est rangé dans
-`scripts/` — c'est là pour être lu, pas pour être lancé à la main.
+1. Clé branchée sur le **PC que vous quittez** : double-cliquez `Migration PC.bat`,
+   choisissez **SOURCE**. La page s'ouvre déjà remplie de vos logiciels.
+2. Débranchez la clé, branchez-la sur le **PC cible** — le neuf, ou le même une fois
+   réinstallé.
+3. Double-cliquez `Migration PC.bat`, choisissez **CIBLE**. La page s'ouvre sur ce qu'il
+   reste à installer : **📦 Logiciels** dit ce qui manque, **🎛️ Pilotes** montre les
+   périphériques sans pilote et le lien du constructeur.
 
-> Windows affiche un avertissement SmartScreen sur un `.bat` téléchargé depuis
-> Internet : « Informations complémentaires » puis « Exécuter quand même ».
-> Aucune astuce ne l'évite sans certificat de signature payant. Les fichiers sont
-> lisibles dans le Bloc-notes — ouvrez-les avant de les lancer si vous voulez
-> vérifier ce qu'ils font.
+Rien à importer à la main entre les deux, et rien à retrouver dans un dossier.
 
----
-
-## Sommaire
-
-- [À quoi ça sert](#à-quoi-ça-sert)
-- [Le parcours en deux double-clics](#le-parcours-en-deux-double-clics)
-- [Démarrage rapide](#démarrage-rapide)
-- **Les scripts Windows**
-  - [Inventorier le PC source](#inventorier-le-pc-source)
-  - [Vérifier le PC cible](#vérifier-le-pc-cible)
-- [Trois onglets](#trois-onglets)
-- [La checklist](#la-checklist)
-  - [La barre du haut](#la-barre-du-haut)
-  - [Ma configuration](#ma-configuration)
-  - [Repartir de zéro](#repartir-de-zéro)
-  - [Mode guidé](#mode-guidé)
-  - [Accessibilité](#accessibilité)
-- [Formats de fichiers](#formats-de-fichiers)
-- [Écrire son propre profil](#écrire-son-propre-profil)
-- [Licence](#licence)
-- [Vie privée](#vie-privée)
-  - [Un profil reçu est une entrée non fiable](#un-profil-reçu-est-une-entrée-non-fiable)
-- [Tests](#tests)
-  - [Intégration continue](#intégration-continue)
-- [Déploiement](#déploiement)
-- [Limites connues](#limites-connues)
-
-## À quoi ça sert
-
-Réinstaller un PC, c'est se souvenir de ce qui était installé et le remettre. Ce projet
-couvre ça, dans **deux situations** : passer sur une autre machine, ou repartir propre
-sur celle qu'on a déjà. Ce qu'il ne couvre pas — la sauvegarde de vos fichiers — il le
-dit au lieu de le laisser croire.
+Le menu n'ajoute aucune capacité : il appelle les mêmes scripts, qu'on peut toujours lancer
+à la main. Une action dont il manque un fichier reste affichée, grisée, avec la raison —
+plus utile qu'une action absente dont on ignore pourquoi. Après chaque action il dit quoi
+faire ensuite, et une entrée **Par où commencer ?** décrit le parcours des trois situations :
+changer de PC, réinstaller sur place, garder les deux machines.
 
 ```
 PC SOURCE                                        PC CIBLE
@@ -114,148 +77,59 @@ scan-pc.ps1 -Role source                  scan-pc.ps1 -Role cible
                                                     compare les deux
 ```
 
-**Le même script des deux côtés.** Sur la source il fige l'état de la machine ; sur la
-cible il refait le même relevé, et c'est la page qui compare les deux. Ça a une
-conséquence qui simplifie tout : « PC neuf » et « même PC après réinstallation »
-deviennent exactement le même cas.
+**Le même script des deux côtés.** Sur la source il fige l'état de la machine, sur la
+cible il refait le même relevé, et c'est la page qui compare. Conséquence qui simplifie
+tout : « PC neuf » et « même PC après réinstallation » deviennent le même cas. Le
+vocabulaire compte pour ça — source et cible peuvent être le même ordinateur à deux
+moments différents.
 
-Les deux côtés partagent leur logique de détection, qui vit une seule fois dans
-`lib-detection.ps1`.
-
-Chaque instantané porte sa date et n'écrase jamais le précédent : « l'état d'une machine
-à un instant donné » n'existe pas si un second scan efface le premier. Un raccourci
+Chaque instantané porte sa date et n'écrase jamais le précédent ; un raccourci
 `inventaire-pc.json` pointe toujours vers le dernier.
 
-Le scan n'est pas obligatoire : la page s'ouvre sur un profil d'exemple utilisable tel
-quel, et vous pouvez écrire le vôtre.
+Le scan n'est pas obligatoire : `index.html` s'ouvre seul sur un profil d'exemple, sans
+dépendance, sans serveur, sans réseau.
 
-## Le parcours en deux double-clics
+### Ce qui se passe entre les deux machines
 
-Posez le dossier entier sur une clé USB et double-cliquez **`Migration PC.bat`**. Un menu
-demande sur quelle machine vous êtes — la seule question à laquelle personne ne peut
-répondre à votre place — et lance le bon script. Il n'ajoute aucune capacité : il appelle
-les mêmes scripts, qu'on peut toujours lancer à la main. Une action dont il manque un
-fichier reste affichée, grisée, avec la raison : plus utile qu'une action absente dont on
-ignore pourquoi.
+Entre le scan de la source et celui de la cible il y a un changement de machine, donc de
+navigateur — et la mémoire locale de la page, où vit l'instantané de la source, ne
+traverse pas. Sans relais, le PC neuf recevrait un scan de lui-même et rien à quoi le
+comparer.
 
-Après chaque action, il dit quoi faire ensuite sur le site — quel onglet, quel bouton.
-Et une entrée **Par où commencer ?** décrit le parcours complet des trois situations :
-changer de PC, réinstaller sur place, garder les deux machines.
+Le relais, c'est la clé. Le scan de la source dépose une copie de son instantané à côté
+de `index.html`, sous le nom fixe `instantane-source.json` ; celui de la cible la relit
+et la joint au résultat. Si la clé ne porte pas la page, le scan de la source le dit tout
+de suite, au lieu de laisser découvrir le problème sur l'autre machine.
 
-Il y a eu une fenêtre graphique ici. Elle a été retirée : elle était le seul morceau du
-projet qu'aucun test ne pouvait exercer — `System.Windows.Forms` ne se pilote pas sur une
-machine d'intégration sans écran — alors que le menu texte, lui, est lancé et vérifié à
-chaque publication. Moins de code, et plus rien qui échappe aux tests.
-
-Il y a eu deux raccourcis numérotés à côté du menu, `1-scanner-ce-pc.bat` et
-`2-verifier-ce-pc.bat`. Ils sont partis : trois fichiers `.bat` qui se ressemblent,
-dans un dossier qui en comptait vingt et un, désorientaient plus qu'ils n'aidaient.
-Le menu fait les deux, et il dit lequel choisir.
-
-Sur le PC source, l'option « Ce PC est la SOURCE » fige l'état de la machine, écrit
-l'instantané à côté de la page et l'ouvre. La checklist s'affiche **déjà remplie de vos
-logiciels** — rien à importer.
-
-Sur le PC cible, l'option « Ce PC est la CIBLE » relance **le même relevé**, et la page
-compare les deux instantanés : ce qui est arrivé, ce qui manque, ce qui est là dans une
-version plus ancienne qu'avant. La clé a fait le transport.
-
-Le vocabulaire compte : « nouveau PC » décrit mal le cas le plus courant, qui est de
-réinstaller la machine qu'on a déjà. Source et cible peuvent être le même ordinateur, à
-deux moments différents.
-
-Le `.bat` existe pour une seule raison : Windows refuse d'exécuter un `.ps1` par
-double-clic. Il appelle le script en contournant ce blocage pour ce seul lancement, et
-reste lisible dans le Bloc-notes — contrairement à un `.exe`, qu'il faudrait croire sur
-parole pour un outil qui lit tout votre PC.
-
-**Le relais entre les deux machines.** La procédure tient en trois gestes : on
-scanne la source, on débranche la clé, on scanne la cible. Entre les deux il y a
-un changement de machine, donc un changement de navigateur — et la mémoire
-locale de la page, où vit l'instantané de la source, ne traverse pas. Sur le PC
-neuf, la page recevait donc un scan de cible et rien à quoi le comparer.
-
-Le relais, c'est la clé elle-même. Le scan de la source dépose une copie de son
-instantané à côté de `index.html`, sous le nom fixe `instantane-source.json` ;
-celui de la cible la relit et la joint au résultat. Les deux voyagent alors
-ensemble, et personne n'a de fichier à retrouver. Si la clé ne porte pas la
-page, le scan de la source le dit au lieu de laisser découvrir le problème sur
-l'autre machine.
-
-**Comment la page se remplit toute seule.** Ouverte depuis une clé, elle n'a pas le droit
-d'aller lire un fichier : le navigateur refuse. Mais elle peut charger un fichier
+Et la page se remplit toute seule parce qu'ouverte depuis une clé, elle n'a pas le droit
+d'aller lire un fichier — le navigateur refuse — mais elle peut charger un fichier
 JavaScript posé à côté d'elle. Les scripts écrivent donc `resultat-scan.js` en plus du
 `.json`, et ouvrir `index.html` suffit. Sans ce fichier, la page s'ouvre normalement.
 
 Ce fichier étant chargé, il est exécuté : sur votre propre clé c'est sans objet, sur une
 clé prêtée c'est du code qui tourne. Ce qu'il dépose est traité comme n'importe quel
-import — des données, jamais des instructions — et la page annonce d'où ça vient au lieu
-d'apparaître pleine sans explication. **⋯ Plus → Les scripts pour Windows** propose les
-fichiers au téléchargement, et `-PasDOuverture` empêche les scripts d'ouvrir le
-navigateur.
+import — des données, jamais des instructions — et la page annonce d'où ça vient.
+`-PasDOuverture` empêche les scripts d'ouvrir le navigateur.
 
-## Démarrage rapide
+> Windows affiche un avertissement SmartScreen sur un `.bat` téléchargé depuis Internet :
+> « Informations complémentaires » puis « Exécuter quand même ». Aucune astuce ne l'évite
+> sans certificat de signature payant. Les fichiers sont lisibles dans le Bloc-notes.
+> Le `.bat` existe pour une seule raison : Windows refuse d'exécuter un `.ps1` par
+> double-clic. Il contourne ce blocage pour ce seul lancement et reste lisible —
+> contrairement à un `.exe`, qu'il faudrait croire sur parole pour un outil qui lit tout
+> votre PC.
 
-**Le plus court** : ouvrez `index.html` et cochez. Le profil d'exemple couvre les étapes
-communes à toute réinstallation Windows, aucun script n'est nécessaire.
+### En ligne de commande
 
-**Le parcours complet.** Téléchargez `migration-pc.zip` depuis la page — un seul bouton,
-une seule archive, qui contient exactement ce qui se lance et rien d'autre. Décompressez-la
-sur une clé USB, puis double-cliquez `Migration PC.bat` : le menu demande sur quelle
-machine vous êtes et lance ce qu'il faut.
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\scan-pc.ps1 -Role source
+```
 
-Pour qui préfère la ligne de commande, dans l'ordre :
+puis, sur la machine fraîchement installée :
 
-1. Sur le **PC source** — celui que vous quittez — figez son état.
-
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File .\scripts\scan-pc.ps1 -Role source
-   ```
-
-2. Sauvegardez vos fichiers personnels. **Le scan liste, il ne copie rien** : cette
-   étape-là n'est pas outillée par ce projet, elle est entièrement à vous.
-
-3. Copiez la clé : la page, les scripts et l'instantané.
-
-4. Sur le **PC cible**, ouvrez `index.html` et importez l'instantané de la source.
-   Passez en **🎯 Mode guidé** et suivez les tâches une par une.
-
-5. Sur le PC cible, relancez le même script de l'autre côté :
-
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File .\scripts\scan-pc.ps1 -Role cible
-   ```
-
-   L'onglet **📦 Logiciels** compare les deux instantanés et dit ce qui est arrivé,
-   ce qui manque, et ce qui est là dans une version plus ancienne qu'avant. L'onglet
-   **🎛️ Pilotes** montre les périphériques sans pilote et le lien du constructeur.
-
-## Inventorier le PC source
-
-`scan-pc.ps1` interroge plusieurs sources et fusionne les résultats :
-
-| Source | Ce qu'elle apporte |
-|---|---|
-| `winget list` | Les identifiants d'installation officiels |
-| Registre `Uninstall` | Les logiciels installés classiquement (32 et 64 bits, machine et utilisateur) |
-| Paquets APPX | Les applications du Microsoft Store |
-| Steam, Epic, GOG, Xbox, Ubisoft, EA | Les jeux installés, sur tous les disques |
-| WMI et registre | La machine elle-même : fabricant, modèle, n° de série, portable ou fixe, écrans branchés |
-| `Win32_PnPSignedDriver` | Les pilotes qui ne viennent pas de Microsoft, groupés par classe |
-
-Une entrée vue par plusieurs sources est fusionnée : le nom vient du registre,
-l'identifiant winget de winget, la taille sur disque de celle qui la connaît, et rien
-n'apparaît deux fois. Chaque application est classée par catégorie selon des mots-clés,
-avec une priorité et une durée estimée — tout cela reste modifiable à la main dans le
-JSON.
-
-**Ce que le scan ne relève pas, et pourquoi.** Il a relevé jusqu'à trente-deux familles :
-réglages, favoris, Wi-Fi, polices, tâches planifiées, VPN, machines virtuelles, gros
-dossiers. Tout ça marchait, et tout ça a été retiré. La raison tient en une phrase : le
-programme **listait sans jamais copier**. Une liste de ce qu'on va perdre n'est pas une
-sauvegarde, et la présenter à côté d'une vraie liste de logiciels installables laissait
-croire le contraire au pire moment — juste avant un formatage. `COUVERTURE.md` garde le
-détail de ce qui est parti.
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\scan-pc.ps1 -Role cible
+```
 
 | Option | Effet |
 |---|---|
@@ -266,330 +140,131 @@ détail de ce qui est parti.
 | `-ToutInclure` | Garde aussi les redistribuables et les composants système |
 | `-PasDOuverture` | N'ouvre pas le navigateur à la fin |
 
-## Vérifier le PC cible
+**Entre les deux, sauvegardez vos fichiers personnels.** Le scan liste, il ne copie rien.
+Cette étape n'est pas outillée par ce projet : c'est le seul geste irréversible de la
+procédure, et il est entièrement à vous.
 
-Installer dix applications puis cocher dix cases à la main est du travail inutile. Sur
-la machine fraîchement installée, on relance **le même script** :
+### Ce que le scan va chercher
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\scan-pc.ps1 -Role cible
-```
+| Source | Ce qu'elle apporte |
+|---|---|
+| `winget list` | Les identifiants d'installation officiels |
+| Registre `Uninstall` | Les logiciels installés classiquement (32 et 64 bits, machine et utilisateur) |
+| Paquets APPX | Les applications du Microsoft Store |
+| Steam, Epic, GOG, Xbox, Ubisoft, EA | Les jeux installés, sur tous les disques |
+| WMI et registre | La machine : fabricant, modèle, n° de série, portable ou fixe, écrans branchés |
+| `Win32_PnPSignedDriver` | Les pilotes qui ne viennent pas de Microsoft, groupés par classe |
 
-Il produit un instantané de même forme que celui de la source, et la page les compare.
-Le rapprochement se fait sur le nom normalisé du logiciel, avec les mêmes règles des deux
-côtés : sans ça, « Mozilla Firefox (x64 fr) » sur la source et « Mozilla Firefox » sur la
-cible seraient comptés comme deux logiciels différents.
+Une entrée vue par plusieurs sources est fusionnée : le nom vient du registre,
+l'identifiant winget de winget, la taille de celle qui la connaît, et rien n'apparaît deux
+fois. Le rapprochement source/cible se fait sur le nom normalisé avec les mêmes règles des
+deux côtés, sinon « Mozilla Firefox (x64 fr) » et « Mozilla Firefox » compteraient pour
+deux logiciels. Rien n'est coché sans votre validation : un rapprochement par nom peut
+confondre deux logiciels voisins, et une case cochée à tort fait sauter une installation.
 
 Sur la cible, le script relève en plus ce qui n'a de sens que là : les périphériques que
-Windows signale comme sans pilote ou en erreur. La page affiche la liste et fabrique le
-lien vers la page de support du constructeur à partir du modèle de la machine.
+Windows signale comme sans pilote ou en erreur.
 
-Ce que le volet pilotes **ne dit jamais**, c'est qu'une version plus récente existe. Le
-programme ne fait aucun appel réseau : il ne peut pas le savoir, et l'affirmer serait
-mentir. Il signale ce qui manque ou ce qui est en erreur, et donne l'adresse où aller
-comparer.
+Il a relevé jusqu'à trente-deux familles — réglages, favoris, Wi-Fi, polices, tâches
+planifiées, VPN, machines virtuelles, gros dossiers. Tout ça marchait, et tout ça a été
+retiré : le programme **listait sans jamais copier**, et une liste de ce qu'on va perdre
+présentée à côté de logiciels réellement installables laissait croire à une sauvegarde
+juste avant un formatage. [COUVERTURE.md](COUVERTURE.md) dit lesquelles et pourquoi.
 
-Rien n'est coché sans votre validation : un rapprochement par nom peut confondre deux
-logiciels voisins, et une case cochée à tort fait sauter une installation.
+## La page
 
-## Trois onglets
-
-La page a compté jusqu'à six onglets et quatre « cas » qui filtraient leur contenu :
-migration, réinstallation, deux PC, mes affaires. Ils servaient à cacher les étapes de
-BIOS quand elles ne s'appliquaient pas et à renommer « Avant de quitter » quand
-l'ancienne machine restait en service. Ces onglets ont disparu avec la réduction du
-projet aux logiciels et aux pilotes : plus un seul élément ne portait de mention `cas`,
-et tout le mécanisme filtrait une liste qu'il ne réduisait jamais. Il est parti avec eux.
-
-## La checklist
-
-Trois onglets : **Logiciels**, **Pilotes** et **PWA**.
-
-**Logiciels** est la liste relevée sur le PC source, regroupée par catégorie, avec la
+Trois onglets. **Logiciels** est la liste relevée sur le PC source, par catégorie, avec la
 version, le poids et la commande qui réinstalle. Dès que le scan du PC cible arrive, la
 même liste change d'état : un bandeau dit combien de logiciels sont là sur combien, et
 chaque ligne porte son verdict — *là*, *manque*, ou *plus ancien* avec les deux versions.
-Un bouton propose de cocher d'un coup ce que le scan a constaté ; il ne décoche jamais,
-parce qu'une détection ratée effacerait un suivi fait à la main.
+Un bouton coche d'un coup ce que le scan a constaté ; il ne décoche jamais, parce qu'une
+détection ratée effacerait un suivi fait à la main.
 
-Il y a eu un onglet « Reste à faire » qui portait cette comparaison à part. C'était un
-endroit de plus pour la même chose : la liste des logiciels et la liste de ce qui manque
-parlent des mêmes lignes, et obliger quelqu'un à comprendre laquelle regarder n'aide
-personne.
+**Pilotes** montre ceux du PC receveur après son scan : les périphériques en défaut, ceux
+déjà en place groupés par fournisseur, et le lien vers la page de support du constructeur,
+construit depuis le modèle et le numéro de série relevés dans le SMBIOS. Avant ce scan, il
+montre ce que portait l'ancienne machine — une bonne idée de ce qu'il faudra retrouver. Ce
+qu'il ne dit **jamais** : qu'une version plus récente existe. Le programme ne fait aucun
+appel réseau, il ne peut pas le savoir, et l'affirmer serait mentir.
 
-**Pilotes** montre ceux du PC receveur, après son scan. Les périphériques que Windows
-signale sans pilote ou en erreur, ceux qui sont déjà en place groupés par fournisseur, et
-le lien vers la page de support du constructeur, construit depuis le modèle et le numéro
-de série relevés dans le SMBIOS. Avant le scan de la machine d'arrivée, il montre ce que
-portait l'ancienne : une bonne idée de ce qu'il faudra retrouver.
+**PWA** liste les applications web installées depuis le navigateur, à rouvrir depuis leur
+site.
 
-Ce que cet onglet ne dit **jamais**, c'est qu'une version plus récente existe. Le
-programme ne fait aucun appel réseau : il ne peut pas le savoir, et l'affirmer serait
-mentir.
-
-**PWA** liste les applications web installées depuis le navigateur, à rouvrir depuis
-leur site.
-
-La progression est enregistrée dans le navigateur au fur et à mesure et peut être
-exportée en JSON pour passer d'une machine à l'autre.
-
-**Navigation** — mode normal ou compact, thème clair/sombre suivant les préférences
-système, recherche sur les trois onglets à la fois, tri des apps par catégorie,
-priorité, durée ou ordre conseillé, filtre sur les apps sans winget. La mise en page
-s'adapte aux écrans étroits : cibles tactiles agrandies, textes relevés, champs à 16 px
-pour éviter le zoom automatique d'iOS.
-
-**S'installer comme une application** — depuis la version en ligne, la page s'installe
-et s'ouvre ensuite sans réseau. Le service worker ne met en cache que le
-squelette ; la progression vit dans le stockage local et n'est jamais affectée. Ouverte
-en `file://` depuis une clé USB, la page ignore simplement cette partie : elle est déjà
-autonome.
-
-**Réinstaller** — le badge winget copie la commande d'installation en un clic, un
-bouton par catégorie copie le script de toute la section. Deux exports pour réinstaller :
-**⬇️ Script des restants** produit un `.ps1`, et **⬇️ winget .json** le format officiel
-de `winget import`, à préférer — il saute ce qui est déjà installé et reprend proprement
-après une interruption.
-
-Le script des restants change de source selon ce qu'on lui donne. Sans scan du PC cible,
-il ne peut que partir des cases non cochées. Dès que la comparaison existe, elle sait ce
-qui **manque** — c'est un constat, pas une supposition — et c'est elle qui décide : sur
-une checklist où personne n'a rien coché, l'ancienne version proposait de réinstaller des
-logiciels déjà en place. Une ligne cochée à la main reste exclue même quand le scan la
-dit manquante : quelqu'un qui coche affirme l'avoir faite, et le script n'a pas à le
-contredire en silence.
+**Réinstaller** — le badge winget copie la commande en un clic, un bouton par catégorie
+copie le script de toute la section. Deux exports : **⬇️ Script des restants** produit un
+`.ps1`, et **⬇️ winget .json** le format officiel de `winget import`, à préférer — il saute
+ce qui est déjà installé et reprend proprement après une interruption.
 
 ```powershell
 winget import -i winget-restant.json --accept-package-agreements --accept-source-agreements
 ```
 
-**Suivi** — barre de progression globale et par onglet, estimation du temps restant
-calculée depuis les durées, chronomètre de session, historique des dernières actions,
-notes libres sur chaque élément, champs dédiés aux clés de licence et aux variables
-d'environnement.
+Le script des restants change de source selon ce qu'on lui donne. Sans scan du PC cible, il
+part des cases non cochées, faute de mieux. Dès que la comparaison existe, c'est elle qui
+décide : elle sait ce qui **manque**, et c'est un constat, pas une supposition. Une ligne
+cochée à la main reste exclue même quand le scan la dit manquante — quelqu'un qui coche
+affirme l'avoir faite.
 
-**Sortie** — export de la progression, du profil, de la checklist en texte, du script
-winget restant ou du fichier `winget import`, et impression globale ou par onglet. Tout
-ce qui sort est ce qui est affiché : un fichier qui dirait autre chose
-que l'écran serait pire que pas de fichier.
+**Le reste** — recherche sur les trois onglets, tri par catégorie, priorité, durée ou ordre
+conseillé, filtre sur les apps sans winget, vue compacte, thème suivant le système, barres
+de progression, chronomètre, notes libres, champs de licence. Tout ce qui sort en fichier est
+ce qui est affiché. La progression est enregistrée au fur et à mesure et la barre « Récent »
+en porte l'heure, ou un avertissement quand le navigateur refuse — plutôt que de laisser
+croire que le travail est gardé.
+
+**⋯ Plus** contient les cinq actions rares, avec un vrai libellé : commencer une session,
+exporter le profil, réinitialiser, exporter en texte, imprimer. **Réinitialiser…** offre
+deux portées distinctes : *Tout décocher* remet la progression à zéro et laisse notes, clés
+et profil en place ; *Tout effacer* vide tout et revient au profil d'exemple. Les deux
+passent par un bandeau d'annulation plutôt que par une boîte de confirmation — une seconde
+chance après coup vaut mieux qu'un « oui » réflexe avant, et ça vaut aussi pour un import
+qui remplace du travail.
+
+**🎯 Mode guidé**, pour le moment où l'on est debout devant la machine : une tâche à la
+fois, dans l'ordre des dépendances, avec la commande winget prête à copier et rien d'autre.
+« C'est fait » coche et avance, « Passer » remet la tâche en fin de file.
+
+**Clavier et contrastes** — tout se fait au clavier : les lignes sont des cases à cocher
+activées par Entrée ou Espace, et le focus reste sur la ligne après la coche. Les contrastes
+respectent le seuil WCAG de 4,5:1 dans les deux thèmes,
+mesurés sur le fond réellement peint. Le réglage système « réduire les animations » est
+respecté, confettis compris.
+
+Depuis la version en ligne, la page **s'installe comme une application** et s'ouvre ensuite
+sans réseau ; ouverte en `file://` depuis une clé, elle ignore cette partie, elle est déjà
+autonome. Si un onglet échoue au rendu, les autres s'affichent quand même et un bandeau
+nomme l'onglet fautif.
 
 ### Ma configuration
 
-Les scripts relèvent le matériel et remplissent ces champs tout seuls : Windows connaît
-la machine, il n'y a pas de raison de recopier une étiquette de carton. Une valeur déjà
-saisie n'est jamais écrasée — elle est peut-être plus précise que ce que Windows
-rapporte, et c'est la personne qui a raison.
-
-Une seule exception, et elle a une raison : le scan lancé avec `-Role cible` tourne
-sur le PC qu'on équipe, donc elle seule sait de quelle machine elle parle, et elle seule
-corrige une valeur. Un inventaire vient presque toujours de l'**ancien** PC — c'est tout
-l'intérêt du scan — et un profil décrit peut-être une troisième machine : ceux-là ne
-comblent que les cases vides. Sinon, sur le PC neuf, le lien du constructeur de
-l'onglet Pilotes viserait le support de la machine qu'on vient d'abandonner.
-
-La configuration voyage avec le profil exporté, dans un champ `materiel`. Sans cela tout
-le bénéfice disparaissait au moment du transfert, c'est-à-dire exactement là où il sert.
-
-**⋯ Plus → Ma configuration** ouvre les mêmes neuf champs, tous saisissables à la main.
-Cinq décrivent la machine — carte mère, processeur, carte graphique, mémoire, SSD — et
-quatre servent à retrouver un pilote : réseau filaire, Wi-Fi, puce audio, version du
-BIOS.
+Neuf champs, tous saisissables à la main, que les scripts remplissent tout seuls — Windows
+connaît la machine, il n'y a pas de raison de recopier une étiquette de carton. Cinq
+décrivent le PC (carte mère, processeur, carte graphique, mémoire, SSD) et quatre servent à
+retrouver un pilote : réseau filaire, Wi-Fi, puce audio, version du BIOS.
 
 Le réseau passe devant parce que c'est le pilote dont dépend la recherche de tous les
-autres : sur une machine fraîche sans Ethernet, il n'y a pas d'autre PC sous la main pour
-aller chercher quoi que ce soit. Ethernet et Wi-Fi sont deux champs, parce qu'on ne
-cherche pas le même pilote et qu'un fixe n'a souvent que le premier. La sortie audio
-d'une carte graphique est écartée — elle passe par HDMI et arrive avec le pilote de la
-carte ; c'est la puce de la carte mère qu'on veut. La version du BIOS répond à la
-question qu'on se pose devant la page du constructeur : est-ce que celle-ci est vieille ?
-Elle porte sa date pour ça.
+autres : sur une machine fraîche sans Ethernet, il n'y a pas d'autre PC sous la main.
+Ethernet et Wi-Fi sont deux champs, parce qu'on ne cherche pas le même pilote et qu'un fixe
+n'a souvent que le premier. La sortie audio d'une carte graphique est écartée — elle passe
+par HDMI et arrive avec le pilote de la carte, c'est la puce de la carte mère qu'on veut.
+Les cartes virtuelles aussi — Hyper-V, VMware, VirtualBox, les TAP de VPN, le Bluetooth qui
+se déclare en réseau : prendre la première venue enverrait chercher le pilote d'un
+adaptateur qui n'existe pas physiquement. La version du BIOS porte sa date, parce que la
+question devant la page du constructeur est « est-ce que la mienne est vieille ? ».
 
-Le scan remplit les neuf. Les cartes virtuelles — Hyper-V, VMware, VirtualBox, les TAP de
-VPN, le Bluetooth qui se déclare en réseau — sont écartées : prendre la première venue
-enverrait chercher le pilote d'un adaptateur qui n'existe pas physiquement.
+Une valeur déjà saisie n'est jamais écrasée : elle est peut-être plus précise que ce que
+Windows rapporte. Une exception, et elle a une raison — le scan lancé avec `-Role cible`
+tourne sur le PC qu'on équipe, donc lui seul sait de quelle machine il parle et lui seul
+corrige une valeur. Sinon, sur le PC neuf, le lien du constructeur viserait le support de la
+machine qu'on vient d'abandonner.
 
-**Les périphériques sans pilote** sont listés à part, après une vérification du nouveau
-PC. Ce n'est pas une déduction : c'est ce que le gestionnaire de périphériques affiche
-avec un point d'exclamation, repris tel quel. Chaque ligne porte un bouton de recherche
-qui cite le modèle de votre carte mère, puisque c'est elle qui porte le réseau, l'audio
-et les contrôleurs.
+Ce que ce bloc ne fait pas, volontairement : deviner quel pilote va avec quel modèle. Il
+faudrait une table de correspondances que personne ne tient à jour, et on servirait des
+liens faux qui ont l'air vrais. La page amène au bon endroit ; c'est vous qui lisez la page
+du constructeur.
 
-Ce que ce bloc ne fait pas, volontairement : deviner quel pilote va avec quel modèle.
-Il faudrait une table de correspondances que personne ne tient à jour, et on servirait
-des liens faux qui ont l'air vrais. La page amène au bon endroit ; c'est vous qui lisez
-la page du constructeur.
-
-Tout est facultatif, reste dans ce navigateur, et le champ `comp` du profil décide à
-quel composant une étape se rattache.
-
-**Si l'enregistrement échoue** — le stockage du navigateur a un quota, et il peut
-être refusé en navigation privée ou sur un site bloqué. La barre « Récent » porte à
-droite l'état de la sauvegarde : l'heure du dernier enregistrement, ou un avertissement.
-Quand le navigateur refuse, un panneau le dit et renvoie vers « Sauvegarder », plutôt
-que de laisser croire que le travail est gardé — il resterait à l'écran et partirait au
-rechargement.
-
-**En cas de problème** — chaque onglet est rendu séparément. Si l'un échoue, les autres
-s'affichent quand même et un bandeau nomme l'onglet fautif et l'erreur, au lieu de
-laisser une page à moitié vide sans explication.
-
-**Revenir en arrière** — réinitialiser une section ou importer un fichier remplace du
-travail. Ces actions ne demandent pas de confirmation — on clique « oui » par réflexe —
-mais s'annulent après coup depuis un bandeau, qui restaure aussi bien les cases que le
-profil remplacé.
-
-### La barre du haut
-
-Sept boutons, pas dix. Les actions fréquentes restent visibles — vue normale ou compacte,
-importer, sauvegarder, mode guidé, thème — et les cinq rares (commencer une session,
-exporter le profil, réinitialiser, exporter en texte, imprimer) vivent dans un menu
-**⋯ Plus**. Elles y
-portent un vrai libellé au lieu d'un emoji qu'il fallait survoler pour comprendre. Le
-menu se referme après une action, au clic ailleurs, et à Échap.
-
-### Repartir de zéro
-
-**⋯ Plus → Réinitialiser…** ouvre un panneau avec deux portées distinctes, décrites
-avant d'être offertes :
-
-- **Tout décocher** remet la progression à zéro sur les deux listes. Les notes, les clés
-  de licence, les variables d'environnement et le profil chargé restent en place. C'est
-  ce qu'on veut pour recommencer la même migration sur une autre machine.
-- **Tout effacer** vide tout ce que le navigateur a mémorisé — progression, notes, clés,
-  variables, profil importé — et revient au profil d'exemple. Les fichiers déjà exportés
-  ne sont pas touchés : ils sont sur le disque, pas dans la page.
-
-Les deux passent par le même bandeau d'annulation que le reste du site plutôt que par une
-boîte de confirmation. Une seconde chance après coup vaut mieux qu'un « oui » réflexe
-avant. Échap referme le panneau et rend le focus au bouton qui l'a ouvert.
-
-### Mode guidé
-
-Pour le moment où l'on est debout devant la machine. Une tâche à la fois, dans l'ordre
-des dépendances, avec seulement ce qui sert alors : la commande winget prête à copier et
-l'avertissement s'il y en a un. Filtres, badges, durées et recherche disparaissent — ils
-appartiennent à la préparation.
-
-« C'est fait » coche et avance. « Passer » remet la tâche en fin de file sans la cocher.
-Un bouton fait l'aller et le retour avec la vue liste, qui reste le défaut ; la
-progression est la même des deux côtés.
-
-### Accessibilité
-
-Tout se fait au clavier : les lignes sont des cases à cocher, atteintes par tabulation
-et activées par Entrée ou Espace, et le focus reste sur la ligne après la coche. L'anneau
-de focus est visible partout (`:focus-visible`), les lignes portent `role="checkbox"` et
-`aria-checked`, les onglets `role="tab"`, et la page a des repères `header` et `main`.
-
-Les contrastes respectent le seuil WCAG de 4,5:1 dans les deux thèmes, mesurés sur le
-fond réellement peint. Le bleu de l'interface est décliné en trois rôles : `--acc` pour
-les aplats et bordures, `--acc-fort` pour le texte et le focus, `--acc-fond` pour les
-fonds bleus portant du texte blanc — `#5493FF` seul n'atteint que 3,00:1 et ne peut pas
-porter de texte.
-
-Le réglage système « réduire les animations » est respecté : transitions et animations
-sont coupées, confettis compris.
-
-## Formats de fichiers
-
-Le bouton **Importer** accepte quatre formats et les reconnaît tout seul, sans que vous
-ayez à dire lequel.
-
-**Export winget** — le fichier produit par `winget export -o apps.json` sur n'importe
-quel PC, sans rien installer de ce projet. Il ne contient que des identifiants, donc les
-noms affichés sont déduits : `Mozilla.Firefox` devient Firefox, édité par Mozilla. Les
-catégories sont attribuées par mots-clés.
-
-**Inventaire** — produit par `scan-pc.ps1`, reconnu à son champ `type`. Plus riche
-qu'un export winget : il couvre aussi le Microsoft Store, Steam et les logiciels absents
-du dépôt winget.
-
-```json
-{
-  "type": "inventaire-migration-pc",
-  "version": 1,
-  "genere": "2026-09-24T10:00:00.000+02:00",
-  "machine": { "os": "Windows 11 Pro", "nom": "PC-BUREAU" },
-  "apps": [
-    { "nom": "7-Zip", "editeur": "Igor Pavlov", "version": "24.08",
-      "source": "registre, winget", "winget": "7zip.7zip",
-      "cat": "system", "priorite": "med", "duree": 5, "tailleGo": 0.02 }
-  ],
-  "materiel": { "cm": "ASUSTeK ROG STRIX B850-A", "cpu": "AMD Ryzen 7 9800X3D",
-                "gpu": "NVIDIA GeForce RTX 5070 Ti", "ram": "32 Go DDR5 6000 MT/s",
-                "ssd": "Samsung SSD 9100 PRO 2TB" },
-  "pilotesTiers": [
-    { "classe": "Net", "fournisseur": "Realtek", "appareils": ["Realtek Gaming GbE"] }
-  ],
-  "pilotes": []
-}
-```
-
-`materiel` remplit le bloc « Ma configuration », `pilotesTiers` les pilotes non-Microsoft
-relevés, `pilotes` — sur un instantané de cible seulement — les périphériques que Windows
-signale comme mal installés.
-
-Tous ces champs sont facultatifs : un inventaire qui n'en porte aucun reste valide, et la
-page ne montre que ce qu'elle a reçu.
-
-**Profil** — les listes des deux onglets à cocher. C'est le format de `presets/exemple.json`,
-et celui que produit le bouton 🧩.
-
-**Progression** — les cases cochées, les notes et les dates, sans les listes. C'est ce
-que produit le bouton 💾.
-
-Importer un export winget, un inventaire ou un profil remplace les listes mais conserve
-la progression. Importer une progression fait l'inverse.
-
-## Écrire son propre profil
-
-Copiez `presets/exemple.json` et modifiez-le. Les identifiants doivent être uniques
-dans tout le fichier : ce sont eux qui portent les cases cochées.
-
-Le profil d'exemple existe en double : dans ce fichier, et embarqué dans `index.html`
-pour que la page fonctionne sans serveur. Après avoir modifié le fichier, lancez
-`npm run sync` pour recopier l'un dans l'autre — `npm test` échoue s'ils divergent.
-
-`npm run sync` met aussi à jour le nom de cache du service worker, qu'il dérive d'une
-empreinte d'`index.html`. Sans cela un appareil qui a installé la checklist garderait
-l'ancienne version hors ligne ; `npm run test:pwa` échoue si on a oublié de le lancer.
-
-```javascript
-meta   // { nom, soustitre } — affichés dans l'en-tête
-cats   // { clé: libellé } — les catégories de l'onglet Logiciels
-quitter // { id, n, p, note, pr, warn? } — facultatif, sur l'ancien PC
-npc    // { id, o, n, src, p, t, d, post?, dep?, warn? }
-apps   // { id, n, c, src, w?, p, t, d, dep?, warn? }
-pwa    // { id, n, u, d }
-ordre  // [ id, ... ] — l'ordre d'installation conseillé
-requetes // { "Nom de l'app": "requête de recherche" }
-materiel // { cm, cpu, gpu, ram, ssd, eth, wifi, audio, bios } — le bloc « Ma configuration »
-```
-
-`p` vaut `high`, `med` ou `ok` · `t` est une durée en minutes · `w` est l'identifiant
-winget · `warn` affiche un avertissement.
-
-Les champs `cas`, `alt`, `o`, `post` et `pilote` ont existé : ils servaient aux onglets
-« Avant de quitter » et « Nouveau PC » et aux quatre cas qui les filtraient. Ils ne sont
-plus lus. Un profil qui les porte encore reste valide, ils sont simplement ignorés.
-
-`dep` accepte deux formes. Une **chaîne** est un libellé affiché tel quel, sans
-vérification possible — c'est le format d'origine, toujours accepté. Un **tableau
-d'identifiants** décrit un vrai lien et débloque trois choses : le badge nomme les
-prérequis et se met en évidence tant qu'ils ne sont pas cochés, un avertissement
-apparaît si vous cochez dans le désordre — sans jamais bloquer —, et l'ordre
-d'installation est calculé par tri topologique au lieu d'être maintenu à la main dans
-`ordre`. Les scripts winget, `.ps1` comme `.json`, sortent dans cet ordre. Les cycles
-sont rompus plutôt que de figer la page.
-
-```json
-{ "id": "a10", "n": "Visual Studio Code", "dep": ["a7"] }
-```
-
-Les liens de téléchargement sont volontairement des requêtes de recherche restreintes
-au domaine officiel (`site:7-zip.org download`) plutôt que des URL directes : une URL
-de téléchargement est périmée en quelques mois, une requête reste valable et évite les
-faux sites de drivers.
+La configuration voyage avec le profil exporté, dans un champ `materiel` — sans ça tout le
+bénéfice disparaissait au moment du transfert, c'est-à-dire là où il sert.
 
 ## Licence
 
@@ -619,14 +294,15 @@ et faites attention à ce que vous écrivez dans les notes et les champs de lice
 partent dans le fichier de progression exporté.
 
 Le scan applique une règle constante : **le nom dans l'inventaire, le secret
-ailleurs.** Il relève les noms des réseaux Wi-Fi mais pas leurs clés, les
-cibles du gestionnaire d'identification mais pas les mots de passe, l'état des
-volumes BitLocker mais pas la clé de récupération, le chemin d'un fichier de
-licence mais pas son contenu, et les cinq derniers caractères d'une clé de
-produit — ce que Windows affiche lui-même — mais jamais la clé complète. Dans
-chacun de ces cas la commande qui donnerait le secret existe : ne pas s'en
-servir est le choix, et il tient à une seule raison — ce fichier voyage sur
-une clé USB qui se perd.
+ailleurs.** Il relève le chemin d'un fichier de licence mais pas son contenu, et
+les cinq derniers caractères d'une clé de produit — ce que Windows affiche
+lui-même — mais jamais la clé complète. Quand il relevait encore les réseaux
+Wi-Fi, les volumes BitLocker et le gestionnaire d'identification, il en donnait
+les noms et jamais les clés, les mots de passe ni la clé de récupération. Dans
+chacun de ces cas la commande qui donnerait le secret existe : ne pas s'en servir
+est le choix, et il tient à une seule raison — ce fichier voyage sur une clé USB
+qui se perd. [COUVERTURE.md](COUVERTURE.md) garde la trace de ces trois arrêts
+volontaires même si le code est parti.
 
 Le stockage local est lié au navigateur **et** au chemin du fichier. Si la lettre de
 lecteur de la clé USB change d'un PC à l'autre, la progression ne suit pas : l'export
@@ -639,281 +315,65 @@ fichier qu'on n'a pas écrit. La page le traite comme une saisie quelconque : to
 qu'il contient est échappé avant d'atteindre la page, et l'adresse d'un raccourci n'est
 ouverte que si c'est du `http`, `https` ou `mailto` — un `javascript:` devient un bouton
 visiblement inerte plutôt qu'un lien qui exécute du code. Ce qui est en jeu n'est pas
-théorique : le stockage local contient les clés de licence saisies dans l'onglet
-Données. `tests/test-profil-hostile.js` rejoue un profil piégé à chaque publication.
-
-## Tests
-
-```bash
-npm install                       # une seule fois
-./verifier-comme-ci.sh            # les 18 étapes du job Linux, dans l'ordre
-npm test                          # les sept suites sans navigateur, en 2 s
-npm run test:scan                 # les quatre suites PowerShell
-npm run test:navigateur           # rendu réel dans Chromium
-npm run test:pwa                  # installabilité et fonctionnement hors ligne
-npm run test:mobile               # ergonomie tactile
-npm run test:a11y                 # accessibilité et réversibilité
-npm run test:guide                # mode guidé
-npm run test:reinit               # remises à zéro et leur annulation
-npm run test:menu                 # menu « Plus » de la barre du haut
-npm run test:hostile              # profil piégé : aucune injection
-npm run test:config               # bloc configuration et affichage grand écran
-npm run test:reconciliation       # comparaison source → cible
-npm run test:archive              # contenu de l'archive téléchargeable
-```
-
-`npm test` ne lance que ce qui tourne partout sans rien installer. Les suites
-navigateur demandent Chromium (`npm install` le fournit via Playwright), les suites
-PowerShell demandent `pwsh`.
-
-Dix-huit suites, dans l'ordre où la CI les lance.
-
-### Ce que seul un vrai Windows peut dire
-
-Les suites PowerShell tournent sur Linux, contre des données écrites à la main : elles
-vérifient un raisonnement, jamais Windows. Le registre, `Get-AppxPackage`, WMI et
-l'encodage d'une console réelle n'y sont jamais exercés — et c'est pourtant là que ces
-scripts vont tourner.
-
-La CI les rejoue donc aussi sur un runner `windows-latest`, deux fois : sous PowerShell 7,
-puis sous **Windows PowerShell 5.1**, celui qui est livré avec Windows et celui qu'on
-obtient en double-cliquant sur un `.bat`. C'est la version que les gens exécutent
-vraiment, et elle n'avait jamais rien exécuté.
-
-Ce job **bloque la publication**, au même titre que les suites Linux : rien ne part en
-ligne sans avoir tourné sur le système où il est censé tourner. Il a démarré en
-`continue-on-error` le temps de se stabiliser — un garde-fou neuf qui bloquerait le site
-serait pire que pas de garde-fou — et il l'a perdu dès qu'il a été vert deux fois de
-suite. Un garde-fou qui laisse passer ce qu'il refuse ne sert qu'à décorer.
-
-`tests/test-windows-reel.ps1` va plus loin : il lance le scan pour de vrai, sur la vraie
-machine. Un runner n'est pas un PC de bureau — on ne sait pas ce qui y est installé —
-donc il vérifie la **forme** de ce qui sort et les erreurs qui ne doivent jamais
-apparaître : le registre a répondu, WMI aussi, aucun nom n'est abîmé par l'encodage,
-aucune exception n'a échappé aux garde-fous, aucun composant Windows n'est présenté
-comme un jeu Xbox, aucun certificat n'est recopié à la place d'un éditeur. Hors Windows,
-ce fichier s'arrête en le disant plutôt que de prétendre avoir vérifié quoi que ce soit.
-
-Ce que même ça ne teste pas : votre carte mère, vos pilotes, Steam, Epic, GOG, et
-le lanceur sur une vraie session. Un runner est un Windows Server nu.
-
-Ça a payé au premier passage utile. `Get-ChildItem -Include` combiné à `-LiteralPath`
-est **ignoré par Windows PowerShell 5.1**, qui rend alors tous les fichiers au lieu des
-seuls demandés : la recherche de clés de signature rapportait le disque entier. PowerShell 7
-le respecte, donc le défaut était invisible partout sauf là où il compte — sur la machine
-de quelqu'un, par double-clic. Le filtre se fait maintenant à la main, et un contrôle
-statique interdit ce mélange dans tout le dépôt.
-
-`tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
-`presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
-identifiants uniques sur les deux listes, priorités valides, catégories déclarées,
-ordre conseillé ne citant que des éléments existants. Il contrôle aussi que les fichiers
-dont les tests dépendent sont bien versionnés, et qu'aucune fonction n'est définie deux
-fois dans `index.html` — une redéfinition écrase silencieusement la première et ce piège
-a coûté trois bugs au projet.
-
-`tests/test-checklist.js` extrait le JS de `index.html` et l'exécute dans un DOM simulé.
-Il rejoue l'import d'un inventaire réellement produit par le scanner
-(`tests/inventaire-exemple.json`), ce qui couvre la chaîne de bout en bout.
-
-`tests/test-scan.ps1` couvre le classement, la fusion entre sources, le parsing de la
-sortie winget et la mise en forme du matériel, des pilotes et de la machine, sans toucher
-à la machine.
-
-`tests/test-reconciliation.js` est la seule partie du projet qui se prouve vraiment : la
-comparaison ne touche ni à Windows ni au DOM, elle prend deux JSON et rend un rapport.
-
-`tests/test-navigateur.js` charge la page dans un vrai Chromium et vérifie ce qu'un DOM
-simulé ne voit pas : que les quatre panneaux sont bien frères et non imbriqués, que les
-éléments ont une taille non nulle, que la saisie des clés de licence survit à un
-rechargement, et qu'une exception pendant un rendu s'affiche au lieu de disparaître.
-Deux variables d'environnement facultatives : `CHROME` pour pointer un binaire Chromium
-existant, `PROFIL` pour tester votre propre profil à la place de l'exemple (par défaut
-il cherche `profil-local.json` à la racine).
-
-`tests/test-pwa.js` sert le dépôt en HTTP local — un service worker ne s'enregistre pas
-en `file://` — et vérifie que la page s'installe, se met en cache et s'ouvre réseau
-coupé, tout en restant fonctionnelle en `file://`.
-
-`tests/test-mobile.js` ouvre la page à la largeur de deux téléphones, dans les deux
-thèmes, et mesure les cibles tactiles, les écarts entre elles, les tailles de texte et
-les débordements horizontaux. Par défaut il rapporte ; `STRICT=1` le fait échouer, ce
-que la CI utilise.
-
-`tests/test-accessibilite.js` calcule le contraste de chaque texte sur le fond
-réellement peint dans les deux thèmes, parcourt la page au clavier jusqu'à cocher une
-tâche, vérifie les rôles et états annoncés, l'annulation des actions destructrices et le
-respect du mouvement réduit.
-
-`tests/test-guide.js` couvre le mode guidé : ce qui doit rester visible, ce qui doit
-disparaître, le parcours d'une tâche à l'autre, la copie de la commande dans le
-presse-papier, et le fait que ce mode tient les mêmes exigences de contraste, de cible
-tactile et de clavier que la vue liste.
-
-`tests/test-reinit.js` couvre les deux remises à zéro : que « Tout décocher » ne touche
-ni aux notes, ni aux clés, ni au profil, que « Tout effacer » vide bien les trois clés du
-navigateur et que rien ne revient après un rechargement, et que l'annulation rend dans
-les deux cas ce qui avait été effacé, profil importé compris. Il mesure
-aussi le panneau à 360 px de large, dans les deux thèmes.
-
-`tests/test-menu.js` compte les boutons restés dans la barre, vérifie qu'aucun n'y est
-réduit à une icône muette, que les cinq actions du menu agissent réellement (la session
-démarre, le profil se télécharge, l'export texte porte ce qui est affiché), que le menu se referme par les trois chemins attendus et qu'il reste
-utilisable au clavier comme au doigt.
-
-`tests/test-profil-hostile.js` charge un profil piégé sur quinze champs — nom de
-catégorie, identifiant winget, adresse de raccourci, intitulés, descriptions, chemins —
-puis clique tout ce qui est cliquable sur les trois onglets et en mode guidé. Il échoue
-si une seule charge s'exécute.
-
-`tests/test-config.js` vérifie que les composants saisis tiennent d'un rechargement à
-l'autre, que seule la machine constatée par un scan de cible écrase ce qu'on a saisi pour
-elle, que l'onglet Pilotes affiche les périphériques en défaut avec le lien du
-constructeur, et que l'élargissement sur grand écran ne change rien au téléphone ni à la
-tablette.
-
-`tests/test-lanceur.ps1` couvre ce que le lanceur propose et ce qu'il vérifie avant : que
-chaque action mène à un fichier qui existe, qu'un dossier incomplet grise les actions
-concernées en nommant ce qui manque, et que les `.bat` portent bien des fins de ligne
-Windows — en fins de ligne Unix, ils ne s'exécutent pas. Il vérifie aussi qu'aucun script
-ne réintroduit de dépendance graphique, que la sortie console est forcée en UTF-8 — sans
-quoi les accents arriveraient en charabia — et que les textes du menu en portent, sans
-être abîmés. La liste des actions vit dans `lanceur-actions.ps1`, séparée de l'affichage :
-c'est elle qui décide de tout, et elle se teste partout.
-
-`tests/test-powershell-compatibility.ps1` garde un piège fermé : Windows PowerShell 5.1 —
-celui livré avec Windows, et celui qu'on obtient par double-clic — lit un `.ps1` sans
-marqueur d'encodage comme de l'ANSI et non de l'UTF-8. « Clés SSH » y devient
-« ClÃ©s SSH », et ce texte part dans le JSON de l'inventaire, donc dans la page. Le test
-vérifie que chaque script porte le marqueur, que tous parsent, et que les textes accentués
-du lanceur arrivent intacts.
-
-### Intégration continue
-
-`.github/workflows/ci.yml` lance les dix-huit suites à chaque push et sur chaque pull
-request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
-mis en ligne.
-
-Ce garde-fou suppose que Pages publie par le workflow et non par la branche — voir
-[Déploiement](#déploiement).
-
-## Déploiement
-
-```
-Migration-PC/
-│   # Les deux seuls fichiers qu'on ouvre
-├── Migration PC.bat              # le menu : il demande quoi faire et lance le reste
-├── index.html                    # la checklist (tout est dedans)
-│
-│   # Ce que le menu appelle — à lire, pas à lancer à la main
-├── scripts/migration-pc.ps1      # le menu qui aiguille
-├── scripts/lanceur-actions.ps1   # ce qu'il propose et ce qu'il vérifie avant
-├── scripts/lib-detection.ps1     # détection partagée par tous les scripts
-├── scripts/ecrire-resultat.ps1   # pose le résultat à côté de la page et l'ouvre
-├── scripts/scan-pc.ps1           # fige la source, puis constate sur la cible
-│
-├── manifest.json, sw.js, icons/  # installation et fonctionnement hors ligne
-├── presets/exemple.json          # la checklist livrée, aussi embarquée dans index.html
-├── presets/demonstration.json    # l'exemple garni, chargé à la demande
-├── scripts-sync.js               # recopie le profil et le nom de cache du sw
-├── captures/                     # images du README
-├── refaire-captures.js           # les refabrique — `node refaire-captures.js`
-├── resultat-scan.js              # écrit par les scripts, lu par la page en file://
-├── instantane-source.json        # le relais : posé par le scan source, relu par le scan cible
-├── tests/                        # suites Node, PowerShell et navigateur
-├── verifier-comme-ci.sh          # rejoue localement les 18 étapes du job Linux
-├── package.json                  # scripts de test uniquement
-├── COUVERTURE.md                 # ce que le scan détecte, refuse et ne peut pas
-├── construire-zip.sh             # fabrique l'archive proposée au téléchargement
-├── LICENSE                       # GNU AGPL v3
-└── .github/workflows/ci.yml      # tests, puis publication si tout est vert
-```
-
-Les scripts PowerShell ont besoin de `lib-detection.ps1` à côté d'eux : copiez le
-dossier, pas un fichier isolé.
-
-`package.json` ne sert qu'aux tests : `index.html` n'a aucune dépendance et n'a jamais
-besoin d'être construit.
-
-Les fichiers personnels sont exclus par `.gitignore`, à la racine seulement :
-`profil-*.json`, `inventaire-*.json`, `progression-*.json`, `winget-*.json` et
-`winget-*.ps1`. Gardez les vôtres en local, hors du dépôt — les fichiers d'exemple de
-`tests/` et `presets/` ne sont pas concernés.
-
-Le dépôt se publie sur GitHub Pages par le workflow, pas par la branche : réglez
-**Settings → Pages → Source : GitHub Actions**. Sur « Deploy from a branch », GitHub
-publierait la branche en parallèle et un push dont les tests échouent partirait quand
-même en ligne.
-
-```bash
-git clone https://github.com/antoniman31/Migration-PC.git
-cd Migration-PC
-npm install && npm test
-```
-
-URL publiée : `https://antoniman31.github.io/Migration-PC`
+théorique : le stockage local contient les clés de licence que vous y avez
+saisies. `tests/test-profil-hostile.js` rejoue un profil piégé à chaque publication.
 
 ## Limites connues
 
-Les scripts sont **Windows uniquement** et demandent PowerShell 5.1 ou supérieur.
-S'ils refusent de démarrer, lancez-les avec `-ExecutionPolicy Bypass`. Ils ont besoin de
-`lib-detection.ps1` à côté d'eux.
+**La détection n'a jamais été exécutée sur une machine Windows réelle.** Le classement, la
+fusion entre sources, le parsing de la sortie winget et le rapprochement source/cible sont
+couverts par des tests sur données écrites à la main. La lecture du registre, des paquets du
+Store et des bibliothèques de jeux demande Windows : ce code est relu, pas éprouvé. Si un
+résultat vous paraît faux, c'est probablement là.
 
-**La détection n'a pas encore été exécutée sur une machine Windows réelle.** Le
-classement, la fusion entre sources, le parsing de la sortie winget et le rapprochement
-avec le profil sont couverts par des tests sur données simulées, et
-Mais la lecture du
-registre, des paquets du Store et des bibliothèques de jeux demande Windows : ce code
-est relu, pas éprouvé. Si un résultat vous paraît faux, c'est probablement là.
+**Le projet ne sauvegarde rien.** C'est la limite la plus importante, et elle est voulue.
+Il a listé un temps les dossiers de réglages, les favoris et les archives mail — sans jamais
+les copier.
 
-**Tous les logiciels n'ont pas d'identifiant winget.** Ceux détectés par le registre
-seul sortent sans commande d'installation : la checklist les affiche avec un lien de
-recherche à la place. Le filtre « Sans winget » permet de les isoler, et ils
-n'apparaissent pas dans l'export `winget .json`, qui ne peut contenir que des paquets
-connus de winget.
+**Il ne déménagera pas vos applications.** Les outils commerciaux comme PCmover copient les
+fichiers *et* les clés de registre *et* les composants partagés, en réécrivant des milliers
+de références qui changent d'une machine à l'autre. Windows n'a jamais été conçu pour ça, les
+applications du Store ne se copient pas, les licences liées au matériel se désactivent, et on
+déménagerait aussi les restes accumulés depuis cinq ans. Une réinstallation propre par winget
+couvre l'essentiel sans rien greffer qu'on ne comprenne.
 
-**Un export winget importé perd les noms d'origine.** Le format ne stocke que les
-identifiants ; `7zip.7zip` donne « 7zip » et non « 7-Zip ». Passer par `scan-pc.ps1`
-donne des noms corrects, puisqu'il lit le registre.
+**Il n'y a plus de checklist d'installation.** Les 29 étapes de « Nouveau PC » — BIOS, TPM,
+Secure Boot, XMP, installation de Windows — étaient des consignes génériques qu'on trouve
+partout, pas quelque chose que ce programme savait vérifier. Une vraie perte au passage : le
+seul endroit qui rappelait d'activer le profil XMP, un réglage qu'on ne voit pas et qui coûte
+10 à 15 % de performances en silence.
 
-**Ce que le projet ne fera pas : déménager vos applications.** Les outils commerciaux
-comme PCmover copient les fichiers de programme *et* les clés de registre *et* les
-composants partagés, en réécrivant au passage des milliers de références qui changent
-d'une machine à l'autre. Windows n'a jamais été conçu pour ça, les applications du Store
-ne se copient pas, les licences liées au matériel se désactivent, et on déménagerait
-aussi les restes accumulés depuis cinq ans. Une réinstallation propre par winget, plus
-les réglages repérés par le scan, couvre l'essentiel sans rien greffer qu'on ne comprenne.
+**Tous les logiciels n'ont pas d'identifiant winget.** Ceux détectés par le registre seul
+sortent avec un lien de recherche à la place de la commande. Le filtre « Sans winget » les
+isole ; ils n'apparaissent pas dans l'export `winget .json`, qui ne peut contenir que des
+paquets connus de winget.
 
-**La déduplication est approximative.** Elle compare les noms en ignorant la version,
-les numéros de mise à jour et les mentions entre parenthèses, ce qui rapproche
-correctement `Mozilla Firefox (x64 fr)` du registre et `Mozilla Firefox` de winget, ou
-`Java 8 Update 401` et `Java 8 Update 411`. Elle fusionne en revanche deux versions
-majeures d'un même logiciel — Python 3.12 et 3.13 donnent une seule ligne. La
-ponctuation qui porte le nom est transcrite plutôt qu'effacée, sinon `Notepad++` et
-`Notepad` donneraient la même clé et l'un des deux disparaîtrait de l'inventaire.
+**Un export winget importé perd les noms d'origine** : le format ne stocke que les
+identifiants, `7zip.7zip` donne « 7zip » et non « 7-Zip ». Passer par `scan-pc.ps1` donne des
+noms corrects, puisqu'il lit le registre.
 
-**Le classement par catégorie est indicatif**, fondé sur des mots-clés. Un logiciel peu
-connu atterrit dans « Utilitaires Système ». Les catégories se corrigent dans le JSON.
+**La déduplication est approximative.** Elle ignore la version, les numéros de mise à jour et
+les mentions entre parenthèses, ce qui rapproche correctement `Mozilla Firefox (x64 fr)` de
+`Mozilla Firefox` — mais fusionne aussi deux versions majeures d'un même logiciel : Python
+3.12 et 3.13 donnent une seule ligne.
 
-**Il n'y a plus de checklist d'installation.** Les 29 étapes de « Nouveau PC » — BIOS,
-TPM, Secure Boot, XMP, installation de Windows, vérifications matérielles — ont été
-retirées avec l'onglet. C'étaient des consignes génériques qu'on trouve partout, pas
-quelque chose que ce programme savait faire. Il a perdu au passage le seul endroit qui
-rappelait d'activer le profil XMP, et c'est une vraie perte : un réglage qu'on ne voit
-pas coûte 10 à 15 % de performances en silence.
+**Le classement par catégorie est indicatif**, fondé sur des mots-clés. Un logiciel peu connu
+atterrit dans « Utilitaires Système ». Les catégories se corrigent dans le JSON.
 
-**Le projet ne sauvegarde rien.** C'est la limite la plus importante, et elle est
-volontaire. Il a un temps listé les dossiers de réglages, les favoris, les archives mail
-et les gros dossiers — sans jamais les copier. Lister ce qu'on va perdre n'aide pas à ne
-pas le perdre, et affiché à côté d'une liste de logiciels réellement installables, ça
-laissait croire à une sauvegarde qui n'existait pas. Ces familles ont été retirées ;
-`COUVERTURE.md` dit lesquelles et pourquoi.
+**Les tailles sur disque sont partielles.** Steam et Epic les donnent exactement, le registre
+les estime — et se trompe parfois largement —, le Store, GOG et Xbox ne les donnent pas du
+tout. Le total est un minimum, utile pour dimensionner un disque, pas un inventaire
+comptable.
 
-**Les tailles sur disque sont partielles.** Steam et Epic les donnent exactement, le
-registre les estime — et se trompe parfois largement —, le Microsoft Store, GOG et Xbox
-ne les donnent pas du tout. Le total affiché est donc un minimum, utile pour dimensionner
-un disque, pas un inventaire comptable.
+**Windows uniquement**, PowerShell 5.1 ou supérieur, et `lib-detection.ps1` doit être à côté
+des scripts : copiez le dossier, pas un fichier isolé. S'ils refusent de démarrer, lancez-les
+avec `-ExecutionPolicy Bypass`. L'installation comme application demande HTTPS — depuis une
+clé USB la page fonctionne mais ne s'installe pas, et elle n'en a pas besoin.
 
-**L'installation sur l'appareil demande HTTPS.** Un service worker ne s'enregistre pas
-depuis un fichier ouvert directement : depuis une clé USB, la page fonctionne mais ne
-s'installe pas et n'a pas de cache. Elle n'en a pas besoin, tout est dans le fichier.
+## Pour aller plus loin
+
+- [COUVERTURE.md](COUVERTURE.md) — ce que le scan détecte, ce qu'il refuse volontairement de
+  détecter, et les vingt-sept familles retirées.
+- [FORMATS.md](FORMATS.md) — les quatre formats que la page importe, et comment écrire son
+  propre profil.
+- [CONTRIBUER.md](CONTRIBUER.md) — les dix-huit suites de tests, la CI, la publication.
