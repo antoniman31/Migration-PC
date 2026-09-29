@@ -225,8 +225,8 @@ cochée à la main reste exclue même quand le scan la dit manquante — quelqu'
 affirme l'avoir faite.
 
 **Le reste** — recherche sur les trois onglets, filtre par catégorie et sur les apps sans
-winget, vue compacte, thème suivant le système, barres de progression, notes libres, champs
-de licence. La liste est groupée par catégorie, sans autre vue : il y a eu quatre tris, dont
+winget, vue compacte, thème suivant le système, barres de progression. La liste est groupée
+par catégorie, sans autre vue : il y a eu quatre tris, dont
 deux lisaient les durées et priorités inventées, et un troisième — « ordre conseillé » —
 n'était qu'un autre affichage des mêmes lignes. L'ordre d'installation compte là où il change
 quelque chose, les scripts winget et le mode guidé, pas comme façon de lire. Tout ce qui sort
@@ -245,11 +245,13 @@ jamais.
 
 **Le menu** contient les actions rares, avec un vrai libellé :
 exporter le profil, réinitialiser, exporter en texte, imprimer. **Réinitialiser…** offre
-deux portées distinctes : *Tout décocher* remet la progression à zéro et laisse notes, clés
-et profil en place ; *Tout effacer* vide tout et revient au profil d'exemple. Les deux
-passent par un bandeau d'annulation plutôt que par une boîte de confirmation — une seconde
-chance après coup vaut mieux qu'un « oui » réflexe avant, et ça vaut aussi pour un import
-qui remplace du travail.
+deux portées distinctes : *Tout décocher* remet la progression à zéro et laisse le profil et
+votre configuration matérielle en place ; *Tout effacer* vide tout et revient au profil
+d'exemple. Les deux passent par un bandeau d'annulation plutôt que par une boîte de
+confirmation — une seconde chance après coup vaut mieux qu'un « oui » réflexe avant, et ça
+vaut aussi pour un import qui remplace du travail. L'annulation rend les cases, le profil
+remplacé **et** la configuration matérielle : ce dernier point manquait, et l'oubli était
+silencieux.
 
 **🎯 Mode guidé**, pour le moment où l'on est debout devant la machine : une tâche à la
 fois, dans l'ordre des dépendances, avec la commande winget prête à copier et rien d'autre.
@@ -259,7 +261,7 @@ fois, dans l'ordre des dépendances, avec la commande winget prête à copier et
 activées par Entrée ou Espace, et le focus reste sur la ligne après la coche. Les contrastes
 respectent le seuil WCAG de 4,5:1 dans les deux thèmes,
 mesurés sur le fond réellement peint. Le réglage système « réduire les animations » est
-respecté, confettis compris.
+respecté.
 
 Depuis la version en ligne, la page **s'installe comme une application** et s'ouvre ensuite
 sans réseau ; ouverte en `file://` depuis une clé, elle ignore cette partie, elle est déjà
@@ -320,9 +322,8 @@ Tout reste sur votre machine. La page est un fichier statique sans serveur ni ap
 réseau : la progression et le profil importé vivent dans le stockage local du
 navigateur, les exports sont des téléchargements ordinaires.
 
-L'inventaire produit par le scan décrit précisément votre machine. Ne le publiez pas,
-et faites attention à ce que vous écrivez dans les notes et les champs de licence — ils
-partent dans le fichier de progression exporté.
+L'inventaire produit par le scan décrit précisément votre machine — son modèle, son numéro
+de série, tout ce qui est installé dessus. Ne le publiez pas.
 
 Le scan applique une règle constante : **le nom dans l'inventaire, le secret
 ailleurs.** Il relève le chemin d'un fichier de licence mais pas son contenu, et
@@ -346,8 +347,8 @@ fichier qu'on n'a pas écrit. La page le traite comme une saisie quelconque : to
 qu'il contient est échappé avant d'atteindre la page, et l'adresse d'un raccourci n'est
 ouverte que si c'est du `http`, `https` ou `mailto` — un `javascript:` devient un bouton
 visiblement inerte plutôt qu'un lien qui exécute du code. Ce qui est en jeu n'est pas
-théorique : le stockage local contient les clés de licence que vous y avez
-saisies. `tests/test-profil-hostile.js` rejoue un profil piégé à chaque publication.
+théorique : le stockage local contient l'inventaire de votre machine.
+`tests/test-profil-hostile.js` rejoue un profil piégé à chaque publication.
 
 ## Limites connues
 

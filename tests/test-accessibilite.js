@@ -152,10 +152,14 @@ console.log('\n--- un bouton dans la ligne garde son rôle propre ---');
 await chargerExemple(pg);
 await pg.click('#tab-apps');await pg.waitForTimeout(200);
 const av=await pg.evaluate(()=>Object.keys(S.checked).length);
-await pg.evaluate(()=>{document.querySelector('#list-apps .lg-plus').click();document.querySelector('#list-apps .note-btn').focus();});
+await pg.evaluate(()=>{document.querySelector('#list-apps .lg-plus').focus();});
 await pg.keyboard.press('Enter');await pg.waitForTimeout(200);
-ok('Entrée sur 📝 ne coche pas la tâche',await pg.evaluate(()=>Object.keys(S.checked).length),av);
-ok('la zone de note s\'ouvre',await pg.evaluate(()=>!!document.querySelector('#list-apps .note-area.open')),true);
+ok('Entrée sur le chevron ne coche pas la tâche',
+  await pg.evaluate(()=>Object.keys(S.checked).length),av);
+ok('et le détail s\'ouvre',
+  await pg.evaluate(()=>!!document.querySelector('#list-apps .lg-det')),true);
+ok('le chevron l\'annonce',
+  await pg.evaluate(()=>document.querySelector('#list-apps .lg-plus').getAttribute('aria-expanded')),'true');
 
 console.log('\n--- onglets ---');
 const t=await pg.evaluate(()=>({sel:document.getElementById('tab-apps').getAttribute('aria-selected'),

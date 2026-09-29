@@ -112,7 +112,6 @@ code{font-family:"Cascadia Code","Consolas",monospace;font-size:.9em}
 .hdr-rech input{width:100%}
 /* Une bande entiere pour annoncer qu'il ne s'est rien passe : masquee tant
    qu'il n'y a rien a montrer. */
-.history-bar[hidden]{display:none}
 
 /* Sous 900 px la colonne laterale ne laisse plus de place au contenu : sur un
    telephone de 390 px elle en prenait 236 et il en restait 120. Elle repasse
@@ -178,12 +177,6 @@ h1{font-size:18px;font-weight:600;color:var(--tx);letter-spacing:-.3px}
 .gsr-tab{font-size:10px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.05em;padding:8px 0 4px;border-bottom:.5px solid var(--brd);margin-top:4px}
 .gsr-tab:first-child{margin-top:0}
 
-/* HISTORY */
-.history-bar{padding:6px 20px;border-bottom:.5px solid var(--brd);background:var(--bg2);display:flex;align-items:center;gap:6px;font-size:11px;color:var(--tx2);flex-wrap:wrap;min-height:30px}
-.h-label{color:var(--tx3);flex-shrink:0}
-.h-item{display:inline-flex;align-items:center;gap:3px}
-.h-ck{color:var(--bok-tx);font-weight:600}
-.h-sep{color:var(--tx3);margin:0 2px}
 /* L'état de la sauvegarde, à droite de la barre : discret quand tout va bien,
    visible quand le navigateur refuse d'enregistrer. */
 .save-state{margin-left:auto;flex-shrink:0;color:var(--tx3);font-variant-numeric:tabular-nums}
@@ -351,16 +344,9 @@ body.compact .item{padding:5px 0}
 .item-name-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .item-name{font-size:13px;font-weight:500;color:var(--tx)}
 .item-date{font-size:10px;color:var(--tx3);font-style:italic}
-.note-btn{font-size:11px;color:var(--tx3);padding:1px 4px;border-radius:4px;border:none;background:transparent}
-.note-btn:hover{color:var(--acc-fort);background:var(--accl)}
-.note-btn.has-note{color:var(--acc-fort)}
 .item-badges{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;align-items:center}
 .item-desc{font-size:11px;color:var(--tx2);margin-top:3px;line-height:1.45}
 .warn-badge{font-size:11px;color:var(--warn-tx);background:var(--warn-bg);border:.5px solid var(--warn-bd);border-radius:5px;padding:2px 8px;margin-top:5px;display:inline-block;font-weight:500}
-.note-area{margin-top:6px;display:none}
-.note-area.open{display:block}
-.note-area textarea{width:100%;font-size:11px;padding:5px 7px;border:.5px solid var(--brd2);border-radius:6px;background:var(--bg2);color:var(--tx);resize:vertical;min-height:38px;outline:none;font-family:inherit}
-.note-area textarea:focus{border-color:var(--acc-fort)}
 .item-link{flex-shrink:0;margin-top:1px}
 .lnk-btn{font-size:11px;color:var(--acc-fort);padding:3px 8px;border:.5px solid var(--accb);border-radius:8px;display:inline-flex;align-items:center;gap:3px;white-space:nowrap;background:transparent}
 .lnk-btn:hover{background:var(--accl);text-decoration:none}
@@ -385,7 +371,6 @@ body.compact .item{padding:5px 0}
 .primary-btn:hover{opacity:.9!important}
 
 /* CONFETTI */
-#confetti-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;display:none}
 
 /* PRINT */
 
@@ -395,7 +380,7 @@ body.compact .item{padding:5px 0}
 }
 @media print{
   body{background:#fff!important;color:#000!important}
-  .hdr-right,.tbar,.footer,.note-btn,.note-area,.lnk-btn,.chk-all,.cat-winget,.gsearch,#gsearch-results,.history-bar,.sm-btn,.tab-badge{display:none!important}
+  .hdr-right,.tbar,.footer,.lnk-btn,.chk-all,.cat-winget,.gsearch,#gsearch-results,.sm-btn,.tab-badge{display:none!important}
   .panel{display:block!important;page-break-after:always}
   .card{border:1px solid #ccc!important}
   .item{break-inside:avoid}
@@ -447,10 +432,6 @@ body.compact .item{padding:5px 0}
 .sec-hdr.post-hdr{color:var(--bok-tx);border-color:var(--bok-bd)}
 .item.post-item .chkbox{border-color:var(--bok-bd)}
 .item.post-item.done .chkbox{background:var(--bok-tx);border-color:var(--bok-bd)}
-
-/* ── V6 : champ licence ── */
-
-/* ── V6 : champ env ── */
 
 /* ── V6 : bouton suivant ── */
 .next-tab-btn{display:flex;align-items:center;justify-content:flex-end;padding:10px 20px;border-top:.5px solid var(--brd);background:transparent}
@@ -666,8 +647,7 @@ body.guide-actif .side-nav,
 body.guide-actif .side-gp,
 body.guide-actif .panel,
 body.guide-actif .gsearch,
-body.guide-actif #gsearch-results,
-body.guide-actif .history-bar{display:none}
+body.guide-actif #gsearch-results{display:none}
 
 .guide-tete{display:flex;align-items:center;gap:12px;padding:12px 20px;
   border-bottom:.5px solid var(--brd);flex-wrap:wrap}
@@ -776,7 +756,6 @@ body.guide-actif .history-bar{display:none}
      contenu ne fait que deux caractères. */
   .icon-btn,.sm-btn,.fb,.chk-all,.lnk-btn,.next-btn,.panne-fermer{
     min-height:34px;min-width:44px;font-size:12px}
-  .note-btn{min-height:34px;min-width:44px;font-size:14px}
   .tab{min-height:44px;font-size:13px}
   .chkbox{min-width:24px;min-height:24px}
 
@@ -786,7 +765,6 @@ body.guide-actif .history-bar{display:none}
   .item-badges{gap:6px}
 
   /* Lisibilité : plus rien sous 12 px. */
-  .h-label,.history-bar,
   .sec-prog-txt,.item-date,.item-desc,.save-note,.save-path,
   .tbar-info,.gsearch-count,.sec-hdr-cnt{font-size:12px}
   .gp-label,.tab-badge,.badge,.sec-hdr{font-size:12px}
@@ -859,7 +837,6 @@ if(location.protocol==='file:'){
 }
 </script>
 
-<canvas id="confetti-canvas"></canvas>
 <div class="app"><div class="card">
 
 <div class="outils" id="outils" role="region" aria-label="Les scripts">
@@ -905,14 +882,14 @@ if(location.protocol==='file:'){
     <div class="reglages-item">
       <div class="reglages-txt">
         <div class="reglages-nom">Décocher toute la checklist</div>
-        <div class="reglages-desc">Remet la progression à zéro sur les cinq onglets. Les notes, les clés de licence, les variables et le profil chargé sont conservés.</div>
+        <div class="reglages-desc">Remet la progression à zéro sur les trois onglets. Le profil chargé et votre configuration matérielle sont conservés.</div>
       </div>
       <button type="button" onclick="toutDecocher()">Tout décocher</button>
     </div>
     <div class="reglages-item reglages-danger">
       <div class="reglages-txt">
         <div class="reglages-nom">Remettre le site à zéro</div>
-        <div class="reglages-desc">Efface tout ce que ce navigateur a mémorisé — progression, notes, clés de licence, variables, profil importé — et revient au profil d'exemple. Vos fichiers exportés ne sont pas touchés.</div>
+        <div class="reglages-desc">Efface tout ce que ce navigateur a mémorisé — progression, configuration matérielle, profil importé — et revient au profil d'exemple. Vos fichiers exportés ne sont pas touchés.</div>
       </div>
       <button type="button" onclick="remiseAZero()">Tout effacer</button>
     </div>
@@ -1015,11 +992,6 @@ if(location.protocol==='file:'){
 <input type="file" id="json-file" accept=".json" style="display:none" tabindex="-1" aria-hidden="true" onchange="handleImport(event)">
 
 <div id="gsearch-results"></div>
-
-<div class="history-bar" id="history-bar" hidden>
-  <span class="h-label">Récent :</span>
-  <span id="history-items"></span>
-</div>
 
 <main>
 <section class="guide" id="guide" aria-live="polite"></section>
@@ -2162,7 +2134,9 @@ function traiterDonnees(d,provenance){
     }
     if(d && d.state){
       memoriserAnnulation('Progression importée.'+suffixe,false);
-      S={checked:d.state.checked||{},notes:d.state.notes||{},dates:d.state.dates||{},lastSave:null};
+      // Un fichier de progression ecrit avant la suppression des notes en
+      // porte encore : on ne les relit pas, et rien ne s'y casse.
+      S={checked:d.state.checked||{},dates:d.state.dates||{},lastSave:null};
       saveState();renderAll();updateGlobal();
       dire('Progression importée : '+Object.keys(S.checked).length+' tâches cochées.');
       return true;
@@ -2186,13 +2160,9 @@ function handleImport(evt){
 
 
 // ═══ STATE ═══
-let S = {checked:{},notes:{},dates:{},lastSave:null};
+let S = {checked:{},dates:{},lastSave:null};
 let curCats=[];
 let curTab='apps',noWinget=false,viewMode='normal',isDark=false;
-// « journal » et non « history » : une globale nommée history masque
-// window.history, ce qui piégerait le jour où l'on voudra gérer le bouton
-// Retour du navigateur.
-let openNotes={},journal=[],donePerTab={};
 
 // ═══ HELPERS ═══
 // Le libellé passé à toggle() finit dans l'historique et dans les bandeaux :
@@ -2266,7 +2236,7 @@ function searchUrl(name,e){
 
 // ═══ STORAGE ═══
 function loadState(){
-  try{const r=localStorage.getItem(CLE_ETAT);if(r){const d=JSON.parse(r);if(d&&typeof d==='object'){S.checked=d.checked||{};S.notes=d.notes||{};S.dates=d.dates||{};S.lastSave=d.lastSave||null;}}}catch(e){console.error(e);}
+  try{const r=localStorage.getItem(CLE_ETAT);if(r){const d=JSON.parse(r);if(d&&typeof d==='object'){S.checked=d.checked||{};S.dates=d.dates||{};S.lastSave=d.lastSave||null;}}}catch(e){console.error(e);}
   updateSaveLabel();
 }
 // Une sauvegarde qui echoue en silence est pire qu'une sauvegarde absente :
@@ -2367,7 +2337,7 @@ function marquerPositions(){
 }
 
 function toggle(id,name){
-  if(S.checked[id]){delete S.checked[id];delete S.dates[id];addHistory(name,false);}
+  if(S.checked[id]){delete S.checked[id];delete S.dates[id];}
   else{
     // On prévient, on ne bloque pas : l'ordre est un conseil, et il arrive
     // qu'on coche une tâche faite hors de la checklist.
@@ -2376,29 +2346,12 @@ function toggle(id,name){
     if(manquantes.length){
       informer('« '+name+' » se fait normalement après : '+manquantes.map(nomDe).join(', ')+'.');
     }
-    S.checked[id]=true;S.dates[id]=Date.now();addHistory(name,true);
+    S.checked[id]=true;S.dates[id]=Date.now();
   }
   saveState();
   renderAll();
   updateGlobal();
-  checkTabComplete();
 }
-
-function addHistory(name,checked){
-  journal.unshift({name:name,checked:checked,ts:Date.now()});
-  if(journal.length>5)journal.length=5;
-  renderHistory();
-}
-function renderHistory(){
-  const el=document.getElementById('history-items');
-  if(!el)return;
-  if(!journal.length){el.innerHTML='<span style="color:var(--tx3);font-style:italic">aucune action</span>';return;}
-  el.innerHTML=journal.map((h,i)=>(i>0?'<span class="h-sep">·</span>':'')+'<span class="h-item"><span class="h-ck">'+(h.checked?'✓':'✗')+'</span> '+esc(h.name)+'</span>').join('');
-}
-
-// ═══ NOTES ═══
-function toggleNote(id,evt){evt.stopPropagation();openNotes[id]=!openNotes[id];const a=document.getElementById('na-'+id);if(a){a.classList.toggle('open',openNotes[id]);if(openNotes[id])setTimeout(function(){const t=a.querySelector('textarea');if(t)t.focus();},50);}}
-function saveNote(id,val){if(val.trim())S.notes[id]=val;else delete S.notes[id];saveState();const b=document.getElementById('nb-'+id);if(b)b.classList.toggle('has-note',!!S.notes[id]);}
 
 // ═══ WINGET COPY ═══
 function copyWinget(w,evt){
@@ -2429,36 +2382,6 @@ function copyCatWinget(cat,evt){
   }).catch(function(){});
 }
 
-// ═══ CONFETTI ═══
-function checkTabComplete(){
-  const tabs={};ONGLETS.forEach(function(c){tabs[c]=visiblesDe(c);});
-  Object.keys(tabs).forEach(function(tab){
-    const data=tabs[tab];
-    const done=data.filter(function(x){return estFait(x.id);}).length;
-    if(done===data.length&&data.length>0&&donePerTab[tab]!==data.length){launchConfetti();}
-    donePerTab[tab]=done;
-  });
-}
-function launchConfetti(){
-  const c=document.getElementById('confetti-canvas');
-  // Un canvas absent ou sans contexte 2d — navigateur qui le refuse, DOM
-  // simule — ne doit pas faire tomber le rendu entier : c'est une decoration.
-  if(!c||typeof c.getContext!=='function')return;
-  const ctx=c.getContext('2d');
-  if(!ctx)return;
-  c.style.display='block';c.width=window.innerWidth;c.height=window.innerHeight;
-  const pieces=[];for(let i=0;i<120;i++)pieces.push({x:Math.random()*c.width,y:Math.random()*-c.height*0.5-20,r:Math.random()*6+3,col:'hsl('+(Math.random()*360)+',80%,55%)',vx:(Math.random()-0.5)*4,vy:Math.random()*4+2,rot:Math.random()*360,vrot:(Math.random()-0.5)*8});
-  let frame=0;
-  function draw(){
-    ctx.clearRect(0,0,c.width,c.height);
-    pieces.forEach(function(p){p.x+=p.vx;p.y+=p.vy;p.rot+=p.vrot;p.vy+=0.05;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);ctx.fillStyle=p.col;ctx.fillRect(-p.r,-p.r/2,p.r*2,p.r);ctx.restore();});
-    frame++;
-    if(frame<180)requestAnimationFrame(draw);
-    else{ctx.clearRect(0,0,c.width,c.height);c.style.display='none';}
-  }
-  draw();
-}
-
 // ═══ RENDER ITEM HELPERS ═══
 // Purement visuelle : l'état accessible est porté par l'item, qui est la case.
 function mkChkbox(){return '<div class="chkbox" aria-hidden="true"><span class="chkbox-mark">✓</span></div>';}
@@ -2479,12 +2402,6 @@ function mkDirectLink(url){
   if(!u)return '<div class="item-link"><span class="lnk-btn lnk-mort" title="Adresse absente ou non prise en charge">🔗 Pas de lien</span></div>';
   return '<div class="item-link"><a class="lnk-btn" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 Ouvrir</a></div>';
 }
-function mkNoteBtn(id){
-  const has=S.notes[id]?'has-note':'';
-  const libelle=S.notes[id]?'Modifier la note':'Ajouter une note';
-  return '<button class="note-btn '+has+'" id="nb-'+esc(id)+'" type="button" title="'+libelle+'" aria-label="'+libelle+'" onclick="toggleNote(\''+escJS(id)+'\',event)">📝</button>';}
-function mkNoteArea(id){const open=openNotes[id]?'open':'';const val=S.notes[id]||'';return '<div class="note-area '+open+'" id="na-'+esc(id)+'"><textarea placeholder="Note personnelle..." onclick="event.stopPropagation()" oninput="saveNote(\''+escJS(id)+'\',this.value)">'+esc(val)+'</textarea></div>';}
-
 // ═══ RENDER APPS ═══
 // curCats vit avec les autres etats d'affichage, plus haut : declare ici, il
 // etait dans sa zone morte quand renderCatFilters tournait au demarrage.
@@ -2587,7 +2504,6 @@ function mkAppItem(a,etats){
       +(cmd?'<button type="button" class="badge b-winget" onclick="'
         +(a.w?'copyWinget(\''+escJS(a.w)+'\',event)':'copierCommande(\''+escJS(a.cmd)+'\',event)')
         +'" title="Copier la commande d\'installation">📋 '+esc(cmd)+'</button>':'')
-      +mkNoteArea(a.id)
       +'</div>';
   }
 
@@ -2607,7 +2523,6 @@ function mkAppItem(a,etats){
       +'<button type="button" class="lg-plus" aria-expanded="'+ouvert+'" '
         +'aria-label="'+(ouvert?'Masquer':'Afficher')+' le détail de '+esc(libelleDe(a))+'" '
         +'onclick="basculerDetail(\''+escJS(a.id)+'\',event)">'+(ouvert?'▴':'▾')+'</button>'
-      +mkNoteBtn(a.id)
       +mkLink(libelleDe(a),a)
     +'</div>'
     +detail
@@ -2647,7 +2562,7 @@ function checkAllCat(cat,evt){
   const all=items.every(function(a){return S.checked[a.id];});
   const now=Date.now();
   items.forEach(function(a){if(all){delete S.checked[a.id];delete S.dates[a.id];}else{S.checked[a.id]=true;S.dates[a.id]=now;}});
-  saveState();renderApps();updateGlobal();checkTabComplete();
+  saveState();renderApps();updateGlobal();
 }
 
 
@@ -2663,10 +2578,9 @@ function renderPWA(){
     html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(p)+'">'
       +mkChkbox()
       +'<div class="item-body">'
-        +'<div class="item-name-row"><span class="item-name">'+esc(libelleDe(p))+'</span>'+dt+mkNoteBtn(p.id)+'</div>'
+        +'<div class="item-name-row"><span class="item-name">'+esc(libelleDe(p))+'</span>'+dt+'</div>'
         +'<div class="item-badges"><span class="badge b-sync">✓ Raccourci OK</span><span class="badge b-pwa">PWA Chrome</span></div>'
         +'<div class="item-desc">'+esc(texte(descDe(p)))+'</div>'
-        +mkNoteArea(p.id)
       +'</div>'
       +mkDirectLink(p.u)
     +'</div>';
@@ -2680,7 +2594,7 @@ function checkAllPWA(evt){
   const all=vues.every(function(p){return S.checked[p.id];});
   const now=Date.now();
   vues.forEach(function(p){if(all){delete S.checked[p.id];delete S.dates[p.id];}else{S.checked[p.id]=true;S.dates[p.id]=now;}});
-  saveState();renderPWA();updateGlobal();checkTabComplete();
+  saveState();renderPWA();updateGlobal();
 }
 
 // ═══ GLOBAL SEARCH ═══
@@ -3187,8 +3101,13 @@ function ordreInstallation(items){
 let annulation=null;
 
 function copieEtat(){
-  return {checked:Object.assign({},S.checked),notes:Object.assign({},S.notes),
-    dates:Object.assign({},S.dates)};
+  // La configuration materielle en fait partie : « Tout effacer » l'efface, et
+  // sans elle dans l'instantane l'annulation la perdait definitivement. Ce
+  // defaut vivait dans l'ombre parce que le test ne verifiait que les notes,
+  // qui elles etaient bien restaurees.
+  return {checked:Object.assign({},S.checked),
+    dates:Object.assign({},S.dates),
+    config:Object.assign({},CONFIG)};
 }
 
 // Appelée AVANT l'action destructrice. Le profil n'est mémorisé que lorsque
@@ -3230,8 +3149,13 @@ function annuler(){
   if(a.profil){
     try{appliquerProfil(a.profil,true);}catch(e){signalerPanne('Annulation',e);}
   }
-  S.checked=a.etat.checked;S.notes=a.etat.notes;S.dates=a.etat.dates;
-  saveState();renderAll();updateGlobal();renderHistory();
+  S.checked=a.etat.checked;S.dates=a.etat.dates;
+  if(a.etat.config){
+    CONFIG=a.etat.config;
+    saveConfig();
+    try{construireConfig();}catch(e){console.error(e);}
+  }
+  saveState();renderAll();updateGlobal();
   masquerAnnulation();
 }
 
@@ -3272,9 +3196,9 @@ function toutDecocher(){
   // ouvert par-dessus le bandeau qui explique pourquoi rien n'a bougé.
   if(!n){fermerReglages();informer('Rien à décocher : aucune case n\'est cochée.');return;}
   memoriserAnnulation(n+' case'+(n>1?'s':'')+' décochée'+(n>1?'s':'')
-    +' sur toute la checklist. Notes, clés et profil conservés.',false);
+    +' sur toute la checklist. Le profil chargé est conservé.',false);
   S.checked={};S.dates={};
-  saveState();renderAll();updateGlobal();renderHistory();
+  saveState();renderAll();updateGlobal();
   fermerReglages();
 }
 
@@ -3288,14 +3212,13 @@ function remiseAZero(){
     localStorage.removeItem(CLE_CONFIG);
     localStorage.removeItem(CLE_SCAN);
   }catch(e){console.error(e);}
-  S.checked={};S.notes={};S.dates={};S.lastSave=null;
-  journal=[];openNotes={};sautees={};
+  S.checked={};S.dates={};S.lastSave=null;
+  sautees={};
   CONFIG={};construireConfig();fermerConfig();
   // Le thème suit les préférences du système, ce n'est pas une donnée de
   // travail : on le laisse tel quel.
   try{appliquerProfil(PROFIL_DEFAUT,false);}
   catch(e){signalerPanne('Remise à zéro',e);}
-  renderHistory();
   fermerReglages();
   if(!avaitProfil)document.getElementById('annul-txt').textContent=
     'Site remis à zéro : progression, notes et clés effacées.';
@@ -3785,7 +3708,6 @@ function exportTxt(){
   const lines=[(PROFIL_NOM||'MIGRATION PC').toUpperCase(),PROFIL_SOUS||''];
   lines.push('');
   const marque=function(e){return estFait(e.id)?'[x]':'[ ]';};
-  const note=function(id){return S.notes[id]?' [Note : '+S.notes[id]+']':'';};
 
   lines.push('=== LOGICIELS ===');
   const apps=visiblesDe('apps');
@@ -3794,11 +3716,11 @@ function exportTxt(){
     if(!liste.length)return;
     lines.push('','# '+CATS[cat]);
     liste.forEach(function(a){
-      lines.push('  '+marque(a)+' '+libelleDe(a)+(a.w?' (winget : '+a.w+')':'')+note(a.id));
+      lines.push('  '+marque(a)+' '+libelleDe(a)+(a.w?' (winget : '+a.w+')':''));
     });
   });
   lines.push('','=== PWA ===');
-  visiblesDe('pwa').forEach(function(e){lines.push(marque(e)+' '+libelleDe(e)+note(e.id));});
+  visiblesDe('pwa').forEach(function(e){lines.push(marque(e)+' '+libelleDe(e));});
   dl(new Blob([lines.join('\n')],{type:'text/plain'}),'migration-pc.txt');
 }
 
@@ -3822,7 +3744,6 @@ window.addEventListener('DOMContentLoaded',function(){
   catch(e){console.error(e);appliquerProfil(PROFIL_DEFAUT,false);}
   construireConfig();
   construireOutils();
-  renderHistory();
   // Après le profil mémorisé : un scan tout frais a le dernier mot.
   appliquerScanLocal();
   enregistrerServiceWorker();
