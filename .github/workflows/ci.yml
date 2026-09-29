@@ -69,12 +69,12 @@ jobs:
       - name: Réconciliation source → cible
         run: node tests/test-reconciliation.js
 
+      - name: Archive de téléchargement
+        run: node tests/test-archive.js
+
       # pwsh est preinstalle sur les runners ubuntu-latest.
       - name: Scanner — classement, fusion, parsing
         run: pwsh -File tests/test-scan.ps1
-
-      - name: Vérification du PC — rapprochement
-        run: pwsh -File tests/test-verification.ps1
 
       # Le seul script PowerShell du projet qui tourne vraiment hors Windows :
       # il ne lit que des fichiers. Le test l'execute sur une arborescence
@@ -164,10 +164,6 @@ jobs:
         shell: pwsh
         run: pwsh -File tests/test-scan.ps1
 
-      - name: Vérification du PC — PowerShell 7
-        shell: pwsh
-        run: pwsh -File tests/test-verification.ps1
-
       - name: Vérification des sauvegardes — PowerShell 7
         shell: pwsh
         run: pwsh -File tests/test-sauvegardes.ps1
@@ -190,10 +186,6 @@ jobs:
       - name: Scanner — Windows PowerShell 5.1
         shell: powershell
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/test-scan.ps1
-
-      - name: Vérification du PC — Windows PowerShell 5.1
-        shell: powershell
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/test-verification.ps1
 
       - name: Vérification des sauvegardes — Windows PowerShell 5.1
         shell: powershell
@@ -251,6 +243,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: actions/configure-pages@v5
+      # L'archive que la page propose. Elle ne contient que ce qui se lance :
+      # l'archive automatique de GitHub emporterait les tests, les captures et
+      # la CI, soit quarante fichiers dont aucun ne sert a migrer un PC.
+      - name: Construire migration-pc.zip
+        run: ./construire-zip.sh
       # Le site est le depot lui-meme : pas d'etape de construction, le
       # fichier publie est exactement celui qui vient d'etre teste.
       - uses: actions/upload-pages-artifact@v3

@@ -35,8 +35,12 @@ ok 'identifiants uniques'          (@($a.id | Sort-Object -Unique)).Count 6
 
 # Les deux premieres actions disent SUR QUELLE MACHINE on est : c'est la seule
 # question a laquelle on ne peut pas repondre a la place de l'utilisateur.
-ok 'une action pour l ancien PC'   (@($a | Where-Object { $_.titre -match 'ANCIEN' })).Count 1
-ok 'une action pour le nouveau'    (@($a | Where-Object { $_.titre -match 'NOUVEAU' })).Count 1
+# Le vocabulaire est source/cible et non ancien/nouveau : « le meme PC que je
+# viens de reinstaller » n'a rien d'un nouveau PC, et c'est pourtant le cas le
+# plus courant.
+ok 'une action pour la source'     (@($a | Where-Object { $_.titre -match 'SOURCE' })).Count 1
+ok 'une action pour la cible'      (@($a | Where-Object { $_.titre -match 'CIBLE' })).Count 1
+ok 'plus de vocabulaire ancien/nouveau' (@($a | Where-Object { $_.titre -match 'ANCIEN|NOUVEAU' })).Count 0
 
 # Chaque action mene quelque part : un script a lancer, ou un fichier a ouvrir.
 ok 'chaque action mene quelque part' (@($a | Where-Object {
@@ -56,7 +60,7 @@ ok 'les actions restent montrees'  $b.Count 6
 ok 'mais aucune n est realisable'  (@($b | Where-Object { $_.possible })).Count 0
 # scan-pc.ps1 est la, mais il ne tourne pas sans lib-detection.ps1 : l'action
 # doit le dire au lieu de laisser lancer un script qui echouera.
-$ancien = $b | Where-Object { $_.id -eq 'ancien' }
+$ancien = $b | Where-Object { $_.id -eq 'source' }
 ok 'le fichier manquant est nomme' ($ancien.manquants -contains 'lib-detection.ps1') $true
 ok 'le script present n est pas signale' ($ancien.manquants -contains 'scan-pc.ps1') $false
 $msg = Get-MessageManquants $ancien.manquants
@@ -71,10 +75,15 @@ Remove-Item $t -Recurse -Force -ErrorAction SilentlyContinue
 # sur le site est le reste, et c'est la que les gens se perdent.
 ok 'chaque action dit la suite' (@($a | Where-Object {
       -not $_.PSObject.Properties['suite'] -or @($_.suite).Count -eq 0 })).Count 0
-$inventaire = $a | Where-Object { $_.id -eq 'ancien' }
+$inventaire = $a | Where-Object { $_.id -eq 'source' }
 ok 'elle nomme un onglet du site' ((@($inventaire.suite) -join ' ') -match 'Apps|Donnees') $true
-$verif = $a | Where-Object { $_.id -eq 'nouveau' }
+$verif = $a | Where-Object { $_.id -eq 'cible' }
 ok 'elle parle des pilotes'       ((@($verif.suite) -join ' ') -match 'pilote') $true
+# Le meme script des deux cotes, distingue par son seul argument : c'est ce
+# qui rend « PC neuf » et « meme PC reinstalle » identiques.
+ok 'les deux lancent le meme script' ($inventaire.script) ($verif.script)
+ok 'la source se declare telle'   ((@($inventaire.arguments) -join ' ')) '-Role source'
+ok 'et la cible aussi'            ((@($verif.arguments) -join ' ')) '-Role cible'
 
 $parcours = @(Get-Parcours)
 ok 'un parcours complet existe'   ($parcours.Count -gt 0) $true
@@ -130,7 +139,7 @@ ok 'aucune dependance graphique'   ($avecFenetre -join ', ') ''
 # Les accents des textes affiches n'arrivent en clair que si la sortie est en
 # UTF-8 : sans cela la console de Windows rend du charabia.
 $sansUtf8 = @()
-foreach ($f in @('scan-pc.ps1', 'verifier-pc.ps1', 'sauvegarder-configs.ps1',
+foreach ($f in @('scan-pc.ps1', 'sauvegarder-configs.ps1',
                  'verifier-sauvegardes.ps1', 'restaurer-configs.ps1', 'migration-pc.ps1')) {
     $t = [System.IO.File]::ReadAllText((Join-Path $racine $f))
     if ($t -notmatch 'OutputEncoding') { $sansUtf8 += $f }

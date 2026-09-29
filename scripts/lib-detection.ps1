@@ -3,9 +3,10 @@
     Logique de detection partagee par les scripts du projet.
 
 .DESCRIPTION
-    Trois scripts interrogent les memes sources Windows : scan-pc.ps1 pour
-    inventorier l'ancien PC, verifier-pc.ps1 pour constater ce qui est deja
-    installe sur le nouveau, verifier-sauvegardes.ps1 pour les chemins.
+    Les scripts interrogent les memes sources Windows : scan-pc.ps1 fige le
+    PC source, puis constate sur la cible ce qui est arrive — c'est le meme
+    script des deux cotes, avec -Role. verifier-sauvegardes.ps1 relit les
+    copies, sauvegarder-configs.ps1 les fait.
 
     Ce fichier porte la detection une seule fois. Un defaut constate sur une
     machine se corrige ici et disparait des trois scripts, au lieu d'etre a

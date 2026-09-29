@@ -60,7 +60,16 @@
 [CmdletBinding()]
 param(
     [switch]$PasDOuverture,
-    [string]$Sortie = "inventaire-pc.json",
+    # Source ou cible. Le meme script tourne des deux cotes : d'un cote il
+    # capture l'etat d'un PC, de l'autre il constate ce qui est deja arrive.
+    # Deux instantanes de meme forme, que la page compare ensuite — plutot
+    # qu'un second script qui redetecterait tout a sa facon.
+    [ValidateSet('source', 'cible')]
+    [string]$Role = 'source',
+    # Vide : le nom est fabrique a partir du role et de la date. Un fichier
+    # ecrase a chaque fois ne peut pas etre « l'etat d'un PC a un instant
+    # donne », qui est pourtant tout l'objet de ce programme.
+    [string]$Sortie = "",
     [switch]$SansStore,
     [switch]$SansJeux,
     [switch]$SansVariables,
@@ -71,6 +80,14 @@ param(
     [switch]$ToutInclure
 )
 
+# Le nom porte le role et le jour : on garde plusieurs instantanes sans qu'ils
+# s'effacent, et on sait lequel on rejoue. Le raccourci « inventaire-pc.json »
+# pointe toujours vers le dernier, pour que la page et les scripts n'aient
+# rien a deviner.
+if ([string]::IsNullOrWhiteSpace($Sortie)) {
+    $Sortie = "instantane-$Role-" + (Get-Date).ToString('yyyy-MM-dd') + ".json"
+}
+
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 # La console de Windows n'ecrit pas en UTF-8 par defaut : les accents de ce
@@ -80,7 +97,7 @@ Set-StrictMode -Version Latest
 # refuse (redirection, console absente).
 try { [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new() } catch { }
 # ---------------------------------------------------------------- detection
-# La detection est partagee avec verifier-pc.ps1 et verifier-sauvegardes.ps1 :
+# La detection est partagee avec verifier-sauvegardes.ps1 :
 # elle vit dans lib-detection.ps1 pour n'exister qu'en un seul exemplaire.
 $lib = Join-Path $PSScriptRoot 'lib-detection.ps1'
 if (-not (Test-Path $lib)) {
@@ -187,6 +204,18 @@ if (-not $SansGrosDossiers) {
 }
 $bitlocker = Invoke-Detecteur -Nom 'BitLocker' -Bloc { Read-Bitlocker }
 
+# Deux familles qui n'ont de sens que sur la machine d'arrivee, et qui
+# vivaient dans verifier-pc.ps1 avant qu'il ne disparaisse : les peripheriques
+# que Windows signale comme mal installes, et les quatre reglages qui ne se
+# voient pas a l'usage. Les faire tourner sur le PC source ne dirait rien
+# d'utile — on est en train de le quitter.
+$pilotes = @()
+$controles = @()
+if ($Role -eq 'cible') {
+    $pilotes = @(Invoke-Detecteur -Nom 'pilotes manquants' -Bloc { Read-PilotesManquants })
+    $controles = @(Invoke-Detecteur -Nom 'controles' -Bloc { Read-Controles })
+}
+
 # Des faits sur l'ancien PC plutot que des choses a copier : ils servent a
 # commander la machine neuve et a la reconnaitre au SAV.
 $machine = Invoke-Detecteur -Nom 'machine' -Bloc { Read-Machine }
@@ -217,6 +246,9 @@ $os = try { (Get-CimInstance Win32_OperatingSystem -ErrorAction Stop).Caption } 
 $inventaire = [ordered]@{
     type    = 'inventaire-migration-pc'
     version = 1
+    # La page route le fichier sans rien demander : un instantane de cible ne
+    # remplace pas la checklist, il sert a la comparer.
+    role    = $Role
     genere  = (Get-Date).ToString('o')
     machine = (Merge-Machine -Base ([ordered]@{ os = $os; nom = $env:COMPUTERNAME }) -Ajouts $machine)
     apps    = @($apps)
@@ -254,6 +286,8 @@ $inventaire = [ordered]@{
     taches    = @($taches)
     pareFeu   = @($pareFeu)
     associations = @($associations)
+    pilotes   = @($pilotes)
+    controles = @($controles)
     outils    = @($outils)
     dossiers  = @($dossiers)
     precieux  = @($precieux)
@@ -261,7 +295,17 @@ $inventaire = [ordered]@{
 }
 
 $json = $inventaire | ConvertTo-Json -Depth 6
-Write-TexteUtf8 -Chemin ([System.IO.Path]::GetFullPath($Sortie)) -Contenu $json
+$cheminSortie = [System.IO.Path]::GetFullPath($Sortie)
+Write-TexteUtf8 -Chemin $cheminSortie -Contenu $json
+
+# Le raccourci vers le dernier instantane. Une copie plutot qu'un lien : un
+# lien symbolique demande des droits particuliers sous Windows, et se perd a
+# la premiere copie sur une cle USB formatee en FAT32.
+$raccourci = Join-Path (Split-Path $cheminSortie -Parent) 'inventaire-pc.json'
+if ($raccourci -ne $cheminSortie) {
+    try { Write-TexteUtf8 -Chemin $raccourci -Contenu $json }
+    catch { Write-Host "  (raccourci inventaire-pc.json non ecrit : $_)" -ForegroundColor DarkGray }
+}
 
 # Sans ce fichier a cote, la page ne se remplit pas toute seule. C'est un
 # confort, pas le resultat — le JSON est ecrit dans tous les cas — mais son

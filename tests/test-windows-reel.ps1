@@ -99,7 +99,7 @@ try {
     "`n--- la verification du PC, pour de vrai ---"
     $verif = Join-Path $bac 'verification.json'
     $jv = Join-Path $bac 'verif.txt'
-    & (Join-Path $racine 'scripts/verifier-pc.ps1') -Sortie $verif -PasDOuverture *> $jv
+    & (Join-Path $racine 'scripts/scan-pc.ps1') -Role cible -Sortie $verif -PasDOuverture *> $jv
     ok 'elle va au bout'             (Test-Path -LiteralPath $verif) $true
     $v = Get-Content -LiteralPath $verif -Raw -Encoding UTF8 | ConvertFrom-Json
     ok 'elle porte son type'         $v.type 'verification-migration-pc'

@@ -70,8 +70,8 @@ Un seul fichier à lancer : `Migration PC.bat`. Tout le reste est rangé dans
 - [Le parcours en deux double-clics](#le-parcours-en-deux-double-clics)
 - [Démarrage rapide](#démarrage-rapide)
 - **Les scripts Windows**
-  - [Inventorier l'ancien PC](#inventorier-lancien-pc)
-  - [Vérifier le nouveau PC](#vérifier-le-nouveau-pc)
+  - [Inventorier le PC source](#inventorier-le-pc-source)
+  - [Vérifier le PC cible](#vérifier-le-pc-cible)
   - [Vérifier les sauvegardes](#vérifier-les-sauvegardes)
   - [Emporter ses réglages, et les remettre](#emporter-ses-réglages-et-les-remettre)
 - [Quatre cas, deux questions](#quatre-cas-deux-questions)
@@ -100,18 +100,29 @@ local. Ce projet couvre les trois, dans **deux situations** : passer sur une aut
 machine, ou repartir propre sur celle qu'on a déjà.
 
 ```
-Ancien PC                              Nouveau PC
-─────────                              ──────────
-scan-pc.ps1 ──► inventaire-pc.json ──► index.html ◄── verifier-pc.ps1
-                                           ▲              (constate ce qui
-verifier-sauvegardes.ps1 ──────────────────┘               est déjà installé)
-  (compare les dossiers copiés)
+PC SOURCE                                        PC CIBLE
+(celui qu'on quitte)                (le neuf, ou le même réinstallé)
+────────────────────                ───────────────────────────────
+scan-pc.ps1 -Role source                  scan-pc.ps1 -Role cible
+        │                                           │
+        └──► instantane-source-AAAA-MM-JJ.json ──┐  └──► instantane-cible-….json
+                                                 │              │
+verifier-sauvegardes.ps1                         └──► index.html ◄┘
+  (relit les dossiers copiés)                       compare les deux
 ```
 
-Trois scripts, une page. `scan-pc.ps1` inventorie la machine qu'on quitte,
-`verifier-pc.ps1` constate ce qui est déjà en place sur celle qu'on installe, et
-`verifier-sauvegardes.ps1` vérifie que les dossiers ont bien été copiés. Tous les trois
-partagent leur logique de détection, qui vit une seule fois dans `lib-detection.ps1`.
+**Le même script des deux côtés.** Sur la source il fige l'état de la machine ; sur la
+cible il refait le même relevé, et c'est la page qui compare les deux. Ça a une
+conséquence qui simplifie tout : « PC neuf » et « même PC après réinstallation »
+deviennent exactement le même cas.
+
+`verifier-sauvegardes.ps1` relit les dossiers copiés, `sauvegarder-configs.ps1` les
+copie. Tous partagent leur logique de détection, qui vit une seule fois dans
+`lib-detection.ps1`.
+
+Chaque instantané porte sa date et n'écrase jamais le précédent : « l'état d'une machine
+à un instant donné » n'existe pas si un second scan efface le premier. Un raccourci
+`inventaire-pc.json` pointe toujours vers le dernier.
 
 Le scan n'est pas obligatoire : la page s'ouvre sur un profil d'exemple utilisable tel
 quel, et vous pouvez écrire le vôtre.
@@ -139,14 +150,18 @@ Il y a eu deux raccourcis numérotés à côté du menu, `1-scanner-ce-pc.bat` e
 dans un dossier qui en comptait vingt et un, désorientaient plus qu'ils n'aidaient.
 Le menu fait les deux, et il dit lequel choisir.
 
-Sur l'ancien PC, l'option « Cet ordinateur est l'ANCIEN » inventorie la machine,
-écrit son résultat à côté de la page et l'ouvre. La checklist s'affiche **déjà
-remplie de vos logiciels** — rien à importer. Vous ajustez, vous exportez votre
-profil sur la clé.
+Sur le PC source, l'option « Ce PC est la SOURCE » fige l'état de la machine, écrit
+l'instantané à côté de la page et l'ouvre. La checklist s'affiche **déjà remplie de vos
+logiciels** — rien à importer. Vous ajustez, et l'onglet **Reste à faire** dit ce qu'il
+reste à sortir avant d'effacer.
 
-Sur le nouveau PC, l'option « Cet ordinateur est le NOUVEAU » regarde ce qui est
-déjà installé et rouvre la page, qui vous propose de cocher ce qu'elle a reconnu.
-La clé a fait le transport.
+Sur le PC cible, l'option « Ce PC est la CIBLE » relance **le même relevé**, et la page
+compare les deux instantanés : ce qui est arrivé, ce qui manque, ce qui est là dans une
+version plus ancienne qu'avant. La clé a fait le transport.
+
+Le vocabulaire compte : « nouveau PC » décrit mal le cas le plus courant, qui est de
+réinstaller la machine qu'on a déjà. Source et cible peuvent être le même ordinateur, à
+deux moments différents.
 
 Le `.bat` existe pour une seule raison : Windows refuse d'exécuter un `.ps1` par
 double-clic. Il appelle le script en contournant ce blocage pour ce seul lancement, et
@@ -170,35 +185,42 @@ navigateur.
 **Le plus court** : ouvrez `index.html` et cochez. Le profil d'exemple couvre les étapes
 communes à toute réinstallation Windows, aucun script n'est nécessaire.
 
-**Le parcours complet**, dans l'ordre :
+**Le parcours complet.** Téléchargez `migration-pc.zip` depuis la page — un seul bouton,
+une seule archive, qui contient exactement ce qui se lance et rien d'autre. Décompressez-la
+sur une clé USB, puis double-cliquez `Migration PC.bat` : le menu demande sur quelle
+machine vous êtes et lance ce qu'il faut.
 
-1. Sur l'**ancien PC**, inventoriez ce qui est installé.
+Pour qui préfère la ligne de commande, dans l'ordre :
+
+1. Sur le **PC source** — celui que vous quittez — figez son état.
 
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\scripts\scan-pc.ps1
+   powershell -ExecutionPolicy Bypass -File .\scripts\scan-pc.ps1 -Role source
    ```
 
-2. Faites vos sauvegardes, puis vérifiez-les.
+2. Faites vos sauvegardes, puis vérifiez-les. **Le scan liste, il ne copie pas** :
+   cette étape-là est la copie, et elle est à vous.
 
    ```powershell
+   .\scripts\sauvegarder-configs.ps1 -Destination D:\sauvegarde-migration
    .\scripts\verifier-sauvegardes.ps1 -Destination D:\sauvegarde-migration
    ```
 
-3. Copiez le dossier du projet et les deux JSON produits sur une clé USB.
+3. Copiez la clé : la page, les scripts, l'instantané et vos sauvegardes.
 
-4. Sur le **nouveau PC**, ouvrez `index.html` et importez `inventaire-pc.json`. Passez en
-   **🎯 Mode guidé** et suivez les tâches une par une.
+4. Sur le **PC cible**, ouvrez `index.html` et importez l'instantané de la source.
+   Passez en **🎯 Mode guidé** et suivez les tâches une par une.
 
-5. Après une série d'installations, constatez ce qui est déjà en place plutôt que de
-   cocher à la main.
+5. Sur le PC cible, relancez le même script de l'autre côté :
 
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\scripts\verifier-pc.ps1
+   powershell -ExecutionPolicy Bypass -File .\scripts\scan-pc.ps1 -Role cible
    ```
 
-   Importez `verification-pc.json` : la page propose, vous validez.
+   L'onglet **🎯 Reste à faire** compare les deux instantanés et dit ce qui est
+   arrivé, ce qui manque, et ce qui est là dans une version plus ancienne qu'avant.
 
-## Inventorier l'ancien PC
+## Inventorier le PC source
 
 `scan-pc.ps1` interroge plusieurs sources et fusionne les résultats :
 
@@ -370,17 +392,24 @@ Le script n'a pas besoin des droits administrateur, mais sans eux les logiciels
 installés par d'autres comptes utilisateurs peuvent manquer. Il n'écrit qu'un fichier
 local et n'envoie rien sur le réseau.
 
-## Vérifier le nouveau PC
+## Vérifier le PC cible
 
 Installer dix applications puis cocher dix cases à la main est du travail inutile. Sur
-la machine fraîchement installée :
+la machine fraîchement installée, on relance **le même script** :
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\verifier-pc.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\scan-pc.ps1 -Role cible
 ```
 
-Le script détecte ce qui est déjà présent, le rapproche des éléments du profil et écrit
-`verification-pc.json`. À l'import, la page affiche la liste avec la raison de chaque
+Il produit un instantané de même forme que celui de la source, et la page les compare :
+la comparaison porte sur les trente-deux familles d'un coup, au lieu d'une règle de
+vérification écrite par famille. Le rapprochement se fait sur le **modèle** des chemins
+(`%APPDATA%\Code\User`) et non sur le chemin réel, parce que le nom d'utilisateur
+diffère souvent d'une machine à l'autre.
+
+Sur la cible, le script relève en plus deux choses qui n'ont de sens que là : les
+périphériques que Windows signale comme mal installés, et les quatre réglages qui ne se
+voient pas à l'usage (XMP, TRIM, Secure Boot et TPM, heures du SSD). À l'import, la page affiche la liste avec la raison de chaque
 correspondance — identifiant winget, ou nom seul — et **rien n'est coché sans votre
 validation** : un rapprochement par nom peut confondre deux logiciels voisins, et une
 case cochée à tort fait sauter une installation.
@@ -494,8 +523,9 @@ marche tout aussi bien, elle demande juste d'être présent.
 
 ## La checklist
 
-Cinq onglets : **Avant de quitter** l'ancien PC, **Nouveau PC**, **Apps**, **Données** à
-sauvegarder, **PWA** (raccourcis web).
+Six onglets : **Avant de quitter** le PC source, **Nouveau PC**, **Apps**, **Données** à
+sauvegarder, **Reste à faire** (la comparaison entre les deux machines), et **PWA**
+(raccourcis web).
 
 Le premier onglet regroupe ce qui se fait sur la machine qu'on abandonne et qui ne se
 rattrape pas ensuite : désactiver les licences Adobe et les autres activations liées au
@@ -558,7 +588,7 @@ la machine, il n'y a pas de raison de recopier une étiquette de carton. Une val
 saisie n'est jamais écrasée — elle est peut-être plus précise que ce que Windows
 rapporte, et c'est la personne qui a raison.
 
-Une seule exception, et elle a une raison : la vérification de `verifier-pc.ps1` tourne
+Une seule exception, et elle a une raison : le scan lancé avec `-Role cible` tourne
 sur le PC qu'on équipe, donc elle seule sait de quelle machine elle parle, et elle seule
 corrige une valeur. Un inventaire vient presque toujours de l'**ancien** PC — c'est tout
 l'intérêt du scan — et un profil décrit peut-être une troisième machine : ceux-là ne
@@ -662,7 +692,9 @@ sont coupées, confettis compris.
 Le bouton **Importer** accepte cinq formats et les reconnaît tout seul, sans que vous
 ayez à dire lequel.
 
-**Vérification de PC** — produite par `verifier-pc.ps1`, reconnue à son champ `type`.
+**Vérification de PC** — ancien format, produit par `verifier-pc.ps1` avant que
+`scan-pc.ps1 -Role cible` ne le remplace. La page le lit toujours, pour les fichiers
+déjà écrits ; plus rien ne le produit.
 Seul format qui ne s'applique pas directement : la page affiche la liste et attend
 confirmation.
 
@@ -1047,8 +1079,7 @@ Migration-PC/
 ├── scripts/lanceur-actions.ps1   # ce qu'il propose et ce qu'il vérifie avant
 ├── scripts/lib-detection.ps1     # détection partagée par tous les scripts
 ├── scripts/ecrire-resultat.ps1   # pose le résultat à côté de la page et l'ouvre
-├── scripts/scan-pc.ps1           # inventorie l'ancien PC
-├── scripts/verifier-pc.ps1       # constate ce qui est déjà sur le nouveau
+├── scripts/scan-pc.ps1           # fige la source, puis constate sur la cible
 ├── scripts/sauvegarder-configs.ps1   # emporte les dossiers de réglages
 ├── scripts/restaurer-configs.ps1     # les repose — le seul qui écrit chez vous
 ├── scripts/verifier-sauvegardes.ps1  # compare les dossiers copiés
@@ -1063,6 +1094,7 @@ Migration-PC/
 ├── verifier-comme-ci.sh          # rejoue localement les 26 étapes du job Linux
 ├── package.json                  # scripts de test uniquement
 ├── COUVERTURE.md                 # ce que le scan détecte, refuse et ne peut pas
+├── construire-zip.sh             # fabrique l'archive proposée au téléchargement
 ├── LICENSE                       # GNU AGPL v3
 └── .github/workflows/ci.yml      # tests, puis publication si tout est vert
 ```

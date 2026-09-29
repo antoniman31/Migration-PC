@@ -191,6 +191,11 @@ console.log('\n--- l\'onglet, vie 1 : sur le PC source ---');
 G('INV_SOURCE=null;INV_CIBLE=null;');
 ok('sans rien, on est côté source',G('surLaCible()'),false);
 vm.runInContext('INV_SOURCE='+JSON.stringify(source)+';INV_CIBLE=null;',ctx);
+// La date de l'instantané est calculée, pas écrite en dur : figée, ce test
+// passait le jour où il a été écrit puis échouait le lendemain, parce que
+// « de moins de vingt-quatre heures » finit toujours par devenir faux.
+vm.runInContext('INV_SOURCE='+JSON.stringify(
+  Object.assign({},source,{genere:new Date(Date.now()-3600000).toISOString()}))+';',ctx);
 const prep=G('etatPreparation()');
 ok('trois points de préparation',prep.length,3);
 ok('l\'instantané est constaté fait',prep[0].etat,'ok');
