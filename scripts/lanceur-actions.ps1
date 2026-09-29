@@ -34,31 +34,33 @@ function Get-ActionsMigration {
 
     @(
         [ordered]@{
-            id      = 'ancien'
-            titre   = "Cet ordinateur est l'ANCIEN"
-            detail  = "Fait la liste de tout ce qui est installé, relève où vivent les réglages, et ouvre la checklist déjà remplie."
+            id      = 'source'
+            titre   = "Ce PC est la SOURCE (celui que je quitte)"
+            detail  = "Fige l'etat de cette machine : tout ce qui est installe, ou vivent les reglages, ce qui pese quoi. C'est l'instantane qu'on rejouera ailleurs."
             script  = 'scan-pc.ps1'
+            arguments = @('-Role', 'source')
             requis  = @('scan-pc.ps1', 'lib-detection.ps1')
             duree   = "1 a 3 minutes"
             suite   = @(
                 "La checklist s'ouvre déjà remplie de vos logiciels.",
                 "Onglet « Apps » : décochez ce que vous ne voulez pas reprendre.",
-                "Onglet « Données » : les dossiers de réglages repérés s'y trouvent.",
-                "Menu (…) Plus > Exporter le profil, et posez le fichier sur la clé."
+                "Onglet « Reste à faire » : ce qu'il reste à sortir avant d'effacer.",
+                "Posez l'instantané et cette page sur la clé, et emportez-la."
             )
         },
         [ordered]@{
-            id      = 'nouveau'
-            titre   = "Cet ordinateur est le NOUVEAU"
-            detail  = "Regarde ce qui est déjà installé et le propose à cocher. Ne coche rien tout seul : un rapprochement par nom peut se tromper."
-            script  = 'verifier-pc.ps1'
-            requis  = @('verifier-pc.ps1', 'lib-detection.ps1')
-            duree   = "1 a 2 minutes"
+            id      = 'cible'
+            titre   = "Ce PC est la CIBLE (le neuf, ou celui que je viens de reinstaller)"
+            detail  = "Refait le meme releve ici, pour le comparer a l'instantane de la source. La page dira ce qui est arrive et ce qui manque encore."
+            script  = 'scan-pc.ps1'
+            arguments = @('-Role', 'cible')
+            requis  = @('scan-pc.ps1', 'lib-detection.ps1')
+            duree   = "1 a 3 minutes"
             suite   = @(
-                "La page propose de cocher ce qui est déjà installé : vérifiez avant.",
-                "Les périphériques sans pilote sont listés, avec de quoi chercher.",
-                "Onglet « Nouveau PC » : les pilotes portent le modèle de votre carte.",
-                "Puis onglet « Apps » : le bouton winget copie la commande d'installation."
+                "Onglet « Reste à faire » : le compte de ce qui est arrivé, et ce qui manque.",
+                "Chaque manquant porte sa commande d'installation ou son chemin.",
+                "Onglet « Nouveau PC » : les périphériques sans pilote, et où chercher.",
+                "Importez l'instantané de la source si la page ne l'a pas encore."
             )
         },
         [ordered]@{
@@ -132,20 +134,22 @@ function Get-ActionsMigration {
 # Le parcours complet, pour qui ouvre le lanceur sans savoir par ou commencer.
 function Get-Parcours {
     @(
-        "  Vous partez d'un PC vers un autre",
-        "    1. Sur l'ANCIEN : inventorier. La page s'ouvre remplie, vous ajustez,",
-        "       vous exportez votre profil sur la clé.",
+        "  D'un PC vers un autre",
+        "    1. Sur la SOURCE : scanner. La page s'ouvre remplie de vos logiciels.",
         "    2. Emportez vos réglages sur la clé, et sauvegardez vos dossiers.",
-        "       Vérifiez la copie avant d'aller plus loin.",
-        "    3. Sur le NOUVEAU : vérifier. La page coche ce qui est déjà là et",
-        "       signale les périphériques sans pilote.",
-        "    4. Installez vos logiciels, PUIS remettez vos réglages.",
+        "       Le scan LISTE, il ne copie pas : la copie, c'est l'etape 2.",
+        "       Vérifiez-la avant d'aller plus loin.",
+        "    3. Sur la CIBLE : scanner de nouveau. La page compare les deux et",
+        "       dit ce qui est arrivé, ce qui manque, ce qui a regresse.",
+        "    4. Installez ce qui manque, PUIS remettez vos réglages.",
         "",
         "  Vous réinstallez Windows sur CETTE machine",
-        "    1. Inventorier d'abord : après le formatage, il n'y a plus de source.",
+        "    Le meme parcours : cette machine est la source avant le formatage,",
+        "    et la cible apres. C'est le meme script des deux cotes.",
+        "    1. Scanner en SOURCE d'abord : apres le formatage, il n'y a plus rien.",
         "    2. Emportez vos réglages, sauvegardez, et vérifiez la copie",
         "       AVANT de formater. Après, il est trop tard.",
-        "    3. Après réinstallation : vérifier, sur la même machine.",
+        "    3. Après réinstallation : scanner en CIBLE, sur la même machine.",
         "",
         "  Vous gardez les deux PC",
         "    Même chose, mais ne déliez rien sur l'ancien : il reste en service.",

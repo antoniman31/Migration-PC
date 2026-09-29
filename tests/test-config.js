@@ -143,7 +143,7 @@ ok('les cinq clés voyagent',
   profil.materiel&&profil.materiel.gpu,'RTX 4060');
 
 console.log('\n--- seule la vérification constate la machine qu'+"'"+'on équipe ---');
-// verifier-pc.ps1 tourne sur le PC neuf : lui seul sait de quelle machine il
+// Le scan de la cible tourne sur le PC neuf : lui seul sait de quelle machine il
 // parle, donc lui seul écrase. Un profil rapporté de l'+"'"+'ancien PC, non.'
 await pg.evaluate(()=>traiterDonnees({
   type:'verification-migration-pc',machine:{},trouves:[],

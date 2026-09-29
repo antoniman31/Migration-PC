@@ -16,9 +16,9 @@ lancer() {
   fi
 }
 # Meme ordre que .github/workflows/ci.yml
-for t in profil-sync checklist winget inventaire-etendu dependances reconciliation; do
+for t in profil-sync checklist winget inventaire-etendu dependances reconciliation archive; do
   lancer node "tests/test-$t.js"; done
-for t in scan verification sauvegardes lanceur configs-aller-retour powershell-compatibility; do
+for t in scan sauvegardes lanceur configs-aller-retour powershell-compatibility; do
   lancer pwsh -File "tests/test-$t.ps1"; done
 for t in navigateur verification-pc pwa; do lancer node "tests/test-$t.js"; done
 printf '%-46s ' 'STRICT=1 tests/test-mobile.js'

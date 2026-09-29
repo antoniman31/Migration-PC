@@ -1,4 +1,6 @@
-// Import d'une verification produite par verifier-pc.ps1 : le script propose,
+// Import d'une verification : le format « verification-migration-pc » n'est
+// plus produit depuis que scan-pc.ps1 -Role cible a remplace verifier-pc.ps1,
+// mais la page continue de le lire pour les fichiers deja ecrits. Le script propose,
 // la page montre la liste avec la raison de chaque rapprochement, et rien
 // n'est coche sans validation. Un rapprochement par nom peut confondre deux
 // logiciels voisins, et une case cochee a tort fait sauter une installation.

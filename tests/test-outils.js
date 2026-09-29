@@ -40,7 +40,7 @@ ok('aucun script publié n\'est absent de la liste',
   surDisque.filter(f=>proposes.indexOf(f)<0).join(', '),'');
 
 // Et quand le fichier manque quand même, ça doit se dire.
-for(const f of ['scripts/scan-pc.ps1','scripts/verifier-pc.ps1']){
+for(const f of ['scripts/scan-pc.ps1']){
   ok(f+' signale son absence',
     /ecrire-resultat\.ps1 n'est pas a cote/.test(fs.readFileSync(path.join(racine,f),'utf8')),true);
 }
@@ -59,26 +59,24 @@ await pg.click('#menu-btn');await pg.waitForTimeout(150);
 await pg.getByRole('menuitem',{name:/Les scripts pour Windows/}).click();
 await pg.waitForTimeout(300);
 ok('ouvert',await pg.isVisible('#outils'),true);
-ok('un lien par fichier',(await pg.$$('.outils-item a')).length,proposes.length);
-ok('chaque lien télécharge au lieu d\'afficher',await pg.evaluate(()=>
-  [...document.querySelectorAll('.outils-item a')].every(a=>a.hasAttribute('download'))),true);
-ok('les liens sont relatifs, donc valables depuis une clé',await pg.evaluate(()=>
-  [...document.querySelectorAll('.outils-item a')]
-    .every(a=>!/^https?:/.test(a.getAttribute('href')))),true);
-// « Migration PC.bat » porte un espace : un href non encode casse chez
-// certains navigateurs, et le nom propose au telechargement doit rester lisible.
-ok('un nom avec espace reste téléchargeable',await pg.evaluate(()=>{
-  const a=[...document.querySelectorAll('.outils-item a')]
-    .find(x=>/Migration/.test(x.getAttribute('download')||''));
-  if(!a)return 'lien absent';
-  // L'attribut href tel qu'ecrit, et l'URL que le navigateur en deduit.
-  return a.href.indexOf('Migration%20PC.bat')>=0?'encodée':'brute : '+a.href.slice(-24);
-}),'encodée');
-ok('le lien vers le dépôt s\'ouvre à part',await pg.evaluate(()=>{
-  const a=document.querySelector('.outils-note a');
-  return !!(a&&a.target==='_blank'&&(a.rel||'').indexOf('noopener')>=0);}),true);
-ok('on avertit de prendre le dossier entier',
-  (await pg.textContent('.outils-note')).indexOf('pas un fichier isolé')>=0,true);
+// Un seul lien, vers l'archive. Proposer les fichiers un par un revenait a
+// laisser quelqu'un prendre scan-pc.ps1 tout seul : il s'arrete au demarrage
+// faute de lib-detection.ps1 a cote, et rien ne dit pourquoi.
+ok('un seul lien de téléchargement',(await pg.$$('#outils a')).length,1);
+ok('il pointe vers l\'archive',
+  await pg.getAttribute('.outils-dl-btn','href'),'migration-pc.zip');
+ok('et il télécharge au lieu d\'afficher',
+  await pg.evaluate(()=>document.querySelector('.outils-dl-btn').hasAttribute('download')),true);
+// Relatif : depuis la page publiee l'archive est a cote, et rien ne pointe
+// vers un depot dont l'URL peut changer.
+ok('le lien est relatif',await pg.evaluate(()=>
+  !/^https?:/.test(document.querySelector('.outils-dl-btn').getAttribute('href'))),true);
+// La liste reste, mais pour DIRE ce qu'il y a dedans, pas pour le proposer.
+ok('la liste décrit le contenu',(await pg.$$('.outils-item')).length,proposes.length);
+ok('sans aucun lien dedans',(await pg.$$('.outils-item a')).length,0);
+ok('on explique pourquoi un seul bouton',
+  (await pg.textContent('.outils-note')).indexOf('pas les fichiers un par un')>=0,true);
+
 await pg.click('.outils-fermer');await pg.waitForTimeout(200);
 ok('« Fermer » referme',await pg.isVisible('#outils'),false);
 

@@ -534,6 +534,17 @@ body.compact .b-dep{display:none}
 .outils.visible{display:block}
 .outils-titre{font-size:14px;font-weight:600;color:var(--tx);margin-bottom:3px}
 .outils-sous{font-size:12px;color:var(--tx2);line-height:1.55;margin-bottom:14px}
+.outils-dl{margin:12px 0 4px;padding:14px;border-radius:10px;background:var(--accl);
+  border:.5px solid var(--accb)}
+.outils-dl-btn{display:inline-block;padding:11px 20px;border-radius:9px;font-size:14px;
+  font-weight:600;background:var(--acc-fond);color:#fff;text-decoration:none;min-height:44px;
+  line-height:22px}
+.outils-dl-btn:hover{filter:brightness(1.08)}
+.outils-dl-d{font-size:12px;color:var(--tx2);margin-top:9px;line-height:1.55}
+.outils-dedans{font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--tx3);margin:14px 0 2px}
+.outils-f{font-size:11px;color:var(--tx3);font-family:"Cascadia Code","Consolas",monospace;
+  white-space:nowrap;flex-shrink:0}
 .outils-liste{display:flex;flex-direction:column;gap:8px}
 .outils-item{display:flex;align-items:center;gap:12px;padding:10px 12px;
   border:.5px solid var(--brd);border-radius:9px;background:var(--bg)}
@@ -687,7 +698,7 @@ body.compact .b-dep{display:none}
 @media print{.scen{display:none!important}}
 
 /* ═══ Confirmation de vérification ═══
-   verifier-pc.ps1 propose, on dispose. Le rapprochement par nom peut se
+   Le scan de la cible propose, on dispose. Le rapprochement par nom peut se
    tromper : la liste est montrée avant de cocher quoi que ce soit. */
 .verif{display:none;margin:0 0 12px;border:.5px solid var(--accb);border-radius:10px;
   background:var(--bg2);overflow:hidden}
@@ -929,15 +940,17 @@ if(location.protocol==='file:'){
   <div class="outils-sous">Trois scripts font le travail que cette page ne peut pas faire :
     un navigateur n'a pas le droit de lire votre registre ni la liste de vos logiciels.
     Ils sont écrits en PowerShell, donc lisibles dans le Bloc-notes avant d'être lancés.</div>
+  <div class="outils-dl">
+    <a class="outils-dl-btn" href="migration-pc.zip" download="migration-pc.zip">⬇️ Télécharger le programme</a>
+    <div class="outils-dl-d">Une seule archive, tout ce qu'il faut dedans. Décompressez-la
+      sur une clé USB, et double-cliquez <code>Migration PC.bat</code> sur le PC source.</div>
+  </div>
   <div class="outils-liste" id="outils-liste"></div>
   <div class="outils-note">
-    <b>Prenez le dossier entier, pas un fichier isolé.</b> Les trois scripts ont besoin de
-    <code>lib-detection.ps1</code> à côté d'eux, et les deux <code>.bat</code> du script
-    qu'ils lancent. Le plus simple est de
-    <a href="https://github.com/antoniman31/Migration-PC/archive/refs/heads/main.zip"
-       target="_blank" rel="noopener noreferrer">télécharger tout le dossier en une fois</a>,
-    de le poser sur une clé USB avec cette page, et de double-cliquer le premier
-    <code>.bat</code> sur l'ancien PC.
+    <b>Ne prenez pas les fichiers un par un.</b> Les scripts ont tous besoin de
+    <code>lib-detection.ps1</code> à côté d'eux, et le <code>.bat</code> a besoin
+    du dossier <code>scripts</code> : un fichier isolé s'arrête au démarrage.
+    C'est pour ça qu'il n'y a qu'un seul bouton.
   </div>
   <button class="outils-fermer" type="button" onclick="fermerOutils()">Fermer</button>
 </div>
@@ -3435,7 +3448,7 @@ const CAT_OUTILS='outils';
 // que ce que Windows rapporte, et c'est la personne qui a raison.
 //
 // `constate` dit une chose et une seule : ce fichier décrit-il la machine
-// qu'on équipe ? Seule la vérification de `verifier-pc.ps1` peut l'affirmer,
+// qu'on équipe ? Seul le scan de la cible peut l'affirmer,
 // puisqu'elle tourne sur le PC neuf. Elle seule écrase donc une valeur.
 //
 // Tout le reste ne remplit que les cases vides, parce qu'un inventaire comme
@@ -4879,7 +4892,7 @@ function traiterDonnees(d,provenance){
       dire('Progression importée : '+Object.keys(S.checked).length+' tâches cochées.');
       return true;
     }
-    informer('Format non reconnu. Attendu : un export winget, un inventaire de scan-pc.ps1, une vérification de verifier-pc.ps1, un profil, ou une progression exportée depuis cette page.');
+    informer('Format non reconnu. Attendu : un export winget, un inventaire de scan-pc.ps1, un profil, ou une progression exportée depuis cette page.');
     return false;
   }catch(err){signalerPanne('Import',err);return false;}
 }
@@ -5663,7 +5676,7 @@ function clavierGlobal(e){
 }
 
 // ═══ VÉRIFICATION DU NOUVEAU PC ═══
-// verifier-pc.ps1 constate ce qui est déjà installé et le propose. Il ne coche
+// Le scan de la cible constate ce qui est déjà installé et le propose. Il ne coche
 // rien : le rapprochement par nom peut confondre deux logiciels voisins, et
 // une case cochée à tort fait sauter une installation. On montre donc la liste
 // avec la raison de chaque correspondance, et c'est la personne qui tranche.
@@ -6214,8 +6227,8 @@ const OUTILS=[
    d:'Les repose à leur place sur le nouveau PC. Refuse d\'écraser par défaut, et met l\'existant de côté sinon.'},
   {f:'scripts/verifier-sauvegardes.ps1',n:'Vérifier les sauvegardes',
    d:'Compare une copie à son original : fichier par fichier, taille par taille. Une sauvegarde non relue n\'est pas une sauvegarde.'},
-  {f:'scripts/scan-pc.ps1',n:'scan-pc.ps1',d:'L\'inventaire de l\'ancien PC.'},
-  {f:'scripts/verifier-pc.ps1',n:'verifier-pc.ps1',d:'Le constat sur la machine neuve.'},
+  {f:'scripts/scan-pc.ps1',n:'scan-pc.ps1',
+   d:'Le releve, des deux cotes : « -Role source » fige le PC qu\'on quitte, « -Role cible » constate celui qu\'on equipe.'},
   {f:'scripts/lib-detection.ps1',n:'lib-detection.ps1',
    d:'La détection partagée. Sans ce fichier à côté, les trois scripts s\'arrêtent.'},
   {f:'scripts/migration-pc.ps1',n:'migration-pc.ps1',d:'Le menu, appelé par « Migration PC.bat ».'},
@@ -6224,15 +6237,19 @@ const OUTILS=[
    d:'Ce qui remplit cette page toute seule après un scan. Sans lui, tout marche, mais il faut importer le fichier à la main.'}
 ];
 
+// La liste dit ce que l'archive contient. Elle ne propose plus de télécharger
+// les fichiers un par un : un script pris isolément s'arrête faute de
+// lib-detection.ps1 à côté de lui, et personne ne comprenait pourquoi.
 function construireOutils(){
   const z=document.getElementById('outils-liste');
   if(!z)return;
-  z.innerHTML=OUTILS.map(function(o){
-    return '<div class="outils-item"><div class="outils-txt">'
-      +'<div class="outils-nom">'+esc(o.n)+'</div>'
-      +'<div class="outils-desc">'+esc(o.d)+'</div></div>'
-      +'<a href="'+esc(o.f)+'" download="'+esc(o.f)+'">Télécharger</a></div>';
-  }).join('');
+  z.innerHTML='<div class="outils-dedans">Dans l\'archive :</div>'
+    +OUTILS.map(function(o){
+      return '<div class="outils-item"><div class="outils-txt">'
+        +'<div class="outils-nom">'+esc(o.n)+'</div>'
+        +'<div class="outils-desc">'+esc(o.d)+'</div></div>'
+        +'<code class="outils-f">'+esc(o.f)+'</code></div>';
+    }).join('');
 }
 function basculerOutils(){
   const b=document.getElementById('outils');
@@ -6240,7 +6257,8 @@ function basculerOutils(){
   const ouvert=b.classList.toggle('visible');
   if(ouvert){
     b.scrollIntoView({block:'nearest',behavior:mouvementReduit()?'auto':'smooth'});
-    const p=b.querySelector('a');
+    // Le bouton de téléchargement, qui est maintenant le seul lien du bloc.
+    const p=b.querySelector('.outils-dl-btn');
     if(p)p.focus();
   }
 }

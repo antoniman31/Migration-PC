@@ -64,6 +64,12 @@ function Invoke-Action {
     # et l'ecraser dans un script est un piege classique.
     $parametres = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $script)
 
+    # Les arguments fixes de l'action : c'est par la que le meme scan-pc.ps1
+    # tourne en source d'un cote et en cible de l'autre.
+    if ($Action.PSObject.Properties['arguments'] -and $Action.arguments) {
+        $parametres += @($Action.arguments)
+    }
+
     if ($Action.PSObject.Properties['dossier'] -and $Action.dossier) {
         $dossier = Read-DossierSauvegarde -Invite $Action.titre
         if (-not $dossier) { return @{ ok = $false; message = "Annulé." } }

@@ -145,4 +145,36 @@ try {
     Remove-Item Env:\MPCSV -ErrorAction SilentlyContinue
 }
 
+"--- le profil se trouve depuis scripts\ ---"
+# Les scripts vivent dans scripts\ et les fichiers qu'ils cherchent — un profil
+# exporte, presets\ — sont a la racine. Quand ils ont demenage, ils ont continue
+# a chercher a cote d'eux et sont tombes sur « Aucun profil trouve ». Le defaut
+# n'etait visible que sur le job Windows, ou le test de bout en bout lance le
+# vrai script — et il est arrive sur main. On le lance donc ici aussi : sans
+# Windows il ne detecte rien, mais il resout son profil avant de scanner quoi
+# que ce soit, et c'est ce qu'on verifie.
+$bacP2 = Join-Path ([System.IO.Path]::GetTempPath()) ("mpc-prof-" + (Get-Random))
+New-Item -ItemType Directory -Path (Join-Path $bacP2 'dst') -Force | Out-Null
+try {
+    $scripts = Join-Path (Split-Path $PSScriptRoot -Parent) 'scripts'
+    $sorties = @{
+        'verifier-sauvegardes.ps1' = @('-Destination', (Join-Path $bacP2 'dst'), '-Sortie', (Join-Path $bacP2 's.json'))
+    }
+    foreach ($nom in $sorties.Keys) {
+        $journal = Join-Path $bacP2 ($nom + '.log')
+        $args = @('-NoProfile', '-File', (Join-Path $scripts $nom)) + $sorties[$nom]
+        Start-Process -FilePath (Get-Process -Id $PID).Path -ArgumentList $args `
+            -NoNewWindow -Wait -RedirectStandardOutput $journal `
+            -RedirectStandardError (Join-Path $bacP2 ($nom + '.err')) -ErrorAction SilentlyContinue
+        $sortie = if (Test-Path -LiteralPath $journal) { Get-Content -LiteralPath $journal -Raw -Encoding UTF8 } else { '' }
+        $err = Join-Path $bacP2 ($nom + '.err')
+        if (Test-Path -LiteralPath $err) { $sortie += (Get-Content -LiteralPath $err -Raw -Encoding UTF8) }
+        ok "$nom trouve son profil" ($sortie -notmatch 'Aucun profil trouve') $true
+        ok "$nom nomme le profil retenu" ($sortie -match 'profil\s*:') $true
+    }
+} finally {
+    Remove-Item -LiteralPath $bacP2 -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+
 if ($script:ko) { "`n$($script:ko) TEST(S) EN ECHEC"; exit 1 } else { "`nVERIFICATION DES SAUVEGARDES OPERATIONNELLE" }
