@@ -124,6 +124,41 @@ $sansTaille = Format-Materiel -CarteMere $null -Processeur $null -Cartes @() -Ba
     -Disques @([pscustomobject]@{ Model = 'KINGSTON SNV2S1000G'; Size = 1000204886016 })
 ok 'taille ajoutee quand elle manque' $sansTaille.ssd 'KINGSTON SNV2S1000G 932 Go'
 
+# ---- les trois qui servent a retrouver un pilote ----
+# Le reseau d'abord : c'est le pilote dont depend la recherche de tous les
+# autres. Une machine de developpement empile les cartes virtuelles, et prendre
+# la premiere venue enverrait chercher le pilote d'un adaptateur Hyper-V.
+$res = Format-Materiel -Reseau @(
+    [pscustomobject]@{ Name = 'Hyper-V Virtual Ethernet Adapter'; PhysicalAdapter = $true },
+    [pscustomobject]@{ Name = 'Realtek Gaming 2.5GbE Family Controller'; PhysicalAdapter = $true },
+    [pscustomobject]@{ Name = 'Intel(R) Wi-Fi 6E AX211 160MHz'; PhysicalAdapter = $true },
+    [pscustomobject]@{ Name = 'Bluetooth Device (Personal Area Network)'; PhysicalAdapter = $true },
+    [pscustomobject]@{ Name = 'WAN Miniport (IP)'; PhysicalAdapter = $false })
+ok 'la carte filaire reelle'   $res.eth  'Realtek Gaming 2.5GbE Family Controller'
+ok 'et le Wi-Fi a part'        $res.wifi 'Intel(R) Wi-Fi 6E AX211 160MHz'
+# Un fixe sans Wi-Fi ne doit pas se retrouver avec un champ invente.
+$fixe = Format-Materiel -Reseau @([pscustomobject]@{ Name = 'Intel(R) Ethernet Controller I225-V'; PhysicalAdapter = $true })
+ok 'un fixe n a pas de Wi-Fi'  ($fixe.Contains('wifi')) $false
+
+# La sortie audio d'une carte graphique passe par HDMI et arrive avec le pilote
+# de la carte : la nommer enverrait chercher un pilote qu'on a deja.
+$aud = Format-Materiel -Audio @(
+    [pscustomobject]@{ Name = 'NVIDIA High Definition Audio' },
+    [pscustomobject]@{ Name = 'Realtek(R) Audio' })
+ok 'la puce de la carte mere'  $aud.audio 'Realtek(R) Audio'
+
+# Get-CimInstance rend un DateTime ; les formes anciennes rendent la chaine CIM
+# brute, que [datetime] refuse. Perdre la date sur une machine qui repond
+# autrement que prevu serait dommage : c'est elle qui dit si le BIOS est vieux.
+$b1 = Format-Materiel -Bios @([pscustomobject]@{ SMBIOSBIOSVersion = '1402'; ReleaseDate = '20250311000000.000000+000' })
+ok 'date CIM brute lue'        $b1.bios '1402 (2025-03-11)'
+$b2 = Format-Materiel -Bios @([pscustomobject]@{ SMBIOSBIOSVersion = 'F31'; ReleaseDate = ([datetime]'2024-06-02') })
+ok 'date DateTime lue'         $b2.bios 'F31 (2024-06-02)'
+$b3 = Format-Materiel -Bios @([pscustomobject]@{ SMBIOSBIOSVersion = '2.1' })
+ok 'sans date, la version seule' $b3.bios '2.1'
+$b4 = Format-Materiel -Bios @([pscustomobject]@{ SMBIOSBIOSVersion = '' })
+ok 'sans version, rien'        ($b4.Contains('bios')) $false
+
 "`n--- peripheriques sans pilote ---"
 # On ne devine pas quel pilote installer — il faudrait une table que personne
 # ne tient a jour. On rapporte ce que Windows signale lui-meme, c'est-a-dire le

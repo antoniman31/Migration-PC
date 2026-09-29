@@ -950,7 +950,8 @@ function Get-Somme {
 # qui s'affiche, donc c'est elle qu'il faut pouvoir verifier.
 
 function Format-Materiel {
-    param($CarteMere, $Processeur, $Cartes, $Barrettes, $Disques)
+    param($CarteMere, $Processeur, $Cartes, $Barrettes, $Disques,
+          $Reseau, $Audio, $Bios)
 
     $config = [ordered]@{}
 
@@ -1014,6 +1015,64 @@ function Format-Materiel {
         }
     }
 
+    # ---- les trois qui servent a retrouver un pilote ----
+    #
+    # La carte reseau d'abord, parce que c'est le pilote dont depend la
+    # recherche de tous les autres : sans reseau sur une machine fraiche, on
+    # ne va rien telecharger. Ethernet et Wi-Fi separement — un fixe n'a
+    # souvent que le premier, et on ne cherche pas le meme pilote.
+    if ($Reseau) {
+        # PhysicalAdapter ecarte les pseudo-cartes ; le filtre par nom ecarte
+        # ce qu'une machine de developpement empile : Hyper-V, VirtualBox,
+        # VMware, les TAP de VPN, le Bluetooth qui se declare en reseau.
+        $vraies = @($Reseau | Where-Object {
+            $_.Name -and
+            ($_.PSObject.Properties['PhysicalAdapter'] -eq $null -or $_.PhysicalAdapter) -and
+            $_.Name -notmatch 'Virtual|Hyper-V|VMware|VirtualBox|TAP-|Loopback|Bluetooth|WAN Miniport|Microsoft Kernel'
+        })
+        $wifi = @($vraies | Where-Object { $_.Name -match 'Wi-?Fi|Wireless|802\.11|WLAN' })
+        $eth  = @($vraies | Where-Object { $_.Name -notmatch 'Wi-?Fi|Wireless|802\.11|WLAN' })
+        if ($eth.Count)  { $config['eth']  = ($eth[0].Name).Trim() }
+        if ($wifi.Count) { $config['wifi'] = ($wifi[0].Name).Trim() }
+    }
+
+    if ($Audio) {
+        # La sortie audio d'une carte graphique passe par HDMI et arrive avec
+        # le pilote de la carte : la nommer enverrait chercher un pilote qu'on
+        # a deja. C'est la puce de la carte mere qui nous interesse.
+        $puces = @($Audio | Where-Object {
+            $_.Name -and $_.Name -notmatch 'NVIDIA|AMD High Definition Audio|Radeon|Intel\(R\) Display Audio'
+        })
+        if ($puces.Count) { $config['audio'] = ($puces[0].Name).Trim() }
+    }
+
+    if ($Bios) {
+        $b = @($Bios)[0]
+        $version = ''
+        if ($b.PSObject.Properties['SMBIOSBIOSVersion'] -and $b.SMBIOSBIOSVersion) {
+            $version = ([string]$b.SMBIOSBIOSVersion).Trim()
+        }
+        if ($version) {
+            # La date compte autant que le numero : « 1402 » ne dit pas s'il
+            # date d'un mois ou de trois ans, et c'est la question qu'on se
+            # pose devant la page du constructeur.
+            # Get-CimInstance rend deja un DateTime ; les formes anciennes
+            # rendent la chaine CIM brute « 20250311000000.000000+000 », que
+            # [datetime] refuse. On accepte les deux plutot que de perdre la
+            # date sur une machine qui repond autrement que prevu.
+            $date = ''
+            if ($b.PSObject.Properties['ReleaseDate'] -and $b.ReleaseDate) {
+                $brut = $b.ReleaseDate
+                if ($brut -is [datetime]) {
+                    $date = $brut.ToString('yyyy-MM-dd')
+                } elseif (([string]$brut) -match '^(\d{4})(\d{2})(\d{2})') {
+                    $date = "$($Matches[1])-$($Matches[2])-$($Matches[3])"
+                }
+            }
+            $config['bios'] = if ($date) { "$version ($date)" } else { $version }
+        }
+    }
+
     return $config
 }
 
@@ -1026,7 +1085,10 @@ function Read-Materiel {
             -Processeur (Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue) `
             -Cartes     (Get-CimInstance Win32_VideoController -ErrorAction SilentlyContinue) `
             -Barrettes  (Get-CimInstance Win32_PhysicalMemory -ErrorAction SilentlyContinue) `
-            -Disques    (Get-CimInstance Win32_DiskDrive -ErrorAction SilentlyContinue)
+            -Disques    (Get-CimInstance Win32_DiskDrive -ErrorAction SilentlyContinue) `
+            -Reseau     (Get-CimInstance Win32_NetworkAdapter -ErrorAction SilentlyContinue) `
+            -Audio      (Get-CimInstance Win32_SoundDevice -ErrorAction SilentlyContinue) `
+            -Bios       (Get-CimInstance Win32_BIOS -ErrorAction SilentlyContinue)
     } catch {
         Write-Host " indisponible, ignore" -ForegroundColor Yellow
         return [ordered]@{}

@@ -45,13 +45,13 @@ ok('rien n\'est retenu',await pg.evaluate(()=>Object.keys(CONFIG).length),0);
 console.log('\n--- on le remplit ---');
 await ouvrirConfig();
 ok('le bloc s\'ouvre',await pg.isVisible('#config'),true);
-ok('un champ par composant',(await pg.$$('.config-input')).length,5);
+ok('un champ par composant',(await pg.$$('.config-input')).length,9);
 ok('le focus y entre',await pg.evaluate(()=>
   document.getElementById('config').contains(document.activeElement)),true);
 await pg.fill('#cfg-cm','ASUS ROG STRIX B850-A');
 await pg.fill('#cfg-gpu','NVIDIA RTX 5070 Ti');
 await pg.waitForTimeout(400);
-ok('le résumé compte',await pg.textContent('#config-resume'),'2 composants sur 5');
+ok('le résumé compte',await pg.textContent('#config-resume'),'2 composants sur 9');
 ok('la carte mère est retenue',await pg.evaluate(()=>CONFIG.cm),'ASUS ROG STRIX B850-A');
 
 console.log('\n--- ça tient, et ça s\'efface ---');
@@ -77,12 +77,16 @@ await pg.evaluate(()=>traiterDonnees({
   variables:{},configs:[],
   materiel:{cm:'ASUSTeK ROG STRIX B850-A',cpu:'AMD Ryzen 7 9800X3D',
             gpu:'NVIDIA GeForce RTX 5070 Ti',ram:'32 Go DDR5 6000 MT/s',
-            ssd:'Samsung SSD 9100 PRO 2TB'}},''));
+            ssd:'Samsung SSD 9100 PRO 2TB',eth:'Realtek Gaming 2.5GbE',
+            wifi:'Intel Wi-Fi 6E AX211',audio:'Realtek(R) Audio',
+            bios:'1402 (2025-03-11)'}},''));
 await pg.waitForTimeout(450);
-ok('les cinq champs sont remplis',
-  await pg.evaluate(()=>COMPOSANTS.filter(c=>CONFIG[c.cle]).length),5);
+// Le scan remplit les neuf : les cinq composants et les quatre qui servent à
+// retrouver un pilote.
+ok('les neuf champs sont remplis',
+  await pg.evaluate(()=>COMPOSANTS.filter(c=>CONFIG[c.cle]).length),9);
 ok('le sous-titre le dit',
-  (await pg.textContent('#profil-sous')).indexOf('5 composants repris')>=0,true);
+  (await pg.textContent('#profil-sous')).indexOf('9 composants repris')>=0,true);
 // Le modèle sert à fabriquer le lien du constructeur dans l'onglet Pilotes.
 ok('la carte mère relevée est retenue',
   await pg.evaluate(()=>CONFIG.cm),'ASUSTeK ROG STRIX B850-A');
