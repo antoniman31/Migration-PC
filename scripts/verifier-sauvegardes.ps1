@@ -300,7 +300,16 @@ $rapport = [ordered]@{
     state   = [ordered]@{ checked = $coches; notes = @{}; dates = $dates; lic = @{}; env = @{} }
 }
 
-[System.IO.File]::WriteAllText(([System.IO.Path]::GetFullPath($Sortie)), ($rapport | ConvertTo-Json -Depth 8), (New-Object System.Text.UTF8Encoding $false))
+# GetFullPath resout un relatif contre Environment.CurrentDirectory, qui ne
+# suit PAS Set-Location : « cd D:\cle » puis lancer ce script ecrivait le
+# rapport la ou PowerShell avait demarre. Ce script est autonome — il ne
+# charge pas lib-detection.ps1 — donc la resolution est ecrite ici.
+$cheminRapport = if ([System.IO.Path]::IsPathRooted($Sortie)) {
+    [System.IO.Path]::GetFullPath($Sortie)
+} else {
+    [System.IO.Path]::GetFullPath((Join-Path (Get-Location).ProviderPath $Sortie))
+}
+[System.IO.File]::WriteAllText($cheminRapport, ($rapport | ConvertTo-Json -Depth 8), (New-Object System.Text.UTF8Encoding $false))
 $chemin = (Resolve-Path $Sortie).Path
 
 Write-Host ""

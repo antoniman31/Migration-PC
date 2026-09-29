@@ -96,20 +96,43 @@ try {
     $relu = $json.Substring(0, $json.Length - 1) | ConvertFrom-Json
     ok 'et il se relit'              $relu.type 'inventaire-migration-pc'
 
-    "`n--- la verification du PC, pour de vrai ---"
-    $verif = Join-Path $bac 'verification.json'
+    "`n--- le scan de la CIBLE, pour de vrai ---"
+    # Le meme script des deux cotes : ce qui change est son role, et ce qu'il
+    # releve en plus sur la machine d'arrivee.
+    $verif = Join-Path $bac 'cible.json'
     $jv = Join-Path $bac 'verif.txt'
     & (Join-Path $racine 'scripts/scan-pc.ps1') -Role cible -Sortie $verif -PasDOuverture *> $jv
-    ok 'elle va au bout'             (Test-Path -LiteralPath $verif) $true
+    ok 'il va au bout'               (Test-Path -LiteralPath $verif) $true
     $v = Get-Content -LiteralPath $verif -Raw -Encoding UTF8 | ConvertFrom-Json
-    ok 'elle porte son type'         $v.type 'verification-migration-pc'
+    ok 'meme format que la source'   $v.type 'inventaire-migration-pc'
+    # Sans ce champ, la page ne sait pas que ce fichier decrit la machine
+    # d'arrivee : elle remplacerait la checklist au lieu de la comparer.
+    ok 'il se declare cible'         $v.role 'cible'
     ok 'aucune exception non geree'  ((Get-Content -LiteralPath $jv -Raw -Encoding UTF8) -match 'Exception|At line:') $false
-    # Le script verifie deux onglets, « Nouveau PC » et « Apps » : ce sont les
-    # seuls qui designent des logiciels installables. Trouve ou absent, chaque
-    # element doit etre rapporte, sans quoi un a disparu en chemin.
-    $profil = Get-Content -LiteralPath (Join-Path $racine 'presets\exemple.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-    $verifiables = @($profil.npc).Count + @($profil.apps).Count
-    ok 'chaque element verifiable est rapporte' (@($v.trouves).Count + @($v.absents).Count) $verifiables
+    # Deux familles n'ont de sens que sur la machine d'arrivee : les
+    # peripheriques que Windows signale comme mal installes, et les quatre
+    # reglages qui ne se voient pas a l'usage. Le scan de la source ne les a
+    # pas ; celui de la cible doit les porter, meme vides.
+    ok 'les controles sont presents' ($v.PSObject.Properties['controles'] -ne $null) $true
+    ok 'les pilotes aussi'           ($v.PSObject.Properties['pilotes'] -ne $null) $true
+    ok 'quatre controles rapportes'  (@($v.controles).Count) 4
+    # Le raccourci vers le dernier instantane, pour que la page et les scripts
+    # n'aient pas a deviner quel fichier lire.
+    ok 'le raccourci est ecrit'      (Test-Path -LiteralPath (Join-Path $bac 'inventaire-pc.json')) $true
+    $r = Get-Content -LiteralPath (Join-Path $bac 'inventaire-pc.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    ok 'et il pointe sur le dernier' $r.role 'cible'
+
+    "`n--- le nom porte le role et la date ---"
+    # Un fichier ecrase a chaque fois ne peut pas etre « l'etat d'une machine a
+    # un instant donne », qui est pourtant tout l'objet de ce programme.
+    $auto = Join-Path $bac 'auto'
+    New-Item -ItemType Directory -Path $auto -Force | Out-Null
+    Push-Location $auto
+    try {
+        & (Join-Path $racine 'scripts/scan-pc.ps1') -Role source -PasDOuverture -SansGrosDossiers -SansOutils *> (Join-Path $bac 'auto.txt')
+    } finally { Pop-Location }
+    $attendu = 'instantane-source-' + (Get-Date).ToString('yyyy-MM-dd') + '.json'
+    ok 'le nom porte le role et la date' (Test-Path -LiteralPath (Join-Path $auto $attendu)) $true
 
     "`n--- le lanceur demarre et rend la main ---"
     # Il n'y a plus que le menu texte. Sans rien a lire sur l'entree, il doit
@@ -131,7 +154,8 @@ try {
     # pour de l'ANSI et « Par ou commencer » arrive en charabia — ce qui a fait
     # tomber ce test des que le menu a pris ses accents.
     $l = if (Test-Path -LiteralPath $jl) { Get-Content -LiteralPath $jl -Raw -Encoding UTF8 } else { '' }
-    ok 'il a liste ses actions'      ($l -match "Cet ordinateur est l'ANCIEN") $true
+    ok 'il a liste ses actions'      ($l -match 'Ce PC est la SOURCE') $true
+    ok 'et les deux cotes'           ($l -match 'Ce PC est la CIBLE') $true
     ok 'et le parcours complet'      ($l -match 'Par où commencer') $true
     # C'est tout l'interet d'avoir force l'UTF-8 : si les accents n'arrivaient
     # pas, ils arriveraient en « Ã¹ » ou en « ├¹ ».

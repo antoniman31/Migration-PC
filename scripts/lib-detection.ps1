@@ -1829,6 +1829,24 @@ function Get-TotalAPrevoirMo {
 # inventaire produit sur une machine a fait echouer un simple ConvertFrom-Json
 # hors PowerShell, et l'erreur ne parle que du marqueur, pas de la cause.
 # Un fichier d'echange doit pouvoir etre relu par autre chose que nous.
+# [System.IO.Path]::GetFullPath resout un chemin relatif contre
+# Environment.CurrentDirectory, qui ne suit PAS Set-Location : en PowerShell,
+# se deplacer avec « cd » ne le change pas. Quelqu'un qui fait « cd D:\cle »
+# puis lance le script voyait donc son fichier ecrit la ou PowerShell avait
+# demarre — souvent C:\Windows\System32 — sans que rien ne le dise. Avec un
+# nom fixe le defaut passait inapercu ; avec des instantanes dates il fait
+# perdre le fichier qu'on vient de produire.
+function Resolve-CheminSortie {
+    param([string]$Chemin)
+    if ([string]::IsNullOrWhiteSpace($Chemin)) { return $Chemin }
+    if ([System.IO.Path]::IsPathRooted($Chemin)) {
+        return [System.IO.Path]::GetFullPath($Chemin)
+    }
+    # ProviderPath et non Path : sur un lecteur reseau monte en PSDrive, Path
+    # rend « X:\... » que .NET ne connait pas.
+    return [System.IO.Path]::GetFullPath((Join-Path (Get-Location).ProviderPath $Chemin))
+}
+
 function Write-TexteUtf8 {
     param([string]$Chemin, [string]$Contenu)
     [System.IO.File]::WriteAllText($Chemin, $Contenu, (New-Object System.Text.UTF8Encoding $false))

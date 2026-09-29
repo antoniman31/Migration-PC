@@ -1281,4 +1281,27 @@ ok 'une police en PSL est gardee'   (Get-Nombre $polPS) 1
 ok 'la bonne'                       $polPS[0].nom 'PSL Ornanong'
 
 
+"--- ou le fichier de sortie atterrit ---"
+# GetFullPath resout un chemin relatif contre Environment.CurrentDirectory,
+# qui ne suit PAS Set-Location. « cd D:\cle » puis lancer le script ecrivait
+# donc le fichier la ou PowerShell avait demarre, sans que rien ne le dise.
+# Avec un nom fixe le defaut passait inapercu ; avec des instantanes dates il
+# fait perdre le fichier qu'on vient de produire.
+$bacCwd = Join-Path ([System.IO.Path]::GetTempPath()) ("cwd-" + [guid]::NewGuid().ToString('N'))
+$null = New-Item -ItemType Directory -Path $bacCwd -Force
+Push-Location $bacCwd
+try {
+    $r = Resolve-CheminSortie -Chemin 'instantane.json'
+    ok 'un relatif suit le dossier courant' `
+        ((Split-Path $r -Parent) -eq (Get-Location).ProviderPath) $true
+    # Et pas celui du processus, qui est reste ailleurs.
+    ok 'et pas celui du processus' `
+        ((Split-Path $r -Parent) -eq [Environment]::CurrentDirectory) $false
+} finally { Pop-Location }
+$absolu = Join-Path ([System.IO.Path]::GetTempPath()) 'ailleurs.json'
+ok 'un chemin absolu est respecte' (Resolve-CheminSortie -Chemin $absolu) ([System.IO.Path]::GetFullPath($absolu))
+ok 'une chaine vide passe telle quelle' (Resolve-CheminSortie -Chemin '') ''
+Remove-Item -LiteralPath $bacCwd -Recurse -Force -ErrorAction SilentlyContinue
+
+
 if($script:ko){"`n$($script:ko) TEST(S) EN ECHEC"; exit 1} else {"`nTOUS LES TESTS POWERSHELL PASSENT"}

@@ -220,7 +220,7 @@ $contenu = [ordered]@{
     machine = $env:COMPUTERNAME
     entrees = @($index)
 }
-Write-TexteUtf8 -Chemin ([System.IO.Path]::GetFullPath($fichierIndex)) -Contenu ($contenu | ConvertTo-Json -Depth 6)
+Write-TexteUtf8 -Chemin ((Resolve-CheminSortie -Chemin $fichierIndex)) -Contenu ($contenu | ConvertTo-Json -Depth 6)
 
 Write-Host ""
 Write-Host "$copies dossier(s) copie(s)$(if ($echecs) { ", $echecs echec(s)" })." -ForegroundColor Green

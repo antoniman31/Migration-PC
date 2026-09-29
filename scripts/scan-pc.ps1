@@ -295,7 +295,7 @@ $inventaire = [ordered]@{
 }
 
 $json = $inventaire | ConvertTo-Json -Depth 6
-$cheminSortie = [System.IO.Path]::GetFullPath($Sortie)
+$cheminSortie = (Resolve-CheminSortie -Chemin $Sortie)
 Write-TexteUtf8 -Chemin $cheminSortie -Contenu $json
 
 # Le raccourci vers le dernier instantane. Une copie plutot qu'un lien : un
