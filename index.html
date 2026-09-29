@@ -1281,13 +1281,6 @@ const PROFIL_DEFAUT = {
       }
     },
     {
-      "id": "q4",
-      "n": "Sortir les codes de récupération 2FA",
-      "p": "Chaque compte → Sécurité",
-      "note": "Le filet quand le transfert échoue. Les imprimer ou les mettre dans un gestionnaire de mots de passe, jamais sur la machine qu'on efface.",
-      "pr": "high"
-    },
-    {
       "id": "q5",
       "n": "Noter la clé de récupération BitLocker",
       "p": "Paramètres → Chiffrement de l'appareil",
@@ -1299,14 +1292,6 @@ const PROFIL_DEFAUT = {
           "d": "Deux machines, deux clés, et aucune des deux ne doit vivre seulement sur le disque qu'elle déverrouille."
         }
       }
-    },
-    {
-      "id": "q6",
-      "n": "Vérifier que les sauvegardes sont restaurables",
-      "p": "Le support de sauvegarde",
-      "note": "Ouvrir quelques fichiers au hasard depuis la copie, pas depuis l'original. Une sauvegarde jamais relue n'est qu'une intention.",
-      "pr": "high",
-      "warn": "Dernière occasion de s'en apercevoir. Après le formatage, il n'y a plus de source."
     },
     {
       "id": "q7",
@@ -1346,13 +1331,6 @@ const PROFIL_DEFAUT = {
       "n": "Récupérer les licences encore inconnues",
       "p": "Belarc Advisor, ProduKey ou l'éditeur",
       "note": "Les clés saisies il y a des années et jamais notées. Les relever tant que le système fonctionne.",
-      "pr": "med"
-    },
-    {
-      "id": "q11",
-      "n": "Exporter les profils Wi-Fi",
-      "p": "netsh wlan export profile key=clear folder=.",
-      "note": "Exporte chaque réseau enregistré avec sa clé. Utile pour les réseaux dont plus personne ne connaît le mot de passe.",
       "pr": "med"
     },
     {
@@ -1771,16 +1749,6 @@ const PROFIL_DEFAUT = {
       "d": "Windows ne choisit pas toujours la fréquence maximale. Régler chaque écran sur sa résolution native et son taux de rafraîchissement maximal."
     },
     {
-      "id": "n28",
-      "o": 29,
-      "n": "Mettre en place une sauvegarde",
-      "src": "Historique des fichiers, OneDrive ou autre",
-      "p": "high",
-      "t": 15,
-      "post": true,
-      "d": "Le moment le plus facile pour s'en occuper, et celui où on le remet toujours à plus tard. Une sauvegarde qui n'a jamais été restaurée n'est pas une sauvegarde : tester une restauration."
-    },
-    {
       "id": "n12",
       "o": 30,
       "n": "Créer un point de restauration",
@@ -1792,19 +1760,6 @@ const PROFIL_DEFAUT = {
         "n1"
       ],
       "d": "Une fois le système propre et à jour, avant d'installer les applications. Filet de sécurité en cas d'installation qui tourne mal."
-    },
-    {
-      "id": "sy5",
-      "o": 31,
-      "n": "Harmoniser les réglages entre les deux machines",
-      "src": "Comptes de synchronisation",
-      "p": "ok",
-      "t": 20,
-      "post": true,
-      "cas": [
-        "second"
-      ],
-      "d": "Navigateur, éditeur de code, raccourcis clavier, thème : la plupart savent synchroniser leurs réglages via un compte. Une demi-heure passée là évite de se sentir chez les autres à chaque fois qu'on change de machine."
     }
   ],
   "ordre": [],
@@ -1874,13 +1829,6 @@ const PROFIL_DEMO = {
       }
     },
     {
-      "id": "q4",
-      "n": "Sortir les codes de récupération 2FA",
-      "p": "Chaque compte → Sécurité",
-      "note": "Le filet quand le transfert échoue. Les imprimer ou les mettre dans un gestionnaire de mots de passe, jamais sur la machine qu'on efface.",
-      "pr": "high"
-    },
-    {
       "id": "q5",
       "n": "Noter la clé de récupération BitLocker",
       "p": "Paramètres → Chiffrement de l'appareil",
@@ -1892,14 +1840,6 @@ const PROFIL_DEMO = {
           "d": "Deux machines, deux clés, et aucune des deux ne doit vivre seulement sur le disque qu'elle déverrouille."
         }
       }
-    },
-    {
-      "id": "q6",
-      "n": "Vérifier que les sauvegardes sont restaurables",
-      "p": "Le support de sauvegarde",
-      "note": "Ouvrir quelques fichiers au hasard depuis la copie, pas depuis l'original. Une sauvegarde jamais relue n'est qu'une intention.",
-      "pr": "high",
-      "warn": "Dernière occasion de s'en apercevoir. Après le formatage, il n'y a plus de source."
     },
     {
       "id": "q7",
@@ -1939,13 +1879,6 @@ const PROFIL_DEMO = {
       "n": "Récupérer les licences encore inconnues",
       "p": "Belarc Advisor, ProduKey ou l'éditeur",
       "note": "Les clés saisies il y a des années et jamais notées. Les relever tant que le système fonctionne.",
-      "pr": "med"
-    },
-    {
-      "id": "q11",
-      "n": "Exporter les profils Wi-Fi",
-      "p": "netsh wlan export profile key=clear folder=.",
-      "note": "Exporte chaque réseau enregistré avec sa clé. Utile pour les réseaux dont plus personne ne connaît le mot de passe.",
       "pr": "med"
     },
     {
@@ -2364,16 +2297,6 @@ const PROFIL_DEMO = {
       "d": "Windows ne choisit pas toujours la fréquence maximale. Régler chaque écran sur sa résolution native et son taux de rafraîchissement maximal."
     },
     {
-      "id": "n28",
-      "o": 29,
-      "n": "Mettre en place une sauvegarde",
-      "src": "Historique des fichiers, OneDrive ou autre",
-      "p": "high",
-      "t": 15,
-      "post": true,
-      "d": "Le moment le plus facile pour s'en occuper, et celui où on le remet toujours à plus tard. Une sauvegarde qui n'a jamais été restaurée n'est pas une sauvegarde : tester une restauration."
-    },
-    {
       "id": "n12",
       "o": 30,
       "n": "Créer un point de restauration",
@@ -2385,19 +2308,6 @@ const PROFIL_DEMO = {
         "n1"
       ],
       "d": "Une fois le système propre et à jour, avant d'installer les applications. Filet de sécurité en cas d'installation qui tourne mal."
-    },
-    {
-      "id": "sy5",
-      "o": 31,
-      "n": "Harmoniser les réglages entre les deux machines",
-      "src": "Comptes de synchronisation",
-      "p": "ok",
-      "t": 20,
-      "post": true,
-      "cas": [
-        "second"
-      ],
-      "d": "Navigateur, éditeur de code, raccourcis clavier, thème : la plupart savent synchroniser leurs réglages via un compte. Une demi-heure passée là évite de se sentir chez les autres à chaque fois qu'on change de machine."
     }
   ],
   "ordre": [
@@ -4903,6 +4813,17 @@ function empreinteScan(d){
 function appliquerScanLocal(){
   const d=window.MIGRATION_PC_SCAN;
   if(!d||typeof d!=='object')return;
+  // Le relais par la clé USB. Sur le PC cible, ce navigateur n'a jamais vu
+  // l'instantané de la source : sa mémoire locale est vide, et un scan de
+  // cible sans rien à comparer ne dit rien. Le scanner joint donc la source
+  // au résultat, et on l'applique d'abord — la checklist se construit depuis
+  // l'ancien PC, puis la comparaison dit ce qui manque.
+  const src=window.MIGRATION_PC_SOURCE;
+  if(src&&typeof src==='object'&&!INV_SOURCE){
+    proteger('Instantané de la source',function(){
+      traiterDonnees(src,'apporté par la clé depuis le PC source');
+    });
+  }
   const empreinte=empreinteScan(d);
   let dejaVu=null;
   try{dejaVu=localStorage.getItem(CLE_SCAN);}catch(e){}

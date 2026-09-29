@@ -180,8 +180,8 @@ requis.forEach(function(f){
 // celui qui a lancé le scan. resultat-scan.js est en plus chargé par la page à
 // l'ouverture — versionné, il partirait en ligne et s'appliquerait chez tous
 // les visiteurs. Un de mes propres essais en avait laissé un dans le dossier.
-['resultat-scan.js','inventaire-pc.json','verification-pc.json',
- 'verification-sauvegardes.json','profil-local.json'].forEach(function(f){
+['resultat-scan.js','inventaire-pc.json','instantane-source.json',
+ 'verification-pc.json','profil-local.json'].forEach(function(f){
   let ignore=false;
   try{
     execFileSync('git',['check-ignore','-q',f],{cwd:racine,stdio:'ignore'});

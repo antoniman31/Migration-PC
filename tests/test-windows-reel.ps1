@@ -41,6 +41,9 @@ New-Item -ItemType Directory -Path $bac -Force | Out-Null
 # scan-pc.ps1 depose aussi son resultat a cote de index.html, donc dans le
 # depot : on le retire quoi qu'il arrive, il n'a rien a faire dans un commit.
 $depose = Join-Path $racine 'resultat-scan.js'
+# Le scan de la source depose aussi le relais a cote de la page, pour que celui
+# de la cible le retrouve apres le changement de machine.
+$relaisTest = Join-Path $racine 'instantane-source.json'
 
 try {
     "--- le scan, pour de vrai ---"
@@ -161,6 +164,7 @@ try {
 finally {
     Remove-Item -LiteralPath $bac -Recurse -Force -ErrorAction SilentlyContinue
     Remove-Item -LiteralPath $depose -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $relaisTest -Force -ErrorAction SilentlyContinue
 }
 
 Write-Host ""
