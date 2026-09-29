@@ -75,7 +75,7 @@ quitter // { id, n, p, note, pr, warn? } — facultatif, sur l'ancien PC
 npc    // { id, o, n, src, p, t, d, post?, dep?, warn? }
 apps   // { id, n, c, src, w?, d, dep?, warn? }
 pwa    // { id, n, u, d }
-ordre  // [ id, ... ] — l'ordre d'installation conseillé
+ordre  // [ id, ... ] — l'ordre d'installation, à défaut de dépendances déclarées
 requetes // { "Nom de l'app": "requête de recherche" }
 materiel // { cm, cpu, gpu, ram, ssd, eth, wifi, audio, bios } — le bloc « Ma configuration »
 ```
@@ -95,8 +95,13 @@ d'identifiants** décrit un vrai lien et débloque trois choses : le badge nomme
 prérequis et se met en évidence tant qu'ils ne sont pas cochés, un avertissement
 apparaît si vous cochez dans le désordre — sans jamais bloquer —, et l'ordre
 d'installation est calculé par tri topologique au lieu d'être maintenu à la main dans
-`ordre`. Les scripts winget, `.ps1` comme `.json`, sortent dans cet ordre. Les cycles
-sont rompus plutôt que de figer la page.
+`ordre`. Les cycles sont rompus plutôt que de figer la page.
+
+`ordre` sert quand aucune dépendance n'est déclarée : un profil écrit à la main qui soigne
+sa liste est respecté. Un élément qui n'y figure pas passe à la fin, il ne disparaît pas.
+Dans les deux cas, ce que l'ordre décide, ce sont les scripts winget — `.ps1` comme `.json` —
+et la file du mode guidé. Ce n'est pas une façon d'afficher la liste : la vue est toujours
+groupée par catégorie.
 
 ```json
 { "id": "a10", "n": "Visual Studio Code", "dep": ["a7"] }

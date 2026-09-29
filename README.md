@@ -224,9 +224,13 @@ décide : elle sait ce qui **manque**, et c'est un constat, pas une supposition.
 cochée à la main reste exclue même quand le scan la dit manquante — quelqu'un qui coche
 affirme l'avoir faite.
 
-**Le reste** — recherche sur les trois onglets, tri par catégorie ou ordre conseillé,
-filtre sur les apps sans winget, vue compacte, thème suivant le système, barres de
-progression, notes libres, champs de licence. Tout ce qui sort en fichier est
+**Le reste** — recherche sur les trois onglets, filtre par catégorie et sur les apps sans
+winget, vue compacte, thème suivant le système, barres de progression, notes libres, champs
+de licence. La liste est groupée par catégorie, sans autre vue : il y a eu quatre tris, dont
+deux lisaient les durées et priorités inventées, et un troisième — « ordre conseillé » —
+n'était qu'un autre affichage des mêmes lignes. L'ordre d'installation compte là où il change
+quelque chose, les scripts winget et le mode guidé, pas comme façon de lire. Tout ce qui sort
+en fichier est
 ce qui est affiché. La progression est enregistrée au fur et à mesure et la barre « Récent »
 en porte l'heure, ou un avertissement quand le navigateur refuse — plutôt que de laisser
 croire que le travail est gardé.

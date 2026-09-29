@@ -210,7 +210,6 @@ body.compact .item{padding:5px 0}
 .search-wrap{position:relative;flex:1;min-width:160px}
 .search-wrap input{width:100%;padding:6px 10px;border:.5px solid var(--brd2);border-radius:8px;background:var(--bg2);color:var(--tx);outline:none}
 .search-wrap input::placeholder{color:var(--tx3)}
-.sort-sel{padding:6px 8px;border:.5px solid var(--brd2);border-radius:8px;background:var(--bg2);color:var(--tx);outline:none}
 .fbs{display:flex;gap:4px;flex-wrap:wrap}
 .fb{padding:4px 9px;font-size:12px;border:.5px solid var(--brd);border-radius:8px;background:var(--bg);color:var(--tx2);white-space:nowrap}
 .fb.active{background:var(--accl);border-color:var(--accb);color:var(--acc-fort);font-weight:500}
@@ -258,8 +257,6 @@ body.compact .item{padding:5px 0}
 .af-c{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--tx);
   padding:5px 0;cursor:pointer;line-height:1.3}
 .af-c input{width:18px;height:18px;flex-shrink:0;cursor:pointer}
-.af-tri{display:block;font-size:11px;color:var(--tx2)}
-.af-tri select{display:block;width:100%;margin-top:5px}
 .apps-filtres .fbs{display:block}
 .apps-act{display:flex;gap:8px;align-items:center;flex-wrap:wrap;
   padding:12px 20px;border-bottom:.5px solid var(--brd)}
@@ -796,7 +793,7 @@ body.guide-actif .history-bar{display:none}
 
   /* Champs : 16 px, sinon iOS zoome à la mise au point et casse la mise en page. */
   input,select,textarea,
-  #gsearch-input,#apps-search,.sort-sel{font-size:16px}
+  #gsearch-input,#apps-search{font-size:16px}
 
   /* Les libellés de variables passent au-dessus du champ : côte à côte,
      110 px de libellé ne laissent plus rien au champ sur 360 px de large. */
@@ -1037,13 +1034,6 @@ if(location.protocol==='file:'){
         <div class="fbs" id="cat-filters"></div>
         <div class="af-sep" aria-hidden="true"></div>
         <label class="af-c"><input type="checkbox" id="btn-no-winget" onchange="toggleNoWinget()"> Sans winget seulement</label>
-        <div class="af-sep" aria-hidden="true"></div>
-        <label class="af-tri">Trier par
-          <select class="sort-sel" id="apps-sort" onchange="renderApps()">
-            <option value="cat">Catégorie</option>
-            <option value="order">Ordre conseillé</option>
-          </select>
-        </label>
       </div>
     </aside>
     <div class="apps-col">
@@ -2512,7 +2502,6 @@ function toggleNoWinget(){
 
 function renderApps(){
   const q=(document.getElementById('apps-search').value||'').toLowerCase();
-  const sort=document.getElementById('apps-sort').value;
   let items=visiblesDe('apps').filter(function(a){
     const catOk=!curCats.length||curCats.indexOf(a.c)>=0;
     const qOk=!q||a.n.toLowerCase().indexOf(q)>=0||(a.w&&a.w.toLowerCase().indexOf(q)>=0);
@@ -2534,7 +2523,13 @@ function renderApps(){
     updateSecProg('apps',visiblesDe('apps'));return;
   }
   let html=tete;
-  if(sort==='cat'){
+  // Une seule vue : groupee par categorie. Il y a eu quatre tris — categorie,
+  // priorite, duree, ordre conseille. Les deux du milieu lisaient des champs
+  // inventes et sont partis avec eux ; « ordre conseille » etait un troisieme
+  // affichage des memes lignes, et l'ordre qu'il montrait ne sert vraiment qu'a
+  // deux endroits ou il compte : les exports winget, qui doivent installer les
+  // prerequis d'abord, et le mode guide. ordreParDependances y reste employe.
+  {
     const grouped={};
     items.forEach(function(a){if(!grouped[a.c])grouped[a.c]=[];grouped[a.c].push(a);});
     let first=true;
@@ -2550,25 +2545,6 @@ function renderApps(){
       html+='<div class="sec-hdr'+(first?' first':'')+'">'+esc(CATS[cat]||cat)+'<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+grp.length+'</span>'+(hasW?'<button class="cat-winget" onclick="copyCatWinget(\''+escJS(cat)+'\',event)">📋 winget</button>':'')+(decidables.length?'<button class="chk-all" onclick="checkAllCat(\''+escJS(cat)+'\',event)">'+(allDone?'Décocher tout':'Tout cocher')+'</button>':'')+'</div></div>';
       grp.forEach(function(a){html+=mkAppItem(a,etats);});
       first=false;
-    });
-  } else if(sort==='order'){
-    // Une liste `ordre` maintenue à la main se désynchronise du profil ; des
-    // dépendances déclarées, elles, restent justes. On préfère donc le calcul
-    // quand il est possible, et on retombe sur la liste sinon.
-    if(aDesDependances()){
-      items=ordreParDependances(items);
-    }else{
-      const orderedIds={};INSTALL_ORDER.forEach(function(id,i){orderedIds[id]=i;});
-      items.sort(function(a,b){const ia=orderedIds[a.id]!==undefined?orderedIds[a.id]:9999;const ib=orderedIds[b.id]!==undefined?orderedIds[b.id]:9999;return ia-ib;});
-    }
-    html+='<div class="sec-hdr first">📋 Ordre conseillé pour le Jour J</div>';
-    items.forEach(function(a){html+=mkAppItem(a,etats);});
-  } else {
-    let lastG='',first=true;
-    items.forEach(function(a){
-      let g='';
-      if(g!==lastG){html+='<div class="sec-hdr'+(first?' first':'')+'">'+g+'</div>';lastG=g;first=false;}
-      html+=mkAppItem(a,etats);
     });
   }
   cont.innerHTML=html;
@@ -2952,7 +2928,7 @@ function fileGuide(){
   const file=[];
   sections.forEach(function(paire){
     let liste=paire[1];
-    if(aDesDependances())liste=ordreParDependances(liste);
+    liste=ordreInstallation(liste);
     liste.forEach(function(e){ONGLET_DE[e.id]=paire[0];file.push(e);});
   });
   return file;
@@ -3178,6 +3154,30 @@ function ordreParDependances(items){
 // Vrai si le profil décrit au moins une dépendance exploitable.
 function aDesDependances(){
   return tousLesElements().some(function(e){return depsDe(e).length>0;});
+}
+
+// L'ordre dans lequel on installe. Un seul endroit décide, parce qu'il n'y a
+// qu'une bonne réponse : un prérequis passe avant ce qui en dépend.
+//
+// Des dépendances déclarées restent justes quand le profil bouge ; une liste
+// `ordre` maintenue à la main se désynchronise. On préfère donc le calcul quand
+// il est possible, et on retombe sur `ordre` sinon — un profil écrit à la main
+// qui ne déclare pas de dépendances mais soigne son ordre est respecté.
+//
+// Il y a eu un mode d'affichage « Ordre conseillé » qui faisait ce calcul pour
+// le montrer. Il est parti : c'était un troisième affichage des mêmes lignes.
+// L'ordre compte là où il change quelque chose — les scripts winget et le mode
+// guidé — pas comme façon de lire la liste.
+function ordreInstallation(items){
+  if(aDesDependances())return ordreParDependances(items);
+  if(!INSTALL_ORDER.length)return items;
+  const rang={};INSTALL_ORDER.forEach(function(id,i){rang[id]=i;});
+  // Une copie : trier sur place remanierait la liste que l'appelant affiche.
+  return items.slice().sort(function(a,b){
+    const ia=rang[a.id]!==undefined?rang[a.id]:9999;
+    const ib=rang[b.id]!==undefined?rang[b.id]:9999;
+    return ia-ib;
+  });
 }
 
 // ═══ ANNULATION ═══
@@ -3669,7 +3669,7 @@ const WINGET_SOURCE={
 
 // winget import traite les paquets dans l'ordre du fichier : on l'ordonne.
 function construireWingetJSON(apps){
-  if(aDesDependances())apps=ordreParDependances(apps);
+  apps=ordreInstallation(apps);
   return {
     $schema:WINGET_SCHEMA,
     CreationDate:new Date().toISOString(),
@@ -3903,9 +3903,8 @@ function exportWingetRemaining(){
       '# Exécuter dans PowerShell en tant qu\'administrateur',''];
     if(!remaining.length){informer('Toutes les apps avec winget sont déjà cochées.');return;}
   }
-  // Un script généré dans le désordre installe un greffon avant son hôte :
-  // quand le profil déclare des dépendances, on les respecte.
-  if(aDesDependances())remaining=ordreParDependances(remaining);
+  // Un script généré dans le désordre installe un greffon avant son hôte.
+  remaining=ordreInstallation(remaining);
   var lines=entete.slice();
   // Les catégories viennent du profil : une liste figée ici omettait
   // silencieusement les apps des profils qui n'ont pas les mêmes.
