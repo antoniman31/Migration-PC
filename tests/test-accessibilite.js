@@ -181,7 +181,7 @@ await pg.click('#tab-apps');await pg.waitForTimeout(150);
 console.log('--- réinitialisation annulable ---');
 await pg.evaluate(()=>{['a1','a2','a3'].forEach(i=>{S.checked[i]=true;S.dates[i]=Date.now();});saveState();renderAll();updateGlobal();});
 ok('3 cases cochées',await pg.evaluate(()=>Object.keys(S.checked).length),3);
-await pg.evaluate(()=>resetSection('apps'));
+await pg.evaluate(()=>toutDecocher());
 await pg.waitForTimeout(200);
 ok('aucune boîte de dialogue',dialogues.length,0);
 ok('bandeau visible',await pg.isVisible('#annul'),true);
@@ -195,7 +195,7 @@ ok('bandeau refermé',await pg.isVisible('#annul'),false);
 
 console.log('\n--- rien à réinitialiser : pas de bouton Annuler ---');
 await pg.evaluate(()=>{S.checked={};S.dates={};saveState();renderAll();updateGlobal();});
-await pg.evaluate(()=>resetSection('apps'));
+await pg.evaluate(()=>toutDecocher());
 await pg.waitForTimeout(150);
 ok('bandeau informatif',await pg.isVisible('#annul'),true);
 ok('bouton Annuler masqué',await pg.isVisible('.annul-btn'),false);

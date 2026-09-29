@@ -35,10 +35,16 @@ console.log('\n--- ce que le menu contient ---');
 await pg.click('#menu-btn');await pg.waitForTimeout(200);
 const items=await pg.evaluate(()=>
   [...document.querySelectorAll('#hdr-menu-liste button')].map(x=>x.textContent.trim()));
-// Le compte exact changera encore : ce qui doit tenir, c'est qu'elles soient
-// toutes nommees et atteignables, pas qu'elles soient six.
-ok('les actions rares sont la',items.length>=6,true);
-['Affichage compact','Exporter le profil','Ma configuration','Réinitialiser','Exporter en texte','Imprimer'].forEach(t=>
+// Le menu a compte seize entrees. Il en reste sept visibles, plus une qui
+// n'apparait que lorsqu'un fichier de scan attend a cote de la page. Ce qui
+// doit tenir : qu'elles soient toutes nommees et atteignables — et qu'on ne
+// retombe pas a seize.
+const permanentes=await pg.evaluate(()=>
+  [...document.querySelectorAll('#hdr-menu-liste button')]
+    .filter(x=>x.id!=='scan-rejouer').length);
+ok('sept entrees permanentes',permanentes,7);
+ok('et une seule conditionnelle',items.length-permanentes,1);
+['Importer','Exporter le profil','Affichage compact','Ma configuration','Réinitialiser','Imprimer'].forEach(t=>
   ok('« '+t+' » y est',items.some(x=>x.indexOf(t)>=0),true));
 ok('chaque action a un libelle, pas qu\'un emoji',
   items.every(t=>t.replace(/[^\p{L}]/gu,'').length>3),true);
@@ -94,24 +100,30 @@ const fichier=await dl;
 ok('« Exporter le profil » produit bien un fichier',!!fichier,true);
 if(fichier)console.log('   nom :',fichier.suggestedFilename());
 
-console.log('\n--- l\'export texte porte le contenu affiché ---');
-// Le profil livré est vide : sans l'exemple garni, l'export n'aurait rien à
-// écrire et ce contrôle ne prouverait rien.
+console.log('\n--- un seul fichier porte les listes et la progression ---');
+// « Sauvegarder ma progression » etait une seconde entree pour la moitie de ce
+// fichier. Elle est partie, et l'export de profil porte les deux : deux
+// fichiers a ne pas confondre valaient moins qu'un seul qui contient tout.
+// Le profil livre est vide : sans l'exemple garni il n'y aurait rien a cocher.
 await pg.evaluate(()=>{chargerDemo();});
 await pg.waitForTimeout(250);
+await pg.evaluate(()=>{const a=APPS_DATA[0];toggle(a.id,a.n);});
+await pg.waitForTimeout(150);
 await pg.click('#menu-btn');await pg.waitForTimeout(150);
-const dlTxt=pg.waitForEvent('download',{timeout:5000}).catch(()=>null);
-await pg.getByRole('menuitem',{name:/Exporter en texte/}).click();
-const f2=await dlTxt;
-ok('« Exporter en texte » produit un fichier',!!f2,true);
+const dlP=pg.waitForEvent('download',{timeout:5000}).catch(()=>null);
+await pg.getByRole('menuitem',{name:/Exporter le profil/}).click();
+const f2=await dlP;
+ok('l\'export produit un fichier',!!f2,true);
 if(f2){
-  const chemin=await f2.path();
-  const txt=require('fs').readFileSync(chemin,'utf8');
-  ok('les deux sections y sont',
-    ['LOGICIELS','PWA'].every(t=>txt.indexOf(t)>=0),true);
+  const d=JSON.parse(require('fs').readFileSync(await f2.path(),'utf8'));
+  ok('il porte les listes',Array.isArray(d.apps)&&d.apps.length>0,true);
+  ok('et la progression',Object.keys(d.state.checked).length>0,true);
   const premier=await pg.evaluate(()=>APPS_DATA[0].n);
-  ok('et le premier logiciel affiché aussi',txt.indexOf(premier)>=0,true);
+  ok('le premier logiciel affiché y est',
+    d.apps.some(a=>a.n===premier),true);
 }
+ok('« Sauvegarder ma progression » a disparu du menu',
+  items.some(x=>/Sauvegarder/.test(x)),false);
 
 console.log('\n--- au clavier ---');
 await pg.evaluate(()=>document.getElementById('menu-btn').focus());

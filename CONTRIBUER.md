@@ -132,7 +132,8 @@ aussi le panneau à 360 px de large, dans les deux thèmes.
 
 `tests/test-menu.js` compte les boutons restés dans la barre, vérifie qu'aucun n'y est
 réduit à une icône muette, que les actions du menu agissent réellement (l'affichage compact
-s'applique, le profil se télécharge, l'export texte porte ce qui est affiché), que le menu se
+s'applique, le fichier exporté porte les listes et les cases cochées), qu'il reste sept
+entrées permanentes et une seule conditionnelle, que le menu se
 referme par les trois chemins attendus et qu'il reste utilisable au clavier comme au doigt.
 
 `tests/test-profil-sync.js` garde aussi une porte fermée : il échoue si `Get-Duree`,
