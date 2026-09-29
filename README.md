@@ -56,11 +56,21 @@ Posez le dossier entier sur une clé USB. Un seul fichier se lance,
 3. Double-cliquez `Migration PC.bat`, choisissez **CIBLE**. La page s'ouvre sur ce qu'il
    reste à installer : **📦 Logiciels** dit ce qui manque, **🎛️ Pilotes** montre les
    périphériques sans pilote et le lien du constructeur.
+4. Relancez `Migration PC.bat` : il propose **Installer ce qui manque**. Il montre la
+   liste, attend que vous tapiez `INSTALLER`, puis joue `winget import`. C'est la seule
+   action du programme qui change la machine, et rien ne s'enchaîne tout seul après un
+   scan.
 
 Rien à importer à la main entre les deux, et rien à retrouver dans un dossier.
 
-Le menu n'ajoute aucune capacité : il appelle les mêmes scripts, qu'on peut toujours lancer
-à la main. Une action dont il manque un fichier reste affichée, grisée, avec la raison —
+Le menu ne vous demande plus de quel côté vous êtes quand il peut le déduire : si la clé
+porte déjà l'instantané d'une autre machine — numéro de série du SMBIOS différent — c'est
+que vous êtes arrivé sur la cible. Il l'annonce, met cette entrée en tête, et vous laissez
+Entrée ou choisissez autre chose. Les deux cas vraiment ambigus restent une question : même
+numéro de série (vous réinstallez ce PC-ci) et numéro de série absent des deux côtés.
+
+À part l'installation, le menu n'ajoute aucune capacité : il appelle les mêmes scripts,
+qu'on peut toujours lancer à la main. Une action dont il manque un fichier reste affichée, grisée, avec la raison —
 plus utile qu'une action absente dont on ignore pourquoi. Après chaque action il dit quoi
 faire ensuite, et une entrée **Par où commencer ?** décrit le parcours des trois situations :
 changer de PC, réinstaller sur place, garder les deux machines.
@@ -140,6 +150,11 @@ powershell -ExecutionPolicy Bypass -File .\scripts\scan-pc.ps1 -Role cible
 | `-ToutInclure` | Garde aussi les redistribuables et les composants système |
 | `-PasDOuverture` | N'ouvre pas le navigateur à la fin |
 
+Le scan de la cible écrit en plus `winget-restant.json` à côté de la page : la liste de ce
+qui manque, au format `winget import`. C'est ce fichier que le menu joue. Il est calculé par
+PowerShell et non par la page, parce que le fichier que la page produit part dans le dossier
+des téléchargements du navigateur, où le menu n'a aucun moyen fiable de le retrouver.
+
 **Entre les deux, sauvegardez vos fichiers personnels.** Le scan liste, il ne copie rien.
 Cette étape n'est pas outillée par ce projet : c'est le seul geste irréversible de la
 procédure, et il est entièrement à vous.
@@ -177,8 +192,12 @@ Trois onglets. **Logiciels** est la liste relevée sur le PC source, par catégo
 version, le poids et la commande qui réinstalle. Dès que le scan du PC cible arrive, la
 même liste change d'état : un bandeau dit combien de logiciels sont là sur combien, et
 chaque ligne porte son verdict — *là*, *manque*, ou *plus ancien* avec les deux versions.
-Un bouton coche d'un coup ce que le scan a constaté ; il ne décoche jamais, parce qu'une
-détection ratée effacerait un suivi fait à la main.
+Une ligne que le scan a trouvée est **réglée d'office** : elle s'affiche cochée et ne se
+décoche pas, parce qu'un constat n'est pas une décision. La case garde son sens entier
+avant tout scan de cible, et devient après une décision — installé, ou je m'en passe. Le
+scan n'écrit jamais dans vos cases : rien de ce qui a été coché à la main n'est effacé ni
+contredit en silence. Si un verdict « là » est faux, c'est que le rapprochement par nom
+s'est trompé : corrigez le nom dans le JSON et relancez le scan.
 
 **Pilotes** montre ceux du PC receveur après son scan : les périphériques en défaut, ceux
 déjà en place groupés par fournisseur, et le lien vers la page de support du constructeur,

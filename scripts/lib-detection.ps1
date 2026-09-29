@@ -1334,3 +1334,98 @@ function Read-PilotesManquants {
         return @()
     }
 }
+
+# ------------------------------------------------- ce qui manque sur la cible
+#
+# La page sait deja calculer cette liste : elle compare les deux instantanes et
+# produit un fichier « winget import ». Mais ce fichier atterrit dans le dossier
+# des telechargements du navigateur, et le lanceur n'a aucun moyen fiable de le
+# retrouver. Le scan de la cible, lui, a les deux instantanes sous la main.
+#
+# Le prix a payer : la logique de rapprochement existe deux fois, ici et en
+# JavaScript. C'est une duplication assumee, et le garde-fou est explicite —
+# tests/test-scan.ps1 et tests/test-reconciliation.js rejouent les MEMES cas de
+# normalisation. Si les deux divergent, un test tombe.
+
+# La copie exacte de cleNom() dans index.html. Chaque ligne y correspond, dans
+# le meme ordre : deux normalisations differentes rapprocheraient des logiciels
+# differents de chaque cote, et personne ne verrait pourquoi.
+function Get-CleNom {
+    param([string]$Nom)
+    $n = ([string]$Nom).ToLowerInvariant()
+    # Les mentions entre parentheses : « (x64 fr) », « (64-bit) ».
+    $n = [regex]::Replace($n, '\([^)]*\)', '')
+    # Le mot « version » et les numeros pointes : 24.08, 1.2.3.
+    $n = [regex]::Replace($n, '\bversion\b|\bv?\d+(\.\d+)+\b', '')
+    $n = [regex]::Replace($n, '\b(update|build|release|rev|patch|sp)\s*\d+\b', '')
+    # Tout ce qui suit un tiret entoure d'espaces : « Firefox - ESR ».
+    $n = [regex]::Replace($n, '\s+-\s+.*$', '')
+    # Transcrits plutot qu'effaces : sans cela « Notepad++ » et « Notepad »
+    # donneraient la meme cle et l'un des deux disparaitrait.
+    $n = $n.Replace('+', 'p').Replace('#', 'd')
+    return [regex]::Replace($n, '[^a-z0-9]', '')
+}
+
+# Les applications de la source, avec un identifiant winget, qu'on ne retrouve
+# pas sur la cible. Le meme critere que la page : present ou absent, jamais
+# « une version plus recente existe » — le programme ne fait aucun appel reseau.
+function Get-AppsManquantes {
+    param($Source, $Cible)
+    if ($null -eq $Source) { return @() }
+    $presentes = @{}
+    if ($null -ne $Cible -and $Cible.PSObject.Properties['apps']) {
+        foreach ($a in @($Cible.apps)) {
+            if (-not $a) { continue }
+            $nom = if ($a.PSObject.Properties['nom']) { [string]$a.nom } else { '' }
+            $cle = Get-CleNom $nom
+            if ($cle) { $presentes[$cle] = $true }
+        }
+    }
+    $out = @()
+    $vues = @{}
+    if (-not $Source.PSObject.Properties['apps']) { return @() }
+    foreach ($a in @($Source.apps)) {
+        if (-not $a) { continue }
+        $w = if ($a.PSObject.Properties['winget']) { ([string]$a.winget).Trim() } else { '' }
+        # Sans identifiant winget il n'y a rien a installer automatiquement :
+        # la page propose alors un lien de recherche, et c'est tout ce qu'on
+        # peut honnetement faire.
+        if (-not $w) { continue }
+        $nom = if ($a.PSObject.Properties['nom']) { [string]$a.nom } else { '' }
+        $cle = Get-CleNom $nom
+        if (-not $cle) { continue }
+        if ($presentes.ContainsKey($cle)) { continue }
+        # Deux entrees de la source peuvent porter le meme identifiant winget :
+        # l'installer deux fois ne ferait pas de mal, mais la liste montree a
+        # l'utilisateur doit etre celle qu'il lira.
+        if ($vues.ContainsKey($w)) { continue }
+        $vues[$w] = $true
+        $out += [pscustomobject]@{ nom = $nom; winget = $w }
+    }
+    return @($out)
+}
+
+# Le format officiel de « winget export », relisible par « winget import ».
+# Choisi plutot qu'un script d'appels successifs parce que l'import est
+# idempotent : il saute ce qui est deja installe et reprend apres une coupure.
+function Format-WingetImport {
+    param($Manquantes)
+    return [ordered]@{
+        '$schema'     = 'https://aka.ms/winget-packages.schema.2.0.json'
+        CreationDate  = (Get-Date).ToString('o')
+        Sources       = @(
+            [ordered]@{
+                Packages      = @(@($Manquantes) | ForEach-Object {
+                    [ordered]@{ PackageIdentifier = $_.winget }
+                })
+                SourceDetails = [ordered]@{
+                    Argument   = 'https://cdn.winget.microsoft.com/cache'
+                    Identifier = 'Microsoft.Winget.Source_8wekyb3d8bbwe'
+                    Name       = 'winget'
+                    Type       = 'Microsoft.PreIndexed.Package'
+                }
+            }
+        )
+        WinGetVersion = '1.13.0'
+    }
+}

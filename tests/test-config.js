@@ -51,7 +51,18 @@ ok('le focus y entre',await pg.evaluate(()=>
 await pg.fill('#cfg-cm','ASUS ROG STRIX B850-A');
 await pg.fill('#cfg-gpu','NVIDIA RTX 5070 Ti');
 await pg.waitForTimeout(400);
-ok('le résumé compte',await pg.textContent('#config-resume'),'2 composants sur 9');
+// Un compte — « 2 sur 9 » — ne dit pas s'il faut remplir la suite. Le résumé
+// nomme donc ce qui manque pour retrouver un pilote, qui est la seule chose
+// qu'on ne peut pas se contenter d'ignorer.
+const resume=await pg.textContent('#config-resume');
+ok('le résumé compte',/2\/9/.test(resume),true);
+ok('et nomme ce qui manque pour les pilotes',
+  /r[ée]seau filaire/.test(resume)&&/wi-fi/i.test(resume),true);
+// Les neuf champs sont rangés en deux groupes : cinq décrivent la machine,
+// quatre servent à retrouver un pilote, et une liste plate cachait cet écart.
+ok('deux groupes de champs',(await pg.$$('.config-grp')).length,2);
+ok('chaque groupe porte un titre',(await pg.$$('.config-grp-t')).length,2);
+ok('les neuf champs y sont tous',(await pg.$$('.config-grp .config-input')).length,9);
 ok('la carte mère est retenue',await pg.evaluate(()=>CONFIG.cm),'ASUS ROG STRIX B850-A');
 
 console.log('\n--- ça tient, et ça s\'efface ---');

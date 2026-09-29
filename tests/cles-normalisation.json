@@ -1,0 +1,82 @@
+[
+  {
+    "nom": "Mozilla Firefox (x64 fr)",
+    "cle": "mozillafirefox"
+  },
+  {
+    "nom": "Mozilla Firefox",
+    "cle": "mozillafirefox"
+  },
+  {
+    "nom": "7-Zip 24.09",
+    "cle": "7zip"
+  },
+  {
+    "nom": "7-Zip",
+    "cle": "7zip"
+  },
+  {
+    "nom": "Java 8 Update 401",
+    "cle": "java8"
+  },
+  {
+    "nom": "Java 8 Update 411",
+    "cle": "java8"
+  },
+  {
+    "nom": "Notepad++",
+    "cle": "notepadpp"
+  },
+  {
+    "nom": "Notepad",
+    "cle": "notepad"
+  },
+  {
+    "nom": "Visual Studio Code",
+    "cle": "visualstudiocode"
+  },
+  {
+    "nom": "Microsoft Visual C++ 2015-2022 Redistributable (x64) 14.40.33810",
+    "cle": "microsoftvisualcpp20152022redistributable"
+  },
+  {
+    "nom": "Python 3.12.4",
+    "cle": "python"
+  },
+  {
+    "nom": "Python 3.13.0",
+    "cle": "python"
+  },
+  {
+    "nom": "Firefox - ESR",
+    "cle": "firefox"
+  },
+  {
+    "nom": "Blender version 4.2",
+    "cle": "blender"
+  },
+  {
+    "nom": "GIMP 2.10.38",
+    "cle": "gimp"
+  },
+  {
+    "nom": "C# Dev Kit",
+    "cle": "cddevkit"
+  },
+  {
+    "nom": "  Steam  ",
+    "cle": "steam"
+  },
+  {
+    "nom": "Épée & Bouclier",
+    "cle": "pebouclier"
+  },
+  {
+    "nom": "",
+    "cle": ""
+  },
+  {
+    "nom": null,
+    "cle": ""
+  }
+]

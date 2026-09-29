@@ -571,4 +571,90 @@ ok 'une chaine vide passe telle quelle' (Resolve-CheminSortie -Chemin '') ''
 Remove-Item -LiteralPath $bacCwd -Recurse -Force -ErrorAction SilentlyContinue
 
 
+"`n--- la normalisation des noms, contrat partage avec la page ---"
+# La liste des manquants est calculee deux fois : par la page, et ici par le
+# scan de la cible qui ecrit le fichier « winget import » que le lanceur joue.
+# Deux normalisations differentes rapprocheraient des logiciels differents de
+# chaque cote, et personne ne verrait pourquoi. Ce fichier est la reference
+# commune, et tests/test-reconciliation.js le rejoue a l'identique : une
+# divergence fait tomber l'un des deux.
+$casCles = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'cles-normalisation.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+$divergents = @()
+foreach ($c in @($casCles)) {
+    $obtenu = Get-CleNom $c.nom
+    if ($obtenu -ne $c.cle) { $divergents += "$($c.nom) -> $obtenu (attendu $($c.cle))" }
+}
+ok "les $(@($casCles).Count) cles du contrat partage" ($divergents -join ' | ') ''
+
+"`n--- ce qui manque sur la cible ---"
+# Le meme critere que la page : present ou absent, jamais « une version plus
+# recente existe ». Le programme ne fait aucun appel reseau.
+$src = [pscustomobject]@{ apps = @(
+    [pscustomobject]@{ nom = 'Mozilla Firefox (x64 fr)'; winget = 'Mozilla.Firefox' },
+    [pscustomobject]@{ nom = '7-Zip 24.09';              winget = '7zip.7zip' },
+    [pscustomobject]@{ nom = 'Krita';                    winget = 'KDE.Krita' },
+    [pscustomobject]@{ nom = 'Pilote maison';            winget = '' }
+) }
+$cib = [pscustomobject]@{ apps = @(
+    [pscustomobject]@{ nom = 'Mozilla Firefox'; winget = 'Mozilla.Firefox' }
+) }
+$manq = @(Get-AppsManquantes -Source $src -Cible $cib)
+ok 'deux manquants' $manq.Count 2
+ok 'Firefox est reconnu malgre le suffixe' (@($manq | Where-Object { $_.winget -eq 'Mozilla.Firefox' })).Count 0
+ok '7-Zip manque'  (@($manq | Where-Object { $_.winget -eq '7zip.7zip' })).Count 1
+ok 'Krita manque'  (@($manq | Where-Object { $_.winget -eq 'KDE.Krita' })).Count 1
+# Sans identifiant winget il n'y a rien a installer automatiquement : la page
+# propose un lien de recherche, et c'est tout ce qu'on peut honnetement faire.
+ok 'ce qui n a pas d identifiant est ecarte' (@($manq | Where-Object { $_.nom -eq 'Pilote maison' })).Count 0
+# Deux entrees du meme paquet ne doivent pas apparaitre deux fois dans la liste
+# qu'on montre a quelqu'un avant de lui installer des logiciels.
+$src2 = [pscustomobject]@{ apps = @(
+    [pscustomobject]@{ nom = 'Python 3.12.4'; winget = 'Python.Python.3' },
+    [pscustomobject]@{ nom = 'Python 3.13.0'; winget = 'Python.Python.3' }
+) }
+ok 'un doublon ne sort qu une fois' (@(Get-AppsManquantes -Source $src2 -Cible ([pscustomobject]@{ apps = @() }))).Count 1
+ok 'une cible vide laisse tout manquant' (@(Get-AppsManquantes -Source $src -Cible $null)).Count 3
+ok 'sans source, rien' (@(Get-AppsManquantes -Source $null -Cible $cib)).Count 0
+# Un instantane sans champ apps ne doit pas faire echouer le scan : StrictMode
+# rend une propriete absente fatale si on la lit mal.
+ok 'un instantane muet ne casse rien' (@(Get-AppsManquantes -Source ([pscustomobject]@{ type = 'x' }) -Cible $cib)).Count 0
+
+"`n--- le fichier winget import ---"
+$fmt = Format-WingetImport -Manquantes $manq
+ok 'le schema officiel' ($fmt['$schema'] -match 'winget-packages\.schema') $true
+ok 'les deux paquets y sont' @($fmt.Sources[0].Packages).Count 2
+ok 'dans l ordre de la liste' $fmt.Sources[0].Packages[0].PackageIdentifier '7zip.7zip'
+ok 'la source est le depot winget' $fmt.Sources[0].SourceDetails.Name 'winget'
+# Le fichier doit etre relisible par notre propre lecteur, sinon le lanceur
+# montrerait une liste vide devant un fichier plein.
+. (Join-Path (Split-Path $PSScriptRoot -Parent) 'scripts/lanceur-actions.ps1')
+$bacW = Join-Path ([System.IO.Path]::GetTempPath()) ("mpc winget " + (Get-Random))
+New-Item -ItemType Directory -Path $bacW -Force | Out-Null
+try {
+    $f = Join-Path $bacW 'winget-restant.json'
+    Set-Content -LiteralPath $f -Value ($fmt | ConvertTo-Json -Depth 6) -Encoding UTF8
+    $relu = @(Read-WingetImport -Chemin $f)
+    ok 'relu par le lanceur' ($relu -join ',') '7zip.7zip,KDE.Krita'
+    ok 'un fichier absent rend une liste vide' (@(Read-WingetImport -Chemin (Join-Path $bacW 'rien.json'))).Count 0
+    Set-Content -LiteralPath $f -Value 'pas du json' -Encoding UTF8
+    ok 'un fichier abime aussi' (@(Read-WingetImport -Chemin $f)).Count 0
+} finally { Remove-Item $bacW -Recurse -Force -ErrorAction SilentlyContinue }
+
+"`n--- la confirmation avant d installer ---"
+# Ce qui s'installe sur la machine de quelqu'un ne se decide pas a sa place : la
+# confirmation est un mot tape, jamais une touche. « o », « y » et Entree se
+# tapent par reflexe.
+ok 'le mot exact passe'        (Test-Confirmation 'INSTALLER') $true
+ok 'la casse est tolerée'      (Test-Confirmation ' installer ') $true
+ok 'Entree ne suffit pas'      (Test-Confirmation '') $false
+ok 'oui ne suffit pas'         (Test-Confirmation 'oui') $false
+ok 'o ne suffit pas'           (Test-Confirmation 'o') $false
+ok 'y ne suffit pas'           (Test-Confirmation 'y') $false
+$invite = @(Get-InviteInstallation -Identifiants @('7zip.7zip', 'KDE.Krita'))
+$texteInvite = $invite -join ' '
+ok 'la liste entiere est montree' ($texteInvite -match '7zip\.7zip' -and $texteInvite -match 'KDE\.Krita') $true
+ok 'le nombre est annonce'        ($texteInvite -match '2 logiciel') $true
+ok 'le mot a taper est dit'       ($texteInvite -match 'INSTALLER') $true
+ok 'une liste vide le dit'        ((@(Get-InviteInstallation -Identifiants @()) -join ' ') -match 'Rien a installer') $true
+
 if($script:ko){"`n$($script:ko) TEST(S) EN ECHEC"; exit 1} else {"`nTOUS LES TESTS POWERSHELL PASSENT"}

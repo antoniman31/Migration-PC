@@ -26,6 +26,11 @@ déclare une couverture inconnue.
 Et, sur la machine d'arrivée seulement, `Read-PilotesManquants` : les
 périphériques que Windows signale comme sans pilote ou en erreur.
 
+Sur la cible encore, le scan écrit `winget-restant.json` : la liste des logiciels
+de la source, avec un identifiant winget, absents d'ici. C'est ce que le menu
+propose d'installer. Le critère est le même que celui de la page — présent ou
+absent, jamais « une version plus récente existe ».
+
 ### Ce que le volet pilotes ne prétend pas faire
 
 Il ne dit **jamais** « une version plus récente existe ». Le programme ne fait

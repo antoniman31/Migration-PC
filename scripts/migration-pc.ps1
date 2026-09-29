@@ -53,6 +53,39 @@ function Invoke-Action {
         return @{ ok = $false; message = (Get-MessageManquants $Action.manquants) }
     }
 
+    # L'installation est la seule action qui change la machine. Elle montre la
+    # liste entiere, attend un mot tape, et n'est jamais enchainee toute seule
+    # apres un scan : c'est le seul endroit du programme ou une erreur ne se
+    # rattrape pas en rechargeant une page.
+    if ($Action.PSObject.Properties['winget'] -and $Action.winget) {
+        $fichier = Join-Path $Racine '..\winget-restant.json'
+        $ids = @(Read-WingetImport -Chemin $fichier)
+        Write-Host ""
+        Get-InviteInstallation -Identifiants $ids | ForEach-Object { Write-Host ("  " + $_) }
+        if (-not $ids.Count) {
+            return @{ ok = $false; message = "Rien a installer. Relancez le scan CIBLE d'abord." }
+        }
+        $saisi = Read-Host "  Votre reponse"
+        if (-not (Test-Confirmation $saisi)) {
+            return @{ ok = $false; message = "Annulé. Rien n'a été installé." }
+        }
+        if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+            return @{ ok = $false; message = "winget est introuvable sur cette machine. Installez « Programme d'installation d'application » depuis le Microsoft Store." }
+        }
+        Write-Host ""
+        Write-Host "  winget import en cours. Laissez cette fenêtre ouverte." -ForegroundColor Cyan
+        & winget import -i $fichier --accept-package-agreements --accept-source-agreements
+        # winget rend un code non nul des qu'un seul paquet a echoue, meme si
+        # tous les autres sont passes : ce n'est pas un echec de l'operation,
+        # c'est une liste partielle. Le prochain scan CIBLE dira laquelle.
+        if ($LASTEXITCODE -ne 0) {
+            return @{ ok = $true
+                      message = "winget a fini avec des avertissements (code $LASTEXITCODE) : au moins un paquet n'est pas passé."
+                      suite = $Action.suite }
+        }
+        return @{ ok = $true; message = "Terminé."; suite = $Action.suite }
+    }
+
     if ($Action.PSObject.Properties['fichier']) {
         $cible = Join-Path $Racine $Action.fichier
         Start-Process $cible
@@ -107,17 +140,25 @@ function Read-DossierSauvegarde {
 # ---------------------------------------------------------------- menu
 
 function Show-MenuTexte {
-    param($Actions)
+    param($Actions, [string]$Deduction = '')
     while ($true) {
         Write-Host ""
         Write-Host "  Migration PC" -ForegroundColor Cyan
         Write-Host "  ------------"
+        # Ce que la cle sait deja. Affiche avant le menu, pas a la place :
+        # la deduction propose, et l'entree proposee est mise en premier.
+        if ($Deduction) {
+            Write-Host ("  " + $Deduction) -ForegroundColor Cyan
+            Write-Host ""
+        }
         Write-Host "  Que voulez-vous faire ?"
         Write-Host ""
         $i = 0
         foreach ($a in $Actions) {
             $i++
-            $etat = if ($a.possible) { '' } else { '  [indisponible]' }
+            $etat = if (-not $a.possible) { '  [indisponible]' }
+                    elseif ($a.suggere)    { '   <-- proposé' }
+                    else                   { '' }
             Write-Host ("  {0}. {1}{2}" -f $i, $a.titre, $etat) -ForegroundColor $(if ($a.possible) { 'White' } else { 'DarkGray' })
             Write-Host ("     {0}" -f $a.detail) -ForegroundColor DarkGray
             if (-not $a.possible) {
@@ -156,5 +197,16 @@ function Show-MenuTexte {
 
 # ---------------------------------------------------------------- lancement
 
-$actions = @(Get-ActionsMigration -Racine $Racine)
-Show-MenuTexte -Actions $actions
+# Le numero de serie du SMBIOS : le seul identifiant qui survit a une
+# reinstallation de Windows. Indisponible ailleurs que sur Windows, et parfois
+# vide sur une machine assemblee — la deduction s'en passe alors et pose la
+# question.
+$serieLocale = try {
+    ([string](Get-CimInstance Win32_BIOS -ErrorAction Stop).SerialNumber).Trim()
+} catch { '' }
+
+$instantane = Get-InstantaneSourceSurCle -Racine $Racine
+$suggestion = Get-RoleSuggere -Instantane $instantane -SerieLocale $serieLocale -NomLocal $env:COMPUTERNAME
+
+$actions = @(Get-ActionsMigration -Racine $Racine -RoleSuggere $suggestion.role)
+Show-MenuTexte -Actions $actions -Deduction $suggestion.raison
