@@ -268,5 +268,43 @@ ok('et elle trouve ce qui manque',relais.total.attendu-relais.total.arrive,1);
 ok('la checklist vient bien de la source',
   G('APPS_DATA').some(a=>/Krita/.test(a.n)),true);
 
+
+console.log('\n--- le script des restants suit la comparaison ---');
+// Il partait des cases non cochées : sur une checklist où personne n'a rien
+// coché, il proposait de réinstaller des logiciels déjà en place. La
+// comparaison sait ce qui manque, et c'est un constat, pas une supposition.
+const fichiers=[];
+ctx.URL={createObjectURL:b=>{fichiers.push(String((b&&b.p&&b.p[0])||''));return 'blob:x';},
+         revokeObjectURL:()=>{}};
+G('appliquerProfil')(G('inventaireVersProfil')(source),true);
+G('S').checked={};
+vm.runInContext('INV_SOURCE='+JSON.stringify(Object.assign({},source,{role:'source'}))
+  +';INV_CIBLE='+JSON.stringify(Object.assign({},cible,{role:'cible'}))+';',ctx);
+G('exportWingetRemaining()');
+// Firefox, 7-Zip et VS Code sont sur la cible ; seul Krita manque, et il n'a
+// pas d'identifiant winget ici. Il n'y a donc rien à écrire — et surtout pas
+// les trois qui sont déjà là, ce que faisait l'ancienne version.
+ok('rien à installer, donc aucun fichier',fichiers.length,0);
+ok('et on dit pourquoi',/sans identifiant winget/.test(els['annul-txt'].textContent),true);
+
+// Avec un manquant qui porte un identifiant winget, il ressort.
+fichiers.length=0;
+const src2=Object.assign({},source,{role:'source',
+  apps:source.apps.concat([{nom:'Notepad++',version:'8.6',winget:'Notepad.Notepad'}])});
+G('appliquerProfil')(G('inventaireVersProfil')(src2),true);
+G('S').checked={};
+vm.runInContext('INV_SOURCE='+JSON.stringify(src2)
+  +';INV_CIBLE='+JSON.stringify(Object.assign({},cible,{role:'cible'}))+';',ctx);
+G('exportWingetRemaining()');
+ok('le manquant est dans le script',/Notepad\.Notepad/.test(fichiers[0]||''),true);
+
+// Une case cochée à la main affirme que c'est fait : le script ne contredit
+// pas quelqu'un qui coche, même quand le scan dit le contraire.
+fichiers.length=0;
+const ligne=G('APPS_DATA').filter(a=>/Notepad/.test(a.n))[0];
+G('toggle')(ligne.id,ligne.n);
+G('exportWingetRemaining()');
+ok('une ligne cochée à la main est respectée',fichiers.length,0);
+
 console.log(ko?'\n'+ko+' EN ECHEC':'\nRECONCILIATION OPERATIONNELLE');
 process.exit(ko?1:0);
