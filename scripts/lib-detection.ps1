@@ -162,30 +162,18 @@ function Get-Categorie {
     return 'system'
 }
 
-# Poids indicatifs : une suite lourde prend plus de temps qu'un petit utilitaire.
-function Get-Duree {
-    param([string]$Nom, [string]$Categorie)
-    $lourds = @('Adobe', 'Visual Studio', 'Android Studio', 'Office', 'Unity', 'Unreal', 'Autodesk', 'MATLAB')
-    foreach ($mot in $lourds) { if ($Nom -like "*$mot*") { return 30 } }
-    switch ($Categorie) {
-        'jeux'    { return 15 }
-        'pilotes' { return 10 }
-        default   { return 5 }
-    }
-}
-
-function Get-Priorite {
-    param([string]$Categorie)
-    switch ($Categorie) {
-        'pilotes'     { return 'high' }
-        'securite'    { return 'high' }
-        'bureautique' { return 'high' }
-        'dev'         { return 'med' }
-        'comms'       { return 'med' }
-        'jeux'        { return 'ok' }
-        default       { return 'med' }
-    }
-}
+# Il y a eu ici une duree et une priorite par application. Elles sont parties,
+# et il faut dire pourquoi : elles etaient inventees. La duree rendait 30 minutes
+# si le nom contenait « Adobe » ou « Unity », 15 pour un jeu, 5 sinon ; la
+# priorite rendait « haute » parce que la categorie etait « bureautique ». La
+# page les additionnait pour afficher « 2h15 restant », un chiffre fabrique
+# presente comme une mesure — et personne ne pouvait le verifier.
+#
+# Une categorie approximative reste, et c'est assume : une erreur de categorie se
+# voit d'un coup d'oeil, une duree fausse ne se voit jamais.
+#
+# Qu'elles ne reviennent pas sous un autre nom : « on pourrait estimer » n'est
+# pas une raison, c'est exactement le raisonnement qui les avait produites.
 
 # Normalise un nom pour rapprocher deux entrees qui designent le meme logiciel.
 function Get-Cle {
@@ -260,8 +248,6 @@ function Add-App {
         winget   = $Winget
         lien     = $Lien
         cat      = $cat
-        priorite = Get-Priorite -Categorie $cat
-        duree    = Get-Duree -Nom $Nom -Categorie $cat
         tailleGo = $TailleGo
         installe = $Installe
     }

@@ -57,13 +57,15 @@ ok('identifiants uniques sur les deux listes',doublons.length===0,doublons.join(
 const sansId=tous.filter(function(e){return !e.id;});
 ok('tous les éléments ont un identifiant',sansId.length===0,sansId.length+' sans id');
 
-const prioValides=['high','med','ok'];
-const mauvaisePrio=(fichier.apps||[]).filter(function(e){return e.p&&prioValides.indexOf(e.p)<0;});
-ok('priorités valides',mauvaisePrio.length===0,mauvaisePrio.map(e=>e.id+'='+e.p).join(', '));
-
-const mauvaisePr=(fichier.quitter||[])
-  .filter(function(e){return prioValides.indexOf(e.pr)<0;});
-ok('priorités de sauvegarde valides',mauvaisePr.length===0,mauvaisePr.map(e=>e.id+'='+e.pr).join(', '));
+const revenus=['a.priorite','a.duree','PRIO[','fmtTime('].filter(function(m){
+  return html.indexOf(m)>=0;
+});
+ok('ni durée ni priorité inventées dans la page',revenus.length===0,revenus.join(', '));
+const scanPs=fs.readFileSync(path.join(racine,'scripts/lib-detection.ps1'),'utf8');
+const revenusPs=['Get-Duree','Get-Priorite'].filter(function(m){
+  return new RegExp('function\\s+'+m).test(scanPs);
+});
+ok('ni l\'une ni l\'autre dans le scan',revenusPs.length===0,revenusPs.join(', '));
 
 // Types des champs : une description qui serait un tableau et une dependance
 // qui serait une phrase signalent une inversion des deux, ce qui s'est

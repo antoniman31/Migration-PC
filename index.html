@@ -153,13 +153,6 @@ h1{font-size:18px;font-weight:600;color:var(--tx);letter-spacing:-.3px}
 /* DAY EST */
 
 /* SESSION */
-.session-bar{padding:8px 20px;background:var(--accl);border-bottom:.5px solid var(--accb);display:none;align-items:center;gap:10px;flex-wrap:wrap}
-.session-bar.active{display:flex}
-.session-dot{width:8px;height:8px;border-radius:50%;background:var(--acc);animation:pulse 1.5s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.session-info{font-size:12px;color:var(--acc-fort);flex:1}
-.session-stop{padding:4px 10px;font-size:11px;border:.5px solid var(--accb);border-radius:6px;color:var(--acc-fort);font-weight:500;background:transparent}
-.session-stop:hover{background:rgba(84,147,255,.15)}
 
 /* SYNC — géré dans le header */
 
@@ -172,7 +165,6 @@ h1{font-size:18px;font-weight:600;color:var(--tx);letter-spacing:-.3px}
 .gp-bar-wrap{flex:1;display:flex;align-items:center;gap:10px;min-width:180px}
 .gp-bar-bg{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
 .gp-bar-fill{height:100%;background:var(--acc);border-radius:3px;transition:width .4s}
-.gp-time{font-size:11px;color:var(--tx2);white-space:nowrap}
 
 /* GLOBAL SEARCH */
 .gsearch{padding:8px 20px;border-bottom:.5px solid var(--brd);background:var(--bg);display:flex;gap:8px;align-items:center}
@@ -384,7 +376,6 @@ body.compact .item{padding:5px 0}
 .b-winget{background:var(--accl);color:var(--acc-fort);border-color:var(--accb);font-family:"Cascadia Code","Consolas",monospace;cursor:pointer}
 .b-winget:hover{opacity:.8}
 .b-time{background:var(--bg2);color:var(--tx2);border-color:var(--brd)}
-.b-high{background:var(--bh-bg);color:var(--bh-tx);border-color:var(--bh-bd)}
 .b-pwa{background:var(--bpwa-bg);color:var(--bpwa-tx);border-color:var(--bpwa-bd)}
 .b-sync{background:var(--bord-bg);color:var(--bord-tx);border-color:var(--bord-bd);font-weight:600}
 .b-crit{background:var(--bh-bg);color:var(--bh-tx);border-color:var(--bh-bd)}
@@ -395,10 +386,6 @@ body.compact .item{padding:5px 0}
 .hdr-sep{width:.5px;height:20px;background:var(--brd2);margin:0 2px}
 .primary-btn{background:var(--acc-fond)!important;color:#fff!important;border-color:var(--acc-fond)!important}
 .primary-btn:hover{opacity:.9!important}
-/* Le démarrage de session portait un fond vert plein quand il était un bouton
-   de la barre. Dans une liste de menu, un pavé de couleur sur une ligne parmi
-   quatre crie plus qu'il n'informe : la couleur reste, sur la seule icône. */
-#session-start-btn .hdr-menu-ico{color:var(--bok-tx)}
 
 /* CONFETTI */
 #confetti-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;display:none}
@@ -411,7 +398,7 @@ body.compact .item{padding:5px 0}
 }
 @media print{
   body{background:#fff!important;color:#000!important}
-  .hdr-right,.tbar,.footer,.note-btn,.note-area,.lnk-btn,.chk-all,.cat-winget,.session-bar,.gsearch,#gsearch-results,.history-bar,.sm-btn,.tab-badge{display:none!important}
+  .hdr-right,.tbar,.footer,.note-btn,.note-area,.lnk-btn,.chk-all,.cat-winget,.gsearch,#gsearch-results,.history-bar,.sm-btn,.tab-badge{display:none!important}
   .panel{display:block!important;page-break-after:always}
   .card{border:1px solid #ccc!important}
   .item{break-inside:avoid}
@@ -790,7 +777,7 @@ body.guide-actif .history-bar{display:none}
 @media (max-width:560px){
   /* Cibles : une largeur minimale suffit pour les boutons d'icône, dont le
      contenu ne fait que deux caractères. */
-  .icon-btn,.sm-btn,.fb,.chk-all,.lnk-btn,.next-btn,.session-stop,.panne-fermer{
+  .icon-btn,.sm-btn,.fb,.chk-all,.lnk-btn,.next-btn,.panne-fermer{
     min-height:34px;min-width:44px;font-size:12px}
   .note-btn{min-height:34px;min-width:44px;font-size:14px}
   .tab{min-height:44px;font-size:13px}
@@ -802,7 +789,7 @@ body.guide-actif .history-bar{display:none}
   .item-badges{gap:6px}
 
   /* Lisibilité : plus rien sous 12 px. */
-  .gp-time,.h-label,.history-bar,
+  .h-label,.history-bar,
   .sec-prog-txt,.item-date,.item-desc,.save-note,.save-path,
   .tbar-info,.gsearch-count,.sec-hdr-cnt{font-size:12px}
   .gp-label,.tab-badge,.badge,.sec-hdr{font-size:12px}
@@ -988,7 +975,6 @@ if(location.protocol==='file:'){
     <div class="side-gp">
       <div class="side-gp-l"><span class="gp-pct" id="gp-pct">0%</span> · <span id="gp-done">0</span>/<span id="gp-total">0</span> tâches</div>
       <div class="gp-bar-bg" role="progressbar" id="gp-bar-wrap" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Progression globale"><div class="gp-bar-fill" id="gp-bar" style="width:0%"></div></div>
-      <div class="gp-time" id="gp-time">⏱ ~0min restant</div>
     </div>
     <button class="side-act" type="button" id="guide-btn" onclick="basculerGuide()" aria-pressed="false" title="Afficher une seule tâche à la fois"><span aria-hidden="true">🎯</span> Mode guidé</button>
     <div class="hdr-menu">
@@ -1005,7 +991,6 @@ if(location.protocol==='file:'){
         <button type="button" role="menuitem" onclick="depuisMenu(function(){printTab(curTab);})"><span class="hdr-menu-ico" aria-hidden="true">🖨️</span>Imprimer cet onglet</button>
         <button type="button" role="menuitem" onclick="depuisMenu(function(){resetSection(curTab);})"><span class="hdr-menu-ico" aria-hidden="true">↺</span>Réinitialiser cet onglet</button>
         <div class="hdr-menu-sep" role="separator"></div>
-        <button type="button" role="menuitem" id="session-start-btn" onclick="depuisMenu(startSession)"><span class="hdr-menu-ico" aria-hidden="true">▶</span>Commencer une session</button>
         <button type="button" role="menuitem" onclick="depuisMenu(exportProfil)"><span class="hdr-menu-ico" aria-hidden="true">🧩</span>Exporter le profil</button>
         <button type="button" role="menuitem" id="reglages-btn" onclick="depuisMenu(basculerReglages)"><span class="hdr-menu-ico" aria-hidden="true">♻️</span>Réinitialiser…</button>
         <button type="button" role="menuitem" onclick="depuisMenu(basculerOutils)"><span class="hdr-menu-ico" aria-hidden="true">⬇️</span>Les scripts pour Windows…</button>
@@ -1029,12 +1014,6 @@ if(location.protocol==='file:'){
   </div>
   <span class="save-state" id="save-state" role="status"></span>
 </header>
-
-<div class="session-bar" id="session-bar">
-  <div class="session-dot"></div>
-  <span class="session-info">Session en cours · <b id="session-dur">0s</b> · <b id="session-cnt">0</b> tâches cochées</span>
-  <button class="session-stop" onclick="stopSession()">⏹ Arrêter</button>
-</div>
 
 <input type="file" id="json-file" accept=".json" style="display:none" tabindex="-1" aria-hidden="true" onchange="handleImport(event)">
 
@@ -1062,8 +1041,6 @@ if(location.protocol==='file:'){
         <label class="af-tri">Trier par
           <select class="sort-sel" id="apps-sort" onchange="renderApps()">
             <option value="cat">Catégorie</option>
-            <option value="prio">Priorité</option>
-            <option value="time">Durée</option>
             <option value="order">Ordre conseillé</option>
           </select>
         </label>
@@ -1655,8 +1632,6 @@ function inventaireVersProfil(inv){
       // Adresse officielle relevée dans le registre de l'ancien PC. Quand elle
       // est là, la checklist ouvre le vrai site au lieu de lancer une recherche.
       u:a.lien||undefined,
-      p:a.priorite||'med',
-      t:a.duree||5,
       d:bouts.join(' · ')||'Détecté sur l\'ancien PC.'
     });
   });
@@ -2221,7 +2196,6 @@ function handleImport(evt){
 
 
 // ═══ STATE ═══
-const PRIO = {high:0,med:1,ok:2};
 let S = {checked:{},notes:{},dates:{},lastSave:null};
 let curCats=[];
 let curTab='apps',noWinget=false,viewMode='normal',isDark=false;
@@ -2229,7 +2203,6 @@ let curTab='apps',noWinget=false,viewMode='normal',isDark=false;
 // window.history, ce qui piégerait le jour où l'on voudra gérer le bouton
 // Retour du navigateur.
 let openNotes={},journal=[],donePerTab={};
-let session={active:false,start:null,count:0,timer:null};
 
 // ═══ HELPERS ═══
 // Le libellé passé à toggle() finit dans l'historique et dans les bandeaux :
@@ -2281,7 +2254,6 @@ function urlSure(u){
 // la main peut omettre n'importe quel champ facultatif : on rend le vide.
 function texte(v){return (v==null)?'':String(v);}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-function fmtTime(min){if(!min)return '';if(min<60)return '~'+min+'min';const h=Math.floor(min/60),m=min%60;return m===0?'~'+h+'h':'~'+h+'h'+(m<10?'0':'')+m;}
 function fmtTaille(go){
   const n=Number(go);
   if(!n||n<=0)return '';
@@ -2414,7 +2386,7 @@ function toggle(id,name){
     if(manquantes.length){
       informer('« '+name+' » se fait normalement après : '+manquantes.map(nomDe).join(', ')+'.');
     }
-    S.checked[id]=true;S.dates[id]=Date.now();if(session.active)session.count++;addHistory(name,true);
+    S.checked[id]=true;S.dates[id]=Date.now();addHistory(name,true);
   }
   saveState();
   renderAll();
@@ -2466,11 +2438,6 @@ function copyCatWinget(cat,evt){
     const o=el.innerHTML;el.innerHTML='✓ Copié !';setTimeout(function(){el.innerHTML=o;},1500);
   }).catch(function(){});
 }
-
-// ═══ SESSION ═══
-function startSession(){session={active:true,start:Date.now(),count:0,timer:null};document.getElementById('session-bar').classList.add('active');document.getElementById('session-start-btn').style.display='none';session.timer=setInterval(updateSessionDisplay,1000);updateSessionDisplay();}
-function stopSession(){if(session.timer)clearInterval(session.timer);session.active=false;document.getElementById('session-bar').classList.remove('active');document.getElementById('session-start-btn').style.display='';}
-function updateSessionDisplay(){const e=Math.floor((Date.now()-session.start)/1000),m=Math.floor(e/60),s=e%60;document.getElementById('session-dur').textContent=(m>0?m+'min '+(s<10?'0':'')+s+'s':s+'s');document.getElementById('session-cnt').textContent=session.count;}
 
 // ═══ CONFETTI ═══
 function checkTabComplete(){
@@ -2597,13 +2564,9 @@ function renderApps(){
     html+='<div class="sec-hdr first">📋 Ordre conseillé pour le Jour J</div>';
     items.forEach(function(a){html+=mkAppItem(a,etats);});
   } else {
-    if(sort==='prio')items.sort(function(a,b){return PRIO[a.p]-PRIO[b.p];});
-    if(sort==='time')items.sort(function(a,b){return (a.t||0)-(b.t||0);});
     let lastG='',first=true;
     items.forEach(function(a){
       let g='';
-      if(sort==='prio')g=a.p==='high'?'⚡ Priorité haute':a.p==='med'?'🔸 Priorité moyenne':'🔹 Priorité basse';
-      if(sort==='time')g=(a.t||0)<=5?'⏱ Rapide (≤5min)':(a.t||0)<=30?'⏳ Moyen (≤30min)':'⏰ Long (>30min)';
       if(g!==lastG){html+='<div class="sec-hdr'+(first?' first':'')+'">'+g+'</div>';lastG=g;first=false;}
       html+=mkAppItem(a,etats);
     });
@@ -2617,14 +2580,14 @@ function renderApps(){
 // vraie machine, l'onglet devenait un mur.
 //
 // La ligne se lit maintenant en colonnes, comme une liste de paquets : la case,
-// le nom, la version et la provenance, la duree, le lien. La description, la
+// le nom, la version et la provenance, le lien. La description, la
 // commande a copier, l'avertissement et les dependances ne disparaissent pas —
 // ils s'ouvrent au clic sur le chevron. On montre ce qu'il faut pour choisir,
 // et le detail quand on l'a choisi.
 //
 // L'identifiant winget sort de la vue : il ne veut rien dire pour la plupart
-// des gens et il est deja dans le bouton qui copie la commande. La priorite ne
-// s'affiche que haute : une etiquette presente sur chaque ligne n'informe plus.
+// des gens et il est deja dans le bouton qui copie la commande. La duree et la
+// priorite ont disparu : elles etaient inventees par mots-cles.
 function mkAppItem(a,etats){
   // Le constat du scan et la case cochée arrivent au même endroit, mais pas au
   // même titre : un constat n'est pas une décision, donc il ne se décoche pas.
@@ -2632,7 +2595,6 @@ function mkAppItem(a,etats){
   const ck=constate||!!S.checked[a.id];
   const ouvert=!!lignesOuvertes[a.id];
   const dt=(!constate&&ck&&S.dates[a.id])?'<span class="item-date">✓ '+fmtDate(S.dates[a.id])+'</span>':'';
-  const pBadge=a.p==='high'?'<span class="badge b-high">⚡</span>':'';
   const meta=[];
   if(a.ver)meta.push(esc(String(a.ver)));
   if(a.go)meta.push(esc(fmtTaille(a.go)));
@@ -2665,7 +2627,7 @@ function mkAppItem(a,etats){
       +'<span class="lg-n">'+esc(libelleDe(a))+dt+'</span>'
       +'<span class="lg-br" aria-hidden="true"></span>'
       +'<span class="lg-m">'+meta.join(' · ')+'</span>'
-      +'<span class="lg-t">'+(a.t?fmtTime(a.t):'')+badgeComparaison(a,etats)+pBadge+'</span>'
+      +'<span class="lg-t">'+badgeComparaison(a,etats)+'</span>'
       +'<button type="button" class="lg-plus" aria-expanded="'+ouvert+'" '
         +'aria-label="'+(ouvert?'Masquer':'Afficher')+' le détail de '+esc(libelleDe(a))+'" '
         +'onclick="basculerDetail(\''+escJS(a.id)+'\',event)">'+(ouvert?'▴':'▾')+'</button>'
@@ -2779,12 +2741,10 @@ function globalSearch(){
 function updateSecProg(sec,data){
   const done=data.filter(function(x){return estFait(x.id);}).length;
   const total=data.length;
-  const rem=data.filter(function(x){return !estFait(x.id);}).reduce(function(s,x){return s+(x.t||0);},0);
   const pct=total?Math.round(done/total*100):0;
   const dEl=document.getElementById('done-'+sec);if(dEl)dEl.textContent=done;
   const tEl=document.getElementById('total-'+sec);if(tEl)tEl.textContent=total;
   const bEl=document.getElementById('bar-'+sec);if(bEl)bEl.style.width=pct+'%';
-  const tmEl=document.getElementById('time-'+sec);if(tmEl)tmEl.textContent=fmtTime(rem)||'~0min';
   const badge=document.getElementById('badge-'+sec);if(badge)badge.textContent=done+'/'+total;
 }
 
@@ -2796,12 +2756,10 @@ function updateGlobal(){
   const done=all.filter(function(x){return estFait(x.id);}).length;
   const total=all.length;
   const pct=total?Math.round(done/total*100):0;
-  const remMins=visiblesDe('apps').filter(function(x){return !estFait(x.id);}).reduce(function(s,x){return s+(x.t||0);},0);
   document.getElementById('gp-pct').textContent=pct+'%';
   document.getElementById('gp-done').textContent=done;
   document.getElementById('gp-total').textContent=total;
   document.getElementById('gp-bar').style.width=pct+'%';
-  document.getElementById('gp-time').textContent='⏱ '+(fmtTime(remMins)||'0min')+' restant';
   updateTitle();
 }
 
@@ -3631,8 +3589,8 @@ function basculerMenu(){
   const btn=document.getElementById('menu-btn');
   if(btn)btn.setAttribute('aria-expanded',ouvert?'true':'false');
   if(ouvert){
-    // « Commencer une session » disparaît une fois la session lancée : on
-    // donne le focus au premier item réellement affiché, pas au premier du DOM.
+    // Le focus va au premier item réellement affiché, pas au premier du DOM :
+    // une entrée peut être masquée selon l'état de la page.
     const p=Array.prototype.find.call(l.querySelectorAll('button'),
       function(x){return x.offsetParent!==null;});
     if(p)p.focus();

@@ -34,6 +34,11 @@ ok('zéro ignoré',G('fmtTaille')(0),'');
 console.log('\n--- inventaire étendu ---');
 const inv=JSON.parse(fs.readFileSync(path.join(__dirname,'inventaire-etendu.json'),'utf8'));
 const p=G('inventaireVersProfil')(inv);
+// Un inventaire converti ne porte plus ni durée ni priorité : elles étaient
+// inventées par mots-clés, et le « temps restant » qu'elles alimentaient était
+// un chiffre fabriqué présenté comme une mesure.
+ok('aucune durée inventée',(p.apps||[]).filter(function(a){return a.t!==undefined;}).length,0);
+ok('aucune priorité inventée',(p.apps||[]).filter(function(a){return a.p!==undefined;}).length,0);
 ok('apps converties',p.apps.length,6);
 ok('taille dans la description',p.apps[1].d.indexOf('75 Go')>=0,true);
 ok('app sans taille tolérée',p.apps[4].d.indexOf('Go')<0,true);

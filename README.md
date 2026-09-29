@@ -224,14 +224,22 @@ décide : elle sait ce qui **manque**, et c'est un constat, pas une supposition.
 cochée à la main reste exclue même quand le scan la dit manquante — quelqu'un qui coche
 affirme l'avoir faite.
 
-**Le reste** — recherche sur les trois onglets, tri par catégorie, priorité, durée ou ordre
-conseillé, filtre sur les apps sans winget, vue compacte, thème suivant le système, barres
-de progression, chronomètre, notes libres, champs de licence. Tout ce qui sort en fichier est
+**Le reste** — recherche sur les trois onglets, tri par catégorie ou ordre conseillé,
+filtre sur les apps sans winget, vue compacte, thème suivant le système, barres de
+progression, notes libres, champs de licence. Tout ce qui sort en fichier est
 ce qui est affiché. La progression est enregistrée au fur et à mesure et la barre « Récent »
 en porte l'heure, ou un avertissement quand le navigateur refuse — plutôt que de laisser
 croire que le travail est gardé.
 
-**⋯ Plus** contient les cinq actions rares, avec un vrai libellé : commencer une session,
+**Il n'y a ni durée ni priorité par logiciel, et c'est voulu.** Le scan en a produit
+pendant des mois : trente minutes si le nom contenait « Adobe » ou « Unity », quinze pour un
+jeu, cinq sinon ; priorité haute parce que la catégorie était « bureautique ». La page les
+additionnait pour afficher « ⏱ 2h15 restant » — un chiffre fabriqué présenté comme une
+mesure, et le seul de la page que personne ne pouvait vérifier. Une catégorie approximative
+reste, elle : une erreur de catégorie se voit d'un coup d'œil, une durée fausse ne se voit
+jamais.
+
+**Le menu** contient les actions rares, avec un vrai libellé :
 exporter le profil, réinitialiser, exporter en texte, imprimer. **Réinitialiser…** offre
 deux portées distinctes : *Tout décocher* remet la progression à zéro et laisse notes, clés
 et profil en place ; *Tout effacer* vide tout et revient au profil d'exemple. Les deux

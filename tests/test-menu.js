@@ -38,7 +38,7 @@ const items=await pg.evaluate(()=>
 // Le compte exact changera encore : ce qui doit tenir, c'est qu'elles soient
 // toutes nommees et atteignables, pas qu'elles soient six.
 ok('les actions rares sont la',items.length>=6,true);
-['Commencer une session','Exporter le profil','Ma configuration','Réinitialiser','Exporter en texte','Imprimer'].forEach(t=>
+['Affichage compact','Exporter le profil','Ma configuration','Réinitialiser','Exporter en texte','Imprimer'].forEach(t=>
   ok('« '+t+' » y est',items.some(x=>x.indexOf(t)>=0),true));
 ok('chaque action a un libelle, pas qu\'un emoji',
   items.every(t=>t.replace(/[^\p{L}]/gu,'').length>3),true);
@@ -75,18 +75,16 @@ await pg.keyboard.press('Escape');await pg.waitForTimeout(150);
 
 console.log('\n--- les actions agissent vraiment ---');
 await pg.click('#menu-btn');await pg.waitForTimeout(150);
-await pg.click('#session-start-btn');await pg.waitForTimeout(300);
-ok('la session demarre',await pg.evaluate(()=>session&&session.active),true);
+await pg.getByRole('menuitem',{name:/Affichage compact/}).click();await pg.waitForTimeout(300);
+ok('l\'affichage compact s\'applique',
+  await pg.evaluate(()=>document.body.classList.contains('compact')),true);
 ok('le menu s\'est referme derriere',await pg.isVisible('#hdr-menu-liste'),false);
-ok('la barre de session s\'affiche',
-  await pg.evaluate(()=>document.getElementById('session-bar').classList.contains('active')),true);
 await pg.click('#menu-btn');await pg.waitForTimeout(200);
-ok('« Commencer une session » a disparu du menu',
-  await pg.isVisible('#session-start-btn'),false);
-ok('le focus va au premier item encore affiche',
-  await pg.evaluate(()=>document.activeElement.textContent.indexOf('Importer un fichier')>=0),true);
-await pg.keyboard.press('Escape');await pg.waitForTimeout(150);
-await pg.evaluate(()=>stopSession());
+ok('le focus va au premier item affiche',
+  await pg.evaluate(()=>document.getElementById('hdr-menu-liste').contains(document.activeElement)),true);
+await pg.getByRole('menuitem',{name:/Affichage normal/}).click();await pg.waitForTimeout(300);
+ok('et on revient a l\'affichage normal',
+  await pg.evaluate(()=>document.body.classList.contains('compact')),false);
 
 // Le telechargement du profil : l'action la plus facile a casser en la deplacant.
 await pg.click('#menu-btn');await pg.waitForTimeout(150);
