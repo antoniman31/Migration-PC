@@ -109,13 +109,10 @@ try {
     # d'arrivee : elle remplacerait la checklist au lieu de la comparer.
     ok 'il se declare cible'         $v.role 'cible'
     ok 'aucune exception non geree'  ((Get-Content -LiteralPath $jv -Raw -Encoding UTF8) -match 'Exception|At line:') $false
-    # Deux familles n'ont de sens que sur la machine d'arrivee : les
-    # peripheriques que Windows signale comme mal installes, et les quatre
-    # reglages qui ne se voient pas a l'usage. Le scan de la source ne les a
-    # pas ; celui de la cible doit les porter, meme vides.
-    ok 'les controles sont presents' ($v.PSObject.Properties['controles'] -ne $null) $true
-    ok 'les pilotes aussi'           ($v.PSObject.Properties['pilotes'] -ne $null) $true
-    ok 'quatre controles rapportes'  (@($v.controles).Count) 4
+    # Une famille n'a de sens que sur la machine d'arrivee : les peripheriques
+    # que Windows signale comme mal installes. Le scan de la source ne l'a
+    # pas ; celui de la cible doit la porter, meme vide.
+    ok 'les pilotes sont presents'   ($v.PSObject.Properties['pilotes'] -ne $null) $true
     # Le raccourci vers le dernier instantane, pour que la page et les scripts
     # n'aient pas a deviner quel fichier lire.
     ok 'le raccourci est ecrit'      (Test-Path -LiteralPath (Join-Path $bac 'inventaire-pc.json')) $true
@@ -129,7 +126,7 @@ try {
     New-Item -ItemType Directory -Path $auto -Force | Out-Null
     Push-Location $auto
     try {
-        & (Join-Path $racine 'scripts/scan-pc.ps1') -Role source -PasDOuverture -SansGrosDossiers -SansOutils *> (Join-Path $bac 'auto.txt')
+        & (Join-Path $racine 'scripts/scan-pc.ps1') -Role source -PasDOuverture -SansJeux *> (Join-Path $bac 'auto.txt')
     } finally { Pop-Location }
     $attendu = 'instantane-source-' + (Get-Date).ToString('yyyy-MM-dd') + '.json'
     ok 'le nom porte le role et la date' (Test-Path -LiteralPath (Join-Path $auto $attendu)) $true
