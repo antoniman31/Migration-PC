@@ -99,12 +99,6 @@ jobs:
       - name: Mode guidé
         run: node tests/test-guide.js
 
-      - name: Onglet « Avant de quitter »
-        run: node tests/test-quitter.js
-
-      - name: Migration ou réinstallation
-        run: node tests/test-scenarios.js
-
       - name: Remises à zéro
         run: node tests/test-reinit.js
 
@@ -113,9 +107,6 @@ jobs:
 
       - name: Profil hostile — aucune injection
         run: node tests/test-profil-hostile.js
-
-      - name: Deux questions et second PC
-        run: node tests/test-debut.js
 
       - name: Configuration et affichage
         run: node tests/test-config.js

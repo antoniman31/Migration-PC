@@ -48,18 +48,17 @@ ok('profil embarqué identique à presets/exemple.json',
 
 // Invariants du profil lui-meme : un id en double fait porter une case a deux
 // elements, et la progression devient fausse sans que rien ne le signale.
-// « quitter » est facultatif : un profil qui ne la déclare pas reste valide.
-const tous=[].concat(fichier.quitter||[],fichier.npc||[],fichier.apps||[],
+const tous=[].concat(fichier.apps||[],
                      fichier.pwa||[]);
 const vus=new Set(),doublons=[];
 tous.forEach(function(e){if(vus.has(e.id))doublons.push(e.id);vus.add(e.id);});
-ok('identifiants uniques sur les quatre onglets',doublons.length===0,doublons.join(', '));
+ok('identifiants uniques sur les deux listes',doublons.length===0,doublons.join(', '));
 
 const sansId=tous.filter(function(e){return !e.id;});
 ok('tous les éléments ont un identifiant',sansId.length===0,sansId.length+' sans id');
 
 const prioValides=['high','med','ok'];
-const mauvaisePrio=(fichier.apps||[]).concat(fichier.npc||[]).filter(function(e){return e.p&&prioValides.indexOf(e.p)<0;});
+const mauvaisePrio=(fichier.apps||[]).filter(function(e){return e.p&&prioValides.indexOf(e.p)<0;});
 ok('priorités valides',mauvaisePrio.length===0,mauvaisePrio.map(e=>e.id+'='+e.p).join(', '));
 
 const mauvaisePr=(fichier.quitter||[])
@@ -89,51 +88,6 @@ tous.forEach(function(e){
   e.dep.forEach(function(d){if(!vus.has(d))depInconnue.push(e.id+'→'+d);});
 });
 ok('les dépendances désignent des éléments existants',depInconnue.length===0,depInconnue.join(', '));
-
-// Dans l'onglet « Nouveau PC », un prerequis doit aussi venir avant dans la
-// numerotation : sinon la liste conseille un ordre que ses propres liens
-// contredisent.
-const rang={};
-(fichier.npc||[]).forEach(function(e){rang[e.id]=e.o;});
-const ordreIncoherent=[];
-(fichier.npc||[]).forEach(function(e){
-  if(!Array.isArray(e.dep))return;
-  e.dep.forEach(function(d){
-    if(rang[d]!==undefined&&rang[d]>rang[e.id])ordreIncoherent.push(e.id+' avant '+d);
-  });
-});
-ok("l'ordre des étapes respecte les prérequis",ordreIncoherent.length===0,ordreIncoherent.join(', '));
-
-// Le contenu, pas seulement la structure. « Préparer la clé » se trouvait apres
-// le POINT DE NON-RETOUR : on validait le dernier controle avant d'effacer,
-// puis on preparait la cle sans laquelle on n'installe rien.
-(function(){
-  const npc=fichier.npc||[];
-  const par=function(motif){return npc.filter(function(e){return motif.test(e.n);})[0];};
-  const nonRetour=par(/NON-RETOUR/);
-  const cle=par(/Préparer la clé/);
-  const installer=par(/^Installer Windows/);
-  const pilotes=par(/Télécharger les pilotes/);
-  const bios=par(/Entrer dans le BIOS/);
-  if(!nonRetour||!cle||!installer){
-    ok('les étapes de préparation sont identifiables',false,'introuvables');
-    return;
-  }
-  ok('la clé est prête avant le point de non-retour',cle.o<nonRetour.o,true);
-  ok('le point de non-retour est le dernier avant l\'installation',
-    nonRetour.o<installer.o&&!npc.some(function(e){
-      return e.o>nonRetour.o&&e.o<installer.o;}),true);
-  ok('le point de non-retour dépend de la clé',
-    (nonRetour.dep||[]).indexOf(cle.id)>=0,true);
-  if(pilotes&&bios){
-    // Les pilotes se telechargent depuis le Windows qu'on va remplacer, donc
-    // avant d'entrer dans le BIOS, pas au milieu de ses reglages.
-    ok('les pilotes se récupèrent avant d\'entrer dans le BIOS',pilotes.o<bios.o,true);
-  }
-})();
-
-const numeros=(fichier.npc||[]).map(function(e){return e.o;});
-ok('numéros d\'étape uniques',new Set(numeros).size===numeros.length);
 
 const catsInconnues=(fichier.apps||[]).filter(function(a){return a.c&&!fichier.cats[a.c];});
 ok('catégories déclarées',catsInconnues.length===0,catsInconnues.map(a=>a.id+'→'+a.c).join(', '));

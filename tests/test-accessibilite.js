@@ -104,6 +104,9 @@ for(const theme of ['light','dark']){
 const pg=await (await b.newContext({viewport:{width:1280,height:900}})).newPage();
 pg.on('pageerror',e=>{console.log(' FAIL erreur JS → '+e.message);ko++;});
 await pg.goto(HTML,{waitUntil:'networkidle'});
+// La checklist livrée est vide : sans l'exemple garni il n'y a aucune case à
+// atteindre au clavier, et le parcours ne prouverait rien.
+await chargerExemple(pg);
 console.log('--- le focus est-il visible après une vraie tabulation ? ---');
 await pg.keyboard.press('Tab');
 const f1=await pg.evaluate(()=>{const e=document.activeElement;const s=getComputedStyle(e);
@@ -128,7 +131,7 @@ await pg.waitForTimeout(200);
 const apres=await pg.evaluate(()=>Object.keys(S.checked).length);
 ok('Espace coche la case',apres,avant+1);
 const apresEtat=await pg.evaluate(()=>{const e=document.activeElement;
-  return {aria:e.getAttribute('aria-checked'),role:e.getAttribute('role'),estCase:!!e.closest('.item')};});
+  return {aria:e.getAttribute('aria-checked'),role:e.getAttribute('role'),estCase:!!e.closest('.item,.lg-l')};});
 console.log('   après Espace :',JSON.stringify(apresEtat));
 ok('aria-checked passe à true',apresEtat.aria,'true');
 ok('le focus reste sur la case',apresEtat.estCase,true);
@@ -156,7 +159,7 @@ ok('la zone de note s\'ouvre',await pg.evaluate(()=>!!document.querySelector('#l
 
 console.log('\n--- onglets ---');
 const t=await pg.evaluate(()=>({sel:document.getElementById('tab-apps').getAttribute('aria-selected'),
-  autre:document.getElementById('tab-npc').getAttribute('aria-selected')}));
+  autre:document.getElementById('tab-pilotes').getAttribute('aria-selected')}));
 ok('aria-selected suit l\'onglet actif',t.sel+'/'+t.autre,'true/false');
 
 await pg.close();

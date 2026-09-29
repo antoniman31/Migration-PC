@@ -43,7 +43,7 @@ function Get-ActionsMigration {
             duree   = "1 a 3 minutes"
             suite   = @(
                 "La checklist s'ouvre déjà remplie de vos logiciels.",
-                "Onglet « Apps » : décochez ce que vous ne voulez pas reprendre.",
+                "Onglet « Logiciels » : décochez ce que vous ne voulez pas reprendre.",
                 "Posez l'instantané et cette page sur la clé, et emportez-la."
             )
         },
@@ -56,9 +56,9 @@ function Get-ActionsMigration {
             requis  = @('scan-pc.ps1', 'lib-detection.ps1')
             duree   = "1 a 3 minutes"
             suite   = @(
-                "Onglet « Reste à faire » : le compte de ce qui est arrivé, et ce qui manque.",
-                "Chaque manquant porte sa commande d'installation ou son chemin.",
-                "Onglet « Nouveau PC » : les périphériques sans pilote, et où chercher.",
+                "Onglet « Logiciels » : le compte de ce qui est arrivé, et ce qui manque.",
+                "Chaque manquant porte sa commande d'installation.",
+                "Onglet « Pilotes » : les périphériques sans pilote, et où chercher.",
                 "Importez l'instantané de la source si la page ne l'a pas encore."
             )
         },
@@ -90,20 +90,23 @@ function Get-ActionsMigration {
 # Le parcours complet, pour qui ouvre le lanceur sans savoir par ou commencer.
 function Get-Parcours {
     @(
-        "  D'un PC vers un autre",
-        "    1. Sur la SOURCE : scanner. La page s'ouvre remplie de vos logiciels.",
+        "  D'un PC vers un autre — la clé USB fait le voyage",
+        "    1. Clé branchée sur la SOURCE : scanner. La page s'ouvre remplie",
+        "       de vos logiciels, et l'instantané reste sur la clé.",
         "       Le scan LISTE, il ne copie rien. Vos fichiers personnels,",
         "       c'est à vous de les sauvegarder — ce programme ne s'en occupe pas.",
-        "    2. Sur la CIBLE : scanner de nouveau. La page compare les deux et",
-        "       dit ce qui est arrivé et ce qui manque encore.",
-        "    3. Installez ce qui manque, et réglez les pilotes signalés.",
+        "    2. Débranchez la clé et branchez-la sur la CIBLE.",
+        "    3. Scanner de nouveau, en CIBLE. La page compare les deux toute",
+        "       seule et dit ce qui manque encore : rien à importer à la main.",
+        "    4. Installez ce qui manque, et réglez les pilotes signalés.",
         "",
         "  Vous réinstallez Windows sur CETTE machine",
         "    Le meme parcours : cette machine est la source avant le formatage,",
         "    et la cible apres. C'est le meme script des deux cotes.",
         "    1. Scanner en SOURCE d'abord : apres le formatage, il n'y a plus rien.",
+        "       Gardez la clé hors de la machine pendant le formatage.",
         "    2. Sauvegardez vos fichiers AVANT de formater. Après, il est trop tard.",
-        "    3. Après réinstallation : scanner en CIBLE, sur la même machine.",
+        "    3. Après réinstallation : rebranchez la clé, scanner en CIBLE.",
         "",
         "  Vous gardez les deux PC",
         "    Même chose, mais ne déliez rien sur l'ancien : il reste en service."

@@ -35,7 +35,6 @@
   --bpwa-bg:#fbeaf0;--bpwa-tx:#993556;--bpwa-bd:#ed93b1;
   --bord-bg:#eeedfe;--bord-tx:#3c3489;--bord-bd:#afa9ec;
   --warn-bg:#fff8e6;--warn-tx:#8a5c00;--warn-bd:#f5c842;
-  --tint-npc:rgba(84,147,255,0.03);
   --tint-apps:rgba(99,153,34,0.03);
   --tint-data:rgba(239,159,39,0.04);
   --tint-pwa:rgba(153,53,86,0.03);
@@ -53,7 +52,6 @@
   --bpwa-bg:#2a1020;--bpwa-tx:#ed93b1;--bpwa-bd:#5a1f3a;
   --bord-bg:#1e1a3a;--bord-tx:#afa9ec;--bord-bd:#3c3489;
   --warn-bg:#2a2000;--warn-tx:#fac775;--warn-bd:#8a6500;
-  --tint-npc:rgba(84,147,255,0.05);
   --tint-apps:rgba(99,153,34,0.05);
   --tint-data:rgba(239,159,39,0.05);
   --tint-pwa:rgba(153,53,86,0.05);
@@ -114,7 +112,7 @@ code{font-family:"Cascadia Code","Consolas",monospace;font-size:.9em}
 .hdr-rech input{width:100%}
 /* Une bande entiere pour annoncer qu'il ne s'est rien passe : masquee tant
    qu'il n'y a rien a montrer. */
-.history-bar[hidden],.scen[hidden]{display:none}
+.history-bar[hidden]{display:none}
 
 /* Sous 900 px la colonne laterale ne laisse plus de place au contenu : sur un
    telephone de 390 px elle en prenait 236 et il en restait 120. Elle repasse
@@ -207,7 +205,6 @@ h1{font-size:18px;font-weight:600;color:var(--tx);letter-spacing:-.3px}
 .tab-badge{background:var(--accl);color:var(--acc-fort);font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600}
 .panel{display:none}
 .panel.active{display:block}
-#panel-npc.active{background:var(--tint-npc)}
 #panel-apps.active{background:var(--tint-apps)}
 #panel-data.active{background:var(--tint-data)}
 #panel-pwa.active{background:var(--tint-pwa)}
@@ -314,7 +311,6 @@ body.compact .item{padding:5px 0}
 .lg-br{display:none}
 .lg-l.done .lg-n{text-decoration:line-through;color:var(--tx3)}
 .lg-det{padding:2px 0 12px 34px;cursor:default}
-.lg-det .lic-field,.lg-det .env-field{margin-top:8px}
 .lg-det-d{font-size:12px;color:var(--tx2);line-height:1.5;margin-bottom:8px}
 /* Sur un ecran etroit, sept colonnes ne tiennent pas : la version et la
    provenance passent sous le nom plutot que de le comprimer a trois lettres. */
@@ -339,32 +335,17 @@ body.compact .item{padding:5px 0}
      case qu'on rate deux fois sur trois est pire qu'une case voyante. */
   .af-c input{width:44px;height:44px;margin:0}
 }
-/* ═══ Onglet « Reste à faire » ═══ */
-.reste-tete{padding:16px 0 12px}
-.reste-titre{font-size:18px;font-weight:700;color:var(--tx);margin-bottom:6px}
-.reste-sous{font-size:13px;color:var(--tx2);line-height:1.55;margin:0}
-.reste-fam{margin-top:14px}
-.reste-fam-t{font-size:12px;font-weight:600;color:var(--tx2);padding:6px 0 4px;
-  border-top:.5px solid var(--brd);display:flex;align-items:center;gap:8px}
-.reste-cnt{font-size:11px;color:var(--tx3);font-weight:400}
-.reste-l{display:flex;align-items:center;gap:10px;padding:7px 0;
-  border-bottom:.5px solid var(--brd);flex-wrap:wrap}
-.reste-n{font-size:13px;color:var(--tx);flex:1;min-width:0}
-.reste-a{font-size:12px;color:var(--tx2);font-family:"Cascadia Code","Consolas",monospace;
-  word-break:break-all}
-.reste-b{font-size:10px;padding:2px 7px;border-radius:8px;white-space:nowrap;
-  border:.5px solid transparent;flex-shrink:0}
-.reste-b-abs{background:var(--warn-bg);color:var(--warn-tx);border-color:var(--warn-bd)}
-.reste-b-ver{background:var(--accl);color:var(--acc-fort);border-color:var(--accb)}
-.reste-ok{font-size:12px;color:var(--tx2);padding:6px 0;line-height:1.6}
-.reste-pt{padding:10px 0;border-bottom:.5px solid var(--brd)}
-.reste-pt-n{font-size:13px;font-weight:500;color:var(--tx);margin-bottom:3px}
-.reste-pt-q{font-size:12px;color:var(--tx2);line-height:1.55}
-.reste-manque .reste-pt-n{color:var(--warn-tx)}
-.reste-suite{margin-top:16px;padding:12px 14px;border-radius:8px;background:var(--bg2);
+/* ═══ Le bandeau de comparaison et l'onglet Pilotes ═══ */
+.cmp-tete{padding:14px 0 12px;border-bottom:.5px solid var(--brd);margin-bottom:6px}
+.cmp-titre{font-size:17px;font-weight:700;color:var(--tx);margin-bottom:5px}
+.cmp-sous{font-size:12px;color:var(--tx2);line-height:1.55}
+.cmp-act{margin-top:10px;padding:10px 12px;border-radius:8px;background:var(--bg2);
   border:.5px solid var(--brd);font-size:12px;color:var(--tx2);line-height:1.6}
-.reste-suite .sm-btn{margin-left:6px}
-@media print{.reste-suite{display:none!important}}
+.cmp-act .sm-btn{margin-left:6px}
+@media print{.cmp-act{display:none!important}}
+.b-arrive{background:var(--bg3);color:var(--tx3);border-color:var(--brd2)}
+.b-manque{background:var(--warn-bg);color:var(--warn-tx);border-color:var(--warn-bd)}
+.b-vieux{background:var(--accl);color:var(--acc-fort);border-color:var(--accb)}
 .item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:.5px solid var(--brd);cursor:pointer;border-radius:4px}
 .item:hover{background:rgba(0,0,0,.025)}
 [data-theme=dark] .item:hover{background:rgba(255,255,255,.04)}
@@ -401,11 +382,8 @@ body.compact .item{padding:5px 0}
 .b-winget:hover{opacity:.8}
 .b-time{background:var(--bg2);color:var(--tx2);border-color:var(--brd)}
 .b-high{background:var(--bh-bg);color:var(--bh-tx);border-color:var(--bh-bd)}
-.b-pay{background:var(--warn-bg);color:var(--warn-tx);border-color:var(--warn-bd)}
 .b-pwa{background:var(--bpwa-bg);color:var(--bpwa-tx);border-color:var(--bpwa-bd)}
 .b-sync{background:var(--bord-bg);color:var(--bord-tx);border-color:var(--bord-bd);font-weight:600}
-.b-num{width:22px;height:22px;border-radius:50%;background:var(--accl);color:var(--acc-fort);border:.5px solid var(--accb);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
-.item.done .b-num{background:var(--bok-bg);color:var(--bok-tx);border-color:var(--bok-bd)}
 .b-crit{background:var(--bh-bg);color:var(--bh-tx);border-color:var(--bh-bd)}
 .b-imp{background:var(--bm-bg);color:var(--bm-tx);border-color:var(--bm-bd)}
 .b-opt{background:var(--bok-bg);color:var(--bok-tx);border-color:var(--bok-bd)}
@@ -484,19 +462,8 @@ body.compact .item{padding:5px 0}
 .item.post-item.done .chkbox{background:var(--bok-tx);border-color:var(--bok-bd)}
 
 /* ── V6 : champ licence ── */
-.lic-field{margin-top:6px;display:flex;align-items:center;gap:6px}
-.lic-field label{font-size:10px;color:var(--tx2);white-space:nowrap;flex-shrink:0}
-.lic-field input{flex:1;font-size:11px;padding:3px 7px;border:.5px solid var(--brd2);border-radius:6px;background:var(--bg2);color:var(--tx);outline:none;font-family:"Cascadia Code","Consolas",monospace}
-.lic-field input:focus{border-color:var(--acc-fort)}
-.lic-field input::placeholder{color:var(--tx3)}
 
 /* ── V6 : champ env ── */
-.env-fields{margin-top:6px;display:flex;flex-direction:column;gap:4px}
-.env-row{display:flex;align-items:center;gap:6px}
-.env-row label{font-size:10px;color:var(--tx2);width:110px;flex-shrink:0;font-family:"Cascadia Code","Consolas",monospace}
-.env-row input{flex:1;font-size:11px;padding:3px 7px;border:.5px solid var(--brd2);border-radius:6px;background:var(--bg2);color:var(--tx);outline:none;font-family:"Cascadia Code","Consolas",monospace}
-.env-row input:focus{border-color:var(--acc-fort)}
-.env-row input::placeholder{color:var(--tx3)}
 
 /* ── V6 : bouton suivant ── */
 .next-tab-btn{display:flex;align-items:center;justify-content:flex-end;padding:10px 20px;border-top:.5px solid var(--brd);background:transparent}
@@ -596,24 +563,6 @@ body.compact .b-dep{display:none}
 /* ═══ Deux questions au premier lancement ═══
    Un questionnaire qui barre l'entrée se subit ; celui-ci se propose et se
    referme. La page reste utilisable en « tout afficher » si on l'ignore. */
-.debut{display:none;margin:0 0 12px;padding:16px 18px;border-radius:10px;
-  background:var(--accl);border:.5px solid var(--accb)}
-.debut.visible{display:block}
-.debut-titre{font-size:14px;font-weight:600;color:var(--tx);margin-bottom:4px}
-.debut-sous{font-size:12px;color:var(--tx2);margin-bottom:14px;line-height:1.55}
-.debut-q{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:8px}
-.debut-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-.debut-choix{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}
-.debut-choix button{flex:1;min-width:190px;text-align:left;padding:11px 14px;
-  min-height:44px;border-radius:9px;border:.5px solid var(--brd2);background:var(--bg);
-  color:var(--tx);cursor:pointer;font-size:13px;line-height:1.45}
-.debut-choix button:hover{background:var(--bg3);border-color:var(--accb)}
-.debut-choix b{display:block;font-size:13px;margin-bottom:2px}
-.debut-choix span{font-size:12px;color:var(--tx2)}
-.debut-passer{margin-top:10px;font-size:12px;color:var(--tx2);background:transparent;
-  border:none;cursor:pointer;padding:6px 2px;min-height:34px}
-.debut-passer:hover{color:var(--tx)}
-@media print{.debut{display:none!important}}
 
 /* Un profil peut décrire un raccourci sans adresse, ou avec une adresse qu'on
    refuse d'ouvrir : le bouton reste, visiblement inerte, plutôt que de
@@ -674,17 +623,6 @@ body.compact .b-dep{display:none}
    Migrer vers une autre machine ou réinstaller celle qu'on a partagent
    l'essentiel ; seuls quelques éléments diffèrent. Le sélecteur filtre plutôt
    que de dupliquer la liste. */
-.scen{display:flex;align-items:center;gap:10px;padding:10px 20px;
-  border-bottom:.5px solid var(--brd);background:var(--bg2);flex-wrap:wrap}
-.scen-label{font-size:12px;text-transform:uppercase;letter-spacing:.05em;
-  color:var(--tx2);font-weight:600}
-.scen-btns{display:flex;gap:8px;flex-wrap:wrap}
-.scen-btn{padding:6px 13px;font-size:12px;border:.5px solid var(--brd2);
-  border-radius:8px;background:var(--bg);color:var(--tx);cursor:pointer;min-height:34px}
-.scen-btn:hover{background:var(--bg3)}
-.scen-btn.active{background:var(--accl);border-color:var(--accb);
-  color:var(--acc-fort);font-weight:600}
-.scen-note{font-size:11px;color:var(--tx2);margin-left:auto}
 .onglet-vide-act{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
 /* Le nom du fichier a lancer est ce qu'on vient chercher ici : il se lit a la
    meme taille que la phrase qui l'entoure, pas a 90 %. */
@@ -692,7 +630,6 @@ body.compact .b-dep{display:none}
 .onglet-vide{padding:28px 20px;text-align:center;color:var(--tx2);font-size:13px;line-height:1.7}
 @media (max-width:560px){
   .scen{gap:8px}
-  .scen-btn{font-size:12px;min-width:44px}
   .scen-note{margin-left:0;width:100%}
 }
 @media print{.scen{display:none!important}}
@@ -856,22 +793,18 @@ body.guide-actif .history-bar{display:none}
 
   /* Lisibilité : plus rien sous 12 px. */
   .gp-time,.h-label,.history-bar,
-  .sec-prog-txt,.b-num,.item-date,.item-desc,.save-note,.save-path,
+  .sec-prog-txt,.item-date,.item-desc,.save-note,.save-path,
   .tbar-info,.gsearch-count,.sec-hdr-cnt{font-size:12px}
   .gp-label,.tab-badge,.badge,.sec-hdr{font-size:12px}
-  .lic-field label,.env-row label{font-size:12px}
 
   /* Champs : 16 px, sinon iOS zoome à la mise au point et casse la mise en page. */
-  input,select,textarea,.lic-field input,.env-row input,
+  input,select,textarea,
   #gsearch-input,#apps-search,.sort-sel{font-size:16px}
 
   /* Les libellés de variables passent au-dessus du champ : côte à côte,
      110 px de libellé ne laissent plus rien au champ sur 360 px de large. */
-  .env-row{flex-direction:column;align-items:stretch;gap:3px}
-  .env-row label{width:auto}
   /* Les trois lignes de variables se suivaient à 4 px : sur un écran tactile
      on vise le mauvais champ. */
-  .env-fields{gap:10px}
 
   /* .icon-only fixe une largeur de 32 px pour l'affichage large : la règle
      générique plus haut ne suffit pas à la remplacer. */
@@ -907,7 +840,7 @@ body.guide-actif .history-bar{display:none}
   .item-desc,.save-path,.save-note,.warn-badge{font-size:var(--t-desc)}
   .badge,.tab-badge{font-size:var(--t-badge)}
   h1{font-size:var(--t-titre)}
-  .tab,.scen-btn,.icon-btn{font-size:13px}
+  .tab,.icon-btn{font-size:13px}
   .item-desc{line-height:1.6}
 }
 @media (min-width:1400px){
@@ -972,20 +905,6 @@ if(location.protocol==='file:'){
   </div>
 </div>
 
-<div class="debut" id="debut" role="region" aria-label="Adapter la liste à votre cas">
-  <div class="debut-titre">Réinstaller Windows sans rien oublier</div>
-  <div class="debut-sous">Cette page est une liste à cocher : ce qu'il faut faire sur
-    l'ancien PC avant de l'effacer, puis sur le neuf, dans l'ordre. Des scripts facultatifs
-    relèvent tes logiciels et tes dossiers pour remplir la liste à ta place. Rien ne sort
-    de ta machine : tout est enregistré dans ce navigateur.</div>
-  <div id="debut-etape"></div>
-  <div class="debut-actions">
-    <button class="debut-passer" type="button" onclick="passerDebut()">Passer — tout afficher</button>
-    <button class="debut-passer" type="button" onclick="basculerOutils()">⬇️ Les scripts pour Windows…</button>
-    <button class="debut-passer" type="button" onclick="chargerDemo()">👁️ Voir un exemple garni</button>
-  </div>
-</div>
-
 <div class="reglages" id="reglages" role="region" aria-label="Réinitialiser">
   <div class="reglages-titre">Réinitialiser</div>
   <div class="reglages-choix">
@@ -1038,25 +957,15 @@ if(location.protocol==='file:'){
   </div>
 
   <div class="side-nav" role="tablist" aria-label="Sections de la checklist">
-      <button class="snav active" type="button" role="tab" aria-selected="true" aria-controls="panel-quitter" onclick="switchTab('quitter')" id="tab-quitter">
-        <span class="snav-t"><span class="snav-i" aria-hidden="true">🚪</span>Avant de quitter</span>
-        <span class="snav-bar"><span class="snav-fill" id="bar-quitter" style="width:0%"></span></span>
-        <span class="tab-badge" id="badge-quitter">0/0</span>
-      </button>
-      <button class="snav" type="button" role="tab" aria-selected="false" aria-controls="panel-npc" onclick="switchTab('npc')" id="tab-npc">
-        <span class="snav-t"><span class="snav-i" aria-hidden="true">🖥️</span>Nouveau PC</span>
-        <span class="snav-bar"><span class="snav-fill" id="bar-npc" style="width:0%"></span></span>
-        <span class="tab-badge" id="badge-npc">0/0</span>
-      </button>
-      <button class="snav" type="button" role="tab" aria-selected="false" aria-controls="panel-apps" onclick="switchTab('apps')" id="tab-apps">
-        <span class="snav-t"><span class="snav-i" aria-hidden="true">📦</span>Apps</span>
+      <button class="snav active" type="button" role="tab" aria-selected="true" aria-controls="panel-apps" onclick="switchTab('apps')" id="tab-apps">
+        <span class="snav-t"><span class="snav-i" aria-hidden="true">📦</span>Logiciels</span>
         <span class="snav-bar"><span class="snav-fill" id="bar-apps" style="width:0%"></span></span>
         <span class="tab-badge" id="badge-apps">0/0</span>
       </button>
-      <button class="snav" type="button" role="tab" aria-selected="false" aria-controls="panel-reste" onclick="switchTab('reste')" id="tab-reste">
-        <span class="snav-t"><span class="snav-i" aria-hidden="true">🎯</span>Reste à faire</span>
-        <span class="snav-bar"><span class="snav-fill" id="bar-reste" style="width:0%"></span></span>
-        <span class="tab-badge" id="badge-reste">—</span>
+      <button class="snav" type="button" role="tab" aria-selected="false" aria-controls="panel-pilotes" onclick="switchTab('pilotes')" id="tab-pilotes">
+        <span class="snav-t"><span class="snav-i" aria-hidden="true">🎛️</span>Pilotes</span>
+        <span class="snav-bar"><span class="snav-fill" id="bar-pilotes" style="width:0%"></span></span>
+        <span class="tab-badge" id="badge-pilotes">—</span>
       </button>
       <button class="snav" type="button" role="tab" aria-selected="false" aria-controls="panel-pwa" onclick="switchTab('pwa')" id="tab-pwa">
         <span class="snav-t"><span class="snav-i" aria-hidden="true">🌍</span>PWA</span>
@@ -1093,8 +1002,6 @@ if(location.protocol==='file:'){
         <button type="button" role="menuitem" onclick="depuisMenu(chargerDemo)"><span class="hdr-menu-ico" aria-hidden="true">👁️</span>Voir un exemple garni</button>
         <button type="button" role="menuitem" id="scan-rejouer" style="display:none" onclick="depuisMenu(rejouerScanLocal)"><span class="hdr-menu-ico" aria-hidden="true">🔄</span>Recharger le scan de la clé</button>
         <button type="button" role="menuitem" id="config-btn" onclick="depuisMenu(basculerConfig)" aria-expanded="false"><span class="hdr-menu-ico" aria-hidden="true">🔧</span>Ma configuration…</button>
-        <button type="button" role="menuitem" onclick="depuisMenu(relancerDebut)"><span class="hdr-menu-ico" aria-hidden="true">🧭</span>Adapter à mon cas…</button>
-        <button type="button" role="menuitem" id="scen-btn" onclick="depuisMenu(basculerSituation)" aria-expanded="false" aria-controls="scen"><span class="hdr-menu-ico" aria-hidden="true">🎛️</span>Changer de situation…</button>
         <button type="button" role="menuitem" onclick="depuisMenu(exportTxt)"><span class="hdr-menu-ico" aria-hidden="true">📄</span>Exporter en texte</button>
         <button type="button" role="menuitem" onclick="depuisMenu(function(){window.print();})"><span class="hdr-menu-ico" aria-hidden="true">🖨️</span>Imprimer</button>
       </div>
@@ -1105,7 +1012,7 @@ if(location.protocol==='file:'){
 <div class="col">
 
 <header class="hdr">
-  <h2 class="hdr-titre" id="page-titre">🚪 Avant de quitter</h2>
+  <h2 class="hdr-titre" id="page-titre">📦 Logiciels</h2>
   <div class="hdr-rech">
     <input type="search" id="gsearch-input" aria-label="Rechercher dans toute la checklist" placeholder="🔍 Rechercher…" oninput="globalSearch()">
     <span class="gsearch-count" id="gsearch-count" style="display:none"><b id="gsearch-n">0</b> résultats</span>
@@ -1129,42 +1036,10 @@ if(location.protocol==='file:'){
 </div>
 
 <main>
-<div class="scen" role="group" id="scen" hidden aria-label="Situation">
-  <span class="scen-label">Situation</span>
-  <div class="scen-btns">
-    <button class="scen-btn active" type="button" id="sc-tout" aria-pressed="true" onclick="changerScenario('tout')">Tout afficher</button>
-    <button class="scen-btn" type="button" id="sc-migration" aria-pressed="false" onclick="changerScenario('migration')" title="Passer sur une autre machine">↗ Migration</button>
-    <button class="scen-btn" type="button" id="sc-second" aria-pressed="false" onclick="changerScenario('second')" title="Nouveau PC, mais l'ancien reste en service — avec synchronisation entre les deux">⇄ Deux PC</button>
-    <button class="scen-btn" type="button" id="sc-reinstall" aria-pressed="false" onclick="changerScenario('reinstall')" title="Repartir propre sur la machine actuelle">↻ Réinstallation</button>
-    <button class="scen-btn" type="button" id="sc-affaires" aria-pressed="false" onclick="changerScenario('affaires')" title="Pilotes, logiciels et documents seulement — ni BIOS ni installation de Windows">📦 Mes affaires</button>
-  </div>
-  <span class="scen-note" id="scenario-note" aria-live="polite"></span>
-</div>
-
 <section class="guide" id="guide" aria-live="polite"></section>
 
 
-<div class="panel active" id="panel-quitter" role="tabpanel" aria-labelledby="tab-quitter" tabindex="0">
-  <div class="tbar">
-    <span class="tbar-info">🚪 À faire sur l'ANCIEN PC, avant de formater ou de le céder</span>
-  </div>
-  <div class="sec-content" id="list-quitter"></div>
-  <div class="next-tab-btn" id="next-quitter">
-    <button class="next-btn" type="button" onclick="switchTab('npc')" id="next-quitter-btn">Nouveau PC <span id="next-quitter-count"></span> →</button>
-  </div>
-</div>
-
-<div class="panel" id="panel-npc" role="tabpanel" aria-labelledby="tab-npc" tabindex="0">
-  <div class="tbar">
-    <span class="tbar-info">🔢 Suivre l'ordre numéroté du haut vers le bas</span>
-  </div>
-  <div class="sec-content" id="list-npc"></div>
-  <div class="next-tab-btn" id="next-npc">
-    <button class="next-btn" onclick="switchTab('apps')" id="next-npc-btn">Apps <span id="next-npc-count"></span> →</button>
-  </div>
-</div>
-
-<div class="panel" id="panel-apps" role="tabpanel" aria-labelledby="tab-apps" tabindex="0">
+<div class="panel active" id="panel-apps" role="tabpanel" aria-labelledby="tab-apps" tabindex="0">
   <div class="apps-wrap">
     <aside class="apps-filtres" id="apps-filtres" aria-label="Filtres">
       <button type="button" class="af-t" id="af-toggle" aria-expanded="true" aria-controls="af-corps"
@@ -1194,7 +1069,7 @@ if(location.protocol==='file:'){
       </div>
       <div class="sec-content" id="list-apps"></div>
       <div class="next-tab-btn" id="next-apps">
-        <button class="next-btn" onclick="switchTab('pwa')" id="next-apps-btn">PWA <span id="next-apps-count"></span> →</button>
+        <button class="next-btn" onclick="switchTab('pilotes')" id="next-apps-btn">Pilotes <span id="next-apps-count"></span> →</button>
       </div>
       <div id="apps-empty" style="display:none;padding:24px;text-align:center;color:var(--tx2);font-size:13px">Aucune app trouvée</div>
     </div>
@@ -1202,8 +1077,8 @@ if(location.protocol==='file:'){
 </div>
 
 
-<div class="panel" id="panel-reste" role="tabpanel" aria-labelledby="tab-reste" tabindex="0">
-  <div class="sec-content" id="list-reste"></div>
+<div class="panel" id="panel-pilotes" role="tabpanel" aria-labelledby="tab-pilotes" tabindex="0">
+  <div class="sec-content" id="list-pilotes"></div>
 </div>
 
 <div class="panel" id="panel-pwa" role="tabpanel" aria-labelledby="tab-pwa" tabindex="0">
@@ -1238,530 +1113,6 @@ const PROFIL_DEFAUT = {
     "system": "🔧 Utilitaires Système",
     "comms": "💬 Communication"
   },
-  "quitter": [
-    {
-      "id": "q1",
-      "n": "Désactiver les logiciels Adobe",
-      "p": "Application → Aide → Se déconnecter",
-      "note": "Désinstaller ou formater ne désactive rien : l'activation reste attachée à une machine qui n'existe plus, et une licence n'en autorise qu'un nombre limité.",
-      "pr": "high",
-      "warn": "À faire pendant que l'ancien PC fonctionne encore. Après le formatage, il faut passer par le support.",
-      "alt": {
-        "second": {
-          "n": "Vérifier combien de postes vos licences Adobe autorisent",
-          "d": "Un abonnement Creative Cloud permet deux installations actives. Au-delà, la troisième déconnecte la première sans prévenir. Si vous comptez travailler sur les deux machines, vérifiez-le maintenant plutôt qu'en pleine séance."
-        }
-      }
-    },
-    {
-      "id": "q2",
-      "n": "Délier les autres licences liées à la machine",
-      "p": "Chaque éditeur concerné",
-      "note": "Antivirus, utilitaires système, logiciels de montage, suites de création. Tout ce qui s'active par clé plutôt que par compte est concerné. La page « mes appareils » de chaque compte en ligne les liste.",
-      "pr": "high",
-      "alt": {
-        "second": {
-          "n": "Compter les postes autorisés par vos autres licences",
-          "d": "Beaucoup de logiciels payants n'en autorisent qu'un ou deux. Faites le tour de ceux que vous voulez sur les deux machines : c'est le moment de le savoir, pas quand l'un des deux refusera de démarrer."
-        }
-      }
-    },
-    {
-      "id": "q3",
-      "n": "Transférer l'application d'authentification",
-      "p": "Téléphone — fonction de transfert",
-      "note": "Les jetons ne se copient pas. Utiliser la fonction de transfert prévue, et le faire avant de changer de téléphone si les deux migrations tombent ensemble.",
-      "pr": "high",
-      "warn": "Sans transfert ni codes de secours, les comptes concernés deviennent inaccessibles.",
-      "alt": {
-        "second": {
-          "n": "Ajouter la seconde machine à l'application d'authentification",
-          "d": "Rien à transférer puisque l'ancienne reste en service : il s'agit d'autoriser la nouvelle. Gardez les codes de récupération sous la main, certains comptes les redemandent à la première connexion depuis un appareil inconnu."
-        }
-      }
-    },
-    {
-      "id": "q5",
-      "n": "Noter la clé de récupération BitLocker",
-      "p": "Paramètres → Chiffrement de l'appareil",
-      "note": "Si le disque est chiffré et que vous comptez y revenir chercher un fichier oublié, sans cette clé il est illisible. Cela vaut aussi pour un disque secondaire.",
-      "pr": "high",
-      "alt": {
-        "second": {
-          "n": "Noter les clés BitLocker des DEUX machines",
-          "d": "Deux machines, deux clés, et aucune des deux ne doit vivre seulement sur le disque qu'elle déverrouille."
-        }
-      }
-    },
-    {
-      "id": "q7",
-      "n": "Désautoriser Steam Guard",
-      "p": "Steam → Paramètres → Sécurité",
-      "note": "Retirer l'ancien PC des appareils autorisés évite qu'il compte dans la limite, et coupe l'accès si la machine change de mains.",
-      "pr": "med",
-      "cas": [
-        "migration",
-        "reinstall"
-      ]
-    },
-    {
-      "id": "q8",
-      "n": "Désautoriser iTunes et les lecteurs liés",
-      "p": "Compte → Autorisations",
-      "note": "Le nombre d'ordinateurs autorisés est limité et ne se libère pas tout seul. Une machine formatée reste comptée.",
-      "pr": "med",
-      "cas": [
-        "migration",
-        "reinstall"
-      ]
-    },
-    {
-      "id": "q9",
-      "n": "Se déconnecter des sessions ouvertes",
-      "p": "Comptes en ligne → Appareils connectés",
-      "note": "Messageries, réseaux sociaux, services de stockage. Une session laissée ouverte sur une machine cédée le reste.",
-      "pr": "med",
-      "cas": [
-        "migration",
-        "reinstall"
-      ]
-    },
-    {
-      "id": "q10",
-      "n": "Récupérer les licences encore inconnues",
-      "p": "Belarc Advisor, ProduKey ou l'éditeur",
-      "note": "Les clés saisies il y a des années et jamais notées. Les relever tant que le système fonctionne.",
-      "pr": "med"
-    },
-    {
-      "id": "q12",
-      "n": "Photographier les réglages personnalisés",
-      "p": "Appareil photo du téléphone",
-      "note": "Disposition des icônes, profils de couleur des écrans, macros de périphériques, réglages audio. Une photo remplace une heure de tâtonnements.",
-      "pr": "ok"
-    },
-    {
-      "id": "q13",
-      "n": "Effacer le disque de façon sécurisée",
-      "p": "Outil du fabricant du SSD, ou chiffrement puis formatage",
-      "note": "Seulement si la machine est vendue ou donnée. Un formatage ordinaire laisse les données récupérables ; sur un SSD, un Secure Erase du fabricant est plus fiable qu'un écrasement.",
-      "pr": "ok",
-      "cas": [
-        "migration"
-      ],
-      "warn": "À ne faire qu'après avoir vérifié les sauvegardes et désactivé les licences."
-    }
-  ],
-  "npc": [
-    {
-      "id": "n13",
-      "o": 3,
-      "n": "Entrer dans le BIOS/UEFI",
-      "src": "Touche Suppr ou F2 au démarrage",
-      "p": "high",
-      "t": 5,
-      "d": "Tapoter Suppr dès l'allumage, quatre à cinq fois par seconde. Sur certaines cartes et sur les portables, c'est F2. Tous les réglages qui suivent se font là, avant d'installer Windows."
-    },
-    {
-      "id": "n14",
-      "o": 4,
-      "n": "Mettre à jour le BIOS si nécessaire",
-      "src": "Site du fabricant de la carte mère",
-      "p": "med",
-      "t": 15,
-      "alt": {
-        "n": "Mettre à jour le BIOS si nécessaire",
-        "d": "Occasion commode si une version corrige un problème qui vous concerne. Sinon, ne rien toucher : les réglages seraient remis par défaut."
-      },
-      "dep": [
-        "n13"
-      ],
-      "d": "Seulement si une version corrige un problème qui vous concerne, ou si le processeur est plus récent que la carte. Un BIOS qui fonctionne n'a pas besoin d'être mis à jour.",
-      "warn": "Ne jamais couper l'alimentation pendant la mise à jour : la carte mère devient inutilisable.",
-      "comp": "cm"
-    },
-    {
-      "id": "n15",
-      "o": 5,
-      "n": "Activer TPM 2.0 et Secure Boot",
-      "src": "BIOS — Sécurité / Avancé",
-      "p": "high",
-      "t": 5,
-      "alt": {
-        "n": "Vérifier que TPM 2.0 et Secure Boot sont actifs",
-        "d": "Ils l'étaient déjà, mais une mise à jour du BIOS ou une pile morte remet les réglages par défaut. Un contrôle de trente secondes évite une installation qui refuse de démarrer."
-      },
-      "dep": [
-        "n13"
-      ],
-      "d": "Windows 11 les exige : sans eux, l'installation refuse de démarrer. Le TPM s'appelle PTT chez Intel et fTPM chez AMD. Secure Boot demande parfois de restaurer les clés par défaut avant de pouvoir s'activer."
-    },
-    {
-      "id": "n16",
-      "o": 6,
-      "n": "Désactiver le CSM",
-      "src": "BIOS — Démarrage",
-      "p": "high",
-      "t": 3,
-      "alt": {
-        "n": "Vérifier que le CSM est toujours désactivé",
-        "d": "S'il s'est réactivé, Secure Boot retombe et le disque ne sera pas vu en UEFI."
-      },
-      "dep": [
-        "n15"
-      ],
-      "d": "Le module de compatibilité fait démarrer en mode ancien (BIOS) au lieu d'UEFI. Secure Boot ne s'active pas tant qu'il est là, et Windows 11 demande un disque en GPT, donc un démarrage UEFI."
-    },
-    {
-      "id": "n7",
-      "o": 7,
-      "n": "Activer le profil XMP / EXPO de la RAM",
-      "src": "BIOS — réglages mémoire",
-      "p": "high",
-      "t": 5,
-      "alt": {
-        "n": "Vérifier le profil XMP / EXPO",
-        "d": "Contrôler dans le Gestionnaire des tâches, onglet Performance, que la mémoire tourne bien à sa fréquence annoncée."
-      },
-      "dep": [
-        "n13"
-      ],
-      "d": "Sans ce profil, la mémoire tourne à sa fréquence de base, bien en dessous de ce pour quoi vous l'avez payée. XMP chez Intel, EXPO chez AMD.",
-      "comp": "ram"
-    },
-    {
-      "id": "n17",
-      "o": 8,
-      "n": "Activer Resizable BAR",
-      "src": "BIOS — Avancé / PCIe",
-      "p": "med",
-      "t": 3,
-      "alt": {
-        "n": "Vérifier Resizable BAR",
-        "d": "Se désactive parfois après une mise à jour du BIOS ou un changement de carte graphique."
-      },
-      "dep": [
-        "n16"
-      ],
-      "d": "Laisse le processeur accéder à toute la mémoire de la carte graphique d'un coup. Deux à cinq pour cent de performance en jeu, gratuitement. S'appelle Smart Access Memory chez AMD, et demande le mode UEFI."
-    },
-    {
-      "id": "n18",
-      "o": 9,
-      "n": "Activer la virtualisation du processeur",
-      "src": "BIOS — Avancé / CPU",
-      "p": "med",
-      "t": 3,
-      "alt": {
-        "n": "Vérifier la virtualisation du processeur",
-        "d": "Nécessaire si vous comptez réinstaller WSL, Docker ou un émulateur."
-      },
-      "dep": [
-        "n13"
-      ],
-      "d": "Nécessaire aux machines virtuelles, à WSL, à Docker et aux émulateurs Android. S'appelle SVM chez AMD, VT-x ou Intel Virtualization Technology chez Intel."
-    },
-    {
-      "id": "n19",
-      "o": 10,
-      "n": "Régler l'ordre de démarrage et l'heure",
-      "src": "BIOS — Démarrage",
-      "p": "med",
-      "t": 3,
-      "alt": {
-        "n": "Vérifier l'ordre de démarrage et l'heure",
-        "d": "La clé d'installation doit passer avant le SSD, sinon la machine redémarre sur le système qu'on veut remplacer."
-      },
-      "dep": [
-        "n13"
-      ],
-      "d": "La clé d'installation en premier, le SSD ensuite. Vérifier aussi la date et l'heure : une horloge fausse provoque des erreurs de certificat pendant l'installation."
-    },
-    {
-      "id": "n20",
-      "o": 11,
-      "n": "Régler la courbe des ventilateurs",
-      "src": "BIOS — Monitoring / Fan control",
-      "p": "ok",
-      "t": 10,
-      "alt": {
-        "n": "Vérifier les courbes de ventilateurs",
-        "d": "Elles sont conservées par le BIOS, mais autant s'en assurer avant de repartir."
-      },
-      "dep": [
-        "n13"
-      ],
-      "d": "Le profil par défaut est souvent bruyant pour rien. Un profil silencieux suffit tant que les températures restent correctes, ce qui se vérifie plus loin."
-    },
-    {
-      "id": "n21",
-      "o": 12,
-      "n": "Revérifier les réglages après redémarrage",
-      "src": "BIOS",
-      "p": "high",
-      "t": 5,
-      "dep": [
-        "n15",
-        "n16",
-        "n7",
-        "n17"
-      ],
-      "d": "Enregistrer, sortir, puis revenir dans le BIOS pour contrôler que TPM, Secure Boot, XMP et Resizable BAR sont bien actifs. Il arrive qu'un réglage ne tienne pas au premier enregistrement."
-    },
-    {
-      "id": "n37",
-      "o": 1,
-      "n": "Télécharger les pilotes sur une clé USB",
-      "src": "Site du fabricant de la carte mère",
-      "p": "high",
-      "t": 15,
-      "cas": [
-        "reinstall"
-      ],
-      "d": "Au minimum le pilote réseau, idéalement le chipset aussi. Si Windows ne reconnaît pas la carte réseau au premier démarrage, il n'y a pas d'autre machine sous la main pour aller le chercher — contrairement à une migration, où l'ancien PC est encore là.",
-      "warn": "À faire avant de formater. Après, il est trop tard pour télécharger quoi que ce soit.",
-      "pilote": true,
-      "comp": "cm"
-    },
-    {
-      "id": "n36",
-      "o": 13,
-      "n": "POINT DE NON-RETOUR — dernier contrôle avant d'effacer",
-      "src": "Sur cette machine, maintenant",
-      "p": "high",
-      "t": 15,
-      "cas": [
-        "reinstall"
-      ],
-      "dep": [
-        "n21",
-        "n22"
-      ],
-      "d": "Une fois le disque effacé, cette machine n'est plus une source : ce qui n'a pas été copié n'existe plus nulle part. Reprendre point par point avant de lancer l'installation. Les sauvegardes sont-elles faites ET relues depuis la copie, pas depuis l'original ? Les licences sont-elles désactivées ? Les codes 2FA sont-ils sortis et l'authentificateur transféré ? La clé BitLocker est-elle notée ailleurs ? Le pilote réseau est-il sur la clé USB, au cas où Windows n'ait pas de réseau au premier démarrage ?",
-      "warn": "C'est la dernière étape réversible. Après, il n'y a plus de retour en arrière."
-    },
-    {
-      "id": "n22",
-      "o": 2,
-      "n": "Préparer la clé d'installation Windows",
-      "src": "Media Creation Tool ou Rufus",
-      "p": "high",
-      "t": 20,
-      "d": "Une clé USB de 8 Go minimum, qui sera effacée. Rufus permet en plus de retirer certaines contraintes et de préconfigurer l'installation. Pour aller plus loin, le générateur schneegans.de/windows/unattend-generator prépare un fichier autounattend.xml : déposé à la racine de la clé, il répond à votre place aux questions de l'installation — langue, partitionnement, compte local, réglages de confidentialité — et retire les applications préinstallées. Facultatif, mais ça change une installation de vingt minutes de clics en une installation qu'on lance et qu'on laisse tourner."
-    },
-    {
-      "id": "n23",
-      "o": 14,
-      "n": "Installer Windows",
-      "src": "Clé USB",
-      "p": "high",
-      "t": 30,
-      "dep": [
-        "n21",
-        "n22"
-      ],
-      "d": "Supprimer toutes les partitions existantes du disque cible pour repartir propre. Ne pas brancher les autres disques pendant l'installation : cela évite que le chargeur de démarrage atterrisse sur le mauvais.",
-      "warn": "Toutes les données du disque choisi sont perdues. Vérifier que les sauvegardes sont faites ET vérifiées."
-    },
-    {
-      "id": "n24",
-      "o": 15,
-      "n": "Choisir le type de compte",
-      "src": "Assistant de première configuration",
-      "p": "med",
-      "t": 5,
-      "dep": [
-        "n23"
-      ],
-      "d": "Compte Microsoft ou compte local. Le compte Microsoft synchronise les réglages et rattache la licence, le compte local garde tout sur la machine. On peut ajouter le compte Microsoft plus tard, l'inverse est plus pénible."
-    },
-    {
-      "id": "n1",
-      "o": 16,
-      "n": "Windows Update — tous les correctifs",
-      "src": "Paramètres → Windows Update",
-      "p": "high",
-      "t": 30,
-      "dep": [
-        "n23"
-      ],
-      "d": "Relancer jusqu'à ce qu'il n'y ait plus rien, redémarrages compris, et penser aux mises à jour facultatives qui contiennent souvent des pilotes."
-    },
-    {
-      "id": "n6",
-      "o": 17,
-      "n": "Vérifier l'activation de Windows",
-      "src": "Paramètres → Système → Activation",
-      "p": "high",
-      "t": 5,
-      "dep": [
-        "n23"
-      ],
-      "d": "Une licence liée au compte Microsoft se réactive en se connectant. Une licence OEM s'attache à la carte mère et revient seule après une réinstallation sur le même matériel."
-    },
-    {
-      "id": "n25",
-      "o": 18,
-      "n": "Noter la clé de récupération BitLocker",
-      "src": "Paramètres → Confidentialité → Chiffrement",
-      "p": "high",
-      "t": 5,
-      "dep": [
-        "n6"
-      ],
-      "d": "Windows 11 chiffre souvent le disque sans le dire clairement. Sans cette clé, un démarrage qui tourne mal ou un changement de matériel rend les données définitivement illisibles. La sauvegarder ailleurs que sur cette machine.",
-      "warn": "À faire tout de suite. Une clé perdue ne se retrouve pas."
-    },
-    {
-      "id": "n26",
-      "o": 19,
-      "n": "Retirer les applications préinstallées",
-      "src": "Paramètres → Applications",
-      "p": "med",
-      "t": 15,
-      "dep": [
-        "n1"
-      ],
-      "d": "Les machines de marque arrivent avec des essais d'antivirus et des utilitaires maison. Désinstaller ce qui ne sert pas, sans toucher aux pilotes ni aux utilitaires du fabricant de la carte mère."
-    },
-    {
-      "id": "n27",
-      "o": 20,
-      "n": "Passer les paramètres de confidentialité",
-      "src": "Paramètres → Confidentialité et sécurité",
-      "p": "med",
-      "t": 10,
-      "dep": [
-        "n1"
-      ],
-      "d": "Publicité personnalisée, historique d'activité, données de diagnostic facultatives, autorisations des applications. Rien de vital, mais c'est le moment de le faire une fois pour toutes."
-    },
-    {
-      "id": "n2",
-      "o": 21,
-      "n": "Pilote chipset de la carte mère",
-      "src": "Site du fabricant de la carte mère",
-      "p": "high",
-      "t": 10,
-      "alt": {
-        "n": "Réinstaller le pilote chipset",
-        "d": "Même sur la même carte mère : une installation propre repart d'un pilote générique."
-      },
-      "dep": [
-        "n1"
-      ],
-      "d": "Gère l'USB, le SATA, le NVMe et la gestion d'énergie. À installer avant les autres pilotes.",
-      "warn": "Télécharger uniquement sur le site officiel du fabricant.",
-      "pilote": true,
-      "comp": "cm"
-    },
-    {
-      "id": "n3",
-      "o": 22,
-      "n": "Pilote réseau (Ethernet / Wi-Fi)",
-      "src": "Site du fabricant de la carte mère",
-      "p": "high",
-      "t": 5,
-      "dep": [
-        "n2"
-      ],
-      "d": "À récupérer sur une clé USB AVANT la migration si le nouveau PC n'a pas de réseau au premier démarrage : sans lui, impossible de télécharger quoi que ce soit.",
-      "pilote": true,
-      "comp": "cm"
-    },
-    {
-      "id": "n4",
-      "o": 23,
-      "n": "Pilote audio",
-      "src": "Site du fabricant de la carte mère",
-      "p": "med",
-      "t": 5,
-      "dep": [
-        "n2"
-      ],
-      "d": "Windows installe un pilote générique ; celui du fabricant débloque les sorties et les effets spécifiques.",
-      "pilote": true,
-      "comp": "cm"
-    },
-    {
-      "id": "n5",
-      "o": 24,
-      "n": "Pilote de carte graphique",
-      "src": "nvidia.com / amd.com / intel.com",
-      "p": "high",
-      "t": 15,
-      "dep": [
-        "n2"
-      ],
-      "d": "Pilote officiel du GPU. Choisir la branche Game Ready ou Studio selon l'usage.",
-      "warn": "Télécharger uniquement sur le site du fabricant — beaucoup de faux sites de pilotes.",
-      "pilote": true,
-      "comp": "gpu"
-    },
-    {
-      "id": "n8",
-      "o": 25,
-      "n": "Vérifier les températures au repos",
-      "src": "HWiNFO64",
-      "p": "med",
-      "t": 10,
-      "post": true,
-      "dep": [
-        "n5"
-      ],
-      "d": "Repères courants : processeur sous 50 °C, carte graphique sous 45 °C, SSD sous 50 °C au repos. Au-dessus, vérifier le montage du refroidissement."
-    },
-    {
-      "id": "n9",
-      "o": 26,
-      "n": "Vérifier le sens des ventilateurs",
-      "src": "Vérification physique",
-      "p": "med",
-      "t": 10,
-      "post": true,
-      "cas": [
-        "migration"
-      ],
-      "d": "L'air doit entrer par l'avant et le bas, sortir par l'arrière et le haut. Les modèles à flux inversé se montent dans l'autre sens que d'habitude."
-    },
-    {
-      "id": "n10",
-      "o": 27,
-      "n": "Benchmark du SSD",
-      "src": "CrystalDiskMark",
-      "p": "ok",
-      "t": 10,
-      "post": true,
-      "d": "Comparer les débits mesurés à ceux annoncés. Un écart important signale souvent un mauvais port M.2, partagé avec d'autres connecteurs.",
-      "comp": "ssd"
-    },
-    {
-      "id": "n11",
-      "o": 28,
-      "n": "Configurer les écrans (résolution + Hz)",
-      "src": "Paramètres → Système → Affichage",
-      "p": "med",
-      "t": 10,
-      "post": true,
-      "dep": [
-        "n5"
-      ],
-      "d": "Windows ne choisit pas toujours la fréquence maximale. Régler chaque écran sur sa résolution native et son taux de rafraîchissement maximal."
-    },
-    {
-      "id": "n12",
-      "o": 30,
-      "n": "Créer un point de restauration",
-      "src": "Créer un point de restauration",
-      "p": "med",
-      "t": 5,
-      "post": true,
-      "dep": [
-        "n1"
-      ],
-      "d": "Une fois le système propre et à jour, avant d'installer les applications. Filet de sécurité en cas d'installation qui tourne mal."
-    }
-  ],
   "ordre": [],
   "apps": [],
   "pwa": [],
@@ -1786,530 +1137,6 @@ const PROFIL_DEMO = {
     "system": "🔧 Utilitaires Système",
     "comms": "💬 Communication"
   },
-  "quitter": [
-    {
-      "id": "q1",
-      "n": "Désactiver les logiciels Adobe",
-      "p": "Application → Aide → Se déconnecter",
-      "note": "Désinstaller ou formater ne désactive rien : l'activation reste attachée à une machine qui n'existe plus, et une licence n'en autorise qu'un nombre limité.",
-      "pr": "high",
-      "warn": "À faire pendant que l'ancien PC fonctionne encore. Après le formatage, il faut passer par le support.",
-      "alt": {
-        "second": {
-          "n": "Vérifier combien de postes vos licences Adobe autorisent",
-          "d": "Un abonnement Creative Cloud permet deux installations actives. Au-delà, la troisième déconnecte la première sans prévenir. Si vous comptez travailler sur les deux machines, vérifiez-le maintenant plutôt qu'en pleine séance."
-        }
-      }
-    },
-    {
-      "id": "q2",
-      "n": "Délier les autres licences liées à la machine",
-      "p": "Chaque éditeur concerné",
-      "note": "Antivirus, utilitaires système, logiciels de montage, suites de création. Tout ce qui s'active par clé plutôt que par compte est concerné. La page « mes appareils » de chaque compte en ligne les liste.",
-      "pr": "high",
-      "alt": {
-        "second": {
-          "n": "Compter les postes autorisés par vos autres licences",
-          "d": "Beaucoup de logiciels payants n'en autorisent qu'un ou deux. Faites le tour de ceux que vous voulez sur les deux machines : c'est le moment de le savoir, pas quand l'un des deux refusera de démarrer."
-        }
-      }
-    },
-    {
-      "id": "q3",
-      "n": "Transférer l'application d'authentification",
-      "p": "Téléphone — fonction de transfert",
-      "note": "Les jetons ne se copient pas. Utiliser la fonction de transfert prévue, et le faire avant de changer de téléphone si les deux migrations tombent ensemble.",
-      "pr": "high",
-      "warn": "Sans transfert ni codes de secours, les comptes concernés deviennent inaccessibles.",
-      "alt": {
-        "second": {
-          "n": "Ajouter la seconde machine à l'application d'authentification",
-          "d": "Rien à transférer puisque l'ancienne reste en service : il s'agit d'autoriser la nouvelle. Gardez les codes de récupération sous la main, certains comptes les redemandent à la première connexion depuis un appareil inconnu."
-        }
-      }
-    },
-    {
-      "id": "q5",
-      "n": "Noter la clé de récupération BitLocker",
-      "p": "Paramètres → Chiffrement de l'appareil",
-      "note": "Si le disque est chiffré et que vous comptez y revenir chercher un fichier oublié, sans cette clé il est illisible. Cela vaut aussi pour un disque secondaire.",
-      "pr": "high",
-      "alt": {
-        "second": {
-          "n": "Noter les clés BitLocker des DEUX machines",
-          "d": "Deux machines, deux clés, et aucune des deux ne doit vivre seulement sur le disque qu'elle déverrouille."
-        }
-      }
-    },
-    {
-      "id": "q7",
-      "n": "Désautoriser Steam Guard",
-      "p": "Steam → Paramètres → Sécurité",
-      "note": "Retirer l'ancien PC des appareils autorisés évite qu'il compte dans la limite, et coupe l'accès si la machine change de mains.",
-      "pr": "med",
-      "cas": [
-        "migration",
-        "reinstall"
-      ]
-    },
-    {
-      "id": "q8",
-      "n": "Désautoriser iTunes et les lecteurs liés",
-      "p": "Compte → Autorisations",
-      "note": "Le nombre d'ordinateurs autorisés est limité et ne se libère pas tout seul. Une machine formatée reste comptée.",
-      "pr": "med",
-      "cas": [
-        "migration",
-        "reinstall"
-      ]
-    },
-    {
-      "id": "q9",
-      "n": "Se déconnecter des sessions ouvertes",
-      "p": "Comptes en ligne → Appareils connectés",
-      "note": "Messageries, réseaux sociaux, services de stockage. Une session laissée ouverte sur une machine cédée le reste.",
-      "pr": "med",
-      "cas": [
-        "migration",
-        "reinstall"
-      ]
-    },
-    {
-      "id": "q10",
-      "n": "Récupérer les licences encore inconnues",
-      "p": "Belarc Advisor, ProduKey ou l'éditeur",
-      "note": "Les clés saisies il y a des années et jamais notées. Les relever tant que le système fonctionne.",
-      "pr": "med"
-    },
-    {
-      "id": "q12",
-      "n": "Photographier les réglages personnalisés",
-      "p": "Appareil photo du téléphone",
-      "note": "Disposition des icônes, profils de couleur des écrans, macros de périphériques, réglages audio. Une photo remplace une heure de tâtonnements.",
-      "pr": "ok"
-    },
-    {
-      "id": "q13",
-      "n": "Effacer le disque de façon sécurisée",
-      "p": "Outil du fabricant du SSD, ou chiffrement puis formatage",
-      "note": "Seulement si la machine est vendue ou donnée. Un formatage ordinaire laisse les données récupérables ; sur un SSD, un Secure Erase du fabricant est plus fiable qu'un écrasement.",
-      "pr": "ok",
-      "cas": [
-        "migration"
-      ],
-      "warn": "À ne faire qu'après avoir vérifié les sauvegardes et désactivé les licences."
-    }
-  ],
-  "npc": [
-    {
-      "id": "n13",
-      "o": 3,
-      "n": "Entrer dans le BIOS/UEFI",
-      "src": "Touche Suppr ou F2 au démarrage",
-      "p": "high",
-      "t": 5,
-      "d": "Tapoter Suppr dès l'allumage, quatre à cinq fois par seconde. Sur certaines cartes et sur les portables, c'est F2. Tous les réglages qui suivent se font là, avant d'installer Windows."
-    },
-    {
-      "id": "n14",
-      "o": 4,
-      "n": "Mettre à jour le BIOS si nécessaire",
-      "src": "Site du fabricant de la carte mère",
-      "p": "med",
-      "t": 15,
-      "alt": {
-        "n": "Mettre à jour le BIOS si nécessaire",
-        "d": "Occasion commode si une version corrige un problème qui vous concerne. Sinon, ne rien toucher : les réglages seraient remis par défaut."
-      },
-      "dep": [
-        "n13"
-      ],
-      "d": "Seulement si une version corrige un problème qui vous concerne, ou si le processeur est plus récent que la carte. Un BIOS qui fonctionne n'a pas besoin d'être mis à jour.",
-      "warn": "Ne jamais couper l'alimentation pendant la mise à jour : la carte mère devient inutilisable.",
-      "comp": "cm"
-    },
-    {
-      "id": "n15",
-      "o": 5,
-      "n": "Activer TPM 2.0 et Secure Boot",
-      "src": "BIOS — Sécurité / Avancé",
-      "p": "high",
-      "t": 5,
-      "alt": {
-        "n": "Vérifier que TPM 2.0 et Secure Boot sont actifs",
-        "d": "Ils l'étaient déjà, mais une mise à jour du BIOS ou une pile morte remet les réglages par défaut. Un contrôle de trente secondes évite une installation qui refuse de démarrer."
-      },
-      "dep": [
-        "n13"
-      ],
-      "d": "Windows 11 les exige : sans eux, l'installation refuse de démarrer. Le TPM s'appelle PTT chez Intel et fTPM chez AMD. Secure Boot demande parfois de restaurer les clés par défaut avant de pouvoir s'activer."
-    },
-    {
-      "id": "n16",
-      "o": 6,
-      "n": "Désactiver le CSM",
-      "src": "BIOS — Démarrage",
-      "p": "high",
-      "t": 3,
-      "alt": {
-        "n": "Vérifier que le CSM est toujours désactivé",
-        "d": "S'il s'est réactivé, Secure Boot retombe et le disque ne sera pas vu en UEFI."
-      },
-      "dep": [
-        "n15"
-      ],
-      "d": "Le module de compatibilité fait démarrer en mode ancien (BIOS) au lieu d'UEFI. Secure Boot ne s'active pas tant qu'il est là, et Windows 11 demande un disque en GPT, donc un démarrage UEFI."
-    },
-    {
-      "id": "n7",
-      "o": 7,
-      "n": "Activer le profil XMP / EXPO de la RAM",
-      "src": "BIOS — réglages mémoire",
-      "p": "high",
-      "t": 5,
-      "alt": {
-        "n": "Vérifier le profil XMP / EXPO",
-        "d": "Contrôler dans le Gestionnaire des tâches, onglet Performance, que la mémoire tourne bien à sa fréquence annoncée."
-      },
-      "dep": [
-        "n13"
-      ],
-      "d": "Sans ce profil, la mémoire tourne à sa fréquence de base, bien en dessous de ce pour quoi vous l'avez payée. XMP chez Intel, EXPO chez AMD.",
-      "comp": "ram"
-    },
-    {
-      "id": "n17",
-      "o": 8,
-      "n": "Activer Resizable BAR",
-      "src": "BIOS — Avancé / PCIe",
-      "p": "med",
-      "t": 3,
-      "alt": {
-        "n": "Vérifier Resizable BAR",
-        "d": "Se désactive parfois après une mise à jour du BIOS ou un changement de carte graphique."
-      },
-      "dep": [
-        "n16"
-      ],
-      "d": "Laisse le processeur accéder à toute la mémoire de la carte graphique d'un coup. Deux à cinq pour cent de performance en jeu, gratuitement. S'appelle Smart Access Memory chez AMD, et demande le mode UEFI."
-    },
-    {
-      "id": "n18",
-      "o": 9,
-      "n": "Activer la virtualisation du processeur",
-      "src": "BIOS — Avancé / CPU",
-      "p": "med",
-      "t": 3,
-      "alt": {
-        "n": "Vérifier la virtualisation du processeur",
-        "d": "Nécessaire si vous comptez réinstaller WSL, Docker ou un émulateur."
-      },
-      "dep": [
-        "n13"
-      ],
-      "d": "Nécessaire aux machines virtuelles, à WSL, à Docker et aux émulateurs Android. S'appelle SVM chez AMD, VT-x ou Intel Virtualization Technology chez Intel."
-    },
-    {
-      "id": "n19",
-      "o": 10,
-      "n": "Régler l'ordre de démarrage et l'heure",
-      "src": "BIOS — Démarrage",
-      "p": "med",
-      "t": 3,
-      "alt": {
-        "n": "Vérifier l'ordre de démarrage et l'heure",
-        "d": "La clé d'installation doit passer avant le SSD, sinon la machine redémarre sur le système qu'on veut remplacer."
-      },
-      "dep": [
-        "n13"
-      ],
-      "d": "La clé d'installation en premier, le SSD ensuite. Vérifier aussi la date et l'heure : une horloge fausse provoque des erreurs de certificat pendant l'installation."
-    },
-    {
-      "id": "n20",
-      "o": 11,
-      "n": "Régler la courbe des ventilateurs",
-      "src": "BIOS — Monitoring / Fan control",
-      "p": "ok",
-      "t": 10,
-      "alt": {
-        "n": "Vérifier les courbes de ventilateurs",
-        "d": "Elles sont conservées par le BIOS, mais autant s'en assurer avant de repartir."
-      },
-      "dep": [
-        "n13"
-      ],
-      "d": "Le profil par défaut est souvent bruyant pour rien. Un profil silencieux suffit tant que les températures restent correctes, ce qui se vérifie plus loin."
-    },
-    {
-      "id": "n21",
-      "o": 12,
-      "n": "Revérifier les réglages après redémarrage",
-      "src": "BIOS",
-      "p": "high",
-      "t": 5,
-      "dep": [
-        "n15",
-        "n16",
-        "n7",
-        "n17"
-      ],
-      "d": "Enregistrer, sortir, puis revenir dans le BIOS pour contrôler que TPM, Secure Boot, XMP et Resizable BAR sont bien actifs. Il arrive qu'un réglage ne tienne pas au premier enregistrement."
-    },
-    {
-      "id": "n37",
-      "o": 1,
-      "n": "Télécharger les pilotes sur une clé USB",
-      "src": "Site du fabricant de la carte mère",
-      "p": "high",
-      "t": 15,
-      "cas": [
-        "reinstall"
-      ],
-      "d": "Au minimum le pilote réseau, idéalement le chipset aussi. Si Windows ne reconnaît pas la carte réseau au premier démarrage, il n'y a pas d'autre machine sous la main pour aller le chercher — contrairement à une migration, où l'ancien PC est encore là.",
-      "warn": "À faire avant de formater. Après, il est trop tard pour télécharger quoi que ce soit.",
-      "pilote": true,
-      "comp": "cm"
-    },
-    {
-      "id": "n36",
-      "o": 13,
-      "n": "POINT DE NON-RETOUR — dernier contrôle avant d'effacer",
-      "src": "Sur cette machine, maintenant",
-      "p": "high",
-      "t": 15,
-      "cas": [
-        "reinstall"
-      ],
-      "dep": [
-        "n21",
-        "n22"
-      ],
-      "d": "Une fois le disque effacé, cette machine n'est plus une source : ce qui n'a pas été copié n'existe plus nulle part. Reprendre point par point avant de lancer l'installation. Les sauvegardes sont-elles faites ET relues depuis la copie, pas depuis l'original ? Les licences sont-elles désactivées ? Les codes 2FA sont-ils sortis et l'authentificateur transféré ? La clé BitLocker est-elle notée ailleurs ? Le pilote réseau est-il sur la clé USB, au cas où Windows n'ait pas de réseau au premier démarrage ?",
-      "warn": "C'est la dernière étape réversible. Après, il n'y a plus de retour en arrière."
-    },
-    {
-      "id": "n22",
-      "o": 2,
-      "n": "Préparer la clé d'installation Windows",
-      "src": "Media Creation Tool ou Rufus",
-      "p": "high",
-      "t": 20,
-      "d": "Une clé USB de 8 Go minimum, qui sera effacée. Rufus permet en plus de retirer certaines contraintes et de préconfigurer l'installation. Pour aller plus loin, le générateur schneegans.de/windows/unattend-generator prépare un fichier autounattend.xml : déposé à la racine de la clé, il répond à votre place aux questions de l'installation — langue, partitionnement, compte local, réglages de confidentialité — et retire les applications préinstallées. Facultatif, mais ça change une installation de vingt minutes de clics en une installation qu'on lance et qu'on laisse tourner."
-    },
-    {
-      "id": "n23",
-      "o": 14,
-      "n": "Installer Windows",
-      "src": "Clé USB",
-      "p": "high",
-      "t": 30,
-      "dep": [
-        "n21",
-        "n22"
-      ],
-      "d": "Supprimer toutes les partitions existantes du disque cible pour repartir propre. Ne pas brancher les autres disques pendant l'installation : cela évite que le chargeur de démarrage atterrisse sur le mauvais.",
-      "warn": "Toutes les données du disque choisi sont perdues. Vérifier que les sauvegardes sont faites ET vérifiées."
-    },
-    {
-      "id": "n24",
-      "o": 15,
-      "n": "Choisir le type de compte",
-      "src": "Assistant de première configuration",
-      "p": "med",
-      "t": 5,
-      "dep": [
-        "n23"
-      ],
-      "d": "Compte Microsoft ou compte local. Le compte Microsoft synchronise les réglages et rattache la licence, le compte local garde tout sur la machine. On peut ajouter le compte Microsoft plus tard, l'inverse est plus pénible."
-    },
-    {
-      "id": "n1",
-      "o": 16,
-      "n": "Windows Update — tous les correctifs",
-      "src": "Paramètres → Windows Update",
-      "p": "high",
-      "t": 30,
-      "dep": [
-        "n23"
-      ],
-      "d": "Relancer jusqu'à ce qu'il n'y ait plus rien, redémarrages compris, et penser aux mises à jour facultatives qui contiennent souvent des pilotes."
-    },
-    {
-      "id": "n6",
-      "o": 17,
-      "n": "Vérifier l'activation de Windows",
-      "src": "Paramètres → Système → Activation",
-      "p": "high",
-      "t": 5,
-      "dep": [
-        "n23"
-      ],
-      "d": "Une licence liée au compte Microsoft se réactive en se connectant. Une licence OEM s'attache à la carte mère et revient seule après une réinstallation sur le même matériel."
-    },
-    {
-      "id": "n25",
-      "o": 18,
-      "n": "Noter la clé de récupération BitLocker",
-      "src": "Paramètres → Confidentialité → Chiffrement",
-      "p": "high",
-      "t": 5,
-      "dep": [
-        "n6"
-      ],
-      "d": "Windows 11 chiffre souvent le disque sans le dire clairement. Sans cette clé, un démarrage qui tourne mal ou un changement de matériel rend les données définitivement illisibles. La sauvegarder ailleurs que sur cette machine.",
-      "warn": "À faire tout de suite. Une clé perdue ne se retrouve pas."
-    },
-    {
-      "id": "n26",
-      "o": 19,
-      "n": "Retirer les applications préinstallées",
-      "src": "Paramètres → Applications",
-      "p": "med",
-      "t": 15,
-      "dep": [
-        "n1"
-      ],
-      "d": "Les machines de marque arrivent avec des essais d'antivirus et des utilitaires maison. Désinstaller ce qui ne sert pas, sans toucher aux pilotes ni aux utilitaires du fabricant de la carte mère."
-    },
-    {
-      "id": "n27",
-      "o": 20,
-      "n": "Passer les paramètres de confidentialité",
-      "src": "Paramètres → Confidentialité et sécurité",
-      "p": "med",
-      "t": 10,
-      "dep": [
-        "n1"
-      ],
-      "d": "Publicité personnalisée, historique d'activité, données de diagnostic facultatives, autorisations des applications. Rien de vital, mais c'est le moment de le faire une fois pour toutes."
-    },
-    {
-      "id": "n2",
-      "o": 21,
-      "n": "Pilote chipset de la carte mère",
-      "src": "Site du fabricant de la carte mère",
-      "p": "high",
-      "t": 10,
-      "alt": {
-        "n": "Réinstaller le pilote chipset",
-        "d": "Même sur la même carte mère : une installation propre repart d'un pilote générique."
-      },
-      "dep": [
-        "n1"
-      ],
-      "d": "Gère l'USB, le SATA, le NVMe et la gestion d'énergie. À installer avant les autres pilotes.",
-      "warn": "Télécharger uniquement sur le site officiel du fabricant.",
-      "pilote": true,
-      "comp": "cm"
-    },
-    {
-      "id": "n3",
-      "o": 22,
-      "n": "Pilote réseau (Ethernet / Wi-Fi)",
-      "src": "Site du fabricant de la carte mère",
-      "p": "high",
-      "t": 5,
-      "dep": [
-        "n2"
-      ],
-      "d": "À récupérer sur une clé USB AVANT la migration si le nouveau PC n'a pas de réseau au premier démarrage : sans lui, impossible de télécharger quoi que ce soit.",
-      "pilote": true,
-      "comp": "cm"
-    },
-    {
-      "id": "n4",
-      "o": 23,
-      "n": "Pilote audio",
-      "src": "Site du fabricant de la carte mère",
-      "p": "med",
-      "t": 5,
-      "dep": [
-        "n2"
-      ],
-      "d": "Windows installe un pilote générique ; celui du fabricant débloque les sorties et les effets spécifiques.",
-      "pilote": true,
-      "comp": "cm"
-    },
-    {
-      "id": "n5",
-      "o": 24,
-      "n": "Pilote de carte graphique",
-      "src": "nvidia.com / amd.com / intel.com",
-      "p": "high",
-      "t": 15,
-      "dep": [
-        "n2"
-      ],
-      "d": "Pilote officiel du GPU. Choisir la branche Game Ready ou Studio selon l'usage.",
-      "warn": "Télécharger uniquement sur le site du fabricant — beaucoup de faux sites de pilotes.",
-      "pilote": true,
-      "comp": "gpu"
-    },
-    {
-      "id": "n8",
-      "o": 25,
-      "n": "Vérifier les températures au repos",
-      "src": "HWiNFO64",
-      "p": "med",
-      "t": 10,
-      "post": true,
-      "dep": [
-        "n5"
-      ],
-      "d": "Repères courants : processeur sous 50 °C, carte graphique sous 45 °C, SSD sous 50 °C au repos. Au-dessus, vérifier le montage du refroidissement."
-    },
-    {
-      "id": "n9",
-      "o": 26,
-      "n": "Vérifier le sens des ventilateurs",
-      "src": "Vérification physique",
-      "p": "med",
-      "t": 10,
-      "post": true,
-      "cas": [
-        "migration"
-      ],
-      "d": "L'air doit entrer par l'avant et le bas, sortir par l'arrière et le haut. Les modèles à flux inversé se montent dans l'autre sens que d'habitude."
-    },
-    {
-      "id": "n10",
-      "o": 27,
-      "n": "Benchmark du SSD",
-      "src": "CrystalDiskMark",
-      "p": "ok",
-      "t": 10,
-      "post": true,
-      "d": "Comparer les débits mesurés à ceux annoncés. Un écart important signale souvent un mauvais port M.2, partagé avec d'autres connecteurs.",
-      "comp": "ssd"
-    },
-    {
-      "id": "n11",
-      "o": 28,
-      "n": "Configurer les écrans (résolution + Hz)",
-      "src": "Paramètres → Système → Affichage",
-      "p": "med",
-      "t": 10,
-      "post": true,
-      "dep": [
-        "n5"
-      ],
-      "d": "Windows ne choisit pas toujours la fréquence maximale. Régler chaque écran sur sa résolution native et son taux de rafraîchissement maximal."
-    },
-    {
-      "id": "n12",
-      "o": 30,
-      "n": "Créer un point de restauration",
-      "src": "Créer un point de restauration",
-      "p": "med",
-      "t": 5,
-      "post": true,
-      "dep": [
-        "n1"
-      ],
-      "d": "Une fois le système propre et à jour, avant d'installer les applications. Filet de sécurité en cas d'installation qui tourne mal."
-    }
-  ],
   "ordre": [
     "a1",
     "a2",
@@ -2568,90 +1395,45 @@ const CLE_PROFIL='mpc_profil_v1', CLE_ETAT='mpc_state_v1', CLE_THEME='mpc_theme'
 const CLE_SOURCE='mpc_source_v1', CLE_CIBLE='mpc_cible_v1';
 let INV_SOURCE=null, INV_CIBLE=null;
 
-let CATS={}, NPC_DATA=[], APPS_DATA=[], PWA_DATA=[], QUITTER_DATA=[], INSTALL_ORDER=[], SEARCH_QUERIES={};
+let CATS={}, APPS_DATA=[], PWA_DATA=[], INSTALL_ORDER=[], SEARCH_QUERIES={};
 
-// ═══ SCÉNARIO ═══
-// La même checklist sert à deux situations qui partagent l'essentiel : migrer
-// vers une autre machine, ou réinstaller proprement celle qu'on a. Ce qui
-// diffère tient en quelques éléments, marqués par `cas`. Sans mention, un
-// élément vaut pour les deux — c'est le cas des pilotes, des applications et
-// des sauvegardes, donc de la grande majorité.
+// ═══ CE QUE LA PAGE MONTRE ═══
 //
-// Différence de fond entre les deux : en migration, l'ancienne machine reste
-// disponible pour récupérer un fichier oublié. En réinstallation, une fois le
-// disque effacé, il n'y a plus de source. D'où le point de non-retour.
-//
-// Le troisième cas ne marche pas comme les deux autres. « Migration » et
-// « réinstallation » partent de tout et retirent le peu qui ne les concerne
-// pas ; « mes affaires » part de rien et ne garde que ce qu'on lui nomme :
-// les onglets Apps et PWA, plus les étapes marquées « pilote ». Sans
-// cette inversion, les réglages BIOS — qui ne portent aucune mention parce
-// qu'ils valent pour les deux premiers cas — s'y retrouveraient aussi.
-const SCENARIOS={
-  tout:{libelle:'Tout afficher',court:'Tout'},
-  migration:{libelle:'Migration vers un autre PC',court:'Migration'},
-  reinstall:{libelle:'Réinstallation sur cette machine',court:'Réinstallation'},
-  second:{libelle:'Second PC, je garde l\'ancien',court:'Deux PC',
-          // L'ancienne machine reste allumée demain : désautoriser Steam et
-          // délier ses licences reviendrait à saboter un PC qu'on utilise
-          // encore. En échange, la répartition des dossiers et leur
-          // synchronisation deviennent le vrai travail.
-          onglet:{quitter:'Sur l\'ancien PC'}},
-  affaires:{libelle:'Juste mes logiciels et mes documents',court:'Mes affaires',
-            exclusif:true,onglets:['apps','pwa']}
-};
-const CLE_SCENARIO='mpc_scenario_v1';
-let scenario='tout';
-
-function visibleDansScenario(e){
-  if(scenario==='tout')return true;
-  if(!e)return true;
-  const sc=SCENARIOS[scenario]||{};
-  const cas=Array.isArray(e.cas)?e.cas:[];
-  if(cas.indexOf(scenario)>=0)return true;          // nommé explicitement
-  if(sc.exclusif){
-    // Un élément qui nomme ses cas et ne nomme pas celui-ci se réclame d'une
-    // autre situation : « synchroniser les deux PC » n'a rien à faire ici,
-    // même si son onglet est gardé en entier. Ce que l'élément dit de
-    // lui-même passe avant l'onglet où il se trouve.
-    if(cas.length)return false;
-    // Un cas exclusif ne garde ensuite que ce qu'il réclame : ses onglets en
-    // entier, et ailleurs les seules étapes marquées « pilote ».
-    if(sc.onglets&&sc.onglets.indexOf(ongletDe(e.id))>=0)return true;
-    return !!e.pilote;
-  }
-  return cas.length===0;                            // sans mention : les deux
-}
+// Il y a eu ici un système de « cas » : migration, réinstallation, deux PC,
+// mes affaires. Il servait à cacher les étapes de BIOS quand elles ne
+// s'appliquaient pas, et à renommer « Avant de quitter » quand l'ancienne
+// machine restait en service. Ces deux onglets ont disparu avec la réduction
+// du projet aux logiciels et aux pilotes : plus un seul élément ne portait de
+// mention `cas`, et tout le mécanisme filtrait une liste qu'il ne réduisait
+// jamais. Il est parti avec eux.
 
 // ONGLET_DE ne se remplit qu'au passage du mode guidé : on retrouve l'onglet
 // d'un élément à la demande, sans dépendre de l'ordre des rendus.
 // Un onglet que le cas choisi vide entierement n'affichait rien du tout : ni
 // liste, ni explication. On dit ce qui se passe et comment en sortir.
 function messageOngletVide(cle){
-  const sc=SCENARIOS[scenario]||{};
-  const total=donneesDe(cle).length;
-  if(!total){
-    // Les onglets Apps et PWA arrivent vides : la checklist livree ne contient
-    // que ce qui vaut pour tout le monde, et la liste des logiciels est celle
-    // de TA machine, que seul le scan connait. Un onglet vide qui dit quoi
-    // faire vaut mieux qu'un onglet rempli des logiciels de quelqu'un d'autre.
-    if(cle==='apps'||cle==='pwa'){
-      return '<div class="onglet-vide">'
-        +'<b>Cette liste se remplit avec le scan de ton ancien PC.</b><br>'
-        +'Lance <code>Migration PC.bat</code> sur la machine que tu quittes : '
-        +'il releve tes logiciels et remplit cet onglet.'
-        +'<div class="onglet-vide-act">'
-        +'<button type="button" class="sm-btn" onclick="basculerOutils()">⬇️ Les scripts pour Windows…</button>'
-        +'<button type="button" class="sm-btn" onclick="chargerDemo()">👁️ Voir un exemple garni</button>'
-        +'</div></div>';
-    }
-    return '<div class="onglet-vide">Le profil chargé ne décrit rien dans « '
-      +esc(nomOnglet(cle))+' ».</div>';
+  if(cle==='pilotes'){
+    return '<div class="onglet-vide">'
+      +'<b>Les pilotes du PC receveur apparaissent ici après son scan.</b><br>'
+      +'Lance <code>Migration PC.bat</code> sur la machine d\'arrivée et choisis '
+      +'CIBLE : elle relève les périphériques que Windows signale sans pilote, '
+      +'et donne le lien du constructeur.'
+      +'<div class="onglet-vide-act">'
+      +'<button type="button" class="sm-btn" onclick="basculerOutils()">⬇️ Les scripts pour Windows…</button>'
+      +'</div></div>';
   }
-  return '<div class="onglet-vide">Rien à faire ici dans le cas « '
-    +esc(sc.court||sc.libelle||scenario)+' ».<br>'
-    +'Cet onglet compte '+total+' élément'+(total>1?'s':'')
-    +' dans les autres cas — le sélecteur est en haut de page.</div>';
+  // Les onglets Logiciels et PWA arrivent vides : la checklist livrée ne
+  // contient rien, et la liste des logiciels est celle de TA machine, que seul
+  // le scan connaît. Un onglet vide qui dit quoi faire vaut mieux qu'un onglet
+  // rempli des logiciels de quelqu'un d'autre.
+  return '<div class="onglet-vide">'
+    +'<b>Cette liste se remplit avec le scan de ton ancien PC.</b><br>'
+    +'Lance <code>Migration PC.bat</code> sur la machine que tu quittes : '
+    +'il releve tes logiciels et remplit cet onglet.'
+    +'<div class="onglet-vide-act">'
+    +'<button type="button" class="sm-btn" onclick="basculerOutils()">⬇️ Les scripts pour Windows…</button>'
+    +'<button type="button" class="sm-btn" onclick="chargerDemo()">👁️ Voir un exemple garni</button>'
+    +'</div></div>';
 }
 
 function ongletDe(id){
@@ -2662,100 +1444,20 @@ function ongletDe(id){
   return '';
 }
 
-// Un élément peut porter un libellé différent selon le cas : « Activer Secure
-// Boot » en migration, « Vérifier que Secure Boot est toujours actif » en
-// réinstallation. Sans cela il faudrait dupliquer l'étape et ses liens.
-//
-// `alt` accepte deux formes. Un objet {n,d} vaut pour la réinstallation, ce
-// qui était la seule alternative au départ et reste valable. Un objet dont les
-// clés sont des noms de cas — {reinstall:{…}, second:{…}} — en couvre
-// plusieurs. La première forme était déjà écrite dans les profils : on la
-// garde plutôt que d'imposer une réécriture.
-function variante(e){
-  if(!e||!e.alt)return null;
-  if(e.alt.n||e.alt.d)return scenario==='reinstall'?e.alt:null;
-  return e.alt[scenario]||null;
-}
-function libelleDe(e){
-  const v=variante(e);
-  return (v&&v.n)?v.n:(e?e.n:'');
-}
-function descDe(e){
-  const v=variante(e);
-  return (v&&v.d)?v.d:(e?(e.d||''):'');
-}
-
-// Un onglet peut aussi changer de nom : « Avant de quitter » n'a pas de sens
-// quand on garde la machine.
-function nomOnglet(cle){
-  const sc=SCENARIOS[scenario]||{};
-  return (sc.onglet&&sc.onglet[cle])||NOM_ONGLET[cle];
-}
-
-// La bande « Situation » ne s'affiche qu'a la demande : le choix se fait deja
-// a l'accueil, et le repeter en permanence doublait la meme commande.
-function basculerSituation(){
-  const el=document.getElementById('scen');if(!el)return;
-  const ouvert=!el.hidden;
-  el.hidden=ouvert;
-  const b=document.getElementById('scen-btn');
-  if(b)b.setAttribute('aria-expanded',ouvert?'false':'true');
-  if(!ouvert){const p=el.querySelector('button');if(p)p.focus();}
-}
-
-function changerScenario(cle){
-  if(!SCENARIOS[cle])return;
-  scenario=cle;
-  try{localStorage.setItem(CLE_SCENARIO,cle);}catch(e){}
-  majSelecteurScenario();
-  curCats=[];
-  renderAll();updateGlobal();
-}
-
-// Le nom de l'onglet « Avant de quitter » et son bandeau mentent quand on
-// garde la machine : ils suivent le cas choisi.
-function majIntitulesOnglets(){
-  const t=document.getElementById('tab-quitter');
-  if(t){
-    const badge=t.querySelector('.tab-badge');
-    t.textContent='🚪 '+nomOnglet('quitter')+' ';
-    if(badge)t.appendChild(badge);
-  }
-  const info=document.querySelector('#panel-quitter .tbar-info');
-  if(info){
-    info.textContent=scenario==='second'
-      ? "🚪 À faire sur l'ANCIEN PC, qui reste en service"
-      : "🚪 À faire sur l'ANCIEN PC, avant de formater ou de le céder";
-  }
-}
-
-function majSelecteurScenario(){
-  majIntitulesOnglets();
-  Object.keys(SCENARIOS).forEach(function(k){
-    const b=document.getElementById('sc-'+k);
-    if(!b)return;
-    b.classList.toggle('active',k===scenario);
-    b.setAttribute('aria-pressed',k===scenario?'true':'false');
-  });
-  const n=document.getElementById('scenario-note');
-  if(n){
-    const compte=itemsVisibles().length;
-    const total=tousLesItems().length;
-    n.textContent=(compte<total)?compte+' des '+total+' éléments concernent ce cas':'';
-  }
-}
+function libelleDe(e){ return e?(e.n||''):''; }
+function descDe(e){ return e?(e.d||''):''; }
 
 // La liste des onglets vivait en sept exemplaires dans le fichier. En ajouter
 // un obligeait à les retrouver tous, et en oublier un ne se voyait pas.
-const ONGLETS=['quitter','npc','apps','pwa'];
-// « Reste à faire » n'est pas une liste de tâches : c'est un rapport. Il a
-// son bouton et son panneau, mais il reste hors de ONGLETS pour que la
-// progression globale, le mode guidé et la recherche ne cherchent pas des
-// cases à cocher là où il n'y en a pas.
-const ONGLETS_VUE=ONGLETS.concat(['reste']);
-const NOM_ONGLET={quitter:'Avant de quitter',npc:'Nouveau PC',apps:'Apps',pwa:'PWA'};
+const ONGLETS=['apps','pilotes','pwa'];
+const ONGLETS_VUE=ONGLETS;
+const NOM_ONGLET={apps:'Logiciels',pilotes:'Pilotes',pwa:'PWA'};
+// L'onglet Pilotes ne porte pas de cases à cocher : c'est un rapport sur la
+// machine d'arrivée, pas une liste de tâches. Il rend donc une liste vide ici,
+// pour que la progression et la recherche ne cherchent pas des cases là où il
+// n'y en a pas.
 function donneesDe(cle){
-  return {quitter:QUITTER_DATA,npc:NPC_DATA,apps:APPS_DATA,pwa:PWA_DATA}[cle]||[];
+  return {apps:APPS_DATA,pwa:PWA_DATA}[cle]||[];
 }
 function tousLesItems(){
   return ONGLETS.reduce(function(acc,c){return acc.concat(donneesDe(c));},[]);
@@ -2764,16 +1466,16 @@ function tousLesItems(){
 // totaux, durées, recherche, mode guidé — passe par là, sinon la page annonce
 // un total qui ne correspond pas à ce qu'elle affiche.
 function visiblesDe(cle){
-  return donneesDe(cle).filter(visibleDansScenario);
+  return donneesDe(cle);
 }
 function itemsVisibles(){
-  return tousLesItems().filter(visibleDansScenario);
+  return tousLesItems();
 }
 let PROFIL_NOM='', PROFIL_SOUS='';
 
 // ═══ PROFILS ═══
 function profilValide(p){
-  return !!(p && typeof p==='object' && (Array.isArray(p.apps)||Array.isArray(p.npc)));
+  return !!(p && typeof p==='object' && Array.isArray(p.apps));
 }
 
 function appliquerProfil(p,memoriser){
@@ -2782,11 +1484,8 @@ function appliquerProfil(p,memoriser){
   PROFIL_NOM=m.nom||'Migration PC';
   PROFIL_SOUS=m.soustitre||'';
   CATS=p.cats||{};
-  NPC_DATA=Array.isArray(p.npc)?p.npc:[];
   APPS_DATA=Array.isArray(p.apps)?p.apps:[];
   PWA_DATA=Array.isArray(p.pwa)?p.pwa:[];
-  // Facultatif : un profil qui ne la déclare pas garde quatre onglets.
-  QUITTER_DATA=Array.isArray(p.quitter)?p.quitter:[];
   INSTALL_ORDER=Array.isArray(p.ordre)?p.ordre:[];
   SEARCH_QUERIES=p.requetes||{};
   // Une catégorie utilisée par une app mais absente de cats reste affichable.
@@ -2795,7 +1494,6 @@ function appliquerProfil(p,memoriser){
   if(memoriser){try{localStorage.setItem(CLE_PROFIL,JSON.stringify(p));}catch(e){console.error(e);}}
   majEnteteProfil();
   construireFiltresCats();
-  majSelecteurScenario();
   curCats=[];
   renderAll();updateGlobal();
 }
@@ -2842,7 +1540,7 @@ function chargerProfilMemorise(){
 // Le profil chargé, reconstruit depuis les listes en mémoire.
 function profilCourant(){
   const p={meta:{version:1,nom:PROFIL_NOM,soustitre:PROFIL_SOUS},cats:CATS,
-    npc:NPC_DATA,apps:APPS_DATA,pwa:PWA_DATA,quitter:QUITTER_DATA,
+    apps:APPS_DATA,pwa:PWA_DATA,
     ordre:INSTALL_ORDER,requetes:SEARCH_QUERIES};
   // La configuration vivait seulement dans ce navigateur : elle ne suivait pas
   // le profil, donc les intitulés redevenaient génériques sur l'autre machine.
@@ -2857,7 +1555,6 @@ function exportProfil(){
 // ═══ INVENTAIRE → PROFIL ═══
 // Transforme la sortie de scan-pc.ps1 en profil utilisable.
 const CAT_PAR_DEFAUT='system';
-const CAT_OUTILS='outils';
 
 // Le scanner relève le matériel : autant remplir les champs prévus pour lui
 // plutôt que de les faire recopier à la main depuis une étiquette de carton.
@@ -2927,13 +1624,6 @@ function inventaireVersProfil(inv){
       }))
     :PROFIL_DEFAUT.pwa;
 
-  // Le scanner relève les variables personnalisées : autant remplir les champs
-  // prévus pour elles plutôt que de les faire recopier à la main.
-  const vars=inv.variables&&typeof inv.variables==='object'?Object.keys(inv.variables):[];
-  vars.forEach(function(v){
-    if(!S.env[v])S.env[v]=String(inv.variables[v]);
-  });
-  if(vars.length)saveState();
   const reprisMateriel=appliquerMateriel(inv.materiel,false);
   const cats={};
   const out=[];
@@ -2966,11 +1656,6 @@ function inventaireVersProfil(inv){
       u:a.lien||undefined,
       p:a.priorite||'med',
       t:a.duree||5,
-      // Ce que le scan sait d'une licence : rien de la machine, tout d'une
-      // liste tenue à la main. Vide veut dire « je ne sais pas », pas
-      // « gratuit », et la ligne ne prétend rien de plus.
-      pay:a.payant?String(a.payant):undefined,
-      lic:a.payant?true:undefined,
       d:bouts.join(' · ')||'Détecté sur l\'ancien PC.'
     });
   });
@@ -3001,180 +1686,102 @@ function inventaireVersProfil(inv){
   return {
     meta:{version:1,nom:'Migration PC — inventaire importé',soustitre:desc.join(' · ')},
     cats:cats,
-    npc:PROFIL_DEFAUT.npc,
     apps:out,
     pwa:pwa,
     ordre:[],
     requetes:{}
   };
 }
-// ═══ L'ONGLET « RESTE À FAIRE » ═══
+// ═══ LA COMPARAISON, DANS L'ONGLET LOGICIELS ═══
 //
-// Deux vies dans le même onglet, parce que la procédure en a deux. Sur le PC
-// source, avant d'effacer, il dit ce qu'il reste à SORTIR. Sur le PC cible,
-// une fois la machine installée, il dit ce qu'il reste à REMETTRE. Un seul
-// endroit où regarder d'un bout à l'autre, au lieu d'un onglet qui ne sert
-// que la moitié du temps.
+// Il y a eu un onglet « Reste à faire » qui portait la comparaison à part.
+// C'était un endroit de plus pour la même chose : la liste des logiciels et
+// la liste de ce qui manque parlent des mêmes lignes, et obliger quelqu'un à
+// comprendre laquelle regarder n'aide personne. La comparaison vit maintenant
+// dans l'onglet Logiciels — la même liste, qui change d'état quand le scan du
+// PC cible arrive.
 
-// Ce qui décide de la vie affichée : l'existence d'un scan du PC cible.
+// Ce qui décide : l'existence d'un scan du PC cible.
 function surLaCible(){ return !!INV_CIBLE; }
 
-function renderReste(){
-  const cont=document.getElementById('list-reste');
-  if(!cont)return;
-  cont.innerHTML=surLaCible()?vueComparaison():vuePreparation();
-}
-
-// ── Vie 1 : sur le PC source, ce qu'il reste à sortir ────────────────────
-//
-// Ici il n'y a rien à comparer — la machine d'arrivée n'existe pas encore.
-// Ce qu'on peut constater, c'est l'état de la préparation, et c'est ce qui
-// compte : une fois le disque effacé, ce qui n'est pas sorti n'existe plus.
-function etatPreparation(){
-  const points=[];
-  const inv=INV_SOURCE;
-
-  const dateInv=inv&&inv.genere?new Date(inv.genere):null;
-  const heures=dateInv&&!isNaN(dateInv)?((Date.now()-dateInv.getTime())/3600000):null;
-  points.push({
-    cle:'instantane',
-    nom:'L\'instantané du PC source est fait',
-    etat:!inv?'manque':(heures!=null&&heures>24?'vieux':'ok'),
-    quoi:!inv
-      ?'Aucun instantané importé. Lance le script sur cette machine, puis ouvre le fichier produit.'
-      :(heures!=null&&heures>24
-        ?'Il date de plus de vingt-quatre heures : ce que tu as installé ou déplacé depuis n\'y est pas. Relance le scan.'
-        :'Pris le '+String(inv.genere).slice(0,10)+'.')
-  });
-
-  const apps=(inv&&Array.isArray(inv.apps))?inv.apps.length:0;
-  points.push({
-    cle:'apps',
-    nom:'La liste des logiciels est relevée',
-    etat:apps?'ok':'manque',
-    quoi:apps
-      ?apps+' logiciel'+(apps>1?'s':'')+' relevé'+(apps>1?'s':'')
-        +'. C\'est cette liste que la machine d\'arrivée devra retrouver.'
-      :'Aucun logiciel dans l\'instantané. Relance le scan sur cette machine.'
-  });
-
-  points.push({
-    cle:'donnees',
-    nom:'Tes fichiers personnels sont sur un autre support',
-    // Ce programme ne sauvegarde rien et ne prétend pas le faire. Le dire ici
-    // est la seule chose utile qu'il puisse faire avant un formatage.
-    etat:'avérifier',
-    quoi:'Photos, documents, projets, réglages : ce programme ne les voit pas '
-      +'et ne les copie pas. Il ne s\'occupe que des logiciels et des pilotes. '
-      +'La sauvegarde de tes fichiers reste entièrement à ta charge, et c\'est '
-      +'le seul geste irréversible de toute la procédure.'
-  });
-
-  return points;
-}
-
-function vuePreparation(){
-  const points=etatPreparation();
-  const restants=points.filter(function(p){return p.etat!=='ok'&&p.etat!=='sansobjet';}).length;
-  const ico={ok:'✅',manque:'⛔',vieux:'⚠️','avérifier':'🔸',sansobjet:'—'};
-
-  let h='<div class="reste-tete">'
-    +'<div class="reste-titre">Avant d\'effacer</div>'
-    +'<p class="reste-sous">Tu es encore sur le PC source. Une fois le disque effacé, '
-    +'ce qui n\'est pas sorti n\'existe plus nulle part : c\'est le seul moment '
-    +'irréversible de toute la procédure.</p>'
-    +'</div>';
-
-  h+='<div class="reste-fam">';
-  points.forEach(function(p){
-    h+='<div class="reste-pt reste-'+esc(p.etat)+'">'
-      +'<div class="reste-pt-n"><span aria-hidden="true">'+(ico[p.etat]||'•')+'</span> '+esc(p.nom)+'</div>'
-      +'<div class="reste-pt-q">'+esc(p.quoi)+'</div>'
-      +'</div>';
-  });
-  h+='</div>';
-
-  h+='<div class="reste-suite"><b>Ensuite :</b> emporte la clé avec cette page et '
-    +'l\'instantané, installe Windows sur la machine d\'arrivée, et relance le même '
-    +'script là-bas. Cet onglet basculera tout seul sur la comparaison.</div>';
-  return h;
-}
-
-// ── Vie 2 : sur le PC cible, ce qu'il reste à remettre ───────────────────
-function vueComparaison(){
+// L'état de chaque logiciel sur la machine d'arrivée, indexé par clé de nom.
+// Recalculé à chaque rendu : c'est une comparaison de deux tableaux en
+// mémoire, pas un travail dont il faille garder le résultat.
+function etatsLogiciels(){
+  if(!INV_CIBLE)return null;
   const r=comparerInstantanes(INV_SOURCE,INV_CIBLE);
-  if(!r.ok){
-    return '<div class="reste-tete"><div class="reste-titre">Rien à comparer</div>'
-      +'<p class="reste-sous">'+esc(r.raison)+'</p></div>';
-  }
-
-  const manque=r.total.attendu-r.total.arrive;
-  const pct=r.total.attendu?Math.round(r.total.arrive/r.total.attendu*100):100;
-  let h='<div class="reste-tete">'
-    +'<div class="reste-titre">'+(manque?manque+' élément'+(manque>1?'s':'')+' à remettre'
-      :'Tout est arrivé')+'</div>'
-    +'<p class="reste-sous">'+r.total.arrive+' sur '+r.total.attendu+' ('+pct+' %) · '
-    +esc(r.source.nom||'PC source')+(r.source.date?' du '+esc(r.source.date):'')
-    +' → '+esc(r.cible.nom||'PC cible')+(r.cible.date?' du '+esc(r.cible.date):'')
-    +'</p></div>';
-
-  // Les familles où il manque quelque chose d'abord, et les plus grosses en
-  // premier : une liste triée par ordre d'apparition dans le code ferait
-  // remonter les associations de fichiers avant les applications.
-  const aFaire=r.familles.filter(function(f){return f.manquants.length||f.differents.length;})
-    .sort(function(a,b){return (b.manquants.length+b.differents.length)-(a.manquants.length+a.differents.length);});
-  const faites=r.familles.filter(function(f){return !f.manquants.length&&!f.differents.length;});
-
-  aFaire.forEach(function(f){
-    h+='<div class="reste-fam"><div class="reste-fam-t">'+esc(f.nom)
-      +' <span class="reste-cnt">'+f.arrives+'/'+f.total+'</span></div>';
-    f.manquants.forEach(function(m){
-      h+='<div class="reste-l"><span class="reste-b reste-b-abs">manque</span>'
-        +'<span class="reste-n">'+esc(m.libelle)+'</span>'+actionDe(f.cle,m)+'</div>';
-    });
-    f.differents.forEach(function(d){
-      h+='<div class="reste-l"><span class="reste-b reste-b-ver">plus ancien</span>'
-        +'<span class="reste-n">'+esc(d.libelle)+'</span>'
-        +'<span class="reste-a">'+esc(d.avant)+' → '+esc(d.apres)+'</span></div>';
-    });
-    h+='</div>';
+  if(!r.ok)return null;
+  const fam=r.familles.filter(function(f){return f.cle==='apps';})[0];
+  if(!fam)return null;
+  const par={};
+  fam.manquants.forEach(function(m){par[cleNom(m.libelle)]={etat:'manque',source:m.source};});
+  fam.differents.forEach(function(d){
+    par[cleNom(d.libelle)]={etat:'ancienne',avant:d.avant,apres:d.apres};
   });
+  return {par:par,total:fam.total,arrives:fam.arrives,
+          manquants:fam.manquants.length,differents:fam.differents.length,
+          source:r.source,cible:r.cible};
+}
 
-  if(faites.length){
-    h+='<div class="reste-fam"><div class="reste-fam-t">Complet '
-      +'<span class="reste-cnt">'+faites.length+' famille'+(faites.length>1?'s':'')+'</span></div>'
-      +'<div class="reste-ok">'+esc(faites.map(function(f){return f.nom+' ('+f.total+')';}).join(' · '))+'</div></div>';
+// Le bandeau en tête de la liste. Il ne s'affiche que quand il y a deux
+// instantanés : sans scan de cible il n'y a rien à annoncer, et un bandeau
+// vide occuperait la place sans rien dire.
+function banniereComparaison(){
+  if(!surLaCible()){
+    if(!INV_SOURCE)return '';
+    return '<div class="cmp-tete"><div class="cmp-sous">'
+      +'Liste relevée sur le PC source. Scanne le PC receveur — '
+      +'<code>Migration PC.bat</code>, choix CIBLE — et cette liste dira ce qui manque.'
+      +'</div></div>';
   }
-
-  // La comparaison sait ce qui est là ; elle ne coche rien dans ton dos. Un
-  // bouton propose de cocher d'un coup ce qu'elle a constaté.
+  const e=etatsLogiciels();
+  if(!e){
+    return '<div class="cmp-tete"><div class="cmp-titre">Rien à comparer</div>'
+      +'<div class="cmp-sous">Le scan du PC cible est là, mais pas celui de la source.</div></div>';
+  }
+  const manque=e.manquants+e.differents;
+  const pct=e.total?Math.round(e.arrives/e.total*100):100;
+  let h='<div class="cmp-tete">'
+    +'<div class="cmp-titre">'+(e.manquants
+        ?e.manquants+' logiciel'+(e.manquants>1?'s':'')+' à installer'
+        :'Tous les logiciels sont là')+'</div>'
+    +'<div class="cmp-sous">'+e.arrives+' sur '+e.total+' ('+pct+' %) · '
+    +esc(e.source.nom||'PC source')+(e.source.date?' du '+esc(e.source.date):'')
+    +' → '+esc(e.cible.nom||'PC cible')+(e.cible.date?' du '+esc(e.cible.date):'')
+    +(e.differents?' · '+e.differents+' en version plus ancienne':'')
+    +'</div>';
+  // La comparaison sait ce qui est là ; elle ne coche rien dans ton dos.
   const cochables=lignesConstatees().filter(function(id){return !S.checked[id];}).length;
   if(cochables){
-    h+='<div class="reste-suite">'+cochables+' ligne'+(cochables>1?'s':'')+' de la checklist '
-      +'correspond'+(cochables>1?'ent':'')+' à quelque chose que le scan a trouvé sur cette machine, '
+    h+='<div class="cmp-act">'+cochables+' ligne'+(cochables>1?'s':'')
+      +' correspond'+(cochables>1?'ent':'')+' à un logiciel trouvé sur cette machine, '
       +'sans être cochée'+(cochables>1?'s':'')+'. '
       +'<button type="button" class="sm-btn warn-btn" onclick="cocherLeConstate()">✓ Cocher ce qui est constaté</button></div>';
   }
-  return h;
+  if(manque===0&&e.total)h+='<div class="cmp-act">Rien ne manque.</div>';
+  return h+'</div>';
 }
 
-// Ce qu'on peut cocher sans rien supposer : une ligne d'application dont le
-// scan de la cible confirme la présence. On ne décoche jamais — une détection
-// ratée effacerait un suivi fait à la main.
+// Le badge que porte une ligne de logiciel quand on a les deux instantanés.
+function badgeComparaison(a,etats){
+  if(!etats)return '';
+  const e=etats.par[cleNom(a&&a.n)];
+  if(!e)return '<span class="badge b-arrive" title="Trouvé sur le PC cible">là</span>';
+  if(e.etat==='ancienne')
+    return '<span class="badge b-vieux" title="Version plus ancienne qu\'avant : '
+      +esc(String(e.avant))+' → '+esc(String(e.apres))+'">plus ancien</span>';
+  return '<span class="badge b-manque" title="Absent du PC cible">manque</span>';
+}
+
+// Ce qu'on peut cocher sans rien supposer : une ligne dont le scan de la cible
+// confirme la présence. On ne décoche jamais — une détection ratée effacerait
+// un suivi fait à la main.
 function lignesConstatees(){
   if(!INV_CIBLE)return [];
   // On raisonne sur ce que la cible A, jamais sur ce qui manque ailleurs.
-  // La version précédente partait des applications manquantes et cochait tout
-  // le reste : les lignes de chaînes d'outils, qui ne sont pas des
-  // applications, passaient donc pour présentes sans que rien ne l'ait
-  // constaté — un outil absent se retrouvait coché.
   const presents={};
-  const ajouter=function(v){const c=cleNom(v);if(c)presents[c]=true;};
   (Array.isArray(INV_CIBLE.apps)?INV_CIBLE.apps:[]).forEach(function(a){
-    if(a&&a.nom)ajouter(a.nom);
-  });
-  (Array.isArray(INV_CIBLE.outils)?INV_CIBLE.outils:[]).forEach(function(o){
-    if(o&&(o.nom||o.id))ajouter(o.nom||o.id);
+    if(a&&a.nom){const c=cleNom(a.nom);if(c)presents[c]=true;}
   });
   return APPS_DATA.filter(function(a){return presents[cleNom(a.n)];})
     .map(function(a){return a.id;});
@@ -3185,51 +1792,110 @@ function cocherLeConstate(){
   if(!ids.length)return;
   const now=Date.now();
   ids.forEach(function(id){S.checked[id]=true;S.dates[id]=now;});
-  saveState();renderApps();updateGlobal();renderReste();majBadgeReste();
+  saveState();renderApps();updateGlobal();
   memoriserAnnulation(ids.length+' ligne'+(ids.length>1?'s':'')+' cochée'
     +(ids.length>1?'s':'')+' d\'après le scan du PC cible.',true);
 }
 
-// L'action qu'on connaît déjà pour cet élément : la commande d'installation
-// pour une application, le chemin pour un dossier. Rien n'est deviné.
-function actionDe(cle,manquant){
-  const e=manquant&&manquant.source;
-  if(!e)return '';
-  // Le badge est coupé à 180 px : écrire la commande entière la tronquait en
-  // plein milieu de l'identifiant — « winget install --id Pyt » n'apprend
-  // rien et ne se copie pas à la main. L'identifiant seul tient, et c'est lui
-  // qui compte ; le bouton copie la commande complète.
-  if(cle==='apps'&&e.winget)
-    return '<button type="button" class="badge b-winget" onclick="copyWinget(\''
-      +escJS(e.winget)+'\',event)" title="Copier winget install --id '+esc(e.winget)
-      +'">📋 '+esc(e.winget)+'</button>';
-  if(cle==='outils'&&e.commande)
-    return '<button type="button" class="badge b-winget" onclick="copierCommande(\''
-      +escJS(e.commande)+'\',event)" title="Copier la commande">📋 '+esc(e.commande)+'</button>';
-  const chemin=e.modele||e.chemin;
-  if(chemin)return '<span class="reste-a">'+esc(chemin)+'</span>';
-  return '';
+// ═══ L'ONGLET PILOTES ═══
+//
+// Les pilotes du PC receveur, après son scan. Avant ce scan il n'y a rien à
+// dire de la machine d'arrivée : on montre alors ce que portait l'ancienne,
+// qui est une bonne idée de ce qu'il faudra retrouver.
+//
+// Ce que cet onglet ne dit JAMAIS : qu'une version plus récente existe. Le
+// programme ne fait aucun appel réseau, il ne peut pas le savoir, et
+// l'affirmer serait mentir. Il signale ce qui manque ou ce qui est en erreur,
+// et donne l'adresse où aller comparer.
+function renderPilotes(){
+  const cont=document.getElementById('list-pilotes');
+  if(!cont)return;
+  cont.innerHTML=surLaCible()?vuePilotesCible():vuePilotesSource();
+  majBadgePilotes();
+}
+
+function listePilotesTiers(inv){
+  const l=(inv&&Array.isArray(inv.pilotesTiers))?inv.pilotesTiers:[];
+  return l.filter(function(p){return p&&typeof p==='object';});
+}
+
+function lignesPilotesTiers(liste,titre,sous){
+  if(!liste.length)return '';
+  const items=liste.map(function(p){
+    const app=Array.isArray(p.appareils)?p.appareils:[];
+    return '<div class="pil-item"><div class="pil-txt">'
+      +'<div class="pil-nom">'+esc(String(p.fournisseur||'Fournisseur inconnu'))+'</div>'
+      +'<div class="pil-quoi">'+esc(String(p.classe||''))
+      +(app.length?' · '+esc(app.slice(0,3).join(', '))+(app.length>3?' …':''):'')
+      +'</div></div></div>';
+  }).join('');
+  return '<div class="pilotes"><div class="pil-titre">'+esc(titre)+'</div>'
+    +'<div class="pil-sous">'+esc(sous)+'</div>'+items+'</div>';
+}
+
+function vuePilotesSource(){
+  const tiers=listePilotesTiers(INV_SOURCE);
+  if(!INV_SOURCE)return messageOngletVide('pilotes');
+  let h='<div class="cmp-tete"><div class="cmp-titre">En attente du PC receveur</div>'
+    +'<div class="cmp-sous">Cet onglet se remplit quand tu scannes la machine '
+    +'d\'arrivée. D\'ici là, voici ce que portait l\'ancienne.</div></div>';
+  h+=lignesPilotesTiers(tiers,
+    tiers.length+' pilote'+(tiers.length>1?'s':'')+' non-Microsoft sur le PC source',
+    'Relevés sur la machine que tu quittes, groupés par fournisseur. C\'est une idée de ce qu\'il faudra retrouver, pas une liste à installer telle quelle.');
+  if(!tiers.length)h+='<div class="pilotes"><div class="pil-sous">Aucun pilote non-Microsoft relevé sur le PC source.</div></div>';
+  return h;
+}
+
+function vuePilotesCible(){
+  const manquants=Array.isArray(INV_CIBLE.pilotes)?INV_CIBLE.pilotes:[];
+  const mat=(INV_CIBLE&&INV_CIBLE.materiel)||{};
+  const machine=(INV_CIBLE&&INV_CIBLE.machine)||{};
+  let h='<div class="cmp-tete">'
+    +'<div class="cmp-titre">'+(manquants.length
+        ?manquants.length+' périphérique'+(manquants.length>1?'s':'')+' à régler'
+        :'Aucun périphérique en défaut')+'</div>'
+    +'<div class="cmp-sous">'+esc(String(machine.nom||'PC cible'))
+    +(machine.os?' · '+esc(String(machine.os)):'')
+    +(mat.cm?' · '+esc(String(mat.cm)):'')+'</div>';
+  // Le lien du constructeur, construit depuis ce que le SMBIOS a donné. On ne
+  // l'invente pas : sans modèle, pas de lien.
+  const modele=[machine.fabricant,machine.modele]
+    .filter(function(x){return typeof x==='string'&&x.trim();}).join(' ').trim();
+  const cible=modele||(mat.cm?String(mat.cm):'');
+  if(cible){
+    const req=cible+' support pilotes'+(machine.serie?' '+String(machine.serie):'');
+    h+='<div class="cmp-act">Page de support du constructeur pour '+esc(cible)
+      +(machine.serie?' (série '+esc(String(machine.serie))+')':'')+' : '
+      +'<button type="button" class="sm-btn" onclick="ouvrirAdresse(\''
+      +escJS('https://www.google.com/search?q='+encodeURIComponent(req))+'\')">🔍 Ouvrir</button>'
+      +'</div>';
+  }
+  h+='</div>';
+  h+=mkPilotesManquants(INV_CIBLE);
+  if(!manquants.length){
+    h+='<div class="pilotes"><div class="pil-sous">Windows ne signale aucun '
+      +'périphérique sans pilote sur cette machine. Ça ne veut pas dire que tous '
+      +'les pilotes sont à jour : le programme ne fait aucun appel réseau, il ne '
+      +'peut pas le savoir. Les versions se comparent sur le site du constructeur.'
+      +'</div></div>';
+  }
+  const tiersCible=listePilotesTiers(INV_CIBLE);
+  h+=lignesPilotesTiers(tiersCible,
+    tiersCible.length+' pilote'+(tiersCible.length>1?'s':'')+' non-Microsoft en place',
+    'Ce que la machine d\'arrivée porte déjà, groupé par fournisseur.');
+  return h;
 }
 
 // Le badge de la barre latérale. « — » tant qu'il n'y a rien à dire : un
 // « 0/0 » laisserait croire que tout est fait.
-function majBadgeReste(){
-  const b=document.getElementById('badge-reste');
-  const barre=document.getElementById('bar-reste');
+function majBadgePilotes(){
+  const b=document.getElementById('badge-pilotes');
+  const barre=document.getElementById('bar-pilotes');
   if(!b)return;
-  if(!surLaCible()){
-    const pts=etatPreparation();
-    const reste=pts.filter(function(p){return p.etat!=='ok'&&p.etat!=='sansobjet';}).length;
-    // « 2 » seul se lit mal à côté de « 0/31 » : le dénominateur dit de
-    // combien de points on parle.
-    b.textContent=(pts.length-reste)+'/'+pts.length;
-    if(barre)barre.style.width=(pts.length?Math.round((pts.length-reste)/pts.length*100):0)+'%';
-    return;
-  }
-  const r=comparerInstantanes(INV_SOURCE,INV_CIBLE);
-  if(!r.ok){b.textContent='—';if(barre)barre.style.width='0%';return;}
-  b.textContent=r.total.arrive+'/'+r.total.attendu;
-  if(barre)barre.style.width=(r.total.attendu?Math.round(r.total.arrive/r.total.attendu*100):0)+'%';
+  if(!surLaCible()){b.textContent='—';if(barre)barre.style.width='0%';return;}
+  const n=Array.isArray(INV_CIBLE.pilotes)?INV_CIBLE.pilotes.length:0;
+  b.textContent=n?String(n):'✓';
+  if(barre)barre.style.width=n?'0%':'100%';
 }
 
 // ═══ RÉCONCILIATION : ce qui est arrivé sur le PC cible ═══
@@ -3464,7 +2130,7 @@ function traiterDonnees(d,provenance){
         memoriserInstantane(CLE_CIBLE,d);
         appliquerMateriel(d.materiel,true);
         const r=comparerInstantanes(INV_SOURCE,INV_CIBLE);
-        renderReste();majBadgeReste();
+        renderApps();renderPilotes();
         if(!INV_SOURCE){
           informer('Scan du PC cible reçu, mais aucun instantané du PC source '
             +'à comparer. Importe d\'abord celui que tu as pris avant d\'effacer.');
@@ -3473,7 +2139,7 @@ function traiterDonnees(d,provenance){
           memoriserAnnulation('Scan du PC cible reçu : '+r.total.arrive+' sur '
             +r.total.attendu+' éléments sont déjà là'
             +(manque>0?', il en reste '+manque:', tout y est')+'.',true);
-          switchTab('reste');
+          switchTab('apps');
         }
         return true;
       }
@@ -3506,12 +2172,12 @@ function traiterDonnees(d,provenance){
       memoriserAnnulation('Profil importé.'+suffixe,true);
       appliquerProfil(d,true);
       appliquerMateriel(d.materiel,false);
-      dire('Profil importé : '+(NPC_DATA.length+APPS_DATA.length+PWA_DATA.length)+' éléments.');
+      dire('Profil importé : '+(APPS_DATA.length+PWA_DATA.length)+' éléments.');
       return true;
     }
     if(d && d.state){
       memoriserAnnulation('Progression importée.'+suffixe,false);
-      S={checked:d.state.checked||{},notes:d.state.notes||{},dates:d.state.dates||{},lic:d.state.lic||{},env:d.state.env||{},lastSave:null};
+      S={checked:d.state.checked||{},notes:d.state.notes||{},dates:d.state.dates||{},lastSave:null};
       saveState();renderAll();updateGlobal();
       dire('Progression importée : '+Object.keys(S.checked).length+' tâches cochées.');
       return true;
@@ -3536,9 +2202,9 @@ function handleImport(evt){
 
 // ═══ STATE ═══
 const PRIO = {high:0,med:1,ok:2};
-let S = {checked:{},notes:{},dates:{},lastSave:null,lic:{},env:{}};
+let S = {checked:{},notes:{},dates:{},lastSave:null};
 let curCats=[];
-let curTab='quitter',noWinget=false,viewMode='normal',isDark=false;
+let curTab='apps',noWinget=false,viewMode='normal',isDark=false;
 // « journal » et non « history » : une globale nommée history masque
 // window.history, ce qui piégerait le jour où l'on voudra gérer le bouton
 // Retour du navigateur.
@@ -3618,7 +2284,7 @@ function searchUrl(name,e){
 
 // ═══ STORAGE ═══
 function loadState(){
-  try{const r=localStorage.getItem(CLE_ETAT);if(r){const d=JSON.parse(r);if(d&&typeof d==='object'){S.checked=d.checked||{};S.notes=d.notes||{};S.dates=d.dates||{};S.lastSave=d.lastSave||null;S.lic=d.lic||{};S.env=d.env||{};}}}catch(e){console.error(e);}
+  try{const r=localStorage.getItem(CLE_ETAT);if(r){const d=JSON.parse(r);if(d&&typeof d==='object'){S.checked=d.checked||{};S.notes=d.notes||{};S.dates=d.dates||{};S.lastSave=d.lastSave||null;}}}catch(e){console.error(e);}
   updateSaveLabel();
 }
 // Une sauvegarde qui echoue en silence est pire qu'une sauvegarde absente :
@@ -3687,8 +2353,7 @@ function setMode(m){
 }
 
 // ═══ TABS ═══
-const LIBELLES_ONGLETS={quitter:'🚪 Avant de quitter',npc:'🖥️ Nouveau PC',
-  apps:'📦 Apps',reste:'🎯 Reste à faire',pwa:'🌍 PWA'};
+const LIBELLES_ONGLETS={apps:'📦 Logiciels',pilotes:'🎛️ Pilotes',pwa:'🌍 PWA'};
 
 function switchTab(t){
   curTab=t;
@@ -3702,7 +2367,6 @@ function switchTab(t){
     const panneau=document.getElementById('panel-'+x);
     if(panneau)panneau.classList.toggle('active',x===t);
   });
-  if(t==='reste')renderReste();
 }
 
 // ═══ TOGGLE ITEM ═══
@@ -3839,49 +2503,6 @@ function mkNoteBtn(id){
   return '<button class="note-btn '+has+'" id="nb-'+esc(id)+'" type="button" title="'+libelle+'" aria-label="'+libelle+'" onclick="toggleNote(\''+escJS(id)+'\',event)">📝</button>';}
 function mkNoteArea(id){const open=openNotes[id]?'open':'';const val=S.notes[id]||'';return '<div class="note-area '+open+'" id="na-'+esc(id)+'"><textarea placeholder="Note personnelle..." onclick="event.stopPropagation()" oninput="saveNote(\''+escJS(id)+'\',this.value)">'+esc(val)+'</textarea></div>';}
 
-// ═══ RENDER NPC ═══
-function renderNPC(){
-  const cont=document.getElementById('list-npc');
-  // L'intitulé suit le profil : un profil de scan n'a pas le même matériel qu'un autre.
-  let html='<div class="sec-hdr first">🖥️ Mise en route — suivre la numérotation</div>';
-  const vues=visiblesDe('npc');
-  if(!vues.length){
-    cont.innerHTML=messageOngletVide('npc');
-    updateSecProg('npc',vues);return;
-  }
-  const sorted=vues.slice().sort(function(a,b){return a.o-b.o;});
-  var postStarted=false;
-  sorted.forEach(function(item){
-    if(item.post&&!postStarted){
-      postStarted=true;
-      html+='<div class="sec-hdr post-hdr">✅ Vérifications post-installation</div>';
-    }
-    const ck=!!S.checked[item.id];
-    const dt=ck&&S.dates[item.id]?'<span class="item-date">✓ '+fmtDate(S.dates[item.id])+'</span>':'';
-    const srcBadge=item.src?'<span class="badge b-src">'+esc(item.src)+'</span>':'';
-    // Seize lignes sur trente et une sont prioritaires : l'etiquette informe
-    // encore. Mais « Priorité haute » ecrit en toutes lettres sur la moitie
-    // des lignes prend la place de ce qu'on lit vraiment.
-    const pBadge=item.p==='high'?'<span class="badge b-high" title="Priorité haute">⚡</span>':'';
-    const tBadge=item.t?'<span class="badge b-time">⏱ '+fmtTime(item.t)+'</span>':'';
-    const depBadge=item.dep?mkDepBadge(item.dep):'';
-    const warn=item.warn?'<div class="warn-badge">⚠️ '+esc(item.warn)+'</div>':'';
-    html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(item)+'">'
-      +mkChkbox()
-      +'<div class="item-body">'
-        +'<div class="item-name-row"><span class="b-num">'+item.o+'</span><span class="item-name">'+esc(preciser(item,libelleDe(item)))+'</span>'+dt+mkNoteBtn(item.id)+'</div>'
-        +'<div class="item-badges">'+srcBadge+tBadge+pBadge+depBadge+'</div>'
-        +'<div class="item-desc">'+esc(texte(descDe(item)))+'</div>'
-        +warn
-        +mkNoteArea(item.id)
-      +'</div>'
-      +(item.u||item.comp?mkLink(preciser(item,libelleDe(item)),item):'')
-    +'</div>';
-  });
-  cont.innerHTML=html;
-  updateSecProg('npc',visiblesDe('npc'));
-}
-
 // ═══ RENDER APPS ═══
 // curCats vit avec les autres etats d'affichage, plus haut : declare ici, il
 // etait dans sa zone morte quand renderCatFilters tournait au demarrage.
@@ -3912,11 +2533,15 @@ function renderApps(){
   document.getElementById('apps-empty').style.display=
     (items.length===0&&!videParCas)?'block':'none';
   const cont=document.getElementById('list-apps');
+  // Le bandeau de comparaison passe devant la liste : c'est la réponse à la
+  // question qu'on se pose en arrivant sur la machine neuve.
+  const tete=banniereComparaison();
+  const etats=etatsLogiciels();
   if(!items.length){
-    cont.innerHTML=videParCas?messageOngletVide('apps'):'';
+    cont.innerHTML=tete+(videParCas?messageOngletVide('apps'):'');
     updateSecProg('apps',visiblesDe('apps'));return;
   }
-  let html='';
+  let html=tete;
   if(sort==='cat'){
     const grouped={};
     items.forEach(function(a){if(!grouped[a.c])grouped[a.c]=[];grouped[a.c].push(a);});
@@ -3927,7 +2552,7 @@ function renderApps(){
       const hasW=grp.filter(function(a){return a.w;}).length>0;
       const allDone=dn===grp.length;
       html+='<div class="sec-hdr'+(first?' first':'')+'">'+esc(CATS[cat]||cat)+'<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+grp.length+'</span>'+(hasW?'<button class="cat-winget" onclick="copyCatWinget(\''+escJS(cat)+'\',event)">📋 winget</button>':'')+'<button class="chk-all" onclick="checkAllCat(\''+escJS(cat)+'\',event)">'+(allDone?'Décocher tout':'Tout cocher')+'</button></div></div>';
-      grp.forEach(function(a){html+=mkAppItem(a);});
+      grp.forEach(function(a){html+=mkAppItem(a,etats);});
       first=false;
     });
   } else if(sort==='order'){
@@ -3941,7 +2566,7 @@ function renderApps(){
       items.sort(function(a,b){const ia=orderedIds[a.id]!==undefined?orderedIds[a.id]:9999;const ib=orderedIds[b.id]!==undefined?orderedIds[b.id]:9999;return ia-ib;});
     }
     html+='<div class="sec-hdr first">📋 Ordre conseillé pour le Jour J</div>';
-    items.forEach(function(a){html+=mkAppItem(a);});
+    items.forEach(function(a){html+=mkAppItem(a,etats);});
   } else {
     if(sort==='prio')items.sort(function(a,b){return PRIO[a.p]-PRIO[b.p];});
     if(sort==='time')items.sort(function(a,b){return (a.t||0)-(b.t||0);});
@@ -3951,7 +2576,7 @@ function renderApps(){
       if(sort==='prio')g=a.p==='high'?'⚡ Priorité haute':a.p==='med'?'🔸 Priorité moyenne':'🔹 Priorité basse';
       if(sort==='time')g=(a.t||0)<=5?'⏱ Rapide (≤5min)':(a.t||0)<=30?'⏳ Moyen (≤30min)':'⏰ Long (>30min)';
       if(g!==lastG){html+='<div class="sec-hdr'+(first?' first':'')+'">'+g+'</div>';lastG=g;first=false;}
-      html+=mkAppItem(a);
+      html+=mkAppItem(a,etats);
     });
   }
   cont.innerHTML=html;
@@ -3971,12 +2596,11 @@ function renderApps(){
 // L'identifiant winget sort de la vue : il ne veut rien dire pour la plupart
 // des gens et il est deja dans le bouton qui copie la commande. La priorite ne
 // s'affiche que haute : une etiquette presente sur chaque ligne n'informe plus.
-function mkAppItem(a){
+function mkAppItem(a,etats){
   const ck=!!S.checked[a.id];
   const ouvert=!!lignesOuvertes[a.id];
   const dt=ck&&S.dates[a.id]?'<span class="item-date">✓ '+fmtDate(S.dates[a.id])+'</span>':'';
   const pBadge=a.p==='high'?'<span class="badge b-high">⚡</span>':'';
-  const payBadge=a.pay?'<span class="badge b-pay" title="'+esc(String(a.pay))+'">licence</span>':'';
   const meta=[];
   if(a.ver)meta.push(esc(String(a.ver)));
   if(a.go)meta.push(esc(fmtTaille(a.go)));
@@ -3989,12 +2613,10 @@ function mkAppItem(a){
     detail='<div class="lg-det" onclick="event.stopPropagation()">'
       +(d?'<p class="lg-det-d">'+esc(d)+'</p>':'')
       +(a.warn?'<div class="warn-badge">⚠️ '+esc(a.warn)+'</div>':'')
-      +(a.pay?'<div class="warn-badge">💳 '+esc(String(a.pay))+'</div>':'')
       +(a.dep?mkDepBadge(a.dep):'')
       +(cmd?'<button type="button" class="badge b-winget" onclick="'
         +(a.w?'copyWinget(\''+escJS(a.w)+'\',event)':'copierCommande(\''+escJS(a.cmd)+'\',event)')
         +'" title="Copier la commande d\'installation">📋 '+esc(cmd)+'</button>':'')
-      +mkLicField(a)
       +mkNoteArea(a.id)
       +'</div>';
   }
@@ -4005,7 +2627,7 @@ function mkAppItem(a){
       +'<span class="lg-n">'+esc(libelleDe(a))+dt+'</span>'
       +'<span class="lg-br" aria-hidden="true"></span>'
       +'<span class="lg-m">'+meta.join(' · ')+'</span>'
-      +'<span class="lg-t">'+(a.t?fmtTime(a.t):'')+payBadge+pBadge+'</span>'
+      +'<span class="lg-t">'+(a.t?fmtTime(a.t):'')+badgeComparaison(a,etats)+pBadge+'</span>'
       +'<button type="button" class="lg-plus" aria-expanded="'+ouvert+'" '
         +'aria-label="'+(ouvert?'Masquer':'Afficher')+' le détail de '+esc(libelleDe(a))+'" '
         +'onclick="basculerDetail(\''+escJS(a.id)+'\',event)">'+(ouvert?'▴':'▾')+'</button>'
@@ -4050,57 +2672,6 @@ function checkAllCat(cat,evt){
 }
 
 
-// « Avant de quitter » : des groupes de priorité, et un paragraphe par ligne.
-// Ces actions se font sur l'ancien PC et ne se rattrapent pas après coup.
-function renderQuitter(){
-  renderParPriorite('quitter',QUITTER_DATA,
-    {high:'🔴 Irréversible — perdu pour de bon si oublié',
-     med:'🟡 Pénible à rattraper',
-     ok:'🟢 Confort'});
-}
-
-function renderParPriorite(onglet,donnees,labels){
-  const groups={high:[],med:[],ok:[]};
-  donnees.filter(visibleDansScenario).forEach(function(s){(groups[s.pr]||groups.ok).push(s);});
-  let html='';let first=true;
-  ['high','med','ok'].forEach(function(pr){
-    const grp=groups[pr];if(!grp.length)return;
-    const dn=grp.filter(function(s){return S.checked[s.id];}).length;
-    const allDone=dn===grp.length;
-    html+='<div class="sec-hdr'+(first?' first':'')+'">'+labels[pr]+'<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+grp.length+'</span><button class="chk-all" type="button" onclick="checkAllPriorite(\''+onglet+'\',\''+pr+'\',event)">'+(allDone?'Décocher tout':'Tout cocher')+'</button></div></div>';
-    grp.forEach(function(s){
-      const ck=!!S.checked[s.id];
-      const dt=ck&&S.dates[s.id]?'<span class="item-date">✓ '+fmtDate(S.dates[s.id])+'</span>':'';
-
-      html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(s)+'">'
-        +mkChkbox()
-        +'<div class="item-body">'
-          +'<div class="item-name-row"><span class="item-name">'+esc(libelleDe(s))+'</span>'+dt+mkNoteBtn(s.id)+'</div>'
-          +(s.p?'<div class="save-path">'+esc(s.p)+'</div>':'')
-          +(s.note?'<div class="save-note">'+esc(s.note)+'</div>':'')
-          +mkLicField(s)
-          +mkEnvFields(s)
-          +mkNoteArea(s.id)
-        +'</div>'
-      +'</div>';
-    });
-    first=false;
-  });
-  document.getElementById('list-'+onglet).innerHTML=html||messageOngletVide(onglet);
-  updateSecProg(onglet,donnees.filter(visibleDansScenario));
-}
-// Cocher ce qu'on ne voit pas, c'est marquer faite une tâche qu'on n'a pas
-// lue : ces boutons ne portent que sur ce que le scénario affiche.
-function checkAllPriorite(onglet,pr,evt){
-  evt.stopPropagation();
-  const items=visiblesDe(onglet).filter(function(s){return s.pr===pr;});
-  if(!items.length)return;
-  const all=items.every(function(s){return S.checked[s.id];});
-  const now=Date.now();
-  items.forEach(function(s){if(all){delete S.checked[s.id];delete S.dates[s.id];}else{S.checked[s.id]=true;S.dates[s.id]=now;}});
-  saveState();renderAll();updateGlobal();checkTabComplete();
-}
-
 // ═══ RENDER PWA ═══
 function renderPWA(){
   const pwaVues=visiblesDe('pwa');
@@ -4140,9 +2711,7 @@ function globalSearch(){
   const res=document.getElementById('gsearch-results');
   if(!q){cnt.style.display='none';res.classList.remove('active');res.innerHTML='';return;}
   const sections=[
-    {label:'🚪 Avant de quitter',items:visiblesDe('quitter').filter(function(x){return libelleDe(x).toLowerCase().indexOf(q)>=0||(x.p||'').toLowerCase().indexOf(q)>=0||(x.note||'').toLowerCase().indexOf(q)>=0;})},
-    {label:'🖥️ Nouveau PC',items:visiblesDe('npc').filter(function(x){return libelleDe(x).toLowerCase().indexOf(q)>=0||descDe(x).toLowerCase().indexOf(q)>=0;})},
-    {label:'📦 Apps',items:visiblesDe('apps').filter(function(x){return libelleDe(x).toLowerCase().indexOf(q)>=0||(x.w&&x.w.toLowerCase().indexOf(q)>=0)||descDe(x).toLowerCase().indexOf(q)>=0;})},
+    {label:'📦 Logiciels',items:visiblesDe('apps').filter(function(x){return libelleDe(x).toLowerCase().indexOf(q)>=0||(x.w&&x.w.toLowerCase().indexOf(q)>=0)||descDe(x).toLowerCase().indexOf(q)>=0;})},
     {label:'🌍 PWA',items:visiblesDe('pwa').filter(function(x){return libelleDe(x).toLowerCase().indexOf(q)>=0;})}
   ];
   const total=sections.reduce(function(s,x){return s+x.items.length;},0);
@@ -4179,14 +2748,14 @@ function updateSecProg(sec,data){
 }
 
 function updateGlobal(){
-  // Le compte de « Reste à faire » ne vient pas des cases cochées mais de la
-  // comparaison : il se rafraîchit ici pour rester d'accord avec le reste.
-  try{majBadgeReste();}catch(e){console.error(e);}
+  // Le badge des pilotes ne vient pas des cases cochées mais du scan de la
+  // cible : il se rafraîchit ici pour rester d'accord avec le reste.
+  try{majBadgePilotes();}catch(e){console.error(e);}
   const all=itemsVisibles();
   const done=all.filter(function(x){return S.checked[x.id];}).length;
   const total=all.length;
   const pct=total?Math.round(done/total*100):0;
-  const remMins=visiblesDe('npc').concat(visiblesDe('apps')).filter(function(x){return !S.checked[x.id];}).reduce(function(s,x){return s+(x.t||0);},0);
+  const remMins=visiblesDe('apps').filter(function(x){return !S.checked[x.id];}).reduce(function(s,x){return s+(x.t||0);},0);
   document.getElementById('gp-pct').textContent=pct+'%';
   document.getElementById('gp-done').textContent=done;
   document.getElementById('gp-total').textContent=total;
@@ -4378,11 +2947,7 @@ const ONGLET_DE={};   // id d'élément → onglet d'origine, pour l'intitulé
 // dépendances quand le profil en déclare.
 function fileGuide(){
   const sections=[
-    // L'ancien PC d'abord : ces actions ne se rattrapent pas une fois la
-    // machine formatée.
-    ['Avant de quitter',visiblesDe('quitter')],
-    ['Nouveau PC',visiblesDe('npc').slice().sort(function(a,b){return (a.o||0)-(b.o||0);})],
-    ['Apps',visiblesDe('apps')],
+    ['Logiciels',visiblesDe('apps')],
     ['PWA',visiblesDe('pwa')]
   ];
   const file=[];
@@ -4564,7 +3129,6 @@ function depsDe(item){
 function depsManquantes(item){
   return depsDe(item).filter(function(id){
     const d=indexParId()[id];
-    if(d&&!visibleDansScenario(d))return false;   // hors scénario : sans objet
     return !S.checked[id];
   });
 }
@@ -4576,7 +3140,7 @@ function mkDepBadge(dep){
   // nommer enverrait chercher dans la liste une tâche qui n'y est pas.
   const vus=dep.filter(function(id){
     const d=indexParId()[id];
-    return d&&visibleDansScenario(d);
+    return !!d;
   });
   if(!vus.length)return '';
   const noms=vus.map(nomDe);
@@ -4623,8 +3187,7 @@ let annulation=null;
 
 function copieEtat(){
   return {checked:Object.assign({},S.checked),notes:Object.assign({},S.notes),
-    dates:Object.assign({},S.dates),lic:Object.assign({},S.lic),
-    env:Object.assign({},S.env)};
+    dates:Object.assign({},S.dates)};
 }
 
 // Appelée AVANT l'action destructrice. Le profil n'est mémorisé que lorsque
@@ -4633,7 +3196,7 @@ function memoriserAnnulation(libelle,avecProfil){
   // Le scénario fait partie de ce qu'on voit à l'écran : une annulation qui
   // rendrait la progression sans rendre le filtre laisserait une liste qui ne
   // correspond plus à ce qu'on avait sous les yeux.
-  annulation={libelle:libelle,etat:copieEtat(),scenario:scenario,
+  annulation={libelle:libelle,etat:copieEtat(),
     profil:avecProfil?JSON.parse(JSON.stringify(profilCourant())):null};
   afficherBandeau(libelle,true);
 }
@@ -4666,9 +3229,7 @@ function annuler(){
   if(a.profil){
     try{appliquerProfil(a.profil,true);}catch(e){signalerPanne('Annulation',e);}
   }
-  if(a.scenario&&a.scenario!==scenario)changerScenario(a.scenario);
   S.checked=a.etat.checked;S.notes=a.etat.notes;S.dates=a.etat.dates;
-  S.lic=a.etat.lic;S.env=a.etat.env;
   saveState();renderAll();updateGlobal();renderHistory();
   masquerAnnulation();
 }
@@ -4689,9 +3250,8 @@ function proteger(ou,fn){
   try{fn();return true;}catch(e){signalerPanne(ou,e);return false;}
 }
 function renderAll(){
-  proteger('Avant de quitter',renderQuitter);
-  proteger('Nouveau PC',renderNPC);
-  proteger('Apps',renderApps);
+  proteger('Logiciels',renderApps);
+  proteger('Pilotes',renderPilotes);
   proteger('PWA',renderPWA);
   proteger('Boutons suivant',updateNextBtns);
   proteger('Positions',marquerPositions);
@@ -4724,20 +3284,16 @@ function remiseAZero(){
   try{
     localStorage.removeItem(CLE_ETAT);
     localStorage.removeItem(CLE_PROFIL);
-    localStorage.removeItem(CLE_SCENARIO);
-    localStorage.removeItem(CLE_DEBUT);
     localStorage.removeItem(CLE_CONFIG);
     localStorage.removeItem(CLE_SCAN);
   }catch(e){console.error(e);}
-  S.checked={};S.notes={};S.dates={};S.lic={};S.env={};S.lastSave=null;
+  S.checked={};S.notes={};S.dates={};S.lastSave=null;
   journal=[];openNotes={};sautees={};
-  scenario='tout';
   CONFIG={};construireConfig();fermerConfig();
   // Le thème suit les préférences du système, ce n'est pas une donnée de
   // travail : on le laisse tel quel.
   try{appliquerProfil(PROFIL_DEFAUT,false);}
   catch(e){signalerPanne('Remise à zéro',e);}
-  majSelecteurScenario();
   renderHistory();
   fermerReglages();
   if(!avaitProfil)document.getElementById('annul-txt').textContent=
@@ -4959,77 +3515,6 @@ function viderConfig(){
   informer('Configuration effacée.');
 }
 
-// ── Deux questions au premier lancement ────────────────────────────────
-// Les quatre cas se devinent mal depuis leurs seuls intitulés, et celui qui
-// compte le plus — garder ou non l'ancienne machine — ne saute pas aux yeux.
-// Deux questions le règlent. Le bandeau ne s'affiche qu'à une page vierge :
-// quelqu'un qui a déjà coché sait ce qu'il fait.
-const CLE_DEBUT='mpc_debut_v1';
-
-function debutDejaVu(){
-  try{return localStorage.getItem(CLE_DEBUT)==='1';}catch(e){return true;}
-}
-function marquerDebutVu(){
-  try{localStorage.setItem(CLE_DEBUT,'1');}catch(e){}
-}
-
-const QUESTIONS={
-  depart:{q:'Qu\'est-ce que vous installez ?',choix:[
-    {t:'Un PC neuf',d:'Une machine qui vient d\'arriver, ou que vous venez de monter.',
-     suite:'ancien'},
-    {t:'Le PC que j\'ai déjà',d:'Repartir propre sur la même machine, sans en changer.',
-     cas:'reinstall'}]},
-  ancien:{q:'Et l\'ancien PC, il devient quoi ?',choix:[
-    {t:'Je m\'en sépare',d:'Vendu, donné, ou mis au rebut. Il faudra délier ses licences et effacer son disque.',
-     cas:'migration'},
-    {t:'Je le garde',d:'Les deux machines resteront en service. Rien à délier, mais des dossiers à répartir et à synchroniser.',
-     cas:'second'}]}
-};
-
-function ouvrirDebut(){
-  const b=document.getElementById('debut');
-  if(!b)return;
-  b.classList.add('visible');
-  afficherQuestion('depart');
-}
-function afficherQuestion(cle){
-  const zone=document.getElementById('debut-etape');
-  const q=QUESTIONS[cle];
-  if(!zone||!q)return;
-  let html='<div class="debut-q">'+esc(q.q)+'</div><div class="debut-choix">';
-  q.choix.forEach(function(c,i){
-    html+='<button type="button" onclick="repondreDebut(\''+escJS(cle)+'\','+i+')">'
-      +'<b>'+esc(c.t)+'</b><span>'+esc(c.d)+'</span></button>';
-  });
-  zone.innerHTML=html+'</div>';
-  const p=zone.querySelector('button');
-  if(p)p.focus();
-}
-function repondreDebut(cle,i){
-  const c=(QUESTIONS[cle]||{choix:[]}).choix[i];
-  if(!c)return;
-  if(c.suite){afficherQuestion(c.suite);return;}
-  marquerDebutVu();
-  fermerDebut();
-  changerScenario(c.cas);
-  const sc=SCENARIOS[c.cas]||{};
-  informer('Liste adaptée : « '+(sc.libelle||c.cas)+' ». Le sélecteur en haut de page permet d\'en changer.');
-}
-function passerDebut(){
-  marquerDebutVu();
-  fermerDebut();
-}
-function fermerDebut(){
-  const b=document.getElementById('debut');
-  if(b)b.classList.remove('visible');
-}
-// Relançable depuis le menu : on peut vouloir y revenir après coup.
-function relancerDebut(){
-  ouvrirDebut();
-  document.getElementById('debut').scrollIntoView(
-    {block:'nearest',behavior:mouvementReduit()?'auto':'smooth'});
-}
-
 // ── Panneau des remises à zéro ─────────────────────────────────────────
 // Deux actions destructrices méritent d'être expliquées avant d'être
 // offertes, plutôt que posées côte à côte dans une barre déjà chargée.
@@ -5119,11 +3604,11 @@ function resetSection(sec){
   const map={};ONGLETS.forEach(function(c){map[c]=visiblesDe(c);});
   const cochees=map[sec].filter(function(x){return S.checked[x.id];}).length;
   if(!cochees){
-    informer('Rien à réinitialiser dans « '+nomOnglet(sec)+' » : aucune case cochée.');
+    informer('Rien à réinitialiser dans « '+(NOM_ONGLET[sec]||sec)+' » : aucune case cochée.');
     return;
   }
   memoriserAnnulation(cochees+' case'+(cochees>1?'s':'')+' décochée'+(cochees>1?'s':'')
-    +' dans « '+nomOnglet(sec)+' ».',false);
+    +' dans « '+(NOM_ONGLET[sec]||sec)+' ».',false);
   map[sec].forEach(function(x){delete S.checked[x.id];delete S.dates[x.id];});
   saveState();renderAll();updateGlobal();
 }
@@ -5221,8 +3706,7 @@ function wingetVersProfil(d){
   return {
     meta:{version:1,nom:'Migration PC — export winget',
       soustitre:apps.length+' paquets winget'+(quand?' · export du '+quand:'')},
-    cats:cats,apps:apps,
-    npc:PROFIL_DEFAUT.npc,pwa:PROFIL_DEFAUT.pwa,
+    cats:cats,apps:apps,pwa:PROFIL_DEFAUT.pwa,
     ordre:[],requetes:{}
   };
 }
@@ -5264,24 +3748,11 @@ function categoriePourNom(texte){
 // que pas d'export.
 function exportTxt(){
   const lines=[(PROFIL_NOM||'MIGRATION PC').toUpperCase(),PROFIL_SOUS||''];
-  if(scenario!=='tout')lines.push('Cas : '+SCENARIOS[scenario].nom);
   lines.push('');
   const marque=function(e){return S.checked[e.id]?'[x]':'[ ]';};
   const note=function(id){return S.notes[id]?' [Note : '+S.notes[id]+']':'';};
 
-  const quitter=visiblesDe('quitter');
-  if(quitter.length){
-    lines.push('=== AVANT DE QUITTER L\'ANCIEN PC ===');
-    quitter.forEach(function(e){
-      lines.push(marque(e)+' '+libelleDe(e)+(e.p?'\n    '+e.p:'')+note(e.id));
-    });
-    lines.push('');
-  }
-  lines.push('=== NOUVEAU PC ===');
-  visiblesDe('npc').slice().sort(function(a,b){return a.o-b.o;}).forEach(function(e){
-    lines.push(marque(e)+' '+e.o+'. '+libelleDe(e)+note(e.id));
-  });
-  lines.push('','=== APPS ===');
+  lines.push('=== LOGICIELS ===');
   const apps=visiblesDe('apps');
   Object.keys(CATS).forEach(function(cat){
     const liste=apps.filter(function(a){return a.c===cat;});
@@ -5308,14 +3779,8 @@ window.addEventListener('DOMContentLoaded',function(){
   chargerInstantanes();
   chargerConfig();
   document.addEventListener('input',function(e){
-    if(e.target.classList.contains('lic-input')){saveLic(e.target.dataset.id,e.target.value);}
-    if(e.target.classList.contains('env-input')){saveEnv(e.target.dataset.var,e.target.value);}
   });
   document.addEventListener('keydown',clavierGlobal);
-  try{
-    const sc=localStorage.getItem(CLE_SCENARIO);
-    if(sc&&SCENARIOS[sc])scenario=sc;
-  }catch(e){}
   // Le profil mémorisé prime sur celui d'exemple. appliquerProfil déclenche le rendu.
   const memorise=chargerProfilMemorise();
   try{appliquerProfil(memorise||PROFIL_DEFAUT,false);}
@@ -5327,7 +3792,6 @@ window.addEventListener('DOMContentLoaded',function(){
   appliquerScanLocal();
   enregistrerServiceWorker();
   // Page vierge seulement : quelqu'un qui a déjà coché sait ce qu'il fait.
-  if(!debutDejaVu()&&!Object.keys(S.checked).length&&scenario==='tout')ouvrirDebut();
 });
 
 // ═══ INSTALLATION (PWA) ═══
@@ -5343,44 +3807,9 @@ function enregistrerServiceWorker(){
   });
 }
 
-// ═══ V6 : CHAMP LICENCE ═══
-// Affiché uniquement sur les éléments que le profil marque avec lic.
-function mkLicField(item){
-  if(!item||!item.lic)return '';
-  var id=item.id;
-  var val=S.lic&&S.lic[id]?S.lic[id]:'';
-  return '<div class="lic-field" onclick="event.stopPropagation()"><label>Clé de licence</label><input class="lic-input" data-id="'+esc(id)+'" type="text" placeholder="Coller la clé..." value="'+esc(val)+'"></div>';
-}
-function saveLic(id,val){
-  if(!S.lic)S.lic={};
-  if(val.trim())S.lic[id]=val;else delete S.lic[id];
-  saveState();
-}
-
-// ═══ V6 : CHAMP ENV ═══
-// env vaut true (liste par défaut) ou un tableau de noms de variables.
-const ENV_VARS=['ANDROID_HOME','JAVA_HOME','PATH_CUSTOM'];
-function mkEnvFields(item){
-  if(!item||!item.env)return '';
-  if(!S.env)S.env={};
-  var vars=Array.isArray(item.env)?item.env:ENV_VARS;
-  var fields=vars.map(function(v){
-    var val=S.env[v]||'';
-    return '<div class="env-row" onclick="event.stopPropagation()"><label>'+v+'</label><input class="env-input" data-var="'+v+'" type="text" placeholder="Chemin..." value="'+esc(val)+'"></div>';
-  }).join('');
-  return '<div class="env-fields">'+fields+'</div>';
-}
-function saveEnv(varname,val){
-  if(!S.env)S.env={};
-  if(val.trim())S.env[varname]=val;else delete S.env[varname];
-  saveState();
-}
-
 // ═══ V6 : BOUTON SUIVANT ═══
 function updateNextBtns(){
   var tabs=[
-    {id:'quitter',data:visiblesDe('quitter'),btnId:'next-quitter-btn',cntId:'next-quitter-count'},
-    {id:'npc',data:visiblesDe('npc'),btnId:'next-npc-btn',cntId:'next-npc-count'},
     {id:'apps',data:visiblesDe('apps'),btnId:'next-apps-btn',cntId:'next-apps-count'},
   ];
   tabs.forEach(function(t){

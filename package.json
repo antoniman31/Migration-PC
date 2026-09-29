@@ -13,12 +13,9 @@
     "test:a11y": "node tests/test-accessibilite.js",
     "sync": "node scripts-sync.js",
     "test:guide": "node tests/test-guide.js",
-    "test:quitter": "node tests/test-quitter.js",
-    "test:scenarios": "node tests/test-scenarios.js",
     "test:reinit": "node tests/test-reinit.js",
     "test:menu": "node tests/test-menu.js",
     "test:hostile": "node tests/test-profil-hostile.js",
-    "test:debut": "node tests/test-debut.js",
     "test:config": "node tests/test-config.js",
     "test:reconciliation": "node tests/test-reconciliation.js",
     "test:archive": "node tests/test-archive.js"

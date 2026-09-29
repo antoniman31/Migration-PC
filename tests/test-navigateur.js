@@ -13,7 +13,7 @@ const HTML='file://'+path.join(racine,'index.html');
 // retoucher ce fichier a chaque enrichissement du contenu, ce qui finit par
 // le faire mentir.
 const PROFIL=JSON.parse(fs.readFileSync(path.join(racine,'presets','exemple.json'),'utf8'));
-const SECTIONS=['quitter','npc','apps','pwa'];
+const SECTIONS=['apps','pwa'];
 const TOTAL=SECTIONS.reduce(function(n,s){return n+((PROFIL[s]||[]).length);},0);
 let ko=0;
 const ok=(l,a,b)=>{const p=(b===undefined?!!a:a===b);console.log((p?'  ok   ':'  FAIL ')+l+' → '+a+(p?'':' (attendu '+b+')'));if(!p)ko++;};
@@ -83,17 +83,17 @@ ok('filtres catégories',(await pg.$$('#cat-filters input[type=checkbox]')).leng
 // invisibles des qu'on quitte le premier. On compare les parents entre eux
 // plutot qu'a un conteneur nomme : ajouter un <main> ne doit pas casser ce test.
 const memeParent=await pg.evaluate(()=>{
-  const p=['npc','apps','pwa'].map(t=>document.getElementById('panel-'+t).parentElement);
+  const p=['apps','pilotes','pwa'].map(t=>document.getElementById('panel-'+t).parentElement);
   return p.every(x=>x===p[0]) && !p[0].closest('.panel');
 });
 ok('panneaux frères',memeParent,true);
 
-console.log('\n--- onglet Nouveau PC ---');
-// Ce n'est plus l'onglet ouvert au chargement : il faut y aller.
-await pg.click('#tab-npc');
+console.log('\n--- onglet Pilotes ---');
+// Sans scan de la machine d'arrivée, il dit ce qu'il fera plutôt que rien.
+await pg.click('#tab-pilotes');
 await pg.waitForTimeout(150);
-ok('items rendus',(await pg.$$('#list-npc .item')).length,PROFIL.npc.length);
-ok('badge étape visible',await pg.isVisible('#list-npc .b-num'));
+ok('l\'onglet dit ce qu\'il attend',
+  (await pg.textContent('#list-pilotes')).indexOf('PC receveur')>=0,true);
 
 console.log('\n--- onglet Apps (celui qui était cassé en v6) ---');
 await chargerExemple(pg);
@@ -165,9 +165,9 @@ await pg.evaluate(()=>{window.renderApps=()=>{throw new Error('panne simulée');
 await pg.waitForTimeout(200);
 ok('bandeau visible après la panne',await pg.isVisible('#panne'),true);
 const detail=await pg.textContent('#panne-detail');
-ok('onglet fautif nommé',detail.indexOf('Apps')>=0,true);
+ok('onglet fautif nommé',detail.indexOf('Logiciels')>=0,true);
 ok('message d\'erreur repris',detail.indexOf('panne simulée')>=0,true);
-ok('les autres onglets survivent',(await pg.$$('#list-npc .item')).length>0,true);
+ok('les autres onglets survivent',(await pg.textContent('#list-pilotes')).length>0,true);
 await pg.click('.panne-fermer');
 ok('bandeau refermable',await pg.isVisible('#panne'),false);
 // La panne ci-dessus est volontaire : on la retire du bilan d'erreurs final.

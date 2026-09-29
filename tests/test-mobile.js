@@ -38,10 +38,14 @@ for(const ec of ECRANS){
     const erreurs=[];
     pg.on('pageerror',e=>erreurs.push(e.message));
     await pg.goto(HTML,{waitUntil:'networkidle'});
+    // Sans l'exemple garni, les listes sont vides : on mesurerait des cibles
+    // tactiles qui n'existent pas.
+    await pg.evaluate(()=>{try{chargerDemo();}catch(e){}});
+    await pg.waitForTimeout(250);
     await pg.evaluate(t=>document.documentElement.setAttribute('data-theme',t),theme);
 
     // Chaque onglet a sa propre mise en page : les mesurer tous.
-    for(const onglet of ['npc','apps','pwa']){
+    for(const onglet of ['apps','pilotes','pwa']){
       await pg.click('#tab-'+onglet);
       await pg.waitForTimeout(120);
       const ou=ec.nom+'/'+theme+'/'+onglet;

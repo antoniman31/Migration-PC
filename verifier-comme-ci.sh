@@ -24,7 +24,7 @@ for t in navigateur pwa; do lancer node "tests/test-$t.js"; done
 printf '%-46s ' 'STRICT=1 tests/test-mobile.js'
 if STRICT=1 node tests/test-mobile.js >/tmp/mpc-ci.log 2>&1; then echo OK; else
   echo ECHEC; ech=$((ech+1)); tail -8 /tmp/mpc-ci.log|sed 's/^/    /'; fi
-for t in accessibilite guide quitter scenarios reinit menu profil-hostile debut config; do
+for t in accessibilite guide reinit menu profil-hostile config; do
   lancer node "tests/test-$t.js"; done
 echo
 if [ "$ech" -gt 0 ]; then echo "$ech ETAPE(S) EN ECHEC"; exit 1; fi
