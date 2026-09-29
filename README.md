@@ -15,6 +15,10 @@ Les scripts sont facultatifs.
 
 ## Aperçu
 
+Ces images se refabriquent par `node refaire-captures.js` : une capture ne casse
+aucun test, donc rien ne signale qu'elle a vieilli — celles-ci ont montré une
+page à six onglets plusieurs semaines après qu'il n'y en ait plus que cinq.
+
 L'onglet **Apps** : la liste des logiciels relevés sur l'ancien PC, regroupés par
 catégorie, avec leur version, leur poids et la commande qui les réinstalle.
 
@@ -868,6 +872,7 @@ Migration-PC/
 ├── presets/demonstration.json    # l'exemple garni, chargé à la demande
 ├── scripts-sync.js               # recopie le profil et le nom de cache du sw
 ├── captures/                     # images du README
+├── refaire-captures.js           # les refabrique — `node refaire-captures.js`
 ├── resultat-scan.js              # écrit par les scripts, lu par la page en file://
 ├── instantane-source.json        # le relais : posé par le scan source, relu par le scan cible
 ├── tests/                        # suites Node, PowerShell et navigateur

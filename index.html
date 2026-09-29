@@ -314,7 +314,6 @@ body.compact .item{padding:5px 0}
 .lg-br{display:none}
 .lg-l.done .lg-n{text-decoration:line-through;color:var(--tx3)}
 .lg-det{padding:2px 0 12px 34px;cursor:default}
-.lg-det .lic-field,.lg-det .env-field{margin-top:8px}
 .lg-det-d{font-size:12px;color:var(--tx2);line-height:1.5;margin-bottom:8px}
 /* Sur un ecran etroit, sept colonnes ne tiennent pas : la version et la
    provenance passent sous le nom plutot que de le comprimer a trois lettres. */
@@ -401,7 +400,6 @@ body.compact .item{padding:5px 0}
 .b-winget:hover{opacity:.8}
 .b-time{background:var(--bg2);color:var(--tx2);border-color:var(--brd)}
 .b-high{background:var(--bh-bg);color:var(--bh-tx);border-color:var(--bh-bd)}
-.b-pay{background:var(--warn-bg);color:var(--warn-tx);border-color:var(--warn-bd)}
 .b-pwa{background:var(--bpwa-bg);color:var(--bpwa-tx);border-color:var(--bpwa-bd)}
 .b-sync{background:var(--bord-bg);color:var(--bord-tx);border-color:var(--bord-bd);font-weight:600}
 .b-num{width:22px;height:22px;border-radius:50%;background:var(--accl);color:var(--acc-fort);border:.5px solid var(--accb);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -484,19 +482,8 @@ body.compact .item{padding:5px 0}
 .item.post-item.done .chkbox{background:var(--bok-tx);border-color:var(--bok-bd)}
 
 /* ── V6 : champ licence ── */
-.lic-field{margin-top:6px;display:flex;align-items:center;gap:6px}
-.lic-field label{font-size:10px;color:var(--tx2);white-space:nowrap;flex-shrink:0}
-.lic-field input{flex:1;font-size:11px;padding:3px 7px;border:.5px solid var(--brd2);border-radius:6px;background:var(--bg2);color:var(--tx);outline:none;font-family:"Cascadia Code","Consolas",monospace}
-.lic-field input:focus{border-color:var(--acc-fort)}
-.lic-field input::placeholder{color:var(--tx3)}
 
 /* ── V6 : champ env ── */
-.env-fields{margin-top:6px;display:flex;flex-direction:column;gap:4px}
-.env-row{display:flex;align-items:center;gap:6px}
-.env-row label{font-size:10px;color:var(--tx2);width:110px;flex-shrink:0;font-family:"Cascadia Code","Consolas",monospace}
-.env-row input{flex:1;font-size:11px;padding:3px 7px;border:.5px solid var(--brd2);border-radius:6px;background:var(--bg2);color:var(--tx);outline:none;font-family:"Cascadia Code","Consolas",monospace}
-.env-row input:focus{border-color:var(--acc-fort)}
-.env-row input::placeholder{color:var(--tx3)}
 
 /* ── V6 : bouton suivant ── */
 .next-tab-btn{display:flex;align-items:center;justify-content:flex-end;padding:10px 20px;border-top:.5px solid var(--brd);background:transparent}
@@ -859,19 +846,15 @@ body.guide-actif .history-bar{display:none}
   .sec-prog-txt,.b-num,.item-date,.item-desc,.save-note,.save-path,
   .tbar-info,.gsearch-count,.sec-hdr-cnt{font-size:12px}
   .gp-label,.tab-badge,.badge,.sec-hdr{font-size:12px}
-  .lic-field label,.env-row label{font-size:12px}
 
   /* Champs : 16 px, sinon iOS zoome à la mise au point et casse la mise en page. */
-  input,select,textarea,.lic-field input,.env-row input,
+  input,select,textarea,
   #gsearch-input,#apps-search,.sort-sel{font-size:16px}
 
   /* Les libellés de variables passent au-dessus du champ : côte à côte,
      110 px de libellé ne laissent plus rien au champ sur 360 px de large. */
-  .env-row{flex-direction:column;align-items:stretch;gap:3px}
-  .env-row label{width:auto}
   /* Les trois lignes de variables se suivaient à 4 px : sur un écran tactile
      on vise le mauvais champ. */
-  .env-fields{gap:10px}
 
   /* .icon-only fixe une largeur de 32 px pour l'affichage large : la règle
      générique plus haut ne suffit pas à la remplacer. */
@@ -2857,7 +2840,6 @@ function exportProfil(){
 // ═══ INVENTAIRE → PROFIL ═══
 // Transforme la sortie de scan-pc.ps1 en profil utilisable.
 const CAT_PAR_DEFAUT='system';
-const CAT_OUTILS='outils';
 
 // Le scanner relève le matériel : autant remplir les champs prévus pour lui
 // plutôt que de les faire recopier à la main depuis une étiquette de carton.
@@ -2927,13 +2909,6 @@ function inventaireVersProfil(inv){
       }))
     :PROFIL_DEFAUT.pwa;
 
-  // Le scanner relève les variables personnalisées : autant remplir les champs
-  // prévus pour elles plutôt que de les faire recopier à la main.
-  const vars=inv.variables&&typeof inv.variables==='object'?Object.keys(inv.variables):[];
-  vars.forEach(function(v){
-    if(!S.env[v])S.env[v]=String(inv.variables[v]);
-  });
-  if(vars.length)saveState();
   const reprisMateriel=appliquerMateriel(inv.materiel,false);
   const cats={};
   const out=[];
@@ -2966,11 +2941,6 @@ function inventaireVersProfil(inv){
       u:a.lien||undefined,
       p:a.priorite||'med',
       t:a.duree||5,
-      // Ce que le scan sait d'une licence : rien de la machine, tout d'une
-      // liste tenue à la main. Vide veut dire « je ne sais pas », pas
-      // « gratuit », et la ligne ne prétend rien de plus.
-      pay:a.payant?String(a.payant):undefined,
-      lic:a.payant?true:undefined,
       d:bouts.join(' · ')||'Détecté sur l\'ancien PC.'
     });
   });
@@ -3511,7 +3481,7 @@ function traiterDonnees(d,provenance){
     }
     if(d && d.state){
       memoriserAnnulation('Progression importée.'+suffixe,false);
-      S={checked:d.state.checked||{},notes:d.state.notes||{},dates:d.state.dates||{},lic:d.state.lic||{},env:d.state.env||{},lastSave:null};
+      S={checked:d.state.checked||{},notes:d.state.notes||{},dates:d.state.dates||{},lastSave:null};
       saveState();renderAll();updateGlobal();
       dire('Progression importée : '+Object.keys(S.checked).length+' tâches cochées.');
       return true;
@@ -3536,7 +3506,7 @@ function handleImport(evt){
 
 // ═══ STATE ═══
 const PRIO = {high:0,med:1,ok:2};
-let S = {checked:{},notes:{},dates:{},lastSave:null,lic:{},env:{}};
+let S = {checked:{},notes:{},dates:{},lastSave:null};
 let curCats=[];
 let curTab='quitter',noWinget=false,viewMode='normal',isDark=false;
 // « journal » et non « history » : une globale nommée history masque
@@ -3618,7 +3588,7 @@ function searchUrl(name,e){
 
 // ═══ STORAGE ═══
 function loadState(){
-  try{const r=localStorage.getItem(CLE_ETAT);if(r){const d=JSON.parse(r);if(d&&typeof d==='object'){S.checked=d.checked||{};S.notes=d.notes||{};S.dates=d.dates||{};S.lastSave=d.lastSave||null;S.lic=d.lic||{};S.env=d.env||{};}}}catch(e){console.error(e);}
+  try{const r=localStorage.getItem(CLE_ETAT);if(r){const d=JSON.parse(r);if(d&&typeof d==='object'){S.checked=d.checked||{};S.notes=d.notes||{};S.dates=d.dates||{};S.lastSave=d.lastSave||null;}}}catch(e){console.error(e);}
   updateSaveLabel();
 }
 // Une sauvegarde qui echoue en silence est pire qu'une sauvegarde absente :
@@ -3976,7 +3946,6 @@ function mkAppItem(a){
   const ouvert=!!lignesOuvertes[a.id];
   const dt=ck&&S.dates[a.id]?'<span class="item-date">✓ '+fmtDate(S.dates[a.id])+'</span>':'';
   const pBadge=a.p==='high'?'<span class="badge b-high">⚡</span>':'';
-  const payBadge=a.pay?'<span class="badge b-pay" title="'+esc(String(a.pay))+'">licence</span>':'';
   const meta=[];
   if(a.ver)meta.push(esc(String(a.ver)));
   if(a.go)meta.push(esc(fmtTaille(a.go)));
@@ -3989,12 +3958,10 @@ function mkAppItem(a){
     detail='<div class="lg-det" onclick="event.stopPropagation()">'
       +(d?'<p class="lg-det-d">'+esc(d)+'</p>':'')
       +(a.warn?'<div class="warn-badge">⚠️ '+esc(a.warn)+'</div>':'')
-      +(a.pay?'<div class="warn-badge">💳 '+esc(String(a.pay))+'</div>':'')
       +(a.dep?mkDepBadge(a.dep):'')
       +(cmd?'<button type="button" class="badge b-winget" onclick="'
         +(a.w?'copyWinget(\''+escJS(a.w)+'\',event)':'copierCommande(\''+escJS(a.cmd)+'\',event)')
         +'" title="Copier la commande d\'installation">📋 '+esc(cmd)+'</button>':'')
-      +mkLicField(a)
       +mkNoteArea(a.id)
       +'</div>';
   }
@@ -4005,7 +3972,7 @@ function mkAppItem(a){
       +'<span class="lg-n">'+esc(libelleDe(a))+dt+'</span>'
       +'<span class="lg-br" aria-hidden="true"></span>'
       +'<span class="lg-m">'+meta.join(' · ')+'</span>'
-      +'<span class="lg-t">'+(a.t?fmtTime(a.t):'')+payBadge+pBadge+'</span>'
+      +'<span class="lg-t">'+(a.t?fmtTime(a.t):'')+pBadge+'</span>'
       +'<button type="button" class="lg-plus" aria-expanded="'+ouvert+'" '
         +'aria-label="'+(ouvert?'Masquer':'Afficher')+' le détail de '+esc(libelleDe(a))+'" '
         +'onclick="basculerDetail(\''+escJS(a.id)+'\',event)">'+(ouvert?'▴':'▾')+'</button>'
@@ -4078,8 +4045,6 @@ function renderParPriorite(onglet,donnees,labels){
           +'<div class="item-name-row"><span class="item-name">'+esc(libelleDe(s))+'</span>'+dt+mkNoteBtn(s.id)+'</div>'
           +(s.p?'<div class="save-path">'+esc(s.p)+'</div>':'')
           +(s.note?'<div class="save-note">'+esc(s.note)+'</div>':'')
-          +mkLicField(s)
-          +mkEnvFields(s)
           +mkNoteArea(s.id)
         +'</div>'
       +'</div>';
@@ -4623,8 +4588,7 @@ let annulation=null;
 
 function copieEtat(){
   return {checked:Object.assign({},S.checked),notes:Object.assign({},S.notes),
-    dates:Object.assign({},S.dates),lic:Object.assign({},S.lic),
-    env:Object.assign({},S.env)};
+    dates:Object.assign({},S.dates)};
 }
 
 // Appelée AVANT l'action destructrice. Le profil n'est mémorisé que lorsque
@@ -4668,7 +4632,6 @@ function annuler(){
   }
   if(a.scenario&&a.scenario!==scenario)changerScenario(a.scenario);
   S.checked=a.etat.checked;S.notes=a.etat.notes;S.dates=a.etat.dates;
-  S.lic=a.etat.lic;S.env=a.etat.env;
   saveState();renderAll();updateGlobal();renderHistory();
   masquerAnnulation();
 }
@@ -4729,7 +4692,7 @@ function remiseAZero(){
     localStorage.removeItem(CLE_CONFIG);
     localStorage.removeItem(CLE_SCAN);
   }catch(e){console.error(e);}
-  S.checked={};S.notes={};S.dates={};S.lic={};S.env={};S.lastSave=null;
+  S.checked={};S.notes={};S.dates={};S.lastSave=null;
   journal=[];openNotes={};sautees={};
   scenario='tout';
   CONFIG={};construireConfig();fermerConfig();
@@ -5308,8 +5271,6 @@ window.addEventListener('DOMContentLoaded',function(){
   chargerInstantanes();
   chargerConfig();
   document.addEventListener('input',function(e){
-    if(e.target.classList.contains('lic-input')){saveLic(e.target.dataset.id,e.target.value);}
-    if(e.target.classList.contains('env-input')){saveEnv(e.target.dataset.var,e.target.value);}
   });
   document.addEventListener('keydown',clavierGlobal);
   try{
@@ -5341,39 +5302,6 @@ function enregistrerServiceWorker(){
   navigator.serviceWorker.register('sw.js').catch(function(e){
     console.info("Service worker non enregistré :",e&&e.message);
   });
-}
-
-// ═══ V6 : CHAMP LICENCE ═══
-// Affiché uniquement sur les éléments que le profil marque avec lic.
-function mkLicField(item){
-  if(!item||!item.lic)return '';
-  var id=item.id;
-  var val=S.lic&&S.lic[id]?S.lic[id]:'';
-  return '<div class="lic-field" onclick="event.stopPropagation()"><label>Clé de licence</label><input class="lic-input" data-id="'+esc(id)+'" type="text" placeholder="Coller la clé..." value="'+esc(val)+'"></div>';
-}
-function saveLic(id,val){
-  if(!S.lic)S.lic={};
-  if(val.trim())S.lic[id]=val;else delete S.lic[id];
-  saveState();
-}
-
-// ═══ V6 : CHAMP ENV ═══
-// env vaut true (liste par défaut) ou un tableau de noms de variables.
-const ENV_VARS=['ANDROID_HOME','JAVA_HOME','PATH_CUSTOM'];
-function mkEnvFields(item){
-  if(!item||!item.env)return '';
-  if(!S.env)S.env={};
-  var vars=Array.isArray(item.env)?item.env:ENV_VARS;
-  var fields=vars.map(function(v){
-    var val=S.env[v]||'';
-    return '<div class="env-row" onclick="event.stopPropagation()"><label>'+v+'</label><input class="env-input" data-var="'+v+'" type="text" placeholder="Chemin..." value="'+esc(val)+'"></div>';
-  }).join('');
-  return '<div class="env-fields">'+fields+'</div>';
-}
-function saveEnv(varname,val){
-  if(!S.env)S.env={};
-  if(val.trim())S.env[varname]=val;else delete S.env[varname];
-  saveState();
 }
 
 // ═══ V6 : BOUTON SUIVANT ═══

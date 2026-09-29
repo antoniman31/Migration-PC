@@ -39,13 +39,12 @@ const ouvrirPanneau=async()=>{
 const defaut=await pg.evaluate(()=>PROFIL_DEFAUT.meta.nom);
 let ko=0;const ok=(l,a,c)=>{const p=(c===undefined?!!a:a===c);console.log((p?'  ok  ':' FAIL ')+l+' → '+JSON.stringify(a)+(p?'':' (attendu '+JSON.stringify(c)+')'));if(!p)ko++;};
 
-// Etat de depart : quelques cases, une note, une cle, un scenario.
+// Etat de depart : quelques cases, une note, un scenario.
 const prepare=async()=>pg.evaluate(()=>{
   const ids=tousLesItems().slice(0,6).map(e=>e.id);
-  S.checked={};S.notes={};S.lic={};
+  S.checked={};S.notes={};
   ids.forEach(i=>{S.checked[i]=true;S.dates[i]=Date.now();});
   S.notes[ids[0]]='ma note';
-  S.lic['cle-test']='ABCD-1234';
   saveState();renderAll();updateGlobal();
   return ids.length;
 });
@@ -81,7 +80,6 @@ await pg.click('#reglages .reglages-item:not(.reglages-danger) button');
 await pg.waitForTimeout(300);
 ok('plus aucune case cochee',await pg.evaluate(()=>Object.keys(S.checked).length),0);
 ok('la note est conservee',await pg.evaluate(()=>S.notes&&Object.keys(S.notes).length),1);
-ok('la cle est conservee',await pg.evaluate(()=>S.lic['cle-test']),'ABCD-1234');
 ok('le scenario ne bouge pas',await pg.evaluate(()=>scenario),'reinstall');
 ok('le panneau se referme',await pg.isVisible('#reglages'),false);
 ok('le bandeau propose d\'annuler',await pg.isVisible('.annul-btn'),true);
@@ -119,7 +117,6 @@ ok('profil efface du navigateur',stock.profil,null);
 ok('scenario efface du navigateur',stock.scen,null);
 ok('plus aucune case',await pg.evaluate(()=>Object.keys(S.checked).length),0);
 ok('plus aucune note',await pg.evaluate(()=>Object.keys(S.notes).length),0);
-ok('plus aucune cle',await pg.evaluate(()=>Object.keys(S.lic).length),0);
 ok('retour au profil d\'exemple',await pg.textContent('#profil-titre'),defaut);
 ok('retour au scenario complet',await pg.evaluate(()=>scenario),'tout');
 ok('« Tout » redevient actif',await pg.getAttribute('#sc-tout','aria-pressed'),'true');
@@ -133,7 +130,6 @@ ok('le profil importe revient',await pg.textContent('#profil-titre'),'Profil imp
 ok('le scenario revient',await pg.evaluate(()=>scenario),'migration');
 ok('les cases reviennent',await pg.evaluate(()=>Object.keys(S.checked).length>0),true);
 ok('la note revient',await pg.evaluate(()=>S.notes&&Object.keys(S.notes).length),1);
-ok('la cle revient',await pg.evaluate(()=>S.lic['cle-test']),'ABCD-1234');
 ok('et tout est re-memorise',
   await pg.evaluate(()=>!!localStorage.getItem(CLE_PROFIL)&&!!localStorage.getItem(CLE_ETAT)),true);
 
