@@ -545,6 +545,13 @@ body.compact .b-dep{display:none}
 .config-titre{font-size:14px;font-weight:600;color:var(--tx);margin-bottom:3px}
 .config-sous{font-size:12px;color:var(--tx2);line-height:1.55}
 .config-resume{flex-shrink:0;font-size:12px;color:var(--tx3);white-space:nowrap}
+.config-resume{max-width:min(100%,320px);white-space:normal;text-align:right;line-height:1.45}
+/* Les deux groupes ne servent pas a la meme chose : cinq decrivent la machine,
+   quatre servent a retrouver un pilote. Une liste plate cachait cet ecart. */
+.config-grp{margin-bottom:16px}
+.config-grp:last-child{margin-bottom:0}
+.config-grp-t{font-size:12px;font-weight:600;color:var(--tx);margin-bottom:2px}
+.config-grp-s{font-size:11px;color:var(--tx3);line-height:1.5;margin-bottom:9px}
 .config-ligne{display:flex;align-items:center;gap:12px;margin-bottom:8px}
 .config-label{flex-shrink:0;width:126px;font-size:13px;color:var(--tx2)}
 .config-input{flex:1;min-width:0;padding:9px 12px;min-height:40px;font-size:13px;
@@ -3474,16 +3481,26 @@ const CLE_CONFIG='mpc_config_v1';
 // recherche de tous les autres — sans lui, sur une machine fraîche, on ne
 // télécharge rien. Ethernet et Wi-Fi séparément, parce qu'on ne cherche pas le
 // même pilote et qu'un fixe n'a souvent que le premier.
+// Les deux groupes ne servent pas a la meme chose, et une liste plate de neuf
+// champs cachait cette difference : cinq decrivent la machine, quatre servent
+// a retrouver un pilote. Quelqu'un qui ouvre ce panneau doit voir lesquels
+// comptent pour ce qu'il est en train de faire.
 const COMPOSANTS=[
-  {cle:'cm',   label:'Carte mère',      exemple:'ASUS ROG STRIX B850-A'},
-  {cle:'cpu',  label:'Processeur',      exemple:'AMD Ryzen 7 9800X3D'},
-  {cle:'gpu',  label:'Carte graphique', exemple:'NVIDIA RTX 5070 Ti'},
-  {cle:'ram',  label:'Mémoire',         exemple:'32 Go DDR5-6000'},
-  {cle:'ssd',  label:'SSD',             exemple:'Samsung 9100 PRO 2 To'},
-  {cle:'eth',  label:'Réseau filaire',  exemple:'Realtek Gaming 2.5GbE'},
-  {cle:'wifi', label:'Wi-Fi',           exemple:'Intel Wi-Fi 6E AX211'},
-  {cle:'audio',label:'Puce audio',      exemple:'Realtek(R) Audio'},
-  {cle:'bios', label:'Version du BIOS', exemple:'1402 (2025-03-11)'}
+  {cle:'cm',   grp:'machine', label:'Carte mère',      exemple:'ASUS ROG STRIX B850-A'},
+  {cle:'cpu',  grp:'machine', label:'Processeur',      exemple:'AMD Ryzen 7 9800X3D'},
+  {cle:'gpu',  grp:'machine', label:'Carte graphique', exemple:'NVIDIA RTX 5070 Ti'},
+  {cle:'ram',  grp:'machine', label:'Mémoire',         exemple:'32 Go DDR5-6000'},
+  {cle:'ssd',  grp:'machine', label:'SSD',             exemple:'Samsung 9100 PRO 2 To'},
+  {cle:'eth',  grp:'pilote',  label:'Réseau filaire',  exemple:'Realtek Gaming 2.5GbE'},
+  {cle:'wifi', grp:'pilote',  label:'Wi-Fi',           exemple:'Intel Wi-Fi 6E AX211'},
+  {cle:'audio',grp:'pilote',  label:'Puce audio',      exemple:'Realtek(R) Audio'},
+  {cle:'bios', grp:'pilote',  label:'Version du BIOS', exemple:'1402 (2025-03-11)'}
+];
+const GROUPES_CONFIG=[
+  {cle:'machine', titre:'La machine',
+   sous:'Ce que le scan relève tout seul. Utile pour reconnaître le PC au SAV.'},
+  {cle:'pilote',  titre:'Pour retrouver un pilote',
+   sous:'Le réseau d\'abord : sans lui, sur une machine fraîche, on ne télécharge rien.'}
 ];
 let CONFIG={};
 
@@ -3535,7 +3552,7 @@ function fermerConfig(){
 function construireConfig(){
   const zone=document.getElementById('config-champs');
   if(!zone)return;
-  zone.innerHTML=COMPOSANTS.map(function(c){
+  const champ=function(c){
     return '<label class="config-ligne">'
       +'<span class="config-label">'+esc(c.label)+'</span>'
       +'<input type="text" class="config-input" id="cfg-'+esc(c.cle)+'"'
@@ -3543,16 +3560,31 @@ function construireConfig(){
       +' placeholder="'+esc(c.exemple)+'"'
       +' oninput="majConfig(\''+escJS(c.cle)+'\',this.value)">'
       +'</label>';
+  };
+  zone.innerHTML=GROUPES_CONFIG.map(function(g){
+    const champs=COMPOSANTS.filter(function(c){return c.grp===g.cle;});
+    if(!champs.length)return '';
+    return '<div class="config-grp">'
+      +'<div class="config-grp-t">'+esc(g.titre)+'</div>'
+      +'<div class="config-grp-s">'+esc(g.sous)+'</div>'
+      +champs.map(champ).join('')
+      +'</div>';
   }).join('');
   majResumeConfig();
 }
 function majResumeConfig(){
   const r=document.getElementById('config-resume');
   if(!r)return;
+  // Un compte — « 4 sur 9 » — n'aide pas a savoir s'il faut remplir la suite.
+  // Ce qui manque pour retrouver un pilote, si.
   const remplis=COMPOSANTS.filter(function(c){return CONFIG[c.cle];});
-  r.textContent=remplis.length
-    ? remplis.length+' composant'+(remplis.length>1?'s':'')+' sur '+COMPOSANTS.length
-    : '';
+  if(!remplis.length){ r.textContent='Rien de rempli. Un scan remplit tout.'; return; }
+  const pilote=COMPOSANTS.filter(function(c){return c.grp==='pilote';});
+  const vides=pilote.filter(function(c){return !CONFIG[c.cle];});
+  r.textContent=vides.length
+    ? remplis.length+'/'+COMPOSANTS.length+' · manque pour les pilotes : '
+      +vides.map(function(c){return c.label.toLowerCase();}).join(', ')
+    : remplis.length+'/'+COMPOSANTS.length+' · tout ce qui sert aux pilotes est là';
 }
 function viderConfig(){
   if(!Object.keys(CONFIG).length){informer('La configuration est déjà vide.');return;}
