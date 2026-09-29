@@ -347,9 +347,17 @@ autonome.
 
 **Réinstaller** — le badge winget copie la commande d'installation en un clic, un
 bouton par catégorie copie le script de toute la section. Deux exports pour réinstaller :
-**⬇️ Script restant** produit un `.ps1` limité aux apps non cochées, et
-**⬇️ winget .json** le format officiel de `winget import`, à préférer — il saute ce qui
-est déjà installé et reprend proprement après une interruption.
+**⬇️ Script des restants** produit un `.ps1`, et **⬇️ winget .json** le format officiel
+de `winget import`, à préférer — il saute ce qui est déjà installé et reprend proprement
+après une interruption.
+
+Le script des restants change de source selon ce qu'on lui donne. Sans scan du PC cible,
+il ne peut que partir des cases non cochées. Dès que la comparaison existe, elle sait ce
+qui **manque** — c'est un constat, pas une supposition — et c'est elle qui décide : sur
+une checklist où personne n'a rien coché, l'ancienne version proposait de réinstaller des
+logiciels déjà en place. Une ligne cochée à la main reste exclue même quand le scan la
+dit manquante : quelqu'un qui coche affirme l'avoir faite, et le script n'a pas à le
+contredire en silence.
 
 ```powershell
 winget import -i winget-restant.json --accept-package-agreements --accept-source-agreements

@@ -3828,13 +3828,50 @@ function updateNextBtns(){
 }
 
 // ═══ V6 : SCRIPT WINGET RESTANT ═══
+// Le script de ce qu'il reste à installer.
+//
+// Il partait des cases non cochées, et c'était le mauvais critère dès que le
+// scan du PC cible existait : une checklist où personne n'a rien coché faisait
+// proposer de réinstaller des logiciels déjà en place. Quand la comparaison est
+// là, elle sait ce qui manque — c'est un constat, pas une supposition, et c'est
+// elle qui décide.
+//
+// Une ligne cochée à la main reste exclue même quand la comparaison la dit
+// manquante : quelqu'un qui coche affirme l'avoir faite, et le script n'a pas à
+// le contredire en silence.
 function exportWingetRemaining(){
-  var remaining=visiblesDe('apps').filter(function(a){return !S.checked[a.id]&&a.w;});
-  if(!remaining.length){informer('Toutes les apps avec winget sont déjà cochées.');return;}
+  const etats=etatsLogiciels();
+  let remaining, entete;
+  if(etats){
+    // Seulement les absents. Un logiciel présent dans une version plus
+    // ancienne est déjà installé : « winget install » ne ferait rien d'utile,
+    // et le noyer là-dedans cacherait ce qui manque vraiment.
+    remaining=visiblesDe('apps').filter(function(a){
+      const e=etats.par[cleNom(a.n)];
+      return a.w&&e&&e.etat==='manque'&&!S.checked[a.id];
+    });
+    entete=['# Script winget — ce qui manque sur '+(etats.cible.nom||'le PC cible'),
+      '# D\'après la comparaison avec '+(etats.source.nom||'le PC source')
+        +(etats.source.date?' du '+etats.source.date:'')
+        +' : '+etats.manquants+' absent'+(etats.manquants>1?'s':'')+' sur '+etats.total+'.',
+      '# Exécuter dans PowerShell en tant qu\'administrateur',''];
+    if(!remaining.length){
+      informer(etats.manquants
+        ?'Les logiciels manquants sont soit déjà cochés, soit sans identifiant winget.'
+        :'Rien ne manque sur cette machine : la comparaison ne trouve aucun absent.');
+      return;
+    }
+  }else{
+    remaining=visiblesDe('apps').filter(function(a){return !S.checked[a.id]&&a.w;});
+    entete=['# Script winget — apps restantes',
+      '# Sans scan du PC cible : la liste vient des cases non cochées.',
+      '# Exécuter dans PowerShell en tant qu\'administrateur',''];
+    if(!remaining.length){informer('Toutes les apps avec winget sont déjà cochées.');return;}
+  }
   // Un script généré dans le désordre installe un greffon avant son hôte :
   // quand le profil déclare des dépendances, on les respecte.
   if(aDesDependances())remaining=ordreParDependances(remaining);
-  var lines=["# Script winget — Apps restantes","# Exécuter dans PowerShell en tant qu'administrateur",''];
+  var lines=entete.slice();
   // Les catégories viennent du profil : une liste figée ici omettait
   // silencieusement les apps des profils qui n'ont pas les mêmes.
   Object.keys(CATS).forEach(function(cat){
