@@ -74,7 +74,7 @@ console.log('\n--- hors ligne ---');
 await ctx.setOffline(true);
 await pg.reload({waitUntil:'domcontentloaded'});
 await pg.waitForTimeout(500);
-ok('page servie sans réseau',(await pg.$$('#list-npc .item')).length>0,true);
+ok('page servie sans réseau',(await pg.textContent('#list-apps')).length>0,true);
 ok('titre présent hors ligne',(await pg.textContent('#profil-titre')).length>0,true);
 await ctx.setOffline(false);
 
@@ -84,7 +84,7 @@ const erreurs=[];
 pg2.on('pageerror',e=>erreurs.push(e.message));
 await pg2.goto('file://'+path.join(racine,'index.html'),{waitUntil:'networkidle'});
 ok('aucune erreur JS en file://',erreurs.length===0?'oui':erreurs.join(' | '),'oui');
-ok('checklist rendue en file://',(await pg2.$$('#list-npc .item')).length>0,true);
+ok('checklist rendue en file://',(await pg2.textContent('#list-apps')).length>0,true);
 
 console.log('\n--- le nom du cache suit la page ---');
 // Le commentaire de sw.js demandait d'incrementer CACHE a chaque publication

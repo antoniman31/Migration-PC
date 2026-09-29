@@ -55,21 +55,19 @@ function eq(label,a,b){const ok=a===b;console.log((ok?'  ok  ':' FAIL ')+label+'
 console.log('\n--- profil par défaut ---');
 const DEF=G('PROFIL_DEFAUT');
 eq('apps chargées',G('APPS_DATA').length,DEF.apps.length);
-eq('étapes nouveau PC',G('NPC_DATA').length,DEF.npc.length);
 eq('pwa',G('PWA_DATA').length,DEF.pwa.length);
 eq('titre du profil',G('PROFIL_NOM'),DEF.meta.nom);
 eq('entête rendue',els['profil-titre'].textContent,DEF.meta.nom);
 eq('filtres générés',els['cat-filters'].innerHTML.split('<label').length-1,Object.keys(DEF.cats).length);
 // Le profil livré n'a pas d'applications : l'onglet affiche ce qu'il faut
 // faire pour le remplir, pas la liste de quelqu'un d'autre.
-eq('l\'onglet Apps invite au scan',
+eq('l\'onglet Logiciels invite au scan',
   els['list-apps'].innerHTML.indexOf('se remplit avec le scan')>=0,true);
 G('appliquerProfil')(G('PROFIL_DEMO'),true);
 eq('liste apps rendue avec la démonstration',els['list-apps'].innerHTML.length>500,true);
 G('appliquerProfil')(DEF,true);
-eq('liste npc rendue',els['list-npc'].innerHTML.length>500,true);
 // Somme de toutes les sections du profil, y compris celles ajoutées depuis.
-const SECTIONS=['quitter','npc','apps','pwa'];
+const SECTIONS=['apps','pwa'];
 const TOT=SECTIONS.reduce(function(n,s){return n+((DEF[s]||[]).length);},0);
 eq('total global',String(els['gp-total'].textContent),String(TOT));
 
@@ -93,7 +91,6 @@ const p=G('inventaireVersProfil')(inv);
 eq('apps converties',p.apps.length,3);
 eq('winget conservé',p.apps[0].w,'Mozilla.Firefox');
 eq('app sans winget',p.apps[2].w,undefined);
-eq('étapes reprises du défaut',p.npc.length,DEF.npc.length);
 eq('sous-titre machine',p.meta.soustitre.indexOf('Windows 11 Pro 24H2')>=0,true);
 G('appliquerProfil')(p,true);
 eq('profil appliqué',G('APPS_DATA').length,3);
@@ -116,9 +113,7 @@ G('exportWingetJSON')(true);
 const contenu=b=>String((b&&b.p&&b.p[0])||'');
 eq('trois fichiers produits',sorties.length,3);
 eq('aucun fichier vide',sorties.every(b=>contenu(b).length>0),true);
-// Le profil actif ici est l'inventaire importe juste avant : trois apps, pas
-// d'onglet quitter. L'export complet sur cinq sections est couvert par
-// tests/test-menu.js, avec un profil qui les a toutes.
+// Le profil actif ici est l'inventaire importe juste avant : trois apps.
 eq('l\'export texte liste les apps du profil actif',
   G('APPS_DATA').every(a=>contenu(sorties[0]).indexOf(a.n)>=0),true);
 eq('et coche ce qui est coché',contenu(sorties[0]).indexOf('[x]')>=0,true);

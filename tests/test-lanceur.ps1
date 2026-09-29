@@ -76,7 +76,7 @@ Remove-Item $t -Recurse -Force -ErrorAction SilentlyContinue
 ok 'chaque action dit la suite' (@($a | Where-Object {
       -not $_.PSObject.Properties['suite'] -or @($_.suite).Count -eq 0 })).Count 0
 $inventaire = $a | Where-Object { $_.id -eq 'source' }
-ok 'elle nomme un onglet du site' ((@($inventaire.suite) -join ' ') -match 'Apps|Donnees') $true
+ok 'elle nomme un onglet du site' ((@($inventaire.suite) -join ' ') -match 'Logiciels|Pilotes') $true
 $verif = $a | Where-Object { $_.id -eq 'cible' }
 ok 'elle parle des pilotes'       ((@($verif.suite) -join ' ') -match 'pilote') $true
 # Le meme script des deux cotes, distingue par son seul argument : c'est ce

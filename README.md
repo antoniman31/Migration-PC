@@ -17,14 +17,14 @@ Les scripts sont facultatifs.
 
 Ces images se refabriquent par `node refaire-captures.js` : une capture ne casse
 aucun test, donc rien ne signale qu'elle a vieilli — celles-ci ont montré une
-page à six onglets plusieurs semaines après qu'il n'y en ait plus que cinq.
+page à six onglets plusieurs semaines après qu'il n'y en ait plus que trois.
 
-L'onglet **Apps** : la liste des logiciels relevés sur l'ancien PC, regroupés par
+L'onglet **Logiciels** : la liste des logiciels relevés sur l'ancien PC, regroupés par
 catégorie, avec leur version, leur poids et la commande qui les réinstalle.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="captures/checklist-sombre.png">
-  <img alt="La checklist, onglet Apps" src="captures/checklist-clair.png">
+  <img alt="La checklist, onglet Logiciels" src="captures/checklist-clair.png">
 </picture>
 
 Le **mode guidé**, pour le jour de l'installation : une tâche à l'écran, « c'est fait »
@@ -155,8 +155,7 @@ Le menu fait les deux, et il dit lequel choisir.
 
 Sur le PC source, l'option « Ce PC est la SOURCE » fige l'état de la machine, écrit
 l'instantané à côté de la page et l'ouvre. La checklist s'affiche **déjà remplie de vos
-logiciels** — rien à importer. Vous ajustez, et l'onglet **Reste à faire** dit ce qu'il
-reste à sortir avant d'effacer.
+logiciels** — rien à importer.
 
 Sur le PC cible, l'option « Ce PC est la CIBLE » relance **le même relevé**, et la page
 compare les deux instantanés : ce qui est arrivé, ce qui manque, ce qui est là dans une
@@ -228,8 +227,9 @@ Pour qui préfère la ligne de commande, dans l'ordre :
    powershell -ExecutionPolicy Bypass -File .\scripts\scan-pc.ps1 -Role cible
    ```
 
-   L'onglet **🎯 Reste à faire** compare les deux instantanés et dit ce qui est
-   arrivé, ce qui manque, et ce qui est là dans une version plus ancienne qu'avant.
+   L'onglet **📦 Logiciels** compare les deux instantanés et dit ce qui est arrivé,
+   ce qui manque, et ce qui est là dans une version plus ancienne qu'avant. L'onglet
+   **🎛️ Pilotes** montre les périphériques sans pilote et le lien du constructeur.
 
 ## Inventorier le PC source
 
@@ -293,62 +293,14 @@ comparer.
 Rien n'est coché sans votre validation : un rapprochement par nom peut confondre deux
 logiciels voisins, et une case cochée à tort fait sauter une installation.
 
-## Quatre cas, deux questions
+## Trois onglets
 
-À la première ouverture, la page pose deux questions : ce que vous installez, et ce que
-devient l'ancienne machine. Elle règle le cas toute seule et se referme. C'est un
-bandeau, pas une porte : la checklist reste lisible derrière, « Passer » l'écarte, et
-**⋯ Plus → Adapter à mon cas** le rappelle plus tard. Une page déjà entamée n'est jamais
-interrogée.
-
-Quatre cas, un sélecteur en haut de page pour en changer à tout moment. Les deux premiers partagent l'essentiel —
-pilotes, applications, sauvegardes — et un élément sans mention vaut pour les deux, ce
-qui est la majorité.
-
-Ce qui change en **migration** : le montage est neuf, donc on vérifie le sens des
-ventilateurs, et on peut effacer le disque de l'ancienne machine puisqu'on s'en sépare.
-
-Ce qui change en **réinstallation** : le BIOS est déjà réglé, donc ses étapes se lisent
-« vérifier que » au lieu d'« activer » — un réglage saute parfois après une mise à jour
-du BIOS. Surtout, deux étapes apparaissent, qui n'ont de sens que là. D'abord
-**télécharger les pilotes sur une clé USB avant de formater** : si Windows ne reconnaît
-pas la carte réseau au premier démarrage, il n'y a pas d'autre machine sous la main pour
-aller les chercher. Ensuite un **point de non-retour**, juste avant de lancer
-l'installation, qui récapitule ce qui doit être fait *et vérifié* — parce qu'une fois le
-disque effacé, cette machine n'est plus une source.
-
-Le filtre vaut partout, pas seulement dans les listes : les compteurs, les boutons
-« Tout cocher », la recherche, le mode guidé, la réinitialisation d'une section et
-l'export texte s'y tiennent. Cocher en masse n'atteint jamais un élément qu'on n'a pas
-sous les yeux, et un intitulé alternatif s'affiche sur les cinq onglets, pas seulement
-dans « Nouveau PC ».
-
-**Deux PC** est le cas qu'on oublie : le nouveau PC arrive, mais l'ancien reste en
-service — un fixe et un portable. La checklist ne savait que transférer, donc elle
-faisait désautoriser Steam, délier les licences et fermer les sessions d'une machine
-qu'on rallume le lendemain. Dans ce cas ces quatre étapes disparaissent, trois se
-retournent — on ne délie plus ses licences Adobe, on compte combien de postes elles
-autorisent — et cinq apparaissent, qui n'existaient nulle part : répartir les dossiers
-entre les deux machines avant de synchroniser quoi que ce soit, mettre la
-synchronisation en place, vérifier qu'elle marche **dans les deux sens**, se donner une
-règle contre les versions divergentes, et harmoniser les réglages. L'onglet lui-même
-change de nom : « Sur l'ancien PC » plutôt que « Avant de quitter ».
-
-**Juste mes affaires** fonctionne à l'envers des deux autres. Eux partent de tout et
-retirent le peu qui ne les concerne pas ; celui-ci part de rien et ne garde que ce qu'on
-lui nomme : les onglets Apps et PWA en entier, plus les étapes marquées
-`pilote` dans le profil. Ni BIOS, ni installation de Windows, ni vérifications
-matérielles. C'est la vue des soirs où l'on réinstalle ses logiciels et rapatrie ses
-dossiers sur une machine déjà en route. Sans cette inversion, les réglages BIOS — qui ne
-portent aucune mention, justement parce qu'ils valent pour les deux premiers cas — s'y
-retrouveraient aussi.
-
-Un onglet que le cas choisi vide entièrement ne reste pas muet : il dit dans quel cas on
-est, et combien d'éléments il compte dans les autres.
-
-Le choix est mémorisé, et une case cochée dans un mode reste cochée dans l'autre : le
-filtre change ce que vous regardez, pas ce que vous avez fait. Le total affiché suit le
-mode, donc il bouge quand vous basculez.
+La page a compté jusqu'à six onglets et quatre « cas » qui filtraient leur contenu :
+migration, réinstallation, deux PC, mes affaires. Ils servaient à cacher les étapes de
+BIOS quand elles ne s'appliquaient pas et à renommer « Avant de quitter » quand
+l'ancienne machine restait en service. Ces onglets ont disparu avec la réduction du
+projet aux logiciels et aux pilotes : plus un seul élément ne portait de mention `cas`,
+et tout le mécanisme filtrait une liste qu'il ne réduisait jamais. Il est parti avec eux.
 
 ### Installer Windows sans rester devant
 
@@ -367,28 +319,38 @@ marche tout aussi bien, elle demande juste d'être présent.
 
 ## La checklist
 
-Cinq onglets : **Avant de quitter** le PC source, **Nouveau PC**, **Apps**, **Reste à
-faire** (la comparaison entre les deux machines) et **PWA** (raccourcis web).
+Trois onglets : **Logiciels**, **Pilotes** et **PWA**.
 
-Le premier onglet regroupe ce qui se fait sur la machine qu'on abandonne et qui ne se
-rattrape pas ensuite : désactiver les licences Adobe et les autres activations liées au
-matériel — désinstaller ou formater ne désactive rien —, transférer l'application
-d'authentification et sortir les codes de récupération, noter la clé BitLocker, vérifier
-que les sauvegardes sont restaurables, désautoriser Steam et iTunes, et effacer le
-disque en sécurité si la machine est cédée. Les trois groupes sont classés par ce qu'on
-risque : irréversible, pénible à rattraper, confort.
+**Logiciels** est la liste relevée sur le PC source, regroupée par catégorie, avec la
+version, le poids et la commande qui réinstalle. Dès que le scan du PC cible arrive, la
+même liste change d'état : un bandeau dit combien de logiciels sont là sur combien, et
+chaque ligne porte son verdict — *là*, *manque*, ou *plus ancien* avec les deux versions.
+Un bouton propose de cocher d'un coup ce que le scan a constaté ; il ne décoche jamais,
+parce qu'une détection ratée effacerait un suivi fait à la main.
 
-L'onglet Nouveau PC suit l'ordre réel d'une installation, et commence avant Windows :
-les réglages du BIOS — TPM 2.0 et Secure Boot, qui conditionnent l'installation de
-Windows 11, désactivation du CSM, profil XMP/EXPO, Resizable BAR, virtualisation — puis
-l'installation elle-même, le système, les pilotes, et enfin les vérifications
-matérielles. Chaque étape dit pourquoi elle existe et ce qu'on risque à l'oublier.
+Il y a eu un onglet « Reste à faire » qui portait cette comparaison à part. C'était un
+endroit de plus pour la même chose : la liste des logiciels et la liste de ce qui manque
+parlent des mêmes lignes, et obliger quelqu'un à comprendre laquelle regarder n'aide
+personne.
+
+**Pilotes** montre ceux du PC receveur, après son scan. Les périphériques que Windows
+signale sans pilote ou en erreur, ceux qui sont déjà en place groupés par fournisseur, et
+le lien vers la page de support du constructeur, construit depuis le modèle et le numéro
+de série relevés dans le SMBIOS. Avant le scan de la machine d'arrivée, il montre ce que
+portait l'ancienne : une bonne idée de ce qu'il faudra retrouver.
+
+Ce que cet onglet ne dit **jamais**, c'est qu'une version plus récente existe. Le
+programme ne fait aucun appel réseau : il ne peut pas le savoir, et l'affirmer serait
+mentir.
+
+**PWA** liste les applications web installées depuis le navigateur, à rouvrir depuis
+leur site.
 
 La progression est enregistrée dans le navigateur au fur et à mesure et peut être
 exportée en JSON pour passer d'une machine à l'autre.
 
 **Navigation** — mode normal ou compact, thème clair/sombre suivant les préférences
-système, recherche sur les cinq onglets à la fois, tri des apps par catégorie,
+système, recherche sur les trois onglets à la fois, tri des apps par catégorie,
 priorité, durée ou ordre conseillé, filtre sur les apps sans winget. La mise en page
 s'adapte aux écrans étroits : cibles tactiles agrandies, textes relevés, champs à 16 px
 pour éviter le zoom automatique d'iOS.
@@ -416,7 +378,7 @@ d'environnement.
 
 **Sortie** — export de la progression, du profil, de la checklist en texte, du script
 winget restant ou du fichier `winget import`, et impression globale ou par onglet. Tout
-ce qui sort suit le scénario choisi et ses intitulés : un fichier qui dirait autre chose
+ce qui sort est ce qui est affiché : un fichier qui dirait autre chose
 que l'écran serait pire que pas de fichier.
 
 ### Ma configuration
@@ -471,7 +433,7 @@ laisser une page à moitié vide sans explication.
 **Revenir en arrière** — réinitialiser une section ou importer un fichier remplace du
 travail. Ces actions ne demandent pas de confirmation — on clique « oui » par réflexe —
 mais s'annulent après coup depuis un bandeau, qui restaure aussi bien les cases que le
-profil remplacé et le scénario choisi.
+profil remplacé.
 
 ### La barre du haut
 
@@ -487,7 +449,7 @@ menu se referme après une action, au clic ailleurs, et à Échap.
 **⋯ Plus → Réinitialiser…** ouvre un panneau avec deux portées distinctes, décrites
 avant d'être offertes :
 
-- **Tout décocher** remet la progression à zéro sur les cinq onglets. Les notes, les clés
+- **Tout décocher** remet la progression à zéro sur les deux listes. Les notes, les clés
   de licence, les variables d'environnement et le profil chargé restent en place. C'est
   ce qu'on veut pour recommencer la même migration sur une autre machine.
 - **Tout effacer** vide tout ce que le navigateur a mémorisé — progression, notes, clés,
@@ -567,7 +529,7 @@ signale comme mal installés.
 Tous ces champs sont facultatifs : un inventaire qui n'en porte aucun reste valide, et la
 page ne montre que ce qu'elle a reçu.
 
-**Profil** — les listes des quatre onglets. C'est le format de `presets/exemple.json`,
+**Profil** — les listes des deux onglets à cocher. C'est le format de `presets/exemple.json`,
 et celui que produit le bouton 🧩.
 
 **Progression** — les cases cochées, les notes et les dates, sans les listes. C'est ce
@@ -591,7 +553,7 @@ l'ancienne version hors ligne ; `npm run test:pwa` échoue si on a oublié de le
 
 ```javascript
 meta   // { nom, soustitre } — affichés dans l'en-tête
-cats   // { clé: libellé } — les catégories de l'onglet Apps
+cats   // { clé: libellé } — les catégories de l'onglet Logiciels
 quitter // { id, n, p, note, pr, warn? } — facultatif, sur l'ancien PC
 npc    // { id, o, n, src, p, t, d, post?, dep?, warn? }
 apps   // { id, n, c, src, w?, p, t, d, dep?, warn? }
@@ -601,22 +563,12 @@ requetes // { "Nom de l'app": "requête de recherche" }
 materiel // { cm, cpu, gpu, ram, ssd } — facultatif, le bloc « Ma configuration »
 ```
 
-`p` et `pr` valent `high`, `med` ou `ok` · `t` est une durée en minutes · `o` est le
-numéro d'étape · `post: true` classe l'étape dans les vérifications d'après-installation
-· `w` est l'identifiant winget · `warn` affiche un avertissement.
+`p` vaut `high`, `med` ou `ok` · `t` est une durée en minutes · `w` est l'identifiant
+winget · `warn` affiche un avertissement.
 
-La section `quitter` est facultative : un profil qui ne la déclare pas affiche quatre
-onglets, comme avant.
-
-`cas` limite un élément à une situation : `["migration"]` ou `["reinstall"]`. Sans ce
-champ, il vaut pour les deux. Ce que l'élément dit de lui-même passe avant l'onglet où
-il se trouve : un onglet gardé en entier ne ramène pas pour autant une entrée qui se
-déclare `["second"]`, parce qu'elle se réclame d'une autre situation. `pilote: true` marque une étape de l'onglet Nouveau PC
-comme relevant des pilotes : c'est la seule chose que le cas « juste mes affaires »
-garde de cet onglet. Un profil qui n'en marque aucune y verra l'onglet vide, avec un
-message qui le dit. `alt` fournit un libellé et une description de
-remplacement en réinstallation — `{ "n": "Vérifier que...", "d": "..." }` — ce qui évite
-de dupliquer une étape et ses dépendances pour changer un verbe.
+Les champs `cas`, `alt`, `o`, `post` et `pilote` ont existé : ils servaient aux onglets
+« Avant de quitter » et « Nouveau PC » et aux quatre cas qui les filtraient. Ils ne sont
+plus lus. Un profil qui les porte encore reste valide, ils sont simplement ignorés.
 
 `dep` accepte deux formes. Une **chaîne** est un libellé affiché tel quel, sans
 vérification possible — c'est le format d'origine, toujours accepté. Un **tableau
@@ -691,7 +643,7 @@ Données. `tests/test-profil-hostile.js` rejoue un profil piégé à chaque publ
 
 ```bash
 npm install                       # une seule fois
-./verifier-comme-ci.sh            # les 21 étapes du job Linux, dans l'ordre
+./verifier-comme-ci.sh            # les 18 étapes du job Linux, dans l'ordre
 npm test                          # les sept suites sans navigateur, en 2 s
 npm run test:scan                 # les quatre suites PowerShell
 npm run test:navigateur           # rendu réel dans Chromium
@@ -699,12 +651,9 @@ npm run test:pwa                  # installabilité et fonctionnement hors ligne
 npm run test:mobile               # ergonomie tactile
 npm run test:a11y                 # accessibilité et réversibilité
 npm run test:guide                # mode guidé
-npm run test:quitter              # onglet « Avant de quitter »
-npm run test:scenarios            # migration ou réinstallation
 npm run test:reinit               # remises à zéro et leur annulation
 npm run test:menu                 # menu « Plus » de la barre du haut
 npm run test:hostile              # profil piégé : aucune injection
-npm run test:debut                # deux questions d'ouverture et second PC
 npm run test:config               # bloc configuration et affichage grand écran
 npm run test:reconciliation       # comparaison source → cible
 npm run test:archive              # contenu de l'archive téléchargeable
@@ -714,7 +663,7 @@ npm run test:archive              # contenu de l'archive téléchargeable
 navigateur demandent Chromium (`npm install` le fournit via Playwright), les suites
 PowerShell demandent `pwsh`.
 
-Vingt et une suites, dans l'ordre où la CI les lance.
+Dix-huit suites, dans l'ordre où la CI les lance.
 
 ### Ce que seul un vrai Windows peut dire
 
@@ -801,30 +750,23 @@ tactile et de clavier que la vue liste.
 `tests/test-reinit.js` couvre les deux remises à zéro : que « Tout décocher » ne touche
 ni aux notes, ni aux clés, ni au profil, que « Tout effacer » vide bien les trois clés du
 navigateur et que rien ne revient après un rechargement, et que l'annulation rend dans
-les deux cas ce qui avait été effacé — profil importé et scénario compris. Il mesure
+les deux cas ce qui avait été effacé, profil importé compris. Il mesure
 aussi le panneau à 360 px de large, dans les deux thèmes.
 
 `tests/test-menu.js` compte les boutons restés dans la barre, vérifie qu'aucun n'y est
 réduit à une icône muette, que les cinq actions du menu agissent réellement (la session
-démarre, le profil se télécharge, l'export texte porte les intitulés du scénario courant
-et rien de l'autre), que le menu se referme par les trois chemins attendus et qu'il reste
+démarre, le profil se télécharge, l'export texte porte ce qui est affiché), que le menu se referme par les trois chemins attendus et qu'il reste
 utilisable au clavier comme au doigt.
 
 `tests/test-profil-hostile.js` charge un profil piégé sur quinze champs — nom de
 catégorie, identifiant winget, adresse de raccourci, intitulés, descriptions, chemins —
-puis clique tout ce qui est cliquable dans les deux cas et en mode guidé. Il échoue si
-une seule charge s'exécute.
+puis clique tout ce qui est cliquable sur les trois onglets et en mode guidé. Il échoue
+si une seule charge s'exécute.
 
-`tests/test-debut.js` couvre les deux questions et le cas qu'elles servent surtout à
-faire connaître : que le bandeau se propose sans barrer la page, ne revient pas une fois
-répondu, se rappelle depuis le menu, et qu'en mode « deux PC » on ne désautorise plus
-rien sur une machine encore en service — tout en revérifiant qu'en migration les étapes
-d'origine reviennent intactes.
-
-`tests/test-config.js` vérifie que les composants saisis précisent les intitulés des
-pilotes — et seulement ceux-là, pas « Désactiver le CSM » —, que les recherches visent
-le support du constructeur, qu'un profil ne déclarant aucun composant s'affiche
-normalement, et que l'élargissement sur grand écran ne change rien au téléphone ni à la
+`tests/test-config.js` vérifie que les composants saisis tiennent d'un rechargement à
+l'autre, que seule la machine constatée par un scan de cible écrase ce qu'on a saisi pour
+elle, que l'onglet Pilotes affiche les périphériques en défaut avec le lien du
+constructeur, et que l'élargissement sur grand écran ne change rien au téléphone ni à la
 tablette.
 
 `tests/test-lanceur.ps1` couvre ce que le lanceur propose et ce qu'il vérifie avant : que
@@ -845,7 +787,7 @@ du lanceur arrivent intacts.
 
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les vingt et une suites à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les dix-huit suites à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 
@@ -876,7 +818,7 @@ Migration-PC/
 ├── resultat-scan.js              # écrit par les scripts, lu par la page en file://
 ├── instantane-source.json        # le relais : posé par le scan source, relu par le scan cible
 ├── tests/                        # suites Node, PowerShell et navigateur
-├── verifier-comme-ci.sh          # rejoue localement les 21 étapes du job Linux
+├── verifier-comme-ci.sh          # rejoue localement les 18 étapes du job Linux
 ├── package.json                  # scripts de test uniquement
 ├── COUVERTURE.md                 # ce que le scan détecte, refuse et ne peut pas
 ├── construire-zip.sh             # fabrique l'archive proposée au téléchargement
@@ -950,9 +892,12 @@ ponctuation qui porte le nom est transcrite plutôt qu'effacée, sinon `Notepad+
 **Le classement par catégorie est indicatif**, fondé sur des mots-clés. Un logiciel peu
 connu atterrit dans « Utilitaires Système ». Les catégories se corrigent dans le JSON.
 
-**Les étapes « Nouveau PC » et « PWA » ne sont pas scannées** : un inventaire importé
-reprend celles du profil d'exemple, à adapter à votre matériel. Un scan ne peut pas
-deviner qu'il faut activer le profil XMP dans le BIOS.
+**Il n'y a plus de checklist d'installation.** Les 29 étapes de « Nouveau PC » — BIOS,
+TPM, Secure Boot, XMP, installation de Windows, vérifications matérielles — ont été
+retirées avec l'onglet. C'étaient des consignes génériques qu'on trouve partout, pas
+quelque chose que ce programme savait faire. Il a perdu au passage le seul endroit qui
+rappelait d'activer le profil XMP, et c'est une vraie perte : un réglage qu'on ne voit
+pas coûte 10 à 15 % de performances en silence.
 
 **Le projet ne sauvegarde rien.** C'est la limite la plus importante, et elle est
 volontaire. Il a un temps listé les dossiers de réglages, les favoris, les archives mail

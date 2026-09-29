@@ -20,12 +20,6 @@ async function ouvrirReglages(pg){
   await pg.click('#menu-btn');
   await pg.waitForSelector('#hdr-menu-liste',{state:'visible'});
 }
-async function ouvrirSituation(pg){
-  if(await pg.isVisible('#scen'))return;
-  await ouvrirReglages(pg);
-  await pg.click('#scen-btn');
-  await pg.waitForSelector('#scen',{state:'visible'});
-}
 
 (async()=>{
 const b=await chromium.launch(lancement);
@@ -39,8 +33,11 @@ const ouvrirPanneau=async()=>{
 const defaut=await pg.evaluate(()=>PROFIL_DEFAUT.meta.nom);
 let ko=0;const ok=(l,a,c)=>{const p=(c===undefined?!!a:a===c);console.log((p?'  ok  ':' FAIL ')+l+' → '+JSON.stringify(a)+(p?'':' (attendu '+JSON.stringify(c)+')'));if(!p)ko++;};
 
-// Etat de depart : quelques cases, une note, un scenario.
+// Etat de depart : quelques cases et une note. La checklist livree est vide
+// depuis la reduction du projet — sans l'exemple garni il n'y a rien a cocher,
+// donc rien a remettre a zero.
 const prepare=async()=>pg.evaluate(()=>{
+  if(!tousLesItems().length)chargerDemo();
   const ids=tousLesItems().slice(0,6).map(e=>e.id);
   S.checked={};S.notes={};
   ids.forEach(i=>{S.checked[i]=true;S.dates[i]=Date.now();});
@@ -74,13 +71,11 @@ ok('« Fermer » referme aussi',await pg.isVisible('#reglages'),false);
 
 console.log('\n--- tout decocher ---');
 const n=await prepare();
-await ouvrirSituation(pg);await pg.click('#sc-reinstall');await pg.waitForTimeout(250);
 await ouvrirPanneau();
 await pg.click('#reglages .reglages-item:not(.reglages-danger) button');
 await pg.waitForTimeout(300);
 ok('plus aucune case cochee',await pg.evaluate(()=>Object.keys(S.checked).length),0);
 ok('la note est conservee',await pg.evaluate(()=>S.notes&&Object.keys(S.notes).length),1);
-ok('le scenario ne bouge pas',await pg.evaluate(()=>scenario),'reinstall');
 ok('le panneau se referme',await pg.isVisible('#reglages'),false);
 ok('le bandeau propose d\'annuler',await pg.isVisible('.annul-btn'),true);
 await pg.click('.annul-btn');await pg.waitForTimeout(300);
@@ -102,7 +97,6 @@ await pg.evaluate(()=>{
   p.meta={nom:'Profil importé',soustitre:'test'};
   appliquerProfil(p,true);
 });
-await ouvrirSituation(pg);await pg.click('#sc-migration');await pg.waitForTimeout(250);
 ok('le profil importe est en memoire',
   await pg.evaluate(()=>!!localStorage.getItem(CLE_PROFIL)),true);
 await ouvrirPanneau();
@@ -111,15 +105,12 @@ await pg.waitForTimeout(400);
 const stock=await pg.evaluate(()=>({
   etat:localStorage.getItem(CLE_ETAT),
   profil:localStorage.getItem(CLE_PROFIL),
-  scen:localStorage.getItem(CLE_SCENARIO)}));
+}));
 ok('progression effacee du navigateur',stock.etat,null);
 ok('profil efface du navigateur',stock.profil,null);
-ok('scenario efface du navigateur',stock.scen,null);
 ok('plus aucune case',await pg.evaluate(()=>Object.keys(S.checked).length),0);
 ok('plus aucune note',await pg.evaluate(()=>Object.keys(S.notes).length),0);
 ok('retour au profil d\'exemple',await pg.textContent('#profil-titre'),defaut);
-ok('retour au scenario complet',await pg.evaluate(()=>scenario),'tout');
-ok('« Tout » redevient actif',await pg.getAttribute('#sc-tout','aria-pressed'),'true');
 ok('l\'historique est vide',await pg.evaluate(()=>journal.length),0);
 ok('la page ne s\'est pas cassee',await pg.isVisible('#panne'),false);
 
@@ -127,7 +118,6 @@ console.log('\n--- annuler la remise a zero ---');
 ok('l\'annulation est proposee',await pg.isVisible('.annul-btn'),true);
 await pg.click('.annul-btn');await pg.waitForTimeout(400);
 ok('le profil importe revient',await pg.textContent('#profil-titre'),'Profil importé');
-ok('le scenario revient',await pg.evaluate(()=>scenario),'migration');
 ok('les cases reviennent',await pg.evaluate(()=>Object.keys(S.checked).length>0),true);
 ok('la note revient',await pg.evaluate(()=>S.notes&&Object.keys(S.notes).length),1);
 ok('et tout est re-memorise',

@@ -46,7 +46,7 @@ ok('Steam classé jeux',p.apps.find(a=>a.w==='Valve.Steam').c,'jeux');
 ok('Discord classé comms',p.apps.find(a=>a.w==='Discord.Discord').c,'comms');
 ok('VLC classé media',p.apps.find(a=>a.w==='VideoLAN.VLC').c,'media');
 ok('Git classé dev',p.apps.find(a=>a.w==='Git.Git').c,'dev');
-ok('étapes du défaut reprises',p.npc.length>0,true);
+ok('les raccourcis web du défaut sont repris',Array.isArray(p.pwa),true);
 ok('date dans le sous-titre',p.meta.soustitre.indexOf('2026-09-20')>=0,true);
 ok('identifiants uniques',new Set(p.apps.map(a=>a.id)).size,p.apps.length);
 

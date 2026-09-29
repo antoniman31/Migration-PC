@@ -83,7 +83,13 @@ honnête, ou pas transférables du tout.
 |---|---|---|
 | Familles couvertes | 32 | 5 |
 | Scripts PowerShell | 8 | 5 |
-| Onglets de la page | 6 | 5 |
+| Onglets de la page | 6 | 3 |
+
+Les trois onglets restants sont **Logiciels**, **Pilotes** et **PWA**. « Avant de
+quitter » et « Nouveau PC » sont partis : le premier listait des gestes de compte et de
+données, le second des consignes d'installation de Windows qu'on trouve partout et que
+ce programme ne savait pas vérifier. « Reste à faire » a fondu dans « Logiciels », parce
+que la liste des logiciels et la liste de ce qui manque parlent des mêmes lignes.
 
 Rien de ce qui est décrit ici n'a été exécuté sur un vrai PC : c'est validé par
 les tests et par le job Windows de la CI, qui vérifient que le code fait ce

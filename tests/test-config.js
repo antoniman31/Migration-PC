@@ -32,23 +32,15 @@ await pg.evaluate(()=>{try{localStorage.setItem('mpc_debut_v1','1');}catch(e){}}
 await pg.reload({waitUntil:'networkidle'});
 let ko=0;const ok=(l,a,c)=>{const p=(c===undefined?!!a:a===c);console.log((p?'  ok  ':' FAIL ')+l+' → '+JSON.stringify(a)+(p?'':' (attendu '+JSON.stringify(c)+')'));if(!p)ko++;};
 const P=JSON.parse(fs.readFileSync(path.join(racine,'presets','exemple.json'),'utf8'));
-const nomsNpc=()=>pg.evaluate(()=>[...document.querySelectorAll('#list-npc .item-name')].map(x=>x.textContent));
 const ouvrirConfig=async()=>{
   if(await pg.isVisible('#config'))return;
   await pg.click('#menu-btn');await pg.waitForTimeout(120);
   await pg.getByRole('menuitem',{name:/Ma configuration/}).click();
   await pg.waitForTimeout(250);
 };
-const lienDe=motif=>pg.evaluate(m=>{
-  const l=[...document.querySelectorAll('#list-npc .item')].find(i=>new RegExp(m).test(i.textContent));
-  const a=l&&l.querySelector('a.lnk-btn');
-  return a?decodeURIComponent(a.getAttribute('href')):null;},motif);
-
 console.log('--- sans configuration ---');
-ok('aucun intitulé ne porte de modèle',(await nomsNpc()).some(n=>/ — [A-Z]/.test(n)),false);
 ok('le bloc est fermé',await pg.isVisible('#config'),false);
-const avant=await lienDe('chipset');
-ok('la recherche est générique',avant.indexOf('download')>=0,true);
+ok('rien n\'est retenu',await pg.evaluate(()=>Object.keys(CONFIG).length),0);
 
 console.log('\n--- on le remplit ---');
 await ouvrirConfig();
@@ -60,47 +52,20 @@ await pg.fill('#cfg-cm','ASUS ROG STRIX B850-A');
 await pg.fill('#cfg-gpu','NVIDIA RTX 5070 Ti');
 await pg.waitForTimeout(400);
 ok('le résumé compte',await pg.textContent('#config-resume'),'2 composants sur 5');
-
-console.log('\n--- ce que ça change ---');
-const apres=await nomsNpc();
-ok('le pilote chipset porte la carte mère',
-  apres.some(n=>/^Pilote chipset.*ASUS ROG STRIX B850-A$/.test(n)),true);
-ok('le pilote graphique porte la carte graphique',
-  apres.some(n=>/^Pilote de carte graphique.*RTX 5070 Ti$/.test(n)),true);
-// Le modele n'a rien a faire la ou l'on ne cherche rien.
-ok('mais pas « Désactiver le CSM »',apres.some(n=>/CSM.*B850-A/.test(n)),false);
-ok('ni « Installer Windows »',apres.some(n=>/Installer Windows.*B850-A/.test(n)),false);
-ok('ni un composant non renseigné',apres.some(n=>/Benchmark du SSD —/.test(n)),false);
-const lien=await lienDe('chipset');
-ok('la recherche vise le constructeur',lien.indexOf('ASUS ROG STRIX B850-A support pilotes')>=0,true);
-ok('et pas la phrase entière',lien.indexOf('Pilote chipset de la carte')<0,true);
-// Une etape qui n'est ni un telechargement ni un composant n'a rien a
-// chercher : « download Windows Update official » ne mene nulle part, et un
-// bouton qui deçoit a chaque clic coute plus que son absence.
-ok('une étape sans composant n\'a pas de bouton',
-  await lienDe('Windows Update'),null);
+ok('la carte mère est retenue',await pg.evaluate(()=>CONFIG.cm),'ASUS ROG STRIX B850-A');
 
 console.log('\n--- ça tient, et ça s\'efface ---');
 await pg.reload({waitUntil:'networkidle'});
 ok('la configuration survit au rechargement',
-  (await nomsNpc()).some(n=>/B850-A/.test(n)),true);
+  await pg.evaluate(()=>CONFIG.cm),'ASUS ROG STRIX B850-A');
 // Le bloc se referme au rechargement : c'est voulu, on le rouvre.
 ok('il ne se rouvre pas tout seul',await pg.isVisible('#config'),false);
 await ouvrirConfig();
 ok('les champs sont repeuplés',await pg.inputValue('#cfg-cm'),'ASUS ROG STRIX B850-A');
 await pg.click('.config-vider');await pg.waitForTimeout(350);
 ok('« Tout effacer » vide les champs',await pg.inputValue('#cfg-cm'),'');
-ok('et les intitulés redeviennent nus',(await nomsNpc()).some(n=>/B850-A/.test(n)),false);
+ok('et la mémoire avec',await pg.evaluate(()=>Object.keys(CONFIG).length),0);
 ok('on le dit',(await pg.textContent('#annul-txt')).indexOf('Configuration effacée')>=0,true);
-
-console.log('\n--- un profil sans composant déclaré marche pareil ---');
-ok('aucun intitulé cassé',await pg.evaluate(()=>{
-  const p=JSON.parse(JSON.stringify(PROFIL_DEFAUT));
-  p.npc.forEach(e=>{delete e.comp;});
-  CONFIG={cm:'Carte X'};appliquerProfil(p,false);
-  const n=[...document.querySelectorAll('#list-npc .item-name')].map(x=>x.textContent);
-  CONFIG={};appliquerProfil(PROFIL_DEFAUT,false);
-  return n.every(x=>x.length>0&&x.indexOf('undefined')<0);}),true);
 
 console.log('\n--- le matériel détecté remplit la configuration ---');
 // Windows connaît la machine : la saisie à la main n'est qu'un repli.
@@ -118,13 +83,14 @@ ok('les cinq champs sont remplis',
   await pg.evaluate(()=>COMPOSANTS.filter(c=>CONFIG[c.cle]).length),5);
 ok('le sous-titre le dit',
   (await pg.textContent('#profil-sous')).indexOf('5 composants repris')>=0,true);
-ok('et les intitulés en profitent aussitôt',
-  (await nomsNpc()).some(n=>/^Pilote chipset.*B850-A$/.test(n)),true);
+// Le modèle sert à fabriquer le lien du constructeur dans l'onglet Pilotes.
+ok('la carte mère relevée est retenue',
+  await pg.evaluate(()=>CONFIG.cm),'ASUSTeK ROG STRIX B850-A');
 
 console.log('\n--- qui a raison sur le matériel ---');
 // Un inventaire vient presque toujours de l'ANCIEN PC : c'est tout l'intérêt
 // du scan. Il n'a donc pas à écraser une configuration saisie pour le neuf,
-// sinon les intitulés des pilotes porteraient la carte mère qu'on abandonne.
+// sinon le lien du constructeur viserait la carte mère qu'on abandonne.
 await pg.evaluate(()=>{CONFIG={cm:'Ma carte à moi'};saveConfig();construireConfig();});
 await pg.evaluate(()=>traiterDonnees({
   type:'inventaire-migration-pc',machine:{},apps:[{nom:'A',cat:'x',source:'y'}],
@@ -150,12 +116,10 @@ await pg.evaluate(()=>traiterDonnees({
   materiel:{cm:'MSI MAG B650 TOMAHAWK'}},''));
 await pg.waitForTimeout(350);
 ok('la machine constatée gagne',await pg.evaluate(()=>CONFIG.cm),'MSI MAG B650 TOMAHAWK');
-// Et les intitulés suivent tout de suite, sans attendre un autre rendu.
-ok('les intitulés se rafraîchissent aussitôt',
-  (await nomsNpc()).some(n=>/^Pilote chipset.*TOMAHAWK$/.test(n)),true);
+
 await pg.evaluate(p=>traiterDonnees(p,''),
-  {meta:{nom:'Ancien'},cats:{},npc:[],apps:[{id:'z',n:'Z',c:'x',src:'s',d:'d'}],
-   data:[],pwa:[],quitter:[],materiel:{cm:'ASUSTeK ancien',ssd:'Un SSD'}});
+  {meta:{nom:'Ancien'},cats:{},apps:[{id:'z',n:'Z',c:'x',src:'s',d:'d'}],
+   pwa:[],materiel:{cm:'ASUSTeK ancien',ssd:'Un SSD'}});
 await pg.waitForTimeout(350);
 ok('un profil n\'écrase pas la machine constatée',
   await pg.evaluate(()=>CONFIG.cm),'MSI MAG B650 TOMAHAWK');

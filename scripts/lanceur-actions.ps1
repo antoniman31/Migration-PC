@@ -43,7 +43,7 @@ function Get-ActionsMigration {
             duree   = "1 a 3 minutes"
             suite   = @(
                 "La checklist s'ouvre déjà remplie de vos logiciels.",
-                "Onglet « Apps » : décochez ce que vous ne voulez pas reprendre.",
+                "Onglet « Logiciels » : décochez ce que vous ne voulez pas reprendre.",
                 "Posez l'instantané et cette page sur la clé, et emportez-la."
             )
         },
@@ -56,9 +56,9 @@ function Get-ActionsMigration {
             requis  = @('scan-pc.ps1', 'lib-detection.ps1')
             duree   = "1 a 3 minutes"
             suite   = @(
-                "Onglet « Reste à faire » : le compte de ce qui est arrivé, et ce qui manque.",
-                "Chaque manquant porte sa commande d'installation ou son chemin.",
-                "Onglet « Nouveau PC » : les périphériques sans pilote, et où chercher.",
+                "Onglet « Logiciels » : le compte de ce qui est arrivé, et ce qui manque.",
+                "Chaque manquant porte sa commande d'installation.",
+                "Onglet « Pilotes » : les périphériques sans pilote, et où chercher.",
                 "Importez l'instantané de la source si la page ne l'a pas encore."
             )
         },

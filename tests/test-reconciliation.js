@@ -175,47 +175,57 @@ ok('et sur le total global',
   r.familles.reduce((n,f)=>n+f.total,0),r.total.attendu);
 ok('une famille non-tableau est ignorée',famille(hostile,'jeux'),undefined);
 
-console.log('\n--- l\'onglet, vie 1 : sur le PC source ---');
-// Rien à comparer : la machine d'arrivée n'existe pas encore. L'onglet doit
-// dire ce qu'il reste à SORTIR, pas rester vide.
+console.log('\n--- la liste des logiciels, avant le scan de la cible ---');
+// Rien à comparer : la machine d'arrivée n'existe pas encore. La liste doit
+// dire ce qu'elle deviendra, pas rester muette.
 G('INV_SOURCE=null;INV_CIBLE=null;');
-ok('sans rien, on est côté source',G('surLaCible()'),false);
+ok('sans rien, on n\'est pas sur la cible',G('surLaCible()'),false);
+ok('et il n\'y a aucun état à afficher',G('etatsLogiciels()'),null);
 vm.runInContext('INV_SOURCE='+JSON.stringify(source)+';INV_CIBLE=null;',ctx);
-// La date de l'instantané est calculée, pas écrite en dur : figée, ce test
-// passait le jour où il a été écrit puis échouait le lendemain, parce que
-// « de moins de vingt-quatre heures » finit toujours par devenir faux.
-vm.runInContext('INV_SOURCE='+JSON.stringify(
-  Object.assign({},source,{genere:new Date(Date.now()-3600000).toISOString()}))+';',ctx);
-const prep=G('etatPreparation()');
-ok('trois points de préparation',prep.length,3);
-ok('l\'instantané est constaté fait',prep[0].etat,'ok');
-ok('la liste des logiciels est constatée',/logiciels relevés/.test(prep[1].quoi),true);
-// Le programme ne sauvegarde rien et ne doit surtout pas laisser croire le
-// contraire avant un formatage : c'est le seul geste irréversible ici.
-ok('les fichiers perso restent à toi',/ne les copie pas/.test(prep[2].quoi),true);
-ok('et c\'est dit comme irréversible',/irréversible/.test(prep[2].quoi),true);
+const tete=G('banniereComparaison()');
+ok('le bandeau annonce la suite',/Scanne le PC receveur/.test(tete),true);
+ok('et ne prétend comparer rien',/à installer/.test(tete),false);
 
-// Un instantané vieux de trois jours ne décrit plus la machine.
-const vieux=Object.assign({},source,{genere:new Date(Date.now()-72*3600000).toISOString()});
-vm.runInContext('INV_SOURCE='+JSON.stringify(vieux)+';',ctx);
-ok('un instantané périmé est signalé',G('etatPreparation()')[0].etat,'vieux');
-ok('et on dit quoi faire',/Relance le scan/.test(G('etatPreparation()')[0].quoi),true);
-
-vm.runInContext('INV_SOURCE=null;',ctx);
-ok('sans instantané, c\'est bloquant',G('etatPreparation()')[0].etat,'manque');
-
-console.log('\n--- l\'onglet, vie 2 : sur le PC cible ---');
+console.log('\n--- la liste des logiciels, après le scan de la cible ---');
 vm.runInContext('INV_SOURCE='+JSON.stringify(source)
   +';INV_CIBLE='+JSON.stringify(cible)+';',ctx);
-ok('le scan de la cible fait basculer l\'onglet',G('surLaCible()'),true);
-G('renderReste()');
-const vue=els['list-reste'].innerHTML;
-ok('le compte est annoncé',/1 élément à remettre/.test(vue),true);
+ok('le scan de la cible fait basculer la vue',G('surLaCible()'),true);
+const e=G('etatsLogiciels()');
+ok('quatre logiciels attendus',e.total,4);
+ok('trois sont arrivés',e.arrives,3);
+ok('un manque',e.manquants,1);
+ok('et un a régressé',e.differents,1);
+const vue=G('banniereComparaison()');
+ok('le compte est annoncé',/1 logiciel à installer/.test(vue),true);
 ok('avec les deux machines',/PC-SOURCE/.test(vue)&&/PC-CIBLE/.test(vue),true);
-ok('ce qui manque est nommé',/Krita/.test(vue),true);
-ok('la régression aussi',/1\.98\.2/.test(vue)&&/1\.90\.0/.test(vue),true);
-// Un badge coupé au milieu de l'identifiant ne se copie pas à la main.
-ok('la commande n\'est pas tronquée',/winget install --id/.test(vue),false);
+ok('la régression est signalée',/version plus ancienne/.test(vue),true);
+
+// Le badge que porte chaque ligne. C'est lui qui remplace l'onglet séparé.
+ok('un logiciel présent est marqué « là »',
+  /b-arrive/.test(G('badgeComparaison')({n:'7-Zip'},e)),true);
+ok('un logiciel absent est marqué « manque »',
+  /b-manque/.test(G('badgeComparaison')({n:'Krita'},e)),true);
+ok('une version plus ancienne se voit',
+  /b-vieux/.test(G('badgeComparaison')({n:'Visual Studio Code'},e)),true);
+ok('sans comparaison, aucun badge',G('badgeComparaison')({n:'Krita'},null),'');
+
+console.log('\n--- l\'onglet Pilotes ---');
+// Il ne dit JAMAIS qu'une version plus récente existe : aucun appel réseau
+// n'est fait, donc il ne peut pas le savoir.
+const cibleP=Object.assign({},cible,{
+  machine:{os:'Windows 11 Pro',nom:'PC-CIBLE',fabricant:'ASUSTeK',modele:'ROG STRIX B850-A',serie:'ABC123'},
+  materiel:{cm:'ASUSTeK ROG STRIX B850-A'},
+  pilotes:[{nom:'Contrôleur Ethernet',classe:'',probleme:'aucun pilote installe',code:28}],
+  pilotesTiers:[{classe:'Net',fournisseur:'Realtek',appareils:['Realtek Gaming GbE']}]});
+vm.runInContext('INV_CIBLE='+JSON.stringify(cibleP)+';',ctx);
+G('renderPilotes()');
+const pil=els['list-pilotes'].innerHTML;
+ok('le périphérique en défaut est nommé',/Contrôleur Ethernet/.test(pil),true);
+ok('le lien du constructeur est proposé',/support du constructeur/.test(pil),true);
+ok('le modèle relevé y sert',/ROG STRIX B850-A/.test(pil),true);
+ok('les pilotes en place sont listés',/Realtek/.test(pil),true);
+ok('rien ne prétend qu\'une version est plus récente',
+  /plus récente est disponible|mise à jour disponible/.test(pil),false);
 
 console.log('\n--- cocher ce qui est constaté ---');
 // La comparaison ne coche rien dans ton dos : elle propose. Et surtout elle

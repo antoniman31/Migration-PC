@@ -9,12 +9,13 @@ const {chromium}=require('playwright');
 const fs=require('fs'),path=require('path');
 const racine=path.join(__dirname,'..');
 const HTML='file://'+path.join(racine,'index.html');
-const PROFIL=JSON.parse(fs.readFileSync(path.join(racine,'presets','exemple.json'),'utf8'));
-const SECTIONS=['quitter','npc','apps','data','pwa'];
+// La checklist livrée est vide : c'est la démonstration qui fournit les tâches
+// que le mode guidé enchaîne.
+const PROFIL=JSON.parse(fs.readFileSync(path.join(racine,'presets','demonstration.json'),'utf8'));
+const SECTIONS=['apps','pwa'];
 const TOTAL=SECTIONS.reduce(function(n,s){return n+((PROFIL[s]||[]).length);},0);
-// La file suit l'ordre des onglets : ce qui se fait sur l'ancien PC passe en
-// premier quand le profil déclare cette section.
-const PREMIERE=(PROFIL.quitter&&PROFIL.quitter.length)?'Avant de quitter':'Nouveau PC';
+// La file suit l'ordre des onglets : les logiciels d'abord.
+const PREMIERE='Logiciels';
 const lancement={args:['--no-sandbox']};
 if(process.env.CHROME)lancement.executablePath=process.env.CHROME;
 
@@ -42,6 +43,9 @@ const ctx=await b.newContext({viewport:{width:1200,height:820},permissions:['cli
 const pg=await ctx.newPage();
 pg.on('pageerror',e=>{console.log(' FAIL erreur JS → '+e.message);ko++;});
 await pg.goto(HTML,{waitUntil:'networkidle'});
+// La checklist livrée est vide : sans l'exemple garni, le mode guidé n'a
+// aucune tâche à enchaîner et tout ce fichier tombe.
+await chargerExemple(pg);
 console.log('--- bascule ---');
 ok('guide masqué par défaut',await pg.isVisible('#guide'),false);
 ok('la vue liste est là',await pg.isVisible('.side-nav'),true);
@@ -95,10 +99,15 @@ ok('le presse-papier contient la commande',presse,c.cmd);
 ok('le bouton confirme',await pg.textContent('#guide-copier'),'✓ Copié');
 
 console.log('\n--- avertissement ---');
+// Aucun logiciel de la démonstration ne porte d'avertissement — c'était les
+// étapes de « Nouveau PC » qui en avaient. On en pose un, puisque ce qu'on
+// vérifie est que le mode guidé l'affiche, pas que le profil en contienne.
 await pg.evaluate(()=>{
   S.checked={};
-  const cible=fileGuide().find(e=>e.warn);
-  fileGuide().forEach(e=>{if(e.id!==cible.id)S.checked[e.id]=true;});
+  const file=fileGuide();
+  const cible=file[0];
+  cible.warn='Ne pas lancer pendant une sauvegarde.';
+  file.forEach(e=>{if(e.id!==cible.id)S.checked[e.id]=true;});
   saveState();renderAll();updateGlobal();});
 await pg.waitForTimeout(250);
 ok('avertissement affiché',await pg.isVisible('.guide-warn'),true);
@@ -180,6 +189,7 @@ await pg.close();
 // clavier
 const pg=await (await b.newContext({viewport:{width:1280,height:900}})).newPage();
 await pg.goto(HTML,{waitUntil:'networkidle'});
+await chargerExemple(pg);
 await pg.click('#guide-btn');await pg.waitForTimeout(200);
 let n=0,atteint=false;
 await pg.evaluate(()=>document.body.focus());

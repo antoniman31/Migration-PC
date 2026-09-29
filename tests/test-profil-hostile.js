@@ -71,7 +71,6 @@ await pg.evaluate(c=>{
     cats:{[c.catQuote]:c.catBalise},
     apps:[{id:c.idApp,n:c.nomSvg,c:c.catQuote,src:c.src,d:c.desc,w:c.wQuote},
           {id:'a2',n:'B',c:'z',src:'S',d:'D',w:c.wSlash}],
-    npc:[{id:c.idNpc,o:1,n:'E',src:'S',d:'D',alt:{n:c.alt,d:'x'}}],
     data:[{id:'d1',n:'D',pr:'high',p:c.chemin}],
     pwa:[{id:'p1',n:'P1',d:'D',u:c.urlJs},
          {id:'p2',n:'P2',d:'D',u:c.urlData},
@@ -84,7 +83,7 @@ await pg.waitForTimeout(400);
 console.log('--- au rendu, sans rien cliquer ---');
 ok('aucune balise injectée dans les listes',
   await pg.evaluate(()=>document.querySelectorAll(
-    '#list-apps img,#list-apps svg,#list-data img,#list-npc img,#list-pwa img,h1 img').length),0);
+    '#list-apps img,#list-apps svg,#list-pilotes img,#list-pwa img,h1 img').length),0);
 ok('le nom de catégorie s\'affiche en texte',
   await pg.evaluate(()=>{
     const h=document.querySelector('#list-apps .sec-hdr');
@@ -104,8 +103,8 @@ ok('les liens qui restent sont isolés de la page ouverte',
     .every(a=>(a.getAttribute('rel')||'').indexOf('noopener')>=0)),true);
 
 console.log('\n--- on clique tout ce qui est cliquable ---');
-for(const sc of ['tout','reinstall']){
-  await pg.evaluate(s=>changerScenario(s),sc);
+for(const onglet of ['#tab-apps','#tab-pilotes','#tab-pwa']){
+  try{await pg.click(onglet,{timeout:800});}catch(e){}
   await pg.waitForTimeout(150);
   for(const sel of ['.b-winget','.cat-winget','.chk-all','.note-btn','.lnk-btn','.item','.fb']){
     for(const el of (await pg.$$(sel)).slice(0,4)){
@@ -132,8 +131,7 @@ console.log('\n--- le matériel d\'un profil reçu ---');
 // quel JSON.
 await pg.evaluate(()=>{CONFIG={};saveConfig();construireConfig();});
 await pg.evaluate(()=>traiterDonnees({
-  meta:{nom:'H'},cats:{},npc:[],apps:[{id:'z',n:'Z',c:'x',src:'s',d:'d'}],
-  data:[],pwa:[],quitter:[],
+  meta:{nom:'H'},cats:{},apps:[{id:'z',n:'Z',c:'x',src:'s',d:'d'}],pwa:[],
   materiel:{cm:"x' onclick='window.__inject=1' data-a='",
             gpu:'<img src=x onerror=window.__inject=2>',
             ram:{objet:1},ssd:['tableau'],cpu:'Un vrai processeur'}},''));
@@ -149,10 +147,7 @@ console.log('\n--- un profil honnête marche toujours ---');
 // La démonstration plutôt que le profil livré : ce qu'on vérifie ici est que
 // les listes se remplissent et que les catégories accentuées s'affichent, et
 // le profil livré n'a plus d'applications à rendre.
-await pg.evaluate(()=>{
-  changerScenario('tout');
-  appliquerProfil(PROFIL_DEMO,false);
-});
+await pg.evaluate(()=>{ appliquerProfil(PROFIL_DEMO,false); });
 await pg.waitForTimeout(300);
 ok('les listes se remplissent',
   await pg.evaluate(()=>document.querySelectorAll('#list-apps .lg-l').length>0),true);

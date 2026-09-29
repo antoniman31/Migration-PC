@@ -45,27 +45,30 @@ console.log('--- les deux formats coexistent ---');
 // Les dependances relient des applications entre elles : elles vivent dans
 // le profil de demonstration depuis que la checklist livree n'en porte plus.
 const profil=JSON.parse(fs.readFileSync(path.join(racine,'presets','demonstration.json'),'utf8'));
-const tous=[].concat(profil.npc,profil.apps,profil.pwa);
+// La checklist livree n'a plus aucune application : sans charger l'exemple
+// garni, depsDe ne resout rien et tout le fichier tombe.
+G('appliquerProfil')(profil,false);
+const tous=[].concat(profil.apps,profil.pwa);
 const enTableau=tous.filter(e=>Array.isArray(e.dep));
 const enTexte=tous.filter(e=>e.dep&&!Array.isArray(e.dep));
 ok('le profil a des dépendances en tableau',enTableau.length>0,true);
 ok('et au moins une en texte libre',enTexte.length>0,true);
 ok('une chaîne ne décrit aucun lien',G('depsDe')({dep:'Installer avant machin'}),[]);
-ok('un tableau décrit des liens',G('depsDe')({dep:['n1','n2']}),['n1','n2']);
-ok('une référence inexistante est ignorée',G('depsDe')({dep:['n1','zzz']}),['n1']);
+ok('un tableau décrit des liens',G('depsDe')({dep:['a1','a7']}),['a1','a7']);
+ok('une référence inexistante est ignorée',G('depsDe')({dep:['a1','zzz']}),['a1']);
 ok('sans dep, rien',G('depsDe')({}),[]);
 
 console.log('\n--- badges ---');
 ok('texte libre rendu tel quel',G('mkDepBadge')('Après le chipset').indexOf('Après le chipset')>=0,true);
-const badgeTab=G('mkDepBadge')(['n1']);
-ok('tableau résolu en nom lisible',badgeTab.indexOf(G('nomDe')('n1'))>=0,true);
+const badgeTab=G('mkDepBadge')(['a1']);
+ok('tableau résolu en nom lisible',badgeTab.indexOf(G('nomDe')('a1'))>=0,true);
 ok('prérequis non coché signalé',badgeTab.indexOf('b-dep-manque')>=0,true);
-G('S').checked['n1']=true;
-ok('une fois coché, le badge se calme',G('mkDepBadge')(['n1']).indexOf('b-dep-manque')<0,true);
+G('S').checked['a1']=true;
+ok('une fois coché, le badge se calme',G('mkDepBadge')(['a1']).indexOf('b-dep-manque')<0,true);
 G('S').checked={};
 
 console.log('\n--- avertissement hors ordre ---');
-const avecDep=enTableau.find(e=>profil.npc.some(n=>n.id===e.id))||enTableau[0];
+const avecDep=enTableau[0];
 G('S').checked={};
 G('toggle')(avecDep.id,avecDep.n);
 const msg=els['annul-txt'].textContent;
@@ -80,17 +83,17 @@ ok('aucun avertissement dans le bon ordre',els['annul-txt'].textContent,'');
 
 console.log('\n--- tri topologique ---');
 G('S').checked={};
-const ordonne=G('ordreParDependances')(profil.npc.slice().reverse());
+const ordonne=G('ordreParDependances')(profil.apps.slice().reverse());
 const pos={};ordonne.forEach((e,i)=>{pos[e.id]=i;});
 let violations=[];
-profil.npc.forEach(e=>{
+profil.apps.forEach(e=>{
   G('depsDe')(e).forEach(d=>{if(pos[d]>pos[e.id])violations.push(e.id+' avant '+d);});
 });
 ok('aucun élément avant son prérequis',violations,[]);
-ok('aucun élément perdu',ordonne.length,profil.npc.length);
+ok('aucun élément perdu',ordonne.length,profil.apps.length);
 
 console.log('\n--- un cycle ne fige pas la page ---');
-const cyclique={meta:{nom:'Cycle'},cats:{x:'X'},npc:[],data:[],pwa:[],ordre:[],requetes:{},
+const cyclique={meta:{nom:'Cycle'},cats:{x:'X'},pwa:[],ordre:[],requetes:{},
   apps:[{id:'c1',n:'A',c:'x',src:'t',p:'med',t:1,d:'',dep:['c2']},
         {id:'c2',n:'B',c:'x',src:'t',p:'med',t:1,d:'',dep:['c3']},
         {id:'c3',n:'C',c:'x',src:'t',p:'med',t:1,d:'',dep:['c1']}]};
@@ -118,10 +121,7 @@ ok('tous les paquets présents',paquets.length,profil.apps.filter(a=>a.w).length
 
 console.log('\n--- un profil sans dépendance garde son ordre manuel ---');
 const sansDep=JSON.parse(JSON.stringify(profil));
-// Les cinq onglets, pas deux : des dependances vivent aussi dans « Donnees »
-// (la synchronisation entre deux machines s'enchaine), et n'en nettoyer qu'une
-// partie laissait le test croire a un profil sans dependance.
-['quitter','npc','apps','data','pwa'].forEach(c=>{
+['apps','pwa'].forEach(c=>{
   (sansDep[c]||[]).forEach(e=>{delete e.dep;});
 });
 sansDep.ordre=['a3','a1','a2'];
