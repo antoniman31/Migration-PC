@@ -26,12 +26,12 @@ function ok($libelle, $obtenu, $attendu) {
 
 "--- dans un dossier complet ---"
 $a = @(Get-ActionsMigration -Racine $racine)
-ok 'six actions proposees'         $a.Count 6
+ok 'trois actions proposees'       $a.Count 3
 ok 'toutes realisables'            (@($a | Where-Object { -not $_.possible })).Count 0
 ok 'chacune a un intitule'         (@($a | Where-Object { [string]::IsNullOrWhiteSpace($_.titre) })).Count 0
 ok 'et une explication'            (@($a | Where-Object { [string]::IsNullOrWhiteSpace($_.detail) })).Count 0
 ok 'et une duree annoncee'         (@($a | Where-Object { [string]::IsNullOrWhiteSpace($_.duree) })).Count 0
-ok 'identifiants uniques'          (@($a.id | Sort-Object -Unique)).Count 6
+ok 'identifiants uniques'          (@($a.id | Sort-Object -Unique)).Count 3
 
 # Les deux premieres actions disent SUR QUELLE MACHINE on est : c'est la seule
 # question a laquelle on ne peut pas repondre a la place de l'utilisateur.
@@ -56,7 +56,7 @@ $t = Join-Path ([System.IO.Path]::GetTempPath()) ("lanceur-" + [guid]::NewGuid()
 $null = New-Item -ItemType Directory -Path $t -Force
 Copy-Item (Join-Path $racine 'scan-pc.ps1') $t
 $b = @(Get-ActionsMigration -Racine $t)
-ok 'les actions restent montrees'  $b.Count 6
+ok 'les actions restent montrees'  $b.Count 3
 ok 'mais aucune n est realisable'  (@($b | Where-Object { $_.possible })).Count 0
 # scan-pc.ps1 est la, mais il ne tourne pas sans lib-detection.ps1 : l'action
 # doit le dire au lieu de laisser lancer un script qui echouera.
@@ -97,15 +97,11 @@ ok 'la reinstallation sur place'   ($texte -match 'r[eé]installez Windows') $tr
 ok 'et le cas des deux PC'         ($texte -match 'gardez les deux') $true
 # Le piege le plus couteux du parcours : formater avant d'avoir verifie la copie.
 ok 'il previent avant le formatage' ($texte -match 'AVANT de formater') $true
-# On copie VERS un dossier, on restaure DEPUIS un dossier : se tromper de sens
-# ecraserait la sauvegarde avec le contenu de la machine neuve.
-$emporter = $a | Where-Object { $_.id -eq 'emporter' }
-$remettre = $a | Where-Object { $_.id -eq 'remettre' }
-ok 'emporter ecrit vers Destination' $emporter.argument 'Destination'
-ok 'remettre lit depuis Source'      $remettre.argument 'Source'
-ok 'les deux demandent un dossier'   (@($emporter.dossier, $remettre.dossier) -contains $false) $false
-# L'ordre compte : installer les logiciels d'abord, reposer les reglages apres.
-ok 'remettre previent sur l ordre'   ((@($remettre.suite) -join ' ') -match 'APR[EÈ]S avoir install[eé]') $true
+# Le projet ne copie plus rien : il liste. Une action qui donnerait a croire
+# le contraire remettrait sur le dos du programme une sauvegarde qu'il ne fait
+# pas, ce qui est la pire promesse possible avant un formatage.
+ok 'plus d action de copie'        (@($a | Where-Object { $_.id -in @('emporter', 'remettre', 'sauvegardes') })).Count 0
+ok 'et le parcours le dit'         ($texte -match 'LISTE, il ne copie rien') $true
 
 "`n--- les fichiers du lanceur ---"
 foreach ($f in @('migration-pc.ps1', 'lanceur-actions.ps1')) {
@@ -139,8 +135,7 @@ ok 'aucune dependance graphique'   ($avecFenetre -join ', ') ''
 # Les accents des textes affiches n'arrivent en clair que si la sortie est en
 # UTF-8 : sans cela la console de Windows rend du charabia.
 $sansUtf8 = @()
-foreach ($f in @('scan-pc.ps1', 'sauvegarder-configs.ps1',
-                 'verifier-sauvegardes.ps1', 'restaurer-configs.ps1', 'migration-pc.ps1')) {
+foreach ($f in @('scan-pc.ps1', 'migration-pc.ps1')) {
     $t = [System.IO.File]::ReadAllText((Join-Path $racine $f))
     if ($t -notmatch 'OutputEncoding') { $sansUtf8 += $f }
 }

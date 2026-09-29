@@ -36,7 +36,7 @@ function Get-ActionsMigration {
         [ordered]@{
             id      = 'source'
             titre   = "Ce PC est la SOURCE (celui que je quitte)"
-            detail  = "Fige l'etat de cette machine : tout ce qui est installe, ou vivent les reglages, ce qui pese quoi. C'est l'instantane qu'on rejouera ailleurs."
+            detail  = "Fige l'etat de cette machine : les logiciels installes et les pilotes en place. C'est l'instantane qu'on rejouera ailleurs."
             script  = 'scan-pc.ps1'
             arguments = @('-Role', 'source')
             requis  = @('scan-pc.ps1', 'lib-detection.ps1')
@@ -44,7 +44,6 @@ function Get-ActionsMigration {
             suite   = @(
                 "La checklist s'ouvre déjà remplie de vos logiciels.",
                 "Onglet « Apps » : décochez ce que vous ne voulez pas reprendre.",
-                "Onglet « Reste à faire » : ce qu'il reste à sortir avant d'effacer.",
                 "Posez l'instantané et cette page sur la clé, et emportez-la."
             )
         },
@@ -61,49 +60,6 @@ function Get-ActionsMigration {
                 "Chaque manquant porte sa commande d'installation ou son chemin.",
                 "Onglet « Nouveau PC » : les périphériques sans pilote, et où chercher.",
                 "Importez l'instantané de la source si la page ne l'a pas encore."
-            )
-        },
-        [ordered]@{
-            id      = 'emporter'
-            titre   = "Emporter mes réglages"
-            detail  = "Copie les dossiers de configuration de vos logiciels vers la clé. Installer un logiciel prend une commande ; retrouver ses réglages prend une soirée."
-            script  = 'sauvegarder-configs.ps1'
-            requis  = @('sauvegarder-configs.ps1', 'lib-detection.ps1')
-            dossier = $true
-            argument = 'Destination'
-            duree   = "selon la taille"
-            suite   = @(
-                "Un index est écrit à côté de la copie : c'est lui qui permettra",
-                "de tout remettre en place, sans deviner un seul chemin.",
-                "Sur le nouveau PC, choisissez « Remettre mes réglages »."
-            )
-        },
-        [ordered]@{
-            id      = 'remettre'
-            titre   = "Remettre mes réglages"
-            detail  = "Repose les dossiers copiés à leur place. Refuse d'écraser quoi que ce soit par défaut, et met l'existant de côté sinon."
-            script  = 'restaurer-configs.ps1'
-            requis  = @('restaurer-configs.ps1')
-            dossier = $true
-            argument = 'Source'
-            duree   = "quelques secondes"
-            suite   = @(
-                "À faire APRÈS avoir installé les logiciels : la plupart créent",
-                "leur dossier de réglages au premier démarrage.",
-                "Fermez-les avant, sinon ils réécriront par-dessus en se fermant."
-            )
-        },
-        [ordered]@{
-            id      = 'sauvegardes'
-            titre   = "Vérifier une sauvegarde"
-            detail  = "Compare une copie à son original, fichier par fichier. Une sauvegarde qu'on n'a jamais relue n'est pas une sauvegarde."
-            script  = 'verifier-sauvegardes.ps1'
-            requis  = @('verifier-sauvegardes.ps1')
-            dossier = $true
-            duree   = "selon la taille"
-            suite   = @(
-                "Le rapport dit fichier par fichier ce qui manque ou diffère.",
-                "Une copie incomplète se voit ici, pas le jour où on en a besoin."
             )
         },
         [ordered]@{
@@ -136,25 +92,21 @@ function Get-Parcours {
     @(
         "  D'un PC vers un autre",
         "    1. Sur la SOURCE : scanner. La page s'ouvre remplie de vos logiciels.",
-        "    2. Emportez vos réglages sur la clé, et sauvegardez vos dossiers.",
-        "       Le scan LISTE, il ne copie pas : la copie, c'est l'etape 2.",
-        "       Vérifiez-la avant d'aller plus loin.",
-        "    3. Sur la CIBLE : scanner de nouveau. La page compare les deux et",
-        "       dit ce qui est arrivé, ce qui manque, ce qui a regresse.",
-        "    4. Installez ce qui manque, PUIS remettez vos réglages.",
+        "       Le scan LISTE, il ne copie rien. Vos fichiers personnels,",
+        "       c'est à vous de les sauvegarder — ce programme ne s'en occupe pas.",
+        "    2. Sur la CIBLE : scanner de nouveau. La page compare les deux et",
+        "       dit ce qui est arrivé et ce qui manque encore.",
+        "    3. Installez ce qui manque, et réglez les pilotes signalés.",
         "",
         "  Vous réinstallez Windows sur CETTE machine",
         "    Le meme parcours : cette machine est la source avant le formatage,",
         "    et la cible apres. C'est le meme script des deux cotes.",
         "    1. Scanner en SOURCE d'abord : apres le formatage, il n'y a plus rien.",
-        "    2. Emportez vos réglages, sauvegardez, et vérifiez la copie",
-        "       AVANT de formater. Après, il est trop tard.",
+        "    2. Sauvegardez vos fichiers AVANT de formater. Après, il est trop tard.",
         "    3. Après réinstallation : scanner en CIBLE, sur la même machine.",
         "",
         "  Vous gardez les deux PC",
-        "    Même chose, mais ne déliez rien sur l'ancien : il reste en service.",
-        "    La page a un cas « Deux PC » qui retire ces étapes et ajoute la",
-        "    synchronisation des dossiers."
+        "    Même chose, mais ne déliez rien sur l'ancien : il reste en service."
     )
 }
 

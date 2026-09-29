@@ -1053,11 +1053,6 @@ if(location.protocol==='file:'){
         <span class="snav-bar"><span class="snav-fill" id="bar-apps" style="width:0%"></span></span>
         <span class="tab-badge" id="badge-apps">0/0</span>
       </button>
-      <button class="snav" type="button" role="tab" aria-selected="false" aria-controls="panel-data" onclick="switchTab('data')" id="tab-data">
-        <span class="snav-t"><span class="snav-i" aria-hidden="true">💾</span>Données</span>
-        <span class="snav-bar"><span class="snav-fill" id="bar-data" style="width:0%"></span></span>
-        <span class="tab-badge" id="badge-data">0/0</span>
-      </button>
       <button class="snav" type="button" role="tab" aria-selected="false" aria-controls="panel-reste" onclick="switchTab('reste')" id="tab-reste">
         <span class="snav-t"><span class="snav-i" aria-hidden="true">🎯</span>Reste à faire</span>
         <span class="snav-bar"><span class="snav-fill" id="bar-reste" style="width:0%"></span></span>
@@ -1198,23 +1193,14 @@ if(location.protocol==='file:'){
         <button class="sm-btn warn-btn" onclick="exportWingetJSON(true)" title="Format officiel winget import — idempotent et rejouable">⬇️ winget .json</button>
       </div>
       <div class="sec-content" id="list-apps"></div>
-  <div class="next-tab-btn" id="next-apps">
-    <button class="next-btn" onclick="switchTab('data')" id="next-apps-btn">Données <span id="next-apps-count"></span> →</button>
-  </div>
+      <div class="next-tab-btn" id="next-apps">
+        <button class="next-btn" onclick="switchTab('pwa')" id="next-apps-btn">PWA <span id="next-apps-count"></span> →</button>
+      </div>
       <div id="apps-empty" style="display:none;padding:24px;text-align:center;color:var(--tx2);font-size:13px">Aucune app trouvée</div>
     </div>
   </div>
 </div>
 
-<div class="panel" id="panel-data" role="tabpanel" aria-labelledby="tab-data" tabindex="0">
-  <div class="tbar">
-    <span class="tbar-info">💾 Sauvegarder avant de migrer — par ordre de priorité</span>
-  </div>
-  <div class="sec-content" id="list-data"></div>
-  <div class="next-tab-btn" id="next-data">
-    <button class="next-btn" onclick="switchTab('pwa')" id="next-data-btn">PWA <span id="next-data-count"></span> →</button>
-  </div>
-</div>
 
 <div class="panel" id="panel-reste" role="tabpanel" aria-labelledby="tab-reste" tabindex="0">
   <div class="sec-content" id="list-reste"></div>
@@ -1823,245 +1809,6 @@ const PROFIL_DEFAUT = {
   ],
   "ordre": [],
   "apps": [],
-  "data": [
-    {
-      "id": "s1",
-      "n": "Documents, images, vidéos",
-      "p": "%USERPROFILE%\\Documents, Pictures, Videos",
-      "note": "Les dossiers personnels de base. Vérifier aussi les sous-dossiers de OneDrive.",
-      "pr": "high",
-      "scan": "dossiers"
-    },
-    {
-      "id": "s2",
-      "n": "Bureau",
-      "p": "%USERPROFILE%\\Desktop",
-      "note": "Souvent plein de fichiers de travail jamais rangés ailleurs.",
-      "pr": "high",
-      "scan": "dossiers"
-    },
-    {
-      "id": "s3",
-      "n": "Téléchargements",
-      "p": "%USERPROFILE%\\Downloads",
-      "note": "À trier avant la migration plutôt qu'après.",
-      "pr": "med",
-      "scan": "dossiers"
-    },
-    {
-      "id": "s4",
-      "n": "Projets et code local",
-      "p": "Selon ton organisation",
-      "note": "Tout ce qui n'est pas poussé sur un dépôt distant n'a aucun filet de sécurité.",
-      "pr": "high",
-      "scan": "dossiers"
-    },
-    {
-      "id": "s5",
-      "n": "Clés SSH et GPG",
-      "p": "%USERPROFILE%\\.ssh",
-      "note": "Copier sur un support chiffré, jamais dans un espace de stockage partagé.",
-      "pr": "high",
-      "scan": "configs"
-    },
-    {
-      "id": "s6",
-      "n": "Licences logicielles",
-      "p": "Courriels et espaces clients",
-      "note": "Rassembler les clés des logiciels payants avant de désinstaller quoi que ce soit.",
-      "pr": "high",
-      "lic": true,
-      "scan": "manuel"
-    },
-    {
-      "id": "s7",
-      "n": "Variables d'environnement",
-      "p": "Panneau de configuration → Système → Variables d'environnement",
-      "note": "Relever les variables personnalisées et les ajouts au PATH.",
-      "pr": "med",
-      "env": true,
-      "scan": "variables"
-    },
-    {
-      "id": "s8",
-      "n": "Mots de passe du navigateur",
-      "p": "Compte du navigateur ou gestionnaire dédié",
-      "note": "Vérifier que la synchronisation est à jour, ou exporter vers un gestionnaire.",
-      "pr": "high",
-      "scan": "manuel"
-    },
-    {
-      "id": "s9",
-      "n": "Sauvegardes de jeux hors ligne",
-      "p": "%USERPROFILE%\\Documents\\My Games et %APPDATA%",
-      "note": "Les jeux sans sauvegarde en ligne perdent tout. Vérifier avant de formater.",
-      "pr": "med",
-      "scan": "configs"
-    },
-    {
-      "id": "s10",
-      "n": "Configurations d'applications",
-      "p": "%APPDATA% et %LOCALAPPDATA%",
-      "note": "Réglages, profils et raccourcis personnalisés des logiciels que tu utilises beaucoup.",
-      "pr": "med",
-      "scan": "configs"
-    },
-    {
-      "id": "s11",
-      "n": "Polices installées",
-      "p": "C:\\Windows\\Fonts",
-      "note": "Seulement celles que tu as ajoutées toi-même.",
-      "pr": "ok",
-      "scan": "polices"
-    },
-    {
-      "id": "s12",
-      "n": "Imprimantes et périphériques",
-      "p": "Paramètres → Bluetooth et appareils",
-      "note": "Noter les modèles et les adresses réseau pour les reconfigurer plus vite.",
-      "pr": "ok",
-      "scan": "imprimantes"
-    },
-    {
-      "id": "s13",
-      "n": "Codes de récupération 2FA",
-      "p": "Coffre-fort ou support hors ligne",
-      "note": "Le plus souvent oublié, et le seul qui enferme dehors définitivement. Sortir les codes de secours de chaque compte AVANT de toucher à quoi que ce soit.",
-      "pr": "high",
-      "scan": "manuel"
-    },
-    {
-      "id": "s14",
-      "n": "Application d'authentification",
-      "p": "Sur le téléphone — fonction de transfert",
-      "note": "Les jetons ne se copient pas comme un fichier. Utiliser la fonction de transfert de l'application, et le faire avant de changer de téléphone si les deux migrations tombent en même temps.",
-      "pr": "high",
-      "scan": "manuel"
-    },
-    {
-      "id": "s15",
-      "n": "Clé de récupération BitLocker de cet ancien PC",
-      "p": "Compte Microsoft ou impression",
-      "note": "Si le disque de l'ancien PC est chiffré et que vous comptez y revenir chercher quelque chose, sans cette clé il sera illisible.",
-      "pr": "high",
-      "scan": "bitlocker"
-    },
-    {
-      "id": "s16",
-      "n": "Favoris du navigateur",
-      "p": "Gestionnaire de favoris → Exporter",
-      "note": "La synchronisation les couvre si elle est active. Sinon, un export HTML prend dix secondes et évite de tout reconstruire.",
-      "pr": "med",
-      "scan": "favoris"
-    },
-    {
-      "id": "s17",
-      "n": "Gestionnaire d'identification Windows",
-      "p": "Panneau de configuration → Comptes d'utilisateurs",
-      "note": "Garde les accès aux partages réseau, aux lecteurs mappés et au bureau à distance. Personne n'y pense, et tout cesse de fonctionner après la réinstallation.",
-      "pr": "med",
-      "scan": "identifiants"
-    },
-    {
-      "id": "s18",
-      "n": "Profils Wi-Fi et clés réseau",
-      "p": "netsh wlan export profile key=clear",
-      "note": "La commande exporte chaque réseau enregistré avec sa clé. Utile pour les réseaux dont personne ne se souvient du mot de passe.",
-      "pr": "med",
-      "scan": "wifi"
-    },
-    {
-      "id": "s19",
-      "n": "Profils VPN et certificats",
-      "p": "Paramètres → Réseau → VPN",
-      "note": "Adresses de serveurs, certificats et fichiers de configuration. Un client VPN réinstallé ne retrouve rien tout seul.",
-      "pr": "med",
-      "scan": "vpn"
-    },
-    {
-      "id": "s20",
-      "n": "Archives mail locales",
-      "p": "Fichiers .pst et .ost, dossiers de profil",
-      "note": "Les messages restés en local n'existent nulle part ailleurs. Vérifier aussi les signatures, les règles et les carnets d'adresses.",
-      "pr": "med",
-      "scan": "mail"
-    },
-    {
-      "id": "s21",
-      "n": "Machines virtuelles",
-      "p": "Selon l'hyperviseur utilisé",
-      "note": "Des dizaines de gigaoctets faciles à oublier, et impossibles à recréer à l'identique. Les arrêter proprement avant de copier.",
-      "pr": "ok",
-      "scan": "vm"
-    },
-    {
-      "id": "sy1",
-      "n": "Décider quels dossiers vivent sur les deux machines",
-      "pr": "high",
-      "p": "À trancher avant de synchroniser quoi que ce soit",
-      "cas": [
-        "second"
-      ],
-      "d": "Tout synchroniser est le réflexe, et c'est l'erreur : une bibliothèque de jeux ou une réserve de machines virtuelles n'ont rien à faire sur un portable, et la synchronisation passera des heures à les recopier. Faites trois piles — ce qui suit partout, ce qui reste sur le fixe, ce qui ne vit que sur le portable — avant d'installer le moindre outil.",
-      "scan": "manuel"
-    },
-    {
-      "id": "sy2",
-      "n": "Mettre en place la synchronisation des dossiers de travail",
-      "pr": "high",
-      "p": "OneDrive, Google Drive, Dropbox ou Syncthing",
-      "cas": [
-        "second"
-      ],
-      "dep": [
-        "sy1"
-      ],
-      "d": "Les services grand public suffisent pour des documents. Pour du code ou de gros projets, Syncthing synchronise en direct entre vos deux machines sans passer par un serveur, et sans limite de taille.",
-      "note": "Le code se gère mieux avec git qu'avec une synchronisation de fichiers : deux copies d'un dépôt synchronisées en même temps finissent par se marcher dessus.",
-      "scan": "manuel"
-    },
-    {
-      "id": "sy3",
-      "n": "Vérifier que la synchronisation marche dans les deux sens",
-      "pr": "high",
-      "p": "Un fichier test créé de chaque côté",
-      "cas": [
-        "second"
-      ],
-      "dep": [
-        "sy2"
-      ],
-      "d": "Créez un fichier sur le fixe, voyez-le arriver sur le portable, modifiez-le là-bas, voyez la modification revenir. Tant que ce va-et-vient n'est pas constaté, vous n'avez pas une synchronisation, vous avez une sauvegarde à sens unique dont vous ignorez le sens.",
-      "warn": "Une synchronisation qu'on n'a jamais testée dans les deux sens se découvre le jour où elle a écrasé la bonne version.",
-      "scan": "manuel"
-    },
-    {
-      "id": "sy4",
-      "n": "Se donner une règle contre les versions divergentes",
-      "pr": "med",
-      "p": "La règle, pas l'outil",
-      "cas": [
-        "second"
-      ],
-      "dep": [
-        "sy3"
-      ],
-      "d": "Deux machines qui modifient le même fichier hors ligne produisent deux versions, et la plupart des outils tranchent en silence. Une règle simple suffit : fermer ses fichiers avant de changer de machine, et attendre que la synchronisation affiche « à jour » avant de refermer le capot.",
-      "scan": "manuel"
-    },
-    {
-      "id": "s24",
-      "n": "local.properties de vos projets Android",
-      "p": "Dans chaque projet, à côté de build.gradle",
-      "note": "Chaque projet Android en a un, hors de git, et il contient le chemin du SDK de l'ANCIENNE machine. Après migration, le projet refuse de compiler pour cette seule raison : corriger sdk.dir, ou supprimer le fichier et laisser Android Studio le refaire.",
-      "pr": "med",
-      "cas": [
-        "migration",
-        "second"
-      ],
-      "scan": "manuel"
-    }
-  ],
   "pwa": [],
   "requetes": {}
 };
@@ -2861,245 +2608,6 @@ const PROFIL_DEMO = {
       "d": "Si tu en utilises un : réinstaller et se reconnecter avant de remettre le pare-feu en place."
     }
   ],
-  "data": [
-    {
-      "id": "s1",
-      "n": "Documents, images, vidéos",
-      "p": "%USERPROFILE%\\Documents, Pictures, Videos",
-      "note": "Les dossiers personnels de base. Vérifier aussi les sous-dossiers de OneDrive.",
-      "pr": "high",
-      "scan": "dossiers"
-    },
-    {
-      "id": "s2",
-      "n": "Bureau",
-      "p": "%USERPROFILE%\\Desktop",
-      "note": "Souvent plein de fichiers de travail jamais rangés ailleurs.",
-      "pr": "high",
-      "scan": "dossiers"
-    },
-    {
-      "id": "s3",
-      "n": "Téléchargements",
-      "p": "%USERPROFILE%\\Downloads",
-      "note": "À trier avant la migration plutôt qu'après.",
-      "pr": "med",
-      "scan": "dossiers"
-    },
-    {
-      "id": "s4",
-      "n": "Projets et code local",
-      "p": "Selon ton organisation",
-      "note": "Tout ce qui n'est pas poussé sur un dépôt distant n'a aucun filet de sécurité.",
-      "pr": "high",
-      "scan": "dossiers"
-    },
-    {
-      "id": "s5",
-      "n": "Clés SSH et GPG",
-      "p": "%USERPROFILE%\\.ssh",
-      "note": "Copier sur un support chiffré, jamais dans un espace de stockage partagé.",
-      "pr": "high",
-      "scan": "configs"
-    },
-    {
-      "id": "s6",
-      "n": "Licences logicielles",
-      "p": "Courriels et espaces clients",
-      "note": "Rassembler les clés des logiciels payants avant de désinstaller quoi que ce soit.",
-      "pr": "high",
-      "lic": true,
-      "scan": "manuel"
-    },
-    {
-      "id": "s7",
-      "n": "Variables d'environnement",
-      "p": "Panneau de configuration → Système → Variables d'environnement",
-      "note": "Relever les variables personnalisées et les ajouts au PATH.",
-      "pr": "med",
-      "env": true,
-      "scan": "variables"
-    },
-    {
-      "id": "s8",
-      "n": "Mots de passe du navigateur",
-      "p": "Compte du navigateur ou gestionnaire dédié",
-      "note": "Vérifier que la synchronisation est à jour, ou exporter vers un gestionnaire.",
-      "pr": "high",
-      "scan": "manuel"
-    },
-    {
-      "id": "s9",
-      "n": "Sauvegardes de jeux hors ligne",
-      "p": "%USERPROFILE%\\Documents\\My Games et %APPDATA%",
-      "note": "Les jeux sans sauvegarde en ligne perdent tout. Vérifier avant de formater.",
-      "pr": "med",
-      "scan": "configs"
-    },
-    {
-      "id": "s10",
-      "n": "Configurations d'applications",
-      "p": "%APPDATA% et %LOCALAPPDATA%",
-      "note": "Réglages, profils et raccourcis personnalisés des logiciels que tu utilises beaucoup.",
-      "pr": "med",
-      "scan": "configs"
-    },
-    {
-      "id": "s11",
-      "n": "Polices installées",
-      "p": "C:\\Windows\\Fonts",
-      "note": "Seulement celles que tu as ajoutées toi-même.",
-      "pr": "ok",
-      "scan": "attendu:polices"
-    },
-    {
-      "id": "s12",
-      "n": "Imprimantes et périphériques",
-      "p": "Paramètres → Bluetooth et appareils",
-      "note": "Noter les modèles et les adresses réseau pour les reconfigurer plus vite.",
-      "pr": "ok",
-      "scan": "attendu:imprimantes"
-    },
-    {
-      "id": "s13",
-      "n": "Codes de récupération 2FA",
-      "p": "Coffre-fort ou support hors ligne",
-      "note": "Le plus souvent oublié, et le seul qui enferme dehors définitivement. Sortir les codes de secours de chaque compte AVANT de toucher à quoi que ce soit.",
-      "pr": "high",
-      "scan": "manuel"
-    },
-    {
-      "id": "s14",
-      "n": "Application d'authentification",
-      "p": "Sur le téléphone — fonction de transfert",
-      "note": "Les jetons ne se copient pas comme un fichier. Utiliser la fonction de transfert de l'application, et le faire avant de changer de téléphone si les deux migrations tombent en même temps.",
-      "pr": "high",
-      "scan": "manuel"
-    },
-    {
-      "id": "s15",
-      "n": "Clé de récupération BitLocker de cet ancien PC",
-      "p": "Compte Microsoft ou impression",
-      "note": "Si le disque de l'ancien PC est chiffré et que vous comptez y revenir chercher quelque chose, sans cette clé il sera illisible.",
-      "pr": "high",
-      "scan": "attendu:bitlocker"
-    },
-    {
-      "id": "s16",
-      "n": "Favoris du navigateur",
-      "p": "Gestionnaire de favoris → Exporter",
-      "note": "La synchronisation les couvre si elle est active. Sinon, un export HTML prend dix secondes et évite de tout reconstruire.",
-      "pr": "med",
-      "scan": "attendu:favoris"
-    },
-    {
-      "id": "s17",
-      "n": "Gestionnaire d'identification Windows",
-      "p": "Panneau de configuration → Comptes d'utilisateurs",
-      "note": "Garde les accès aux partages réseau, aux lecteurs mappés et au bureau à distance. Personne n'y pense, et tout cesse de fonctionner après la réinstallation.",
-      "pr": "med",
-      "scan": "attendu:identifiants"
-    },
-    {
-      "id": "s18",
-      "n": "Profils Wi-Fi et clés réseau",
-      "p": "netsh wlan export profile key=clear",
-      "note": "La commande exporte chaque réseau enregistré avec sa clé. Utile pour les réseaux dont personne ne se souvient du mot de passe.",
-      "pr": "med",
-      "scan": "attendu:wifi"
-    },
-    {
-      "id": "s19",
-      "n": "Profils VPN et certificats",
-      "p": "Paramètres → Réseau → VPN",
-      "note": "Adresses de serveurs, certificats et fichiers de configuration. Un client VPN réinstallé ne retrouve rien tout seul.",
-      "pr": "med",
-      "scan": "attendu:vpn"
-    },
-    {
-      "id": "s20",
-      "n": "Archives mail locales",
-      "p": "Fichiers .pst et .ost, dossiers de profil",
-      "note": "Les messages restés en local n'existent nulle part ailleurs. Vérifier aussi les signatures, les règles et les carnets d'adresses.",
-      "pr": "med",
-      "scan": "attendu:mail"
-    },
-    {
-      "id": "s21",
-      "n": "Machines virtuelles",
-      "p": "Selon l'hyperviseur utilisé",
-      "note": "Des dizaines de gigaoctets faciles à oublier, et impossibles à recréer à l'identique. Les arrêter proprement avant de copier.",
-      "pr": "ok",
-      "scan": "attendu:vm"
-    },
-    {
-      "id": "sy1",
-      "n": "Décider quels dossiers vivent sur les deux machines",
-      "pr": "high",
-      "p": "À trancher avant de synchroniser quoi que ce soit",
-      "cas": [
-        "second"
-      ],
-      "d": "Tout synchroniser est le réflexe, et c'est l'erreur : une bibliothèque de jeux ou une réserve de machines virtuelles n'ont rien à faire sur un portable, et la synchronisation passera des heures à les recopier. Faites trois piles — ce qui suit partout, ce qui reste sur le fixe, ce qui ne vit que sur le portable — avant d'installer le moindre outil.",
-      "scan": "manuel"
-    },
-    {
-      "id": "sy2",
-      "n": "Mettre en place la synchronisation des dossiers de travail",
-      "pr": "high",
-      "p": "OneDrive, Google Drive, Dropbox ou Syncthing",
-      "cas": [
-        "second"
-      ],
-      "dep": [
-        "sy1"
-      ],
-      "d": "Les services grand public suffisent pour des documents. Pour du code ou de gros projets, Syncthing synchronise en direct entre vos deux machines sans passer par un serveur, et sans limite de taille.",
-      "note": "Le code se gère mieux avec git qu'avec une synchronisation de fichiers : deux copies d'un dépôt synchronisées en même temps finissent par se marcher dessus.",
-      "scan": "manuel"
-    },
-    {
-      "id": "sy3",
-      "n": "Vérifier que la synchronisation marche dans les deux sens",
-      "pr": "high",
-      "p": "Un fichier test créé de chaque côté",
-      "cas": [
-        "second"
-      ],
-      "dep": [
-        "sy2"
-      ],
-      "d": "Créez un fichier sur le fixe, voyez-le arriver sur le portable, modifiez-le là-bas, voyez la modification revenir. Tant que ce va-et-vient n'est pas constaté, vous n'avez pas une synchronisation, vous avez une sauvegarde à sens unique dont vous ignorez le sens.",
-      "warn": "Une synchronisation qu'on n'a jamais testée dans les deux sens se découvre le jour où elle a écrasé la bonne version.",
-      "scan": "manuel"
-    },
-    {
-      "id": "sy4",
-      "n": "Se donner une règle contre les versions divergentes",
-      "pr": "med",
-      "p": "La règle, pas l'outil",
-      "cas": [
-        "second"
-      ],
-      "dep": [
-        "sy3"
-      ],
-      "d": "Deux machines qui modifient le même fichier hors ligne produisent deux versions, et la plupart des outils tranchent en silence. Une règle simple suffit : fermer ses fichiers avant de changer de machine, et attendre que la synchronisation affiche « à jour » avant de refermer le capot.",
-      "scan": "manuel"
-    },
-    {
-      "id": "s24",
-      "n": "local.properties de vos projets Android",
-      "p": "Dans chaque projet, à côté de build.gradle",
-      "note": "Chaque projet Android en a un, hors de git, et il contient le chemin du SDK de l'ANCIENNE machine. Après migration, le projet refuse de compiler pour cette seule raison : corriger sdk.dir, ou supprimer le fichier et laisser Android Studio le refaire.",
-      "pr": "med",
-      "cas": [
-        "migration",
-        "second"
-      ],
-      "scan": "manuel"
-    }
-  ],
   "pwa": [
     {
       "id": "p1",
@@ -3150,7 +2658,7 @@ const CLE_PROFIL='mpc_profil_v1', CLE_ETAT='mpc_state_v1', CLE_THEME='mpc_theme'
 const CLE_SOURCE='mpc_source_v1', CLE_CIBLE='mpc_cible_v1';
 let INV_SOURCE=null, INV_CIBLE=null;
 
-let CATS={}, NPC_DATA=[], APPS_DATA=[], DATA_SAVES=[], PWA_DATA=[], QUITTER_DATA=[], INSTALL_ORDER=[], SEARCH_QUERIES={};
+let CATS={}, NPC_DATA=[], APPS_DATA=[], PWA_DATA=[], QUITTER_DATA=[], INSTALL_ORDER=[], SEARCH_QUERIES={};
 
 // ═══ SCÉNARIO ═══
 // La même checklist sert à deux situations qui partagent l'essentiel : migrer
@@ -3166,7 +2674,7 @@ let CATS={}, NPC_DATA=[], APPS_DATA=[], DATA_SAVES=[], PWA_DATA=[], QUITTER_DATA
 // Le troisième cas ne marche pas comme les deux autres. « Migration » et
 // « réinstallation » partent de tout et retirent le peu qui ne les concerne
 // pas ; « mes affaires » part de rien et ne garde que ce qu'on lui nomme :
-// les onglets Apps, Données et PWA, plus les étapes marquées « pilote ». Sans
+// les onglets Apps et PWA, plus les étapes marquées « pilote ». Sans
 // cette inversion, les réglages BIOS — qui ne portent aucune mention parce
 // qu'ils valent pour les deux premiers cas — s'y retrouveraient aussi.
 const SCENARIOS={
@@ -3180,7 +2688,7 @@ const SCENARIOS={
           // synchronisation deviennent le vrai travail.
           onglet:{quitter:'Sur l\'ancien PC'}},
   affaires:{libelle:'Juste mes logiciels et mes documents',court:'Mes affaires',
-            exclusif:true,onglets:['apps','data','pwa']}
+            exclusif:true,onglets:['apps','pwa']}
 };
 const CLE_SCENARIO='mpc_scenario_v1';
 let scenario='tout';
@@ -3194,7 +2702,7 @@ function visibleDansScenario(e){
   if(sc.exclusif){
     // Un élément qui nomme ses cas et ne nomme pas celui-ci se réclame d'une
     // autre situation : « synchroniser les deux PC » n'a rien à faire ici,
-    // même si l'onglet Données est gardé en entier. Ce que l'élément dit de
+    // même si son onglet est gardé en entier. Ce que l'élément dit de
     // lui-même passe avant l'onglet où il se trouve.
     if(cas.length)return false;
     // Un cas exclusif ne garde ensuite que ce qu'il réclame : ses onglets en
@@ -3329,15 +2837,15 @@ function majSelecteurScenario(){
 
 // La liste des onglets vivait en sept exemplaires dans le fichier. En ajouter
 // un obligeait à les retrouver tous, et en oublier un ne se voyait pas.
-const ONGLETS=['quitter','npc','apps','data','pwa'];
+const ONGLETS=['quitter','npc','apps','pwa'];
 // « Reste à faire » n'est pas une liste de tâches : c'est un rapport. Il a
 // son bouton et son panneau, mais il reste hors de ONGLETS pour que la
 // progression globale, le mode guidé et la recherche ne cherchent pas des
 // cases à cocher là où il n'y en a pas.
 const ONGLETS_VUE=ONGLETS.concat(['reste']);
-const NOM_ONGLET={quitter:'Avant de quitter',npc:'Nouveau PC',apps:'Apps',data:'Données',pwa:'PWA'};
+const NOM_ONGLET={quitter:'Avant de quitter',npc:'Nouveau PC',apps:'Apps',pwa:'PWA'};
 function donneesDe(cle){
-  return {quitter:QUITTER_DATA,npc:NPC_DATA,apps:APPS_DATA,data:DATA_SAVES,pwa:PWA_DATA}[cle]||[];
+  return {quitter:QUITTER_DATA,npc:NPC_DATA,apps:APPS_DATA,pwa:PWA_DATA}[cle]||[];
 }
 function tousLesItems(){
   return ONGLETS.reduce(function(acc,c){return acc.concat(donneesDe(c));},[]);
@@ -3366,7 +2874,6 @@ function appliquerProfil(p,memoriser){
   CATS=p.cats||{};
   NPC_DATA=Array.isArray(p.npc)?p.npc:[];
   APPS_DATA=Array.isArray(p.apps)?p.apps:[];
-  DATA_SAVES=Array.isArray(p.data)?p.data:[];
   PWA_DATA=Array.isArray(p.pwa)?p.pwa:[];
   // Facultatif : un profil qui ne la déclare pas garde quatre onglets.
   QUITTER_DATA=Array.isArray(p.quitter)?p.quitter:[];
@@ -3425,7 +2932,7 @@ function chargerProfilMemorise(){
 // Le profil chargé, reconstruit depuis les listes en mémoire.
 function profilCourant(){
   const p={meta:{version:1,nom:PROFIL_NOM,soustitre:PROFIL_SOUS},cats:CATS,
-    npc:NPC_DATA,apps:APPS_DATA,data:DATA_SAVES,pwa:PWA_DATA,quitter:QUITTER_DATA,
+    npc:NPC_DATA,apps:APPS_DATA,pwa:PWA_DATA,quitter:QUITTER_DATA,
     ordre:INSTALL_ORDER,requetes:SEARCH_QUERIES};
   // La configuration vivait seulement dans ce navigateur : elle ne suivait pas
   // le profil, donc les intitulés redevenaient génériques sur l'autre machine.
@@ -3553,45 +3060,10 @@ function inventaireVersProfil(inv){
       // liste tenue à la main. Vide veut dire « je ne sais pas », pas
       // « gratuit », et la ligne ne prétend rien de plus.
       pay:a.payant?String(a.payant):undefined,
-      // Marqué payant : autant offrir tout de suite le champ où noter la clé,
-      // c'est le même mécanisme que sur les lignes de Données.
       lic:a.payant?true:undefined,
       d:bouts.join(' · ')||'Détecté sur l\'ancien PC.'
     });
   });
-  // Les chaines d'outils : SDK Android, WSL, scoop, npm, pip. Aucun
-  // installateur ne les enregistre, donc elles n'apparaissaient nulle part.
-  // Elles arrivent avec leur commande d'installation deja ecrite : on ne la
-  // devine pas, le scanner la fournit. Une categorie a part, parce que les
-  // melanger aux applications noierait les deux listes.
-  const outils=Array.isArray(inv.outils)?inv.outils:[];
-  // Ce qu'on a vraiment retenu, pas ce que le fichier annoncait : un profil
-  // recu peut porter des entrees vides, et le sous-titre les compterait.
-  let outilsRetenus=0;
-  if(outils.length){
-    cats[CAT_OUTILS]=LIBELLES_CATS[CAT_OUTILS]||'Chaînes d\'outils';
-    outils.forEach(function(o,i){
-      if(!o||typeof o!=='object')return;
-      const id=String(o.id==null?'':o.id).trim();
-      if(!id)return;
-      const bouts=[];
-      if(o.version)bouts.push('version '+o.version);
-      bouts.push('relevé sur l\'ancien PC');
-      out.push({
-        id:'out'+(i+1),
-        n:String(o.nom||id),
-        c:CAT_OUTILS,
-        src:String(o.famille||'Outil'),
-        cmd:o.commande?String(o.commande):undefined,
-        p:'med',
-        t:3,
-        d:bouts.join(' · ')
-      });
-      outilsRetenus++;
-    });
-    if(!outilsRetenus)delete cats[CAT_OUTILS];
-  }
-
   const machine=inv.machine||{};
   const desc=[];
   if(machine.os)desc.push(machine.os);
@@ -3605,314 +3077,27 @@ function inventaireVersProfil(inv){
   const nbEcrans=Number(machine.ecrans);
   if(isFinite(nbEcrans)&&nbEcrans>0)desc.push(nbEcrans+' écran'+(nbEcrans>1?'s':''));
   desc.push(apps.length+' applications détectées');
-  if(outilsRetenus)desc.push(outilsRetenus+' outil'+(outilsRetenus>1?'s':'')+' de développement');
   const total=apps.reduce(function(s,a){return s+(Number(a.tailleGo)||0);},0);
   if(total>0)desc.push(fmtTaille(total)+' connus');
   if(inv.genere)desc.push('scan du '+String(inv.genere).slice(0,10));
   if(reprisMateriel)desc.push(reprisMateriel+' composant'+(reprisMateriel>1?'s':'')+' repris');
-  // L'élément « variables d'environnement » du profil par défaut affiche
-  // exactement celles que le scan a relevées, plutôt qu'une liste figée.
-  let donnees=PROFIL_DEFAUT.data.map(function(d){
-    if(d.env&&vars.length)return Object.assign({},d,{env:vars});
-    return d;
-  });
-  // Les dossiers de configuration repérés viennent s'ajouter aux chemins
-  // écrits à la main. Ceux-là sont constatés sur la machine, avec leur chemin
-  // réel et leur taille : quand les deux désignent le même dossier, la ligne
-  // détectée remplace la ligne écrite d'avance plutôt que de doubler.
-  const reperes=configsVersDonnees(inv.configs);
-  donnees=donnees.filter(function(d){
-    return !reperes.some(function(r){return recouvre(d.p,r.p);});
-  }).concat(reperes);
-  // Et les gros dossiers que personne n'a pensé à lister. Ils arrivent après,
-  // donc ils se comparent à tout ce qui précède, lignes détectées comprises.
-  const oublies=grosDossiersVersDonnees(inv.dossiers,
-    donnees.map(function(d){return d.p;}));
-  donnees=donnees.concat(oublies);
-  // Les clés de signature passent devant : quelques kilo-octets, mais les
-  // seuls fichiers de la liste qu'aucune réinstallation ne rattrape.
-  const suspects=portablesVersDonnees(inv.portables,donnees.map(function(d){return d.p;}));
-  donnees=donnees.concat(suspects);
-  const cles=precieuxVersDonnees(inv.precieux,donnees.map(function(d){return d.p;}));
-  donnees=cles.concat(donnees);
-  // Un fichier de licence pèse quelques centaines d'octets et ne se
-  // reconstitue pas : même traitement que les clés de signature.
-  // Le numéro de série de l'ancien PC. Ce n'est pas un secret — il est
-  // imprimé sous la machine — mais il ne se retrouve plus une fois le disque
-  // effacé, et c'est lui qu'on cite au SAV ou dans une annonce de revente.
-  if(typeof machine.serie==='string'&&machine.serie.trim()){
-    donnees=donnees.concat([{id:'ser1',n:'Numéro de série de l\'ancien PC',
-      pr:'low',p:String(machine.serie).trim(),
-      note:'Relevé dans le BIOS · utile pour le SAV ou la revente',scan:'machine'}]);
-  }
-  const licf=fichiersLicenceVersDonnees(inv.fichiersLicence,
-    donnees.map(function(d){return d.p;}));
-  if(licf.length)donnees=licf.concat(donnees);
-  // Les cinq familles ajoutées depuis. Les favoris, les VM et les archives
-  // mail portent un chemin réel : ils remplacent la ligne écrite d'avance qui
-  // désignait le même endroit, au lieu de doubler.
-  const dejaLa=function(){return donnees.map(function(d){return d.p;});};
-  const favs=favorisVersDonnees(inv.favoris,dejaLa());
-  const vms=vmVersDonnees(inv.vm,dejaLa());
-  const mails=mailVersDonnees(inv.mail,dejaLa());
-  const vpns=vpnVersDonnees(inv.vpn);
-  // Une ligne écrite d'avance qui déclare une famille — « Favoris du
-  // navigateur », scan:'favoris' — est un pense-bête en attendant le
-  // détecteur. Dès que celui-ci rapporte quelque chose de concret, avec des
-  // chemins réels, le pense-bête fait doublon : on le retire plutôt que
-  // d'afficher les deux. S'il n'a rien trouvé, la ligne reste, parce que la
-  // chose est toujours à faire à la main.
-  const remplacees={};
-  if(favs.length)remplacees.favoris=true;
-  if(vms.length)remplacees.vm=true;
-  if(mails.length)remplacees.mail=true;
-  if(vpns.length)remplacees.vpn=true;
-  donnees=donnees.filter(function(d){return !remplacees[d.scan];});
-  donnees=donnees.concat(favs).concat(vms).concat(vpns);
-  if(mails.length)donnees=mails.concat(donnees);
-  // BitLocker passe tout devant, avec les licences : c'est la panne la plus
-  // définitive de la migration, et elle se prévient avant de démonter.
-  const blk=bitlockerVersDonnees(inv.bitlocker);
-  if(blk.length){
-    donnees=donnees.filter(function(d){return d.scan!=='bitlocker';});
-    donnees=blk.concat(donnees);
-  }
-  // Le dernier lot. Chaque famille remplace son pense-bête écrit d'avance,
-  // comme les précédentes : une ligne qui annonçait « à faire à la main »
-  // n'a plus lieu d'être quand le scan a rapporté la vraie liste.
-  const dernieres=[]
-    .concat(antivirusVersDonnees(inv.antivirus))
-    .concat(compteVersDonnees(inv.compte))
-    .concat(pilotesTiersVersDonnees(inv.pilotesTiers))
-    .concat(wifiVersDonnees(inv.wifi))
-    .concat(identifiantsVersDonnees(inv.identifiants))
-    .concat(policesVersDonnees(inv.polices))
-    .concat(lecteursVersDonnees(inv.lecteurs))
-    .concat(imprimantesVersDonnees(inv.imprimantes))
-    .concat(demarrageVersDonnees(inv.demarrage))
-    .concat(tachesVersDonnees(inv.taches))
-    .concat(pareFeuVersDonnees(inv.pareFeu))
-    .concat(associationsVersDonnees(inv.associations));
-  if(dernieres.length){
-    const familles={};
-    dernieres.forEach(function(d){familles[d.scan]=true;});
-    donnees=donnees.filter(function(d){return !familles[d.scan];});
-    // Les urgentes devant, le reste derrière : une licence d'antivirus se
-    // décide avant de démonter, une association de fichiers se refait après.
-    const devant=dernieres.filter(function(d){return d.pr==='high';});
-    const apres=dernieres.filter(function(d){return d.pr!=='high';});
-    donnees=devant.concat(donnees).concat(apres);
-  }
-  // Les licences passent tout devant : une licence qui ne suit pas change ce
-  // qu'il faut acheter, donc elle doit se lire avant de commander la machine.
-  const lics=licencesVersDonnees(inv.licences);
-  if(lics.length)donnees=lics.concat(donnees);
-  if(oublies.length)desc.push(oublies.length+' gros dossier'+(oublies.length>1?'s':'')+' hors liste');
-  if(cles.length)desc.push(cles.length+' clé'+(cles.length>1?'s':'')+' de signature');
-  if(suspects.length)desc.push(suspects.length+' portable'+(suspects.length>1?'s':'')+' à relire');
-  if(licf.length)desc.push(licf.length+' fichier'+(licf.length>1?'s':'')+' de licence');
-  const payants=out.filter(function(a){return a.pay;}).length;
-  if(payants)desc.push(payants+' licence'+(payants>1?'s':'')+' à prévoir');
-  const pst=mails.filter(function(m){return m.pr==='high';}).length;
-  if(pst)desc.push(pst+' archive'+(pst>1?'s':'')+' Outlook');
-  if(vms.length)desc.push(vms.length+' machine'+(vms.length>1?'s':'')+' virtuelle'+(vms.length>1?'s':''));
-  if(vpns.length)desc.push(vpns.length+' VPN');
-  const chiffres=blk.filter(function(b){return b.pr==='high';}).length;
-  if(chiffres)desc.push('disque chiffré');
-  const nbWifi=(Array.isArray(inv.wifi)?inv.wifi.length:0);
-  if(nbWifi)desc.push(nbWifi+' réseau'+(nbWifi>1?'x':'')+' Wi-Fi');
-  const nbPol=(Array.isArray(inv.polices)?inv.polices.length:0);
-  if(nbPol)desc.push(nbPol+' police'+(nbPol>1?'s':'')+' ajoutée'+(nbPol>1?'s':''));
-  const nbImp=(Array.isArray(inv.imprimantes)?inv.imprimantes.length:0);
-  if(nbImp)desc.push(nbImp+' imprimante'+(nbImp>1?'s':''));
-  const licsOem=lics.filter(function(l){return l.pr==='high';}).length;
-  if(licsOem)desc.push(licsOem+' licence'+(licsOem>1?'s':'')+' qui ne suivra'+(licsOem>1?'ient':'')+' pas');
-  // Ce que le scan a mesuré, pas ce que la checklist réclame par ailleurs :
-  // les chemins écrits à la main n'ont pas de taille. Découvrir la clé pleine
-  // au milieu de la copie coûte une soirée.
-  const aPrevoir=Number(inv.aPrevoirMo);
-  if(isFinite(aPrevoir)&&aPrevoir>0)desc.push('prévoir '+fmtMo(aPrevoir)+' sur la clé');
+  // Le numéro de série de l'ancien PC. Ce n'est pas un secret — il est imprimé
+  // sous la machine — mais il ne se retrouve plus une fois le disque effacé,
+  // et c'est lui qu'on cite au SAV du constructeur pour ses pilotes.
+  if(typeof machine.serie==='string'&&machine.serie.trim())
+    desc.push('série '+String(machine.serie).trim());
+  const nbPil=Array.isArray(inv.pilotesTiers)?inv.pilotesTiers.length:0;
+  if(nbPil)desc.push(nbPil+' pilote'+(nbPil>1?'s':'')+' non-Microsoft');
   return {
     meta:{version:1,nom:'Migration PC — inventaire importé',soustitre:desc.join(' · ')},
     cats:cats,
     npc:PROFIL_DEFAUT.npc,
     apps:out,
-    data:donnees,
     pwa:pwa,
     ordre:[],
     requetes:{}
   };
 }
-
-// Un dossier de configuration repéré par le scanner devient une ligne de
-// l'onglet « Données ». Les clés et les trousseaux passent en priorité haute
-// et portent l'avertissement qui va avec : ce sont des secrets, pas des
-// réglages.
-// Les gros dossiers releves sur le disque. Le script mesure, la page decide :
-// elle seule connait la checklist, donc elle seule peut dire lequel de ces
-// dossiers est deja reclame. Un dossier deja reclame n'est pas ajoute — la
-// ligne existante le couvre — et seuls les autres apparaissent, parce que ce
-// sont eux qu'on oublie.
-function grosDossiersVersDonnees(dossiers,dejaReclames){
-  if(!Array.isArray(dossiers)||!dossiers.length)return [];
-  const reclames=Array.isArray(dejaReclames)?dejaReclames:[];
-  const out=[];
-  dossiers.forEach(function(d,i){
-    if(!d||typeof d!=='object')return;
-    const chemin=String(d.chemin==null?'':d.chemin).trim();
-    if(!chemin)return;
-    if(reclames.some(function(p){return recouvre(p,chemin);}))return;
-    const bouts=[];
-    const mo=Number(d.tailleMo);
-    if(isFinite(mo)&&mo>0)bouts.push(fmtMo(mo));
-    // Une mesure interrompue par le budget de temps ne doit pas se faire
-    // passer pour une mesure complete : le dossier est plus gros que dit.
-    if(d.complet===false)bouts.push('mesure partielle, au moins cette taille');
-    bouts.push('repéré sur le disque, absent de la liste');
-    out.push({
-      id:'gros'+(i+1),
-      n:String(d.nom||chemin),
-      pr:'med',
-      p:chemin,
-      note:bouts.join(' · ')
-    });
-  });
-  return out;
-}
-
-// Les cles de signature trouvees sur le disque. Elles passent en priorite
-// haute avec un avertissement : perdre un keystore de release oblige a passer
-// par la procedure de reinitialisation de cle de l'editeur, et un debug
-// keystore perdu fait changer la signature de tous les builds de debug.
-function precieuxVersDonnees(precieux,dejaReclames){
-  if(!Array.isArray(precieux)||!precieux.length)return [];
-  const reclames=Array.isArray(dejaReclames)?dejaReclames:[];
-  const out=[];
-  precieux.forEach(function(f,i){
-    if(!f||typeof f!=='object')return;
-    const chemin=String(f.chemin==null?'':f.chemin).trim();
-    if(!chemin)return;
-    if(reclames.some(function(p){return recouvre(p,chemin);}))return;
-    const bouts=[];
-    const ko=Number(f.tailleKo);
-    if(isFinite(ko)&&ko>0)bouts.push(Math.round(ko)+' Ko');
-    bouts.push('trouvé sur le disque');
-    out.push({
-      id:'cle'+(i+1),
-      n:String(f.nom||chemin),
-      pr:'high',
-      p:chemin,
-      note:bouts.join(' · '),
-      warn:'Ne se recrée pas. Perdu, il faut passer par la procédure de réinitialisation de clé de l\'éditeur, et les applications déjà installées ne peuvent plus être mises à jour.'
-    });
-  });
-  return out;
-}
-
-// Les dossiers qui RESSEMBLENT a des logiciels portables. Le mot compte :
-// rien ne permet de distinguer a coup sur un logiciel pose sans installateur
-// d'un dossier qui contient un .exe. On le dit, plutot que de presenter une
-// supposition comme un constat — c'est la regle du projet partout ailleurs.
-//
-// Ils ne se reinstallent pas : ils se copient. Leur place est donc ici, avec
-// les dossiers a emporter, et non parmi les applications.
-function portablesVersDonnees(portables,dejaReclames){
-  if(!Array.isArray(portables)||!portables.length)return [];
-  const reclames=Array.isArray(dejaReclames)?dejaReclames:[];
-  const out=[];
-  portables.forEach(function(p,i){
-    if(!p||typeof p!=='object')return;
-    const chemin=String(p.chemin==null?'':p.chemin).trim();
-    if(!chemin)return;
-    if(reclames.some(function(q){return recouvre(q,chemin);}))return;
-    const exes=Array.isArray(p.exes)?p.exes.filter(function(e){return e;}):[];
-    const bouts=[];
-    if(exes.length)bouts.push(exes.slice(0,3).join(', '));
-    bouts.push('aucun installateur ne le connaît : à copier, pas à réinstaller');
-    out.push({
-      id:'port'+(i+1),
-      n:String(p.nom||chemin),
-      pr:'med',
-      p:chemin,
-      note:bouts.join(' · '),
-      warn:'Supposition, pas un constat : ce dossier contient un exécutable, ce qui ne prouve pas que ce soit un logiciel portable. À relire.'
-    });
-  });
-  return out;
-}
-
-// Les licences relevées par WMI. Une seule chose compte ici et elle tient en
-// un mot : est-ce que la licence suit la machine ? Une Windows OEM est mariée
-// à la carte mère de l'ancien PC, elle ne suit pas ; une Retail suit. C'est
-// exactement ce qu'on découvre trop tard, une fois l'ancienne machine
-// démontée, et ça n'apparaissait nulle part dans la checklist.
-//
-// La clé partielle est les cinq derniers caractères, ce que Windows affiche
-// lui-même dans ses paramètres. Elle ne réinstalle rien et n'ouvre rien : on
-// l'affiche pour reconnaître la licence, pas pour s'en servir.
-function licencesVersDonnees(licences){
-  if(!Array.isArray(licences)||!licences.length)return [];
-  const out=[];
-  licences.forEach(function(l,i){
-    if(!l||typeof l!=='object')return;
-    const nom=String(l.nom||'').trim();
-    if(!nom)return;
-    const bouts=[];
-    if(l.canal)bouts.push('canal '+String(l.canal));
-    if(l.etat)bouts.push(String(l.etat));
-    if(l.clePartielle)bouts.push('se termine par '+String(l.clePartielle));
-    bouts.push('relevé par le scan');
-    const e={
-      id:'lic'+(i+1),
-      n:'Licence : '+nom,
-      // Le chemin, ici, c'est où l'utilisateur va vérifier lui-même.
-      p:'Paramètres → Système → Activation',
-      // Une licence qui ne suit pas est la seule qui demande une décision
-      // avant d'acheter la machine neuve.
-      pr:(l.suitLeMateriel===false)?'high':'med',
-      note:(l.quoi?String(l.quoi)+' · ':'')+bouts.join(' · '),
-      scan:'licences'
-    };
-    if(l.suitLeMateriel===false)
-      e.warn='Cette licence ne suivra pas sur la machine neuve : prévois-en une avant de démonter l\'ancienne.';
-    out.push(e);
-  });
-  return out;
-}
-
-// Les fichiers qui SONT une licence : rarreg.key pour WinRAR, wincmd.key pour
-// Total Commander. Quelques centaines d'octets, et rien ne les reconstitue —
-// perdus, il faut repasser par l'éditeur. Le scan relève leur chemin, jamais
-// leur contenu : l'inventaire voyage sur une clé USB, et une clé de licence
-// lisible dedans serait une clé de licence perdue. Le même avertissement vaut
-// pour la copie, d'où le warn.
-function fichiersLicenceVersDonnees(fichiers,dejaReclames){
-  if(!Array.isArray(fichiers)||!fichiers.length)return [];
-  const reclames=Array.isArray(dejaReclames)?dejaReclames:[];
-  const out=[];
-  fichiers.forEach(function(f,i){
-    if(!f||typeof f!=='object')return;
-    const chemin=String(f.chemin==null?'':f.chemin).trim();
-    if(!chemin)return;
-    if(reclames.some(function(p){return recouvre(p,chemin);}))return;
-    const bouts=[];
-    if(f.quoi)bouts.push(String(f.quoi));
-    const ko=Number(f.tailleKo);
-    if(isFinite(ko)&&ko>0)bouts.push(ko+' Ko');
-    bouts.push('trouvé sur le disque');
-    out.push({
-      id:'licf'+(i+1),
-      n:'Licence '+String(f.nom||chemin),
-      pr:'high',
-      p:chemin,
-      note:bouts.join(' · '),
-      scan:'payants',
-      warn:'Ce fichier est la licence elle-même : qui l\'a, l\'a. À copier sur un support que tu ne perds pas, pas sur la clé USB qui se balade.'
-    });
-  });
-  return out;
-}
-
 // ═══ L'ONGLET « RESTE À FAIRE » ═══
 //
 // Deux vies dans le même onglet, parce que la procédure en a deux. Sur le PC
@@ -3952,33 +3137,27 @@ function etatPreparation(){
         :'Pris le '+String(inv.genere).slice(0,10)+'.')
   });
 
-  const configs=(inv&&Array.isArray(inv.configs))?inv.configs.length:0;
+  const apps=(inv&&Array.isArray(inv.apps))?inv.apps.length:0;
   points.push({
-    cle:'configs',
-    nom:'Les dossiers de réglages sont copiés',
-    // Le scan ne copie rien : il liste. La copie est un second script, et
-    // confondre les deux est la seule façon de perdre des données ici.
-    etat:configs?'avérifier':'sansobjet',
-    quoi:configs
-      ?configs+' dossier'+(configs>1?'s':'')+' de réglages repéré'+(configs>1?'s':'')
-        +'. Le scan les a LISTÉS, il ne les a pas copiés : lance sauvegarder-configs.ps1, '
-        +'puis verifier-sauvegardes.ps1 pour les relire depuis la copie.'
-      :'Aucun dossier de réglages repéré sur cette machine.'
+    cle:'apps',
+    nom:'La liste des logiciels est relevée',
+    etat:apps?'ok':'manque',
+    quoi:apps
+      ?apps+' logiciel'+(apps>1?'s':'')+' relevé'+(apps>1?'s':'')
+        +'. C\'est cette liste que la machine d\'arrivée devra retrouver.'
+      :'Aucun logiciel dans l\'instantané. Relance le scan sur cette machine.'
   });
 
-  const aPrevoir=Number(inv&&inv.aPrevoirMo);
-  const gros=(inv&&Array.isArray(inv.dossiers))?inv.dossiers.length:0;
   points.push({
     cle:'donnees',
     nom:'Tes fichiers personnels sont sur un autre support',
-    // Personne ne veut qu'un script décide tout seul de déplacer quatre-vingts
-    // gigaoctets. La page mesure et rappelle ; c'est toi qui copies.
+    // Ce programme ne sauvegarde rien et ne prétend pas le faire. Le dire ici
+    // est la seule chose utile qu'il puisse faire avant un formatage.
     etat:'avérifier',
-    quoi:(isFinite(aPrevoir)&&aPrevoir>0
-      ?fmtMo(aPrevoir)+' mesurés à emporter'+(gros?', plus '+gros+' gros dossier'+(gros>1?'s':''):'')+'. '
-      :'')
-      +'Photos, documents, projets, machines virtuelles : aucun script ne les copie à ta place. '
-      +'L\'onglet Données dit lesquels et combien ils pèsent.'
+    quoi:'Photos, documents, projets, réglages : ce programme ne les voit pas '
+      +'et ne les copie pas. Il ne s\'occupe que des logiciels et des pilotes. '
+      +'La sauvegarde de tes fichiers reste entièrement à ta charge, et c\'est '
+      +'le seul geste irréversible de toute la procédure.'
   });
 
   return points;
@@ -4163,44 +3342,15 @@ function majBadgeReste(){
 // le chemin réel : le nom d'utilisateur diffère souvent d'une machine à
 // l'autre, et comparer « C:\Users\antoni\... » à « C:\Users\Antoni\... »
 // rendrait tout manquant.
+//
+// Une seule famille se compare : les logiciels. Il y en a eu vingt. Le projet
+// promettait alors de suivre les favoris, les polices, les règles de pare-feu
+// et le reste — sans jamais rien copier, donc sans jamais tenir la promesse.
+// Ce qui reste est ce qu'il sait vraiment faire : dire quels logiciels
+// manquent sur la machine d'arrivée.
 const FAMILLES_COMPARABLES=[
   {cle:'apps',nom:'Applications',id:function(e){return cleNom(e.nom);},
-   lib:function(e){return e.nom;},ver:function(e){return e.version;}},
-  {cle:'outils',nom:'Chaînes d\'outils',id:function(e){return String(e.id||'').toLowerCase();},
-   lib:function(e){return e.nom||e.id;},ver:function(e){return e.version;}},
-  {cle:'configs',nom:'Dossiers de réglages',id:cleChemin,lib:function(e){return e.nom;}},
-  {cle:'dossiers',nom:'Gros dossiers',id:cleChemin,lib:function(e){return e.nom;}},
-  {cle:'precieux',nom:'Clés de signature',id:cleChemin,lib:function(e){return e.nom;}},
-  {cle:'portables',nom:'Logiciels portables',id:cleChemin,lib:function(e){return e.nom;}},
-  {cle:'fichiersLicence',nom:'Fichiers de licence',id:cleChemin,lib:function(e){return e.nom;}},
-  {cle:'mail',nom:'Archives mail',id:cleChemin,lib:function(e){return e.nom;},
-   // Un cache .ost se refait tout seul : l'attendre sur la cible ferait
-   // compter comme manquant un fichier que personne ne doit copier.
-   garder:function(e){return !e.cache;}},
-  {cle:'vm',nom:'Machines virtuelles',id:function(e){return String(e.nom||'').toLowerCase();},
-   lib:function(e){return e.nom;}},
-  {cle:'favoris',nom:'Favoris',id:function(e){return (String(e.navigateur||'')+'|'+String(e.profil||'')).toLowerCase();},
-   lib:function(e){return 'Favoris '+String(e.navigateur||'');}},
-  {cle:'vpn',nom:'Connexions VPN',id:function(e){return String(e.nom||'').toLowerCase();},
-   lib:function(e){return e.nom;}},
-  {cle:'wifi',nom:'Réseaux Wi-Fi',id:function(e){return String(e.nom||'').toLowerCase();},
-   lib:function(e){return e.nom;}},
-  {cle:'identifiants',nom:'Identifiants Windows',id:function(e){return String(e.cible||'').toLowerCase();},
-   lib:function(e){return e.cible;}},
-  {cle:'polices',nom:'Polices ajoutées',id:function(e){return String(e.nom||'').toLowerCase();},
-   lib:function(e){return e.nom;}},
-  {cle:'imprimantes',nom:'Imprimantes',id:function(e){return String(e.nom||'').toLowerCase();},
-   lib:function(e){return e.nom;}},
-  {cle:'lecteurs',nom:'Lecteurs réseau',id:function(e){return String(e.cible||'').toLowerCase();},
-   lib:function(e){return (e.lettre?e.lettre+' ':'')+String(e.cible||'');}},
-  {cle:'demarrage',nom:'Lancés au démarrage',id:function(e){return String(e.nom||'').toLowerCase();},
-   lib:function(e){return e.nom;}},
-  {cle:'taches',nom:'Tâches planifiées',id:function(e){return String(e.nom||'').toLowerCase();},
-   lib:function(e){return e.nom;}},
-  {cle:'pareFeu',nom:'Règles de pare-feu',id:function(e){return String(e.nom||'').toLowerCase();},
-   lib:function(e){return e.nom;}},
-  {cle:'associations',nom:'Associations de fichiers',id:function(e){return String(e.extension||'').toLowerCase();},
-   lib:function(e){return e.extension+' → '+String(e.programme||'');}}
+   lib:function(e){return e.nom;},ver:function(e){return e.version;}}
 ];
 
 // Mêmes règles que Get-Cle côté PowerShell : sans ça « Mozilla Firefox (x64
@@ -4216,13 +3366,6 @@ function cleNom(nom){
   return n.replace(/[^a-z0-9]/g,'');
 }
 
-// Le modèle d'abord, le chemin réel en dernier recours.
-function cleChemin(e){
-  const m=String((e&&(e.modele||e.chemin))||'').toLowerCase();
-  return m.replace(/[\\/]+$/,'');
-}
-
-// « 1.2.10 » est plus récent que « 1.2.9 » : une comparaison de texte dirait
 // l'inverse. Rend -1, 0 ou 1, et null quand l'une des deux n'est pas lisible.
 function comparerVersions(a,b){
   const decoupe=function(v){
@@ -4241,8 +3384,7 @@ function comparerVersions(a,b){
 // Les familles qui décrivent la machine plutôt que ce qu'on transporte. Les
 // comparer n'aurait pas de sens : personne n'attend que le PC neuf ait la même
 // carte mère, ni la même licence OEM, que celui qu'on quitte.
-const FAMILLES_ETAT=['machine','materiel','licences','bitlocker','antivirus',
-  'pilotesTiers','controles','web','jeux'];
+const FAMILLES_ETAT=['machine','materiel','pilotesTiers','pilotes','jeux'];
 
 function listeDe(inv,cle){
   const v=inv&&inv[cle];
@@ -4306,22 +3448,6 @@ function comparerInstantanes(source,cible){
       manquants:manquants,differents:differents});
   });
 
-  // Les variables d'environnement sont un dictionnaire, pas une liste.
-  const vsrc=(source.variables&&typeof source.variables==='object')?source.variables:{};
-  const vcib=(cible.variables&&typeof cible.variables==='object')?cible.variables:{};
-  const nomsVar=Object.keys(vsrc);
-  if(nomsVar.length){
-    const manquants=[];
-    let presents=0;
-    nomsVar.forEach(function(n){
-      if(vcib[n])presents++;else manquants.push({id:n,libelle:n});
-    });
-    attendu+=nomsVar.length;
-    arrive+=presents;
-    familles.push({cle:'variables',nom:'Variables d\'environnement',
-      total:nomsVar.length,arrives:presents,manquants:manquants,differents:[]});
-  }
-
   const decrire=function(inv){
     const m=(inv&&inv.machine)||{};
     return {date:String(inv&&inv.genere||'').slice(0,10),
@@ -4330,412 +3456,6 @@ function comparerInstantanes(source,cible){
   return {ok:true,raison:'',familles:familles,
     total:{attendu:attendu,arrive:arrive},
     source:decrire(source),cible:decrire(cible)};
-}
-
-// ═══ Les cinq familles que la checklist réclamait sans détecteur ═══
-
-// Les connexions VPN. Windows rend le nom et le serveur, jamais le mot de
-// passe ; les clients tiers ne rendent qu'un chemin de fichier, et ce fichier
-// contient la clé en clair — d'où l'avertissement.
-function vpnVersDonnees(vpns){
-  if(!Array.isArray(vpns)||!vpns.length)return [];
-  const out=[];
-  vpns.forEach(function(v,i){
-    if(!v||typeof v!=='object')return;
-    const nom=String(v.nom==null?'':v.nom).trim();
-    if(!nom)return;
-    const bouts=[];
-    if(v.quoi)bouts.push(String(v.quoi));
-    if(v.type)bouts.push(String(v.type));
-    bouts.push('relevé par le scan');
-    const e={
-      id:'vpn'+(i+1),
-      n:'VPN : '+nom,
-      pr:v.secret?'high':'med',
-      p:String(v.source&&v.source!=='Windows'?v.source:(v.serveur||'Paramètres → Réseau → VPN')),
-      note:bouts.join(' · '),
-      scan:'vpn'
-    };
-    if(v.secret)e.warn='Ce fichier contient la clé de la connexion en clair : à traiter comme un mot de passe, pas comme un réglage.';
-    out.push(e);
-  });
-  return out;
-}
-
-// Les marque-pages. Un nombre rend la ligne vérifiable : « 412 favoris » se
-// recompte après la migration, « les favoris » ne se vérifie pas.
-function favorisVersDonnees(favoris,dejaReclames){
-  if(!Array.isArray(favoris)||!favoris.length)return [];
-  const reclames=Array.isArray(dejaReclames)?dejaReclames:[];
-  const out=[];
-  favoris.forEach(function(f,i){
-    if(!f||typeof f!=='object')return;
-    const chemin=String(f.chemin==null?'':f.chemin).trim();
-    if(!chemin)return;
-    if(reclames.some(function(q){return recouvre(q,chemin);}))return;
-    const bouts=[];
-    const n=Number(f.nombre);
-    if(isFinite(n)&&n>0)bouts.push(n+' favori'+(n>1?'s':''));
-    if(f.quoi)bouts.push(String(f.quoi));
-    bouts.push('relevé par le scan');
-    const profil=String(f.profil||'');
-    out.push({
-      id:'fav'+(i+1),
-      n:'Favoris '+String(f.navigateur||'')+(profil&&profil!=='Default'?' ('+profil+')':''),
-      pr:'med',
-      p:chemin,
-      note:bouts.join(' · '),
-      scan:'favoris'
-    });
-  });
-  return out;
-}
-
-// Les archives mail. Toute la valeur de cette ligne tient dans une
-// distinction : le .pst n'existe nulle part ailleurs, le .ost se reconstruit
-// tout seul. Les deux vivent côte à côte et se ressemblent.
-function mailVersDonnees(mails,dejaReclames){
-  if(!Array.isArray(mails)||!mails.length)return [];
-  const reclames=Array.isArray(dejaReclames)?dejaReclames:[];
-  const out=[];
-  mails.forEach(function(m,i){
-    if(!m||typeof m!=='object')return;
-    const chemin=String(m.chemin==null?'':m.chemin).trim();
-    if(!chemin)return;
-    if(reclames.some(function(q){return recouvre(q,chemin);}))return;
-    const cache=!!m.cache;
-    const bouts=[];
-    if(m.quoi)bouts.push(String(m.quoi));
-    if(m.tailleMo!=null&&m.tailleMo!=='')bouts.push(fmtMo(m.tailleMo));
-    bouts.push('trouvé sur le disque');
-    const e={
-      id:'mail'+(i+1),
-      n:(cache?'Cache Outlook ':'Archive Outlook ')+String(m.nom||''),
-      pr:cache?'low':'high',
-      p:chemin,
-      note:bouts.join(' · '),
-      scan:'mail'
-    };
-    if(!cache)e.warn='Ces messages ne sont que là. Une fois le disque effacé, aucune reconnexion ne les ramène.';
-    out.push(e);
-  });
-  return out;
-}
-
-// Les machines virtuelles. Elles ne se réinstallent pas, elles se copient —
-// ou se refont. Leur poids décide de la taille du disque à commander, et
-// c'est pour ça qu'on le mesure. Il n'entre pas dans le total « à prévoir sur
-// la clé » : emporter 96 Go de VM est une décision, pas un choix par défaut.
-function vmVersDonnees(vms,dejaReclames){
-  if(!Array.isArray(vms)||!vms.length)return [];
-  const reclames=Array.isArray(dejaReclames)?dejaReclames:[];
-  const out=[];
-  vms.forEach(function(v,i){
-    if(!v||typeof v!=='object')return;
-    const chemin=String(v.chemin==null?'':v.chemin).trim();
-    if(!chemin)return;
-    if(reclames.some(function(q){return recouvre(q,chemin);}))return;
-    const bouts=[];
-    if(v.hyperviseur)bouts.push(String(v.hyperviseur));
-    if(v.tailleMo!=null&&v.tailleMo!=='')bouts.push(fmtMo(v.tailleMo));
-    bouts.push('à copier ou à refaire, pas à réinstaller');
-    out.push({
-      id:'vm'+(i+1),
-      n:'Machine virtuelle '+String(v.nom||chemin),
-      pr:'med',
-      p:chemin,
-      mo:(Number(v.tailleMo)||0)||undefined,
-      note:bouts.join(' · '),
-      scan:'vm'
-    });
-  });
-  return out;
-}
-
-// BitLocker. La seule famille où le scan s'arrête volontairement avant la
-// fin : il dit qu'un volume est chiffré et qu'une clé existe, jamais laquelle.
-// Un mot de passe de récupération dans un inventaire qui voyage sur une clé
-// USB annulerait le chiffrement qu'on vient de constater.
-function bitlockerVersDonnees(volumes){
-  if(!Array.isArray(volumes)||!volumes.length)return [];
-  const out=[];
-  volumes.forEach(function(v,i){
-    if(!v||typeof v!=='object')return;
-    const vol=String(v.volume||'').trim();
-    const bouts=[];
-    if(v.quoi)bouts.push(String(v.quoi));
-    const prot=Array.isArray(v.protecteurs)?v.protecteurs.filter(function(p){return p;}):[];
-    if(prot.length)bouts.push('protecteurs : '+prot.join(', '));
-    const e={
-      id:'blk'+(i+1),
-      n:'BitLocker'+(vol?' — '+vol:''),
-      // Un volume chiffré dont la clé n'est notée nulle part est la panne la
-      // plus définitive de toute la migration.
-      pr:(v.chiffre===false)?'low':'high',
-      p:'Compte Microsoft, ou Panneau de configuration → BitLocker',
-      note:bouts.join(' · '),
-      scan:'bitlocker'
-    };
-    if(v.chiffre!==false)
-      e.warn='Le scan ne relève pas la clé de récupération, et ne la relèvera jamais : elle ouvre le disque à qui la lit. Va la chercher toi-même et note-la ailleurs que sur la clé USB.';
-    out.push(e);
-  });
-  return out;
-}
-
-// ═══ Les treize familles du dernier lot ═══
-//
-// Trois sortes de lignes, et la distinction compte parce qu'elle change ce
-// qu'on promet. Celles qui se copient portent un chemin. Celles qui se
-// ressaisissent portent un nom et disent que le secret reste sur l'ancien PC.
-// Celles qui ne se transportent pas du tout — pare-feu, associations — le
-// disent aussi : la liste sert à re-décider, pas à restaurer.
-
-// Fabrique une ligne de Données à partir d'une entrée quelconque du scan.
-function ligneScan(id,nom,chemin,note,famille,priorite,avert){
-  const e={id:id,n:nom,pr:priorite||'med',p:chemin||'',note:note,scan:famille};
-  if(avert)e.warn=avert;
-  return e;
-}
-
-function imprimantesVersDonnees(imprimantes){
-  if(!Array.isArray(imprimantes)||!imprimantes.length)return [];
-  const out=[];
-  imprimantes.forEach(function(i,n){
-    if(!i||typeof i!=='object')return;
-    const nom=String(i.nom==null?'':i.nom).trim();
-    if(!nom)return;
-    const bouts=[];
-    if(i.quoi)bouts.push(String(i.quoi));
-    if(i.pilote)bouts.push('pilote : '+String(i.pilote));
-    bouts.push('relevé par le scan');
-    out.push(ligneScan('imp'+(n+1),'Imprimante '+nom,
-      String(i.port||''),bouts.join(' · '),'imprimantes','low'));
-  });
-  return out;
-}
-
-// Les noms des réseaux Wi-Fi, jamais les clés. Un nom de réseau est diffusé
-// à la ronde par la box elle-même : ce n'est pas un secret. La clé, si.
-function wifiVersDonnees(reseaux){
-  if(!Array.isArray(reseaux)||!reseaux.length)return [];
-  const noms=reseaux.map(function(r){return r&&r.nom?String(r.nom).trim():'';})
-    .filter(function(n){return n;});
-  if(!noms.length)return [];
-  // Une ligne par réseau ferait vingt lignes pour une seule action : les
-  // reconnecter. Une seule ligne, avec la liste dans la note.
-  return [ligneScan('wifi1','Réseaux Wi-Fi à reconnecter',
-    'Paramètres → Réseau → Wi-Fi',
-    noms.slice(0,12).join(', ')+(noms.length>12?' et '+(noms.length-12)+' autres':'')
-      +' · '+noms.length+' réseau'+(noms.length>1?'x':'')+' relevé'+(noms.length>1?'s':''),
-    'wifi','med',
-    'Le scan relève les noms, jamais les clés : « netsh wlan export profile key=clear » les écrirait en clair, et cet inventaire voyage sur une clé USB. Note les mots de passe ailleurs.')];
-}
-
-function identifiantsVersDonnees(cibles){
-  if(!Array.isArray(cibles)||!cibles.length)return [];
-  const noms=cibles.map(function(c){return c&&c.cible?String(c.cible).trim():'';})
-    .filter(function(n){return n;});
-  if(!noms.length)return [];
-  return [ligneScan('idw1','Identifiants enregistrés dans Windows',
-    'Panneau de configuration → Gestionnaire d\'identification',
-    noms.slice(0,8).join(', ')+(noms.length>8?' et '+(noms.length-8)+' autres':'')
-      +' · '+noms.length+' cible'+(noms.length>1?'s':''),
-    'identifiants','med',
-    'Le scan relève les cibles, jamais les mots de passe. Chacun sera à ressaisir une fois sur la machine neuve.')];
-}
-
-// Une police manquante ne fait pas planter : elle remplace le texte par une
-// autre, et le document ne ressemble plus à rien. C'est la panne silencieuse
-// par excellence.
-function policesVersDonnees(polices){
-  if(!Array.isArray(polices)||!polices.length)return [];
-  const noms=polices.map(function(p){return p&&p.nom?String(p.nom).trim():'';})
-    .filter(function(n){return n;});
-  if(!noms.length)return [];
-  return [ligneScan('pol1','Polices ajoutées à Windows',
-    '%LOCALAPPDATA%\\Microsoft\\Windows\\Fonts',
-    noms.slice(0,10).join(', ')+(noms.length>10?' et '+(noms.length-10)+' autres':'')
-      +' · '+noms.length+' police'+(noms.length>1?'s':'')+' hors Windows',
-    'polices','med',
-    'Une police absente ne provoque aucune erreur : Windows la remplace en silence, et les documents qui s\'en servaient changent d\'allure sans prévenir.')];
-}
-
-function lecteursVersDonnees(lecteurs){
-  if(!Array.isArray(lecteurs)||!lecteurs.length)return [];
-  const out=[];
-  lecteurs.forEach(function(l,i){
-    if(!l||typeof l!=='object')return;
-    const cible=String(l.cible==null?'':l.cible).trim();
-    if(!cible)return;
-    out.push(ligneScan('lec'+(i+1),
-      'Lecteur réseau'+(l.lettre?' '+String(l.lettre):''),
-      cible,String(l.quoi||'')+' · relevé par le scan','lecteurs','med'));
-  });
-  return out;
-}
-
-// Deux usages opposés et aussi utiles : remettre ce qu'on veut retrouver, et
-// ne pas remettre ce qui traînait là depuis trois ans.
-function demarrageVersDonnees(entrees){
-  if(!Array.isArray(entrees)||!entrees.length)return [];
-  const noms=entrees.map(function(e){return e&&e.nom?String(e.nom).trim():'';})
-    .filter(function(n){return n;});
-  if(!noms.length)return [];
-  return [ligneScan('dem1','Programmes lancés au démarrage',
-    'Gestionnaire des tâches → Démarrage',
-    noms.slice(0,10).join(', ')+(noms.length>10?' et '+(noms.length-10)+' autres':'')
-      +' · '+noms.length+' programme'+(noms.length>1?'s':''),
-    'demarrage','low',
-    'À lire dans les deux sens : ce qu\'on veut retrouver, et ce qui traînait là sans qu\'on s\'en souvienne. Une réinstallation est la seule occasion de trancher.')];
-}
-
-function tachesVersDonnees(taches){
-  if(!Array.isArray(taches)||!taches.length)return [];
-  const noms=taches.map(function(t){return t&&t.nom?String(t.nom).trim():'';})
-    .filter(function(n){return n;});
-  if(!noms.length)return [];
-  return [ligneScan('tac1','Tâches planifiées créées sur cette machine',
-    'Planificateur de tâches',
-    noms.slice(0,8).join(', ')+(noms.length>8?' et '+(noms.length-8)+' autres':'')
-      +' · '+noms.length+' tâche'+(noms.length>1?'s':''),
-    'taches','low',
-    'Elles ne suivent pas la migration. Celles de Windows et des logiciels ne sont pas comptées : seules celles rangées à la racine, là où atterrit ce qu\'on crée soi-même.')];
-}
-
-// La liste sert à re-décider, pas à rejouer. Recopier des ouvertures de
-// pare-feu sans les relire est exactement la mauvaise façon de s'en servir.
-function pareFeuVersDonnees(regles){
-  if(!Array.isArray(regles)||!regles.length)return [];
-  const noms=regles.map(function(r){return r&&r.nom?String(r.nom).trim():'';})
-    .filter(function(n){return n;});
-  if(!noms.length)return [];
-  return [ligneScan('pfw1','Ouvertures de pare-feu ajoutées à la main',
-    'Pare-feu Windows → Règles de trafic entrant',
-    noms.slice(0,8).join(', ')+(noms.length>8?' et '+(noms.length-8)+' autres':'')
-      +' · '+noms.length+' règle'+(noms.length>1?'s':'')+' entrante'+(noms.length>1?'s':''),
-    'pareFeu','low',
-    'À relire, pas à recopier : une ouverture entrante qu\'on ne sait plus expliquer ne se refait pas les yeux fermés. Les règles posées par Windows et les installateurs ne sont pas comptées.')];
-}
-
-// Windows signe le choix « ouvrir avec » pour cette machine-ci : il ne se
-// restaure pas, même à la main sur le registre. La ligne ne promet donc que
-// de rappeler quoi refaire.
-function associationsVersDonnees(assos){
-  if(!Array.isArray(assos)||!assos.length)return [];
-  const exts=assos.map(function(a){return a&&a.extension?String(a.extension).trim():'';})
-    .filter(function(e){return e;});
-  if(!exts.length)return [];
-  return [ligneScan('aso1','Associations « ouvrir avec » à refaire',
-    'Paramètres → Applications → Applications par défaut',
-    exts.slice(0,14).join(' ')+(exts.length>14?' et '+(exts.length-14)+' autres':'')
-      +' · '+exts.length+' extension'+(exts.length>1?'s':''),
-    'associations','low',
-    'Windows signe ce choix pour cette machine : il ne se restaure pas, même en recopiant le registre. Cette liste sert à les refaire une fois les logiciels réinstallés.')];
-}
-
-function antivirusVersDonnees(produits){
-  if(!Array.isArray(produits)||!produits.length)return [];
-  const tiers=produits.filter(function(a){return a&&!a.integre&&a.nom;});
-  if(!tiers.length)return [];
-  return tiers.map(function(a,i){
-    return ligneScan('av'+(i+1),'Licence antivirus — '+String(a.nom),
-      'Compte de l\'éditeur',String(a.quoi||''),'antivirus','high',
-      'Presque toujours un abonnement, avec un nombre de postes limité : délie l\'ancien poste avant de le démonter.');
-  });
-}
-
-function compteVersDonnees(compte){
-  const c=String(compte==null?'':compte).trim();
-  if(!c||c.indexOf('@')<0)return [];
-  return [ligneScan('cms1','Ouvrir la session avec ce compte Microsoft',
-    c,'Relevé sur l\'ancien PC · évite de créer un compte local puis de tout refaire',
-    'compte','med')];
-}
-
-// Ce qu'on NE fait PAS : dire quel pilote installer. Il faudrait une table
-// que personne ne tient à jour, et on servirait des liens faux qui ont l'air
-// vrais. Ce qu'on fait : dire quel matériel n'a pas un pilote Microsoft,
-// donc lequel Windows Update ne retrouvera pas forcément tout seul.
-function pilotesTiersVersDonnees(pilotes){
-  if(!Array.isArray(pilotes)||!pilotes.length)return [];
-  const noms=pilotes.map(function(p){
-    if(!p||!p.fournisseur)return '';
-    return String(p.fournisseur)+(p.classe?' ('+String(p.classe)+')':'');
-  }).filter(function(n){return n;});
-  if(!noms.length)return [];
-  return [ligneScan('pil1','Pilotes qui ne viennent pas de Microsoft',
-    'Site du constructeur de la carte mère',
-    noms.slice(0,10).join(', ')+(noms.length>10?' et '+(noms.length-10)+' autres':'')
-      +' · '+noms.length+' fournisseur'+(noms.length>1?'s':''),
-    'pilotesTiers','med',
-    'Windows Update ne les retrouvera pas tous. La liste dit quel matériel chercher, pas quel pilote installer : personne ne tient à jour la table qui ferait ça sans se tromper.')];
-}
-
-function configsVersDonnees(configs){
-  if(!Array.isArray(configs)||!configs.length)return [];
-  const sensible=/clé|cle |ssh|gpg|mot de passe|trousseau/i;
-  return configs.map(function(c,i){
-    const nom=String(c.nom||('Configuration '+(i+1)));
-    const secret=sensible.test(nom)||sensible.test(String(c.quoi||''));
-    const bouts=[];
-    if(c.quoi)bouts.push(String(c.quoi));
-    if(c.tailleMo!=null&&c.tailleMo!=='')bouts.push(fmtMo(c.tailleMo));
-    // Une clé de registre n'est pas un dossier : PuTTY, 7-Zip et WinRAR n'ont
-    // aucun fichier de réglages. Le dire évite de chercher un dossier qui
-    // n'existe pas, et la sauvegarde l'exporte en .reg au lieu de le copier.
-    bouts.push(c.registre?'clé de registre, exportée par le script':'repéré par le scan');
-    const e={
-      id:'cfg'+(i+1),
-      n:nom,
-      pr:secret?'high':'med',
-      p:String(c.chemin||''),
-      note:bouts.join(' · ')
-    };
-    if(secret)e.warn='Contient des secrets : à copier sur un support chiffré, jamais dans un dossier partagé.';
-    return e;
-  });
-}
-
-// « %USERPROFILE%\.ssh » écrit d'avance et « C:\Users\moi\.ssh » constaté
-// désignent le même dossier. On compare la fin du chemin, pas son début : le
-// début est justement ce qui diffère d'une machine à l'autre. Deux segments,
-// parce qu'un seul confondrait tous les dossiers nommés « User ».
-// Un champ « chemin » de l'onglet Donnees peut en porter plusieurs, separes
-// par une virgule ou par « et » : « %USERPROFILE%\Documents, Pictures, Videos »
-// en designe trois. Sans les separer, la comparaison portait sur la chaine
-// entiere et ne reconnaissait aucun des trois — le scan reproposait donc des
-// dossiers deja reclames. verifier-sauvegardes.ps1 applique la meme regle.
-function decouperChemins(p){
-  const brut=String(p==null?'':p);
-  if(!brut.trim())return [];
-  const morceaux=brut.split(/\s+et\s+|,\s*/);
-  const out=[];
-  morceaux.forEach(function(m){
-    const t=m.trim();
-    if(t)out.push(t);
-  });
-  return out;
-}
-
-// Vrai si l'une des deux listes de chemins recouvre l'autre.
-function recouvre(declare,chemin){
-  return decouperChemins(declare).some(function(d){return memeDossier(d,chemin);});
-}
-
-function memeDossier(a,b){
-  const bouts=function(x){
-    return String(x||'').toLowerCase().replace(/\//g,'\\')
-      .replace(/[%][^%]*[%]/g,'').split('\\')
-      .filter(function(m){return m&&m!=='.';});
-  };
-  const A=bouts(a),B=bouts(b);
-  if(!A.length||!B.length)return false;
-  const n=Math.min(2,A.length,B.length);
-  for(let i=1;i<=n;i++){
-    if(A[A.length-i]!==B[B.length-i])return false;
-  }
-  return true;
 }
 
 function fmtMo(mo){
@@ -4749,8 +3469,7 @@ function fmtMo(mo){
 const LIBELLES_CATS={
   dev:'🛠️ Développement',jeux:'🎮 Jeux & Launchers',reseau:'🌐 Réseau & Sécurité',
   bureautique:'📄 Bureautique & Web',media:'🎵 Médias',system:'🔧 Utilitaires Système',
-  comms:'💬 Communication',securite:'🛡️ Sécurité',pilotes:'🎛️ Pilotes & Périphériques',
-  outils:'⚙️ Chaînes d\'outils'
+  comms:'💬 Communication',securite:'🛡️ Sécurité',pilotes:'🎛️ Pilotes & Périphériques'
 };
 
 // ═══ LES DEUX INSTANTANÉS ═══
@@ -4864,13 +3583,8 @@ function traiterDonnees(d,provenance){
       INV_SOURCE=d;
       memoriserInstantane(CLE_SOURCE,d);
       const p=inventaireVersProfil(d);
-      // Ce message disait « Nouveau PC, Données et PWA restent ceux du profil
-      // d'exemple ». C'est devenu faux : le scan alimente maintenant Données
-      // et PWA. Il dit donc ce qui a vraiment changé, en le comptant.
+      // Le message dit ce qui a vraiment changé, en le comptant.
       const dits=[p.apps.length+' applications'];
-      const ajoutsData=p.data.filter(function(e){
-        return /^(cfg|gros|cle|port)/.test(String(e.id));}).length;
-      if(ajoutsData)dits.push(ajoutsData+' entrée'+(ajoutsData>1?'s':'')+' dans Données');
       const ajoutsPwa=p.pwa.filter(function(e){return /^web/.test(String(e.id));}).length;
       if(ajoutsPwa)dits.push(ajoutsPwa+' application'+(ajoutsPwa>1?'s':'')+' web');
       memoriserAnnulation('Inventaire importé : '+dits.join(', ')
@@ -4882,7 +3596,7 @@ function traiterDonnees(d,provenance){
       memoriserAnnulation('Profil importé.'+suffixe,true);
       appliquerProfil(d,true);
       appliquerMateriel(d.materiel,false);
-      dire('Profil importé : '+(NPC_DATA.length+APPS_DATA.length+DATA_SAVES.length+PWA_DATA.length)+' éléments.');
+      dire('Profil importé : '+(NPC_DATA.length+APPS_DATA.length+PWA_DATA.length)+' éléments.');
       return true;
     }
     if(d && d.state){
@@ -5064,7 +3778,7 @@ function setMode(m){
 
 // ═══ TABS ═══
 const LIBELLES_ONGLETS={quitter:'🚪 Avant de quitter',npc:'🖥️ Nouveau PC',
-  apps:'📦 Apps',data:'💾 Données',reste:'🎯 Reste à faire',pwa:'🌍 PWA'};
+  apps:'📦 Apps',reste:'🎯 Reste à faire',pwa:'🌍 PWA'};
 
 function switchTab(t){
   curTab=t;
@@ -5400,7 +4114,7 @@ function basculerDetail(id,evt){
   if(lignesOuvertes[id])delete lignesOuvertes[id];else lignesOuvertes[id]=true;
   // Les deux onglets partagent ce depliage : ne redessiner que « Apps »
   // laissait la ligne de « Donnees » repliee, sans rien dire.
-  renderApps();renderData();
+  renderApps();
 }
 
 // Le panneau de filtres n'est repliable que sur telephone : sur grand ecran
@@ -5425,69 +4139,9 @@ function checkAllCat(cat,evt){
   saveState();renderApps();updateGlobal();checkTabComplete();
 }
 
-// ═══ RENDER DATA ═══
-// L'onglet Donnees porte les memes lignes compactes que l'onglet Apps : ce
-// sont des choses qu'on emporte, decrites par un chemin et une taille, et on
-// en a beaucoup. L'onglet « Avant de quitter » garde sa mise en forme
-// explicative : ses quatorze lignes sont des instructions, chacune avec un
-// paragraphe qui dit pourquoi elle compte, et un tableau les rendrait muettes.
-const LIBELLES_PRIO_DATA={high:'🔴 Critique — sauvegarder en priorité absolue',
-  med:'🟡 Important — à ne pas oublier',
-  ok:'🟢 Optionnel — pratique mais récupérable'};
 
-function renderData(){
-  const groups={high:[],med:[],ok:[]};
-  DATA_SAVES.filter(visibleDansScenario).forEach(function(s){(groups[s.pr]||groups.ok).push(s);});
-  let html='';let first=true;
-  ['high','med','ok'].forEach(function(pr){
-    const grp=groups[pr];if(!grp.length)return;
-    const dn=grp.filter(function(s){return S.checked[s.id];}).length;
-    const allDone=dn===grp.length;
-    html+='<div class="sec-hdr'+(first?' first':'')+'">'+LIBELLES_PRIO_DATA[pr]
-      +'<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+grp.length+'</span>'
-      +'<button class="chk-all" type="button" onclick="checkAllPriorite(\'data\',\''+pr+'\',event)">'
-      +(allDone?'Décocher tout':'Tout cocher')+'</button></div></div>';
-    grp.forEach(function(s){html+=mkDataItem(s);});
-    first=false;
-  });
-  document.getElementById('list-data').innerHTML=html||messageOngletVide('data');
-  updateSecProg('data',DATA_SAVES.filter(visibleDansScenario));
-}
-
-// Le chemin est ce qu'on lit en premier pour savoir de quoi il s'agit : il
-// reste sur la ligne. La note, la cle de licence et les variables
-// d'environnement s'ouvrent au chevron — ce sont des champs qu'on remplit une
-// fois, pas des informations qu'on parcourt.
-function mkDataItem(s){
-  const ck=!!S.checked[s.id];
-  const ouvert=!!lignesOuvertes[s.id];
-  const dt=ck&&S.dates[s.id]?'<span class="item-date">✓ '+fmtDate(S.dates[s.id])+'</span>':'';
-  const aRemplir=!!(s.lic||s.env);
-  const detail=ouvert?'<div class="lg-det" onclick="event.stopPropagation()">'
-      +(s.note?'<p class="lg-det-d">'+esc(s.note)+'</p>':'')
-      +(s.warn?'<div class="warn-badge">⚠️ '+esc(s.warn)+'</div>':'')
-      +mkLicField(s)+mkEnvFields(s)+mkNoteArea(s.id)
-    +'</div>':'';
-  return '<div class="lg-l'+(ck?' done':'')+'">'
-    +'<div class="lg-r" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(s)+'">'
-      +mkChkbox()
-      +'<span class="lg-n">'+esc(libelleDe(s))+dt+'</span>'
-      +'<span class="lg-br" aria-hidden="true"></span>'
-      +'<span class="lg-m">'+(s.p?esc(s.p):'')+'</span>'
-      +'<span class="lg-t">'+(s.mo?esc(fmtMo(s.mo)):'')
-        +(aRemplir?'<span class="badge b-high" title="Un champ à remplir">✎</span>':'')+'</span>'
-      +'<button type="button" class="lg-plus" aria-expanded="'+ouvert+'" '
-        +'aria-label="'+(ouvert?'Masquer':'Afficher')+' le détail de '+esc(libelleDe(s))+'" '
-        +'onclick="basculerDetail(\''+escJS(s.id)+'\',event)">'+(ouvert?'▴':'▾')+'</button>'
-      +mkNoteBtn(s.id)
-    +'</div>'
-    +detail
-  +'</div>';
-}
-
-// « Avant de quitter » partage la mise en forme de « Données » : mêmes
-// groupes de priorité, mêmes champs. Ce qui change est le moment et l'enjeu —
-// ces actions se font sur l'ancien PC et ne se rattrapent pas après coup.
+// « Avant de quitter » : des groupes de priorité, et un paragraphe par ligne.
+// Ces actions se font sur l'ancien PC et ne se rattrapent pas après coup.
 function renderQuitter(){
   renderParPriorite('quitter',QUITTER_DATA,
     {high:'🔴 Irréversible — perdu pour de bon si oublié',
@@ -5579,7 +4233,6 @@ function globalSearch(){
     {label:'🚪 Avant de quitter',items:visiblesDe('quitter').filter(function(x){return libelleDe(x).toLowerCase().indexOf(q)>=0||(x.p||'').toLowerCase().indexOf(q)>=0||(x.note||'').toLowerCase().indexOf(q)>=0;})},
     {label:'🖥️ Nouveau PC',items:visiblesDe('npc').filter(function(x){return libelleDe(x).toLowerCase().indexOf(q)>=0||descDe(x).toLowerCase().indexOf(q)>=0;})},
     {label:'📦 Apps',items:visiblesDe('apps').filter(function(x){return libelleDe(x).toLowerCase().indexOf(q)>=0||(x.w&&x.w.toLowerCase().indexOf(q)>=0)||descDe(x).toLowerCase().indexOf(q)>=0;})},
-    {label:'💾 Données',items:visiblesDe('data').filter(function(x){return libelleDe(x).toLowerCase().indexOf(q)>=0||x.p.toLowerCase().indexOf(q)>=0;})},
     {label:'🌍 PWA',items:visiblesDe('pwa').filter(function(x){return libelleDe(x).toLowerCase().indexOf(q)>=0;})}
   ];
   const total=sections.reduce(function(s,x){return s+x.items.length;},0);
@@ -5711,37 +4364,6 @@ function mkPilotesManquants(d){
     +'</div>'+lignes+'</div>';
 }
 
-// Quatre contrôles qui ne concernent que la machine neuve. Aucun ne se voit à
-// l'œil nu, et les quatre se découvrent une fois le délai de retour passé :
-// la mémoire bridée faute d'XMP, TRIM coupé, Secure Boot ou le TPM éteints, et
-// surtout un SSD « neuf » dont le compteur d'heures dit le contraire.
-//
-// On n'affiche que ce qui demande une action ou reste indéterminé. Répéter
-// quatre « tout va bien » noierait le seul point qui compte le jour où il y en
-// a un.
-function mkControles(d){
-  const liste=Array.isArray(d&&d.controles)?d.controles:[];
-  if(!liste.length)return '';
-  const aVoir=liste.filter(function(c){return c&&(c.etat==='attention'||c.etat==='inconnu');});
-  if(!aVoir.length)return '';
-  const soucis=aVoir.filter(function(c){return c.etat==='attention';}).length;
-  const lignes=aVoir.map(function(c){
-    const marque=c.etat==='attention'?'⚠️':'❔';
-    return '<div class="pil-item"><div class="pil-txt">'
-      +'<div class="pil-nom">'+marque+' '+esc(String(c.nom||''))+'</div>'
-      +'<div class="pil-quoi">'+esc(String(c.constat||''))+'</div>'
-      +'<div class="pil-quoi">'+esc(String(c.quoi||''))+'</div>'
-      +'</div></div>';
-  }).join('');
-  const titre=soucis
-    ?soucis+' point'+(soucis>1?'s':'')+' à regarder sur cette machine'
-    :'Contrôles à confirmer';
-  return '<div class="pilotes"><div class="pil-titre">🔧 '+esc(titre)+'</div>'
-    +'<div class="pil-sous">Ces réglages ne se voient pas à l\'usage. '
-    +'Le moment de les corriger, c\'est maintenant — pas après le délai de retour.</div>'
-    +lignes+'</div>';
-}
-
 function estVerification(d){
   return !!(d&&d.type==='verification-migration-pc'&&Array.isArray(d.trouves));
 }
@@ -5754,7 +4376,7 @@ function afficherVerification(d){
   const bloc=document.getElementById('verif');
   if(!bloc)return;
   appliquerMateriel(d.materiel,true);
-  const pilotes=mkControles(d)+mkPilotesManquants(d);
+  const pilotes=mkPilotesManquants(d);
   const index=indexParId();
   // On ne propose que ce qui existe dans le profil chargé et n'est pas déjà coché.
   const proposables=d.trouves.filter(function(t){return index[t.id]&&!S.checked[t.id];});
@@ -5851,7 +4473,6 @@ function fileGuide(){
     ['Avant de quitter',visiblesDe('quitter')],
     ['Nouveau PC',visiblesDe('npc').slice().sort(function(a,b){return (a.o||0)-(b.o||0);})],
     ['Apps',visiblesDe('apps')],
-    ['Données',visiblesDe('data')],
     ['PWA',visiblesDe('pwa')]
   ];
   const file=[];
@@ -6161,7 +4782,6 @@ function renderAll(){
   proteger('Avant de quitter',renderQuitter);
   proteger('Nouveau PC',renderNPC);
   proteger('Apps',renderApps);
-  proteger('Données',renderData);
   proteger('PWA',renderPWA);
   proteger('Boutons suivant',updateNextBtns);
   proteger('Positions',marquerPositions);
@@ -6221,16 +4841,10 @@ function remiseAZero(){
 const OUTILS=[
   {f:'Migration PC.bat',n:'▶ Par où commencer',
    d:'Le seul fichier à double-cliquer. Il demande sur quelle machine vous êtes et lance ce qu\'il faut. Les autres sont là pour être lus, pas pour être lancés à la main.'},
-  {f:'scripts/sauvegarder-configs.ps1',n:'Emporter mes réglages',
-   d:'Copie les dossiers de configuration de vos logiciels vers la clé, avec un index de ce qui vient d\'où.'},
-  {f:'scripts/restaurer-configs.ps1',n:'Remettre mes réglages',
-   d:'Les repose à leur place sur le nouveau PC. Refuse d\'écraser par défaut, et met l\'existant de côté sinon.'},
-  {f:'scripts/verifier-sauvegardes.ps1',n:'Vérifier les sauvegardes',
-   d:'Compare une copie à son original : fichier par fichier, taille par taille. Une sauvegarde non relue n\'est pas une sauvegarde.'},
   {f:'scripts/scan-pc.ps1',n:'scan-pc.ps1',
    d:'Le releve, des deux cotes : « -Role source » fige le PC qu\'on quitte, « -Role cible » constate celui qu\'on equipe.'},
   {f:'scripts/lib-detection.ps1',n:'lib-detection.ps1',
-   d:'La détection partagée. Sans ce fichier à côté, les trois scripts s\'arrêtent.'},
+   d:'La détection partagée. Sans ce fichier à côté, le scan s\'arrête.'},
   {f:'scripts/migration-pc.ps1',n:'migration-pc.ps1',d:'Le menu, appelé par « Migration PC.bat ».'},
   {f:'scripts/lanceur-actions.ps1',n:'lanceur-actions.ps1',d:'Ce que le lanceur propose, et ce qu\'il vérifie avant.'},
   {f:'scripts/ecrire-resultat.ps1',n:'ecrire-resultat.ps1',
@@ -6687,7 +5301,7 @@ function wingetVersProfil(d){
     meta:{version:1,nom:'Migration PC — export winget',
       soustitre:apps.length+' paquets winget'+(quand?' · export du '+quand:'')},
     cats:cats,apps:apps,
-    npc:PROFIL_DEFAUT.npc,data:PROFIL_DEFAUT.data,pwa:PROFIL_DEFAUT.pwa,
+    npc:PROFIL_DEFAUT.npc,pwa:PROFIL_DEFAUT.pwa,
     ordre:[],requetes:{}
   };
 }
@@ -6755,10 +5369,6 @@ function exportTxt(){
     liste.forEach(function(a){
       lines.push('  '+marque(a)+' '+libelleDe(a)+(a.w?' (winget : '+a.w+')':'')+note(a.id));
     });
-  });
-  lines.push('','=== DONNÉES ===');
-  visiblesDe('data').forEach(function(e){
-    lines.push(marque(e)+' '+libelleDe(e)+(e.p?'\n    '+e.p:'')+note(e.id));
   });
   lines.push('','=== PWA ===');
   visiblesDe('pwa').forEach(function(e){lines.push(marque(e)+' '+libelleDe(e)+note(e.id));});
@@ -6851,7 +5461,6 @@ function updateNextBtns(){
     {id:'quitter',data:visiblesDe('quitter'),btnId:'next-quitter-btn',cntId:'next-quitter-count'},
     {id:'npc',data:visiblesDe('npc'),btnId:'next-npc-btn',cntId:'next-npc-count'},
     {id:'apps',data:visiblesDe('apps'),btnId:'next-apps-btn',cntId:'next-apps-count'},
-    {id:'data',data:visiblesDe('data'),btnId:'next-data-btn',cntId:'next-data-count'},
   ];
   tabs.forEach(function(t){
     var btn=document.getElementById(t.btnId);

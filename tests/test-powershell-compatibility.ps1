@@ -41,15 +41,22 @@ ok 'aucun script sans marqueur' ($sansBom -join ', ') ''
 ok 'tous parsent'               ($neParsePas -join ' | ') ''
 
 "`n--- le texte accentue survit ---"
-# La table des configurations porte des noms accentues qui finissent dans le
-# JSON, puis dans la page. C'est la que l'encodage se voit vraiment.
+# Les textes du lanceur sont ce que les gens lisent dans la console. C'est la
+# que l'encodage se voit vraiment.
 . (Join-Path $racine 'scripts/lib-detection.ps1')
-$avecAccent = @($ConfigsConnues | Where-Object { $_.nom -match '[^\x00-\x7F]' })
-ok 'des noms accentues existent'  ($avecAccent.Count -gt 0) $true
+. (Join-Path $racine 'scripts/lanceur-actions.ps1')
+$textesLanceur = @()
+foreach ($a in @(Get-ActionsMigration -Racine (Join-Path $racine 'scripts'))) {
+    $textesLanceur += $a.titre
+    $textesLanceur += $a.detail
+    $textesLanceur += @($a.suite)
+}
+$textesLanceur += (Get-Parcours)
+$avecAccent = @($textesLanceur | Where-Object { $_ -match '[^\x00-\x7F]' })
+ok 'des textes accentues existent'  ($avecAccent.Count -gt 0) $true
 # Mojibake : la marque d'un UTF-8 relu comme de l'ANSI.
-$abimes = @($avecAccent | Where-Object { $_.nom -match 'Ã|Â|â€' })
-ok 'aucun nom abime'              ($abimes.Count) 0
-ok 'les cles SSH gardent leur accent' (@($ConfigsConnues | Where-Object { $_.nom -eq 'Clés SSH' })).Count 1
+$abimes = @($avecAccent | Where-Object { $_ -match 'Ã|Â|â€' })
+ok 'aucun texte abime'              ($abimes.Count) 0
 
 "`n--- constructions a eviter ---"
 # Une apostrophe dans une chaine interpolee passe partout, mais une apostrophe

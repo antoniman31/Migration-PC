@@ -18,13 +18,13 @@ lancer() {
 # Meme ordre que .github/workflows/ci.yml
 for t in profil-sync checklist winget inventaire-etendu dependances reconciliation archive; do
   lancer node "tests/test-$t.js"; done
-for t in scan sauvegardes lanceur configs-aller-retour powershell-compatibility; do
+for t in scan lanceur powershell-compatibility; do
   lancer pwsh -File "tests/test-$t.ps1"; done
-for t in navigateur verification-pc pwa; do lancer node "tests/test-$t.js"; done
+for t in navigateur pwa; do lancer node "tests/test-$t.js"; done
 printf '%-46s ' 'STRICT=1 tests/test-mobile.js'
 if STRICT=1 node tests/test-mobile.js >/tmp/mpc-ci.log 2>&1; then echo OK; else
   echo ECHEC; ech=$((ech+1)); tail -8 /tmp/mpc-ci.log|sed 's/^/    /'; fi
-for t in accessibilite guide quitter scenarios reinit menu profil-hostile sauvegarde debut config outils; do
+for t in accessibilite guide quitter scenarios reinit menu profil-hostile debut config; do
   lancer node "tests/test-$t.js"; done
 echo
 if [ "$ech" -gt 0 ]; then echo "$ech ETAPE(S) EN ECHEC"; exit 1; fi

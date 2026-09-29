@@ -116,8 +116,8 @@ if(f2){
   ok('le fichier porte l\'intitulé du scénario',txt.indexOf('INTITULE-REINSTALL')>=0,true);
   ok('et pas celui de l\'autre mode',txt.indexOf('RESERVE-MIGRATION')<0,true);
   ok('il nomme le cas en tête',txt.indexOf('Cas :')>=0,true);
-  ok('les cinq sections y sont',
-    ['AVANT DE QUITTER','NOUVEAU PC','APPS','DONNÉES','PWA']
+  ok('les quatre sections y sont',
+    ['AVANT DE QUITTER','NOUVEAU PC','APPS','PWA']
       .every(t=>txt.indexOf(t)>=0),true);
 }
 await pg.evaluate(()=>{

@@ -45,7 +45,7 @@ console.log('--- les deux formats coexistent ---');
 // Les dependances relient des applications entre elles : elles vivent dans
 // le profil de demonstration depuis que la checklist livree n'en porte plus.
 const profil=JSON.parse(fs.readFileSync(path.join(racine,'presets','demonstration.json'),'utf8'));
-const tous=[].concat(profil.npc,profil.apps,profil.data,profil.pwa);
+const tous=[].concat(profil.npc,profil.apps,profil.pwa);
 const enTableau=tous.filter(e=>Array.isArray(e.dep));
 const enTexte=tous.filter(e=>e.dep&&!Array.isArray(e.dep));
 ok('le profil a des dépendances en tableau',enTableau.length>0,true);

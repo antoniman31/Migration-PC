@@ -50,7 +50,7 @@ ok('profil embarqué identique à presets/exemple.json',
 // elements, et la progression devient fausse sans que rien ne le signale.
 // « quitter » est facultatif : un profil qui ne la déclare pas reste valide.
 const tous=[].concat(fichier.quitter||[],fichier.npc||[],fichier.apps||[],
-                     fichier.data||[],fichier.pwa||[]);
+                     fichier.pwa||[]);
 const vus=new Set(),doublons=[];
 tous.forEach(function(e){if(vus.has(e.id))doublons.push(e.id);vus.add(e.id);});
 ok('identifiants uniques sur les quatre onglets',doublons.length===0,doublons.join(', '));
@@ -62,7 +62,7 @@ const prioValides=['high','med','ok'];
 const mauvaisePrio=(fichier.apps||[]).concat(fichier.npc||[]).filter(function(e){return e.p&&prioValides.indexOf(e.p)<0;});
 ok('priorités valides',mauvaisePrio.length===0,mauvaisePrio.map(e=>e.id+'='+e.p).join(', '));
 
-const mauvaisePr=(fichier.data||[]).concat(fichier.quitter||[])
+const mauvaisePr=(fichier.quitter||[])
   .filter(function(e){return prioValides.indexOf(e.pr)<0;});
 ok('priorités de sauvegarde valides',mauvaisePr.length===0,mauvaisePr.map(e=>e.id+'='+e.pr).join(', '));
 
@@ -140,47 +140,16 @@ ok('catégories déclarées',catsInconnues.length===0,catsInconnues.map(a=>a.id+
 
 const ids=new Set(tous.map(e=>e.id));
 const ordreInconnu=(fichier.ordre||[]).filter(function(id){return !ids.has(id);});
-// ── Ce que le scanner couvre, et ce qu'il ne couvre pas ──────────────────
-// La checklist a été écrite à la main d'abord ; le scanner est arrivé après et
-// n'en couvre qu'une partie. Rien ne disait « cette ligne prétend être
-// vérifiable, mais aucun détecteur ne la regarde » — le même sens manquant qui
-// avait laissé `ecrire-resultat.ps1` hors de la liste de téléchargement.
-//
-// Chaque ligne de Données déclare donc l'une de trois choses :
-//   une couverture qui existe  — un détecteur la remplit aujourd'hui
-//   « attendu:xxx »            — c'est scannable, le détecteur reste à écrire
-//   « manuel »                 — personne ne scannera ça, et c'est assumé
+// ── Ce que le scanner couvre ─────────────────────────────────────────────
+// Le projet ne promet plus que deux choses : les logiciels et les pilotes. La
+// table des couvertures le dit, et ce contrôle refuse qu'elle se remette à
+// enfler sans qu'on l'ait décidé.
 const lib=fs.readFileSync(path.join(racine,'scripts','lib-detection.ps1'),'utf8');
 const blocCouv=(lib.match(/\$CouverturesScan\s*=\s*\[ordered\]@\{([\s\S]*?)\n\}/)||[,''])[1];
 const couvertures=(blocCouv.match(/^\s*([A-Za-z]+)\s*=/gm)||[]).map(m=>m.trim().replace(/\s*=$/,''));
 ok('les couvertures sont déclarées dans lib-detection.ps1',couvertures.length>0,true);
-
-const sansDeclaration=[],couvInconnue=[],attendus=[];
-fichier.data.forEach(e=>{
-  const c=e.scan;
-  if(!c){sansDeclaration.push(e.id);return;}
-  if(c==='manuel')return;
-  if(String(c).startsWith('attendu:')){attendus.push(e.id);return;}
-  if(couvertures.indexOf(c)<0)couvInconnue.push(e.id+'→'+c);
-});
-ok('chaque ligne de Données déclare ce qui la couvre',
-  sansDeclaration.length===0,sansDeclaration.join(', '));
-ok('et aucune ne cite une couverture qui n\'existe pas',
-  couvInconnue.length===0,couvInconnue.join(', '));
-
-// Une ligne qui porte un vrai chemin ne peut pas se dire « manuelle » : si le
-// chemin est là, quelque chose peut aller le voir. C'est ce mélange qui faisait
-// proposer des dossiers que le scan savait déjà trouver.
-const manuelAvecChemin=fichier.data.filter(e=>
-  e.scan==='manuel'&&/%[^%]+%|^[A-Za-z]:\\/.test(String(e.p||''))).map(e=>e.id);
-ok('aucune ligne « manuelle » ne porte un chemin scannable',
-  manuelAvecChemin.length===0,manuelAvecChemin.join(', '));
-
-// Le compte est affiché pour qu'il se voie bouger quand un détecteur arrive.
-console.log('   → '+fichier.data.filter(e=>e.scan==="manuel").length+" manuelles, "
-  +attendus.length+' détecteurs attendus, '
-  +fichier.data.filter(e=>e.scan&&e.scan!=="manuel"&&!String(e.scan).startsWith("attendu:")).length
-  +' couvertes aujourd\'hui');
+const attendues=['apps','jeux','materiel','machine','pilotesTiers'];
+ok('cinq familles, et ces cinq-là',couvertures.slice().sort().join(','),attendues.slice().sort().join(','));
 
 ok("l'ordre conseillé ne cite que des éléments existants",ordreInconnu.length===0,ordreInconnu.join(', '));
 
