@@ -91,6 +91,36 @@ données, le second des consignes d'installation de Windows qu'on trouve partout
 ce programme ne savait pas vérifier. « Reste à faire » a fondu dans « Logiciels », parce
 que la liste des logiciels et la liste de ce qui manque parlent des mêmes lignes.
 
+## Ce qui est parti de l'interface et du lanceur
+
+La page a compté **quatre « cas »** qui filtraient son contenu : migration,
+réinstallation, deux PC, mes affaires. Ils cachaient les étapes de BIOS quand elles ne
+s'appliquaient pas et renommaient « Avant de quitter » quand l'ancienne machine restait
+en service. Après la réduction du projet aux logiciels et aux pilotes, plus un seul
+élément ne portait de mention `cas` : tout le mécanisme filtrait une liste qu'il ne
+réduisait jamais. Les champs `cas`, `alt`, `o`, `post` et `pilote` d'un profil ne sont
+plus lus — un profil qui les porte reste valide, ils sont ignorés.
+
+Il y a eu un onglet **« Reste à faire »** qui portait la comparaison source/cible à part.
+C'était un endroit de plus pour la même chose : la liste des logiciels et la liste de ce
+qui manque parlent des mêmes lignes, et obliger quelqu'un à comprendre laquelle regarder
+n'aide personne.
+
+Il y a eu une **fenêtre graphique** dans le lanceur. Elle était le seul morceau du projet
+qu'aucun test ne pouvait exercer — `System.Windows.Forms` ne se pilote pas sur une machine
+d'intégration sans écran — alors que le menu texte, lui, est lancé et vérifié à chaque
+publication. Un garde-fou qui laisse passer ce qu'il refuse ne sert qu'à décorer.
+
+Il y a eu deux raccourcis numérotés, `1-scanner-ce-pc.bat` et `2-verifier-ce-pc.bat` :
+trois fichiers `.bat` qui se ressemblent, dans un dossier qui en comptait vingt et un,
+désorientaient plus qu'ils n'aidaient. Le menu fait les deux, et il dit lequel choisir.
+
+Enfin, **les 29 étapes de « Nouveau PC »** — BIOS, TPM, Secure Boot, XMP, installation de
+Windows, vérifications matérielles — étaient des consignes génériques qu'on trouve partout
+et que ce programme ne savait pas vérifier. La perte est réelle sur un point : c'était le
+seul endroit qui rappelait d'activer le profil XMP, un réglage qu'on ne voit pas et qui
+coûte 10 à 15 % de performances en silence.
+
 Rien de ce qui est décrit ici n'a été exécuté sur un vrai PC : c'est validé par
 les tests et par le job Windows de la CI, qui vérifient que le code fait ce
 qu'il dit, pas que Windows réponde ce qu'on croit.
