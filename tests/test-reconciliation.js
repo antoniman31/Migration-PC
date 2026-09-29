@@ -248,8 +248,16 @@ G('appliquerProfil')(G('inventaireVersProfil')(source),true);
 vm.runInContext('INV_SOURCE='+JSON.stringify(source)
   +';INV_CIBLE='+JSON.stringify(cible)+';',ctx);
 const avant=G('lignesConstatees()');
-// Trois applications sur quatre : Krita n'est pas arrivé.
-ok('trois lignes constatées présentes',avant.length,3);
+// Deux applications sur quatre sont réglées d'office : Firefox et 7-Zip. Krita
+// n'est pas arrivé, et Visual Studio Code est là en version PLUS ANCIENNE —
+// donc la décision reste à prendre et il n'est pas « réglé ». Sans cette
+// exclusion, il s'affichait réglé et non décochable tout en figurant dans « à
+// installer » : deux affirmations contraires sur la même ligne.
+ok('deux lignes constatées présentes',avant.length,2);
+ok('la régressée n\'en fait pas partie',
+  avant.indexOf(G('APPS_DATA').filter(a=>/Visual Studio Code/.test(a.n))[0].id),-1);
+ok('et elle reste à décider',
+  G('estFait')(G('APPS_DATA').filter(a=>/Visual Studio Code/.test(a.n))[0].id),false);
 ok('elles comptent comme faites',avant.every(id=>G('estFait')(id)),true);
 // Et rien n'a été écrit dans le suivi manuel : c'est tout l'intérêt.
 ok('sans rien écrire dans les cases',
@@ -267,10 +275,31 @@ ok('et la case porte bien la décision',G('S').checked[absente.id],true);
 ok('plus de bouton « cocher le constaté »',
   typeof G('window').cocherLeConstate,'undefined');
 
+// La page ouvre sur la réponse : ce qui manque, et rien d'autre. Elle arrivait
+// avant sur la liste entière groupée par catégorie, et il fallait lire un
+// bandeau pour savoir laquelle des soixante lignes regarder.
+G('renderApps()');
+const vueReponse=G('document').getElementById('list-apps').innerHTML;
+const lignesVueReponse=vueReponse.split('<div class="lg-l').slice(1);
+// Krita manque, Blender a régressé : deux lignes à traiter sur quatre.
+ok('la vue par défaut ne montre que ce qui manque',lignesVueReponse.length,2);
+ok('elle annonce le compte',/2 à installer/.test(vueReponse),true);
+ok('et dit qu\'aucun n\'a d\'identifiant winget',
+  /Aucun de ces logiciels/.test(vueReponse),true);
+ok('donc pas de bouton winget',/exportWingetJSON\(true\)/.test(vueReponse),false);
+ok('avec un passage vers la liste entière',
+  /Voir les 4 logiciels relevés/.test(vueReponse),true);
+ok('aucune ligne constatée dans cette vue',/lg-constate/.test(vueReponse),false);
+
+// La liste entière reste accessible, et c'est là que vivent les constatées.
+G('basculerListeComplete()');
+const htmlApps=G('document').getElementById('list-apps').innerHTML;
+ok('la liste entière montre les quatre',
+  htmlApps.split('<div class="lg-l').slice(1).length,4);
+ok('avec le retour vers ce qui manque',/Revenir à ce qui manque/.test(htmlApps),true);
+
 // La ligne constatée s'affiche réglée et non cliquable : un contrôle qui ne
 // répond pas au clic sans le dire passe pour un défaut.
-G('renderApps()');
-const htmlApps=G('document').getElementById('list-apps').innerHTML;
 ok('la ligne constatée est marquée',/lg-constate/.test(htmlApps),true);
 ok('et annoncée désactivée',/aria-disabled="true"/.test(htmlApps),true);
 ok('le bandeau explique la règle',/r[ée]gl[ée]e?s? d.office/.test(htmlApps),true);
@@ -280,7 +309,7 @@ ok('le bandeau explique la règle',/r[ée]gl[ée]e?s? d.office/.test(htmlApps),t
 // querySelectorAll ne reconstruit pas l'arbre depuis innerHTML.
 const blocsLignes=htmlApps.split('<div class="lg-l').slice(1);
 const cst=blocsLignes.filter(function(b){return /^[^>]*lg-constate/.test(b);});
-ok('des lignes constatées sont rendues',cst.length,3);
+ok('des lignes constatées sont rendues',cst.length,2);
 ok('aucune bascule sur une ligne constatée',
   cst.every(function(b){return !/onclick="toggle/.test(b.split('lg-n')[0]);}),true);
 // Et une ligne encore à décider garde la sienne, sinon on aurait tout bloqué.

@@ -253,6 +253,8 @@ body.compact .item{padding:5px 0}
 .apps-filtres .fbs{display:block}
 .apps-act{display:flex;gap:8px;align-items:center;flex-wrap:wrap;
   padding:12px 20px;border-bottom:.5px solid var(--brd)}
+/* Le passage entre « ce qui manque » et la liste entiere. */
+.voir-tout{padding:14px 20px;border-top:.5px solid var(--brd)}
 .apps-act .search-wrap{flex:1;min-width:150px}
 /* La commande a copier est longue : elle s'enroule au lieu d'etre coupee. */
 .lg-det .b-winget{white-space:normal;text-align:left;word-break:break-all}
@@ -1731,7 +1733,23 @@ function lignesConstatees(){
   (Array.isArray(INV_CIBLE.apps)?INV_CIBLE.apps:[]).forEach(function(a){
     if(a&&a.nom){const c=cleNom(a.nom);if(c)presents[c]=true;}
   });
-  return APPS_DATA.filter(function(a){return presents[cleNom(a.n)];})
+  // Une version PLUS ANCIENNE qu'avant n'est pas un constat de « regle ». Le
+  // logiciel est bien la, mais on veut peut-etre le remettre a niveau, donc la
+  // decision reste a prendre et la case doit rester cliquable.
+  //
+  // Sans cette exclusion, une ligne qui a regresse etait affichee reglee et non
+  // decochable TOUT EN figurant dans « a installer » : deux affirmations
+  // contraires sur la meme ligne. La vue « reponse d'abord » l'a rendu visible.
+  const r=comparerInstantanes(INV_SOURCE,INV_CIBLE);
+  const regressees={};
+  if(r.ok){
+    const fam=r.familles.filter(function(f){return f.cle==='apps';})[0];
+    if(fam)fam.differents.forEach(function(d){regressees[cleNom(d.libelle)]=true;});
+  }
+  return APPS_DATA.filter(function(a){
+      const c=cleNom(a.n);
+      return presents[c]&&!regressees[c];
+    })
     .map(function(a){return a.id;});
 }
 
@@ -2461,6 +2479,54 @@ function renderApps(){
     updateSecProg('apps',visiblesDe('apps'));return;
   }
   let html=tete;
+
+  // ═══ LA REPONSE D'ABORD ═══
+  //
+  // Des qu'on a les deux instantanes, la question a laquelle cette page repond
+  // est « qu'est-ce qu'il me manque ». On arrivait pourtant sur soixante lignes
+  // groupees par categorie, et il fallait lire un bandeau pour savoir laquelle
+  // regarder. La reponse passe devant : les manquants, leur bouton, et le reste
+  // replie derriere un lien.
+  //
+  // Sans scan de la cible il n'y a pas de reponse a donner : la vue groupee
+  // reste, telle quelle.
+  if(etats&&!listeComplete){
+    const manquants=items.filter(function(a){
+      const e=etats.par[cleNom(a.n)];
+      return e&&(e.etat==='manque'||e.etat==='ancienne');
+    });
+    const reste=items.length-manquants.length;
+    if(manquants.length){
+      const avecW=manquants.filter(function(a){return a.w;}).length;
+      html+='<div class="sec-hdr first">'+manquants.length+' à installer'
+        +'<div class="sec-hdr-r">'
+        +(avecW?'<button class="cat-winget" onclick="exportWingetJSON(true)" '
+          +'title="Format officiel winget import — idempotent et rejouable">'
+          +'⬇️ winget .json ('+avecW+')</button>':'')
+        +'</div></div>';
+      manquants.forEach(function(a){html+=mkAppItem(a,etats);});
+      if(!avecW){
+        html+='<div class="cmp-act">Aucun de ces logiciels n\'a d\'identifiant '
+          +'winget : chaque ligne porte un lien de recherche vers le site officiel.</div>';
+      }
+    }else{
+      html+='<div class="sec-hdr first">Rien à installer</div>'
+        +'<div class="cmp-act">Tout ce qui était sur le PC source est là.</div>';
+    }
+    if(reste>0){
+      html+='<div class="voir-tout"><button type="button" class="sm-btn" '
+        +'onclick="basculerListeComplete()">Voir les '+items.length
+        +' logiciels relevés</button></div>';
+    }
+    cont.innerHTML=html;
+    updateSecProg('apps',visiblesDe('apps'));
+    return;
+  }
+  if(etats&&listeComplete){
+    html+='<div class="voir-tout"><button type="button" class="sm-btn" '
+      +'onclick="basculerListeComplete()">← Revenir à ce qui manque</button></div>';
+  }
+
   // Une seule vue : groupee par categorie. Il y a eu quatre tris — categorie,
   // priorite, duree, ordre conseille. Les deux du milieu lisaient des champs
   // inventes et sont partis avec eux ; « ordre conseille » etait un troisieme
@@ -2553,6 +2619,18 @@ function mkAppItem(a,etats){
 // Quelles lignes sont depliees. Volontairement hors de S : c'est un etat
 // d'affichage du moment, il n'a rien a faire dans la progression sauvegardee.
 let lignesOuvertes={};
+// Meme raison : « j'ai demande a voir la liste entiere » est une vue, pas une
+// donnee. Faux au chargement, donc la page ouvre sur la reponse.
+let listeComplete=false;
+function basculerListeComplete(){
+  listeComplete=!listeComplete;
+  renderApps();
+  // Le bouton qu'on vient de cliquer n'existe plus apres le rendu : on remet le
+  // focus sur celui qui l'a remplace, sinon il retombe sur le document et la
+  // navigation au clavier repart du haut de la page.
+  const b=document.querySelector('.voir-tout button');
+  if(b)b.focus();
+}
 function basculerDetail(id,evt){
   evt.stopPropagation();
   if(lignesOuvertes[id])delete lignesOuvertes[id];else lignesOuvertes[id]=true;

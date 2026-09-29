@@ -192,8 +192,15 @@ Trois onglets. **Logiciels** est la liste relevée sur le PC source, par catégo
 version, le poids et la commande qui réinstalle. Dès que le scan du PC cible arrive, la
 même liste change d'état : un bandeau dit combien de logiciels sont là sur combien, et
 chaque ligne porte son verdict — *là*, *manque*, ou *plus ancien* avec les deux versions.
+**La page ouvre sur la réponse.** Dès qu'il y a les deux instantanés, l'onglet Logiciels
+arrive sur « N à installer », les N lignes concernées et le bouton qui produit le fichier
+`winget import` ; la liste complète se replie derrière « Voir les X logiciels relevés ». Sans
+scan de la cible il n'y a pas de réponse à donner, et la liste reste groupée par catégorie.
+
 Une ligne que le scan a trouvée est **réglée d'office** : elle s'affiche cochée et ne se
-décoche pas, parce qu'un constat n'est pas une décision. La case garde son sens entier
+décoche pas, parce qu'un constat n'est pas une décision. Une version **plus ancienne**
+qu'avant fait exception : le logiciel est là, mais on veut peut-être le remettre à niveau,
+donc la ligne reste à décider et figure dans ce qui est à installer. La case garde son sens entier
 avant tout scan de cible, et devient après une décision — installé, ou je m'en passe. Le
 scan n'écrit jamais dans vos cases : rien de ce qui a été coché à la main n'est effacé ni
 contredit en silence. Si un verdict « là » est faux, c'est que le rapprochement par nom
