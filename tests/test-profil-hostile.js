@@ -106,7 +106,7 @@ console.log('\n--- on clique tout ce qui est cliquable ---');
 for(const onglet of ['#tab-apps','#tab-pilotes','#tab-pwa']){
   try{await pg.click(onglet,{timeout:800});}catch(e){}
   await pg.waitForTimeout(150);
-  for(const sel of ['.b-winget','.cat-winget','.chk-all','.note-btn','.lnk-btn','.item','.fb']){
+  for(const sel of ['.b-winget','.cat-winget','.chk-all','.lg-plus','.lnk-btn','.item','.fb']){
     for(const el of (await pg.$$(sel)).slice(0,4)){
       try{await el.click({timeout:800});}catch(e){}
     }

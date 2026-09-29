@@ -99,7 +99,7 @@ fait tomber l'un des deux. Si vous touchez à `cleNom` ou à `Get-CleNom`, touch
 
 `tests/test-navigateur.js` charge la page dans un vrai Chromium et vérifie ce qu'un DOM
 simulé ne voit pas : que les quatre panneaux sont bien frères et non imbriqués, que les
-éléments ont une taille non nulle, que la saisie des clés de licence survit à un
+éléments ont une taille non nulle, que la saisie de la configuration survit à un
 rechargement, et qu'une exception pendant un rendu s'affiche au lieu de disparaître.
 Deux variables d'environnement facultatives : `CHROME` pour pointer un binaire Chromium
 existant, `PROFIL` pour tester votre propre profil à la place de l'exemple (par défaut
@@ -125,7 +125,7 @@ presse-papier, et le fait que ce mode tient les mêmes exigences de contraste, d
 tactile et de clavier que la vue liste.
 
 `tests/test-reinit.js` couvre les deux remises à zéro : que « Tout décocher » ne touche
-ni aux notes, ni aux clés, ni au profil, que « Tout effacer » vide bien les trois clés du
+ni au profil, ni à la configuration matérielle, que « Tout effacer » vide bien les trois clés du
 navigateur et que rien ne revient après un rechargement, et que l'annulation rend dans
 les deux cas ce qui avait été effacé, profil importé compris. Il mesure
 aussi le panneau à 360 px de large, dans les deux thèmes.

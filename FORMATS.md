@@ -49,7 +49,7 @@ page ne montre que ce qu'elle a reçu.
 **Profil** — les listes des deux onglets à cocher. C'est le format de `presets/exemple.json`,
 et celui que produit le bouton 🧩.
 
-**Progression** — les cases cochées, les notes et les dates, sans les listes. C'est ce
+**Progression** — les cases cochées et les dates, sans les listes. C'est ce
 que produit le bouton 💾.
 
 Importer un export winget, un inventaire ou un profil remplace les listes mais conserve
