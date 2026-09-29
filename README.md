@@ -243,8 +243,14 @@ mesure, et le seul de la page que personne ne pouvait vérifier. Une catégorie 
 reste, elle : une erreur de catégorie se voit d'un coup d'œil, une durée fausse ne se voit
 jamais.
 
-**Le menu** contient les actions rares, avec un vrai libellé :
-exporter le profil, réinitialiser, exporter en texte, imprimer. **Réinitialiser…** offre
+**Le menu** contient sept entrées, avec un vrai libellé : importer, exporter le profil,
+affichage compact, thème, ma configuration, imprimer, réinitialiser. Une huitième n'apparaît
+que lorsqu'un fichier de scan attend à côté de la page. Il en a compté seize : deux entrées
+d'import pour un bouton qui reconnaît déjà le format, deux lignes pour un réglage à deux
+états, deux impressions, un export texte que l'impression couvre, une réinitialisation par
+onglet que le panneau fait déjà en plus large, et deux entrées qui vivent désormais dans le
+bandeau de la page vide, là où elles ont un sens. **Exporter le profil** produit un seul
+fichier qui porte les listes **et** les cases cochées. **Réinitialiser…** offre
 deux portées distinctes : *Tout décocher* remet la progression à zéro et laisse le profil et
 votre configuration matérielle en place ; *Tout effacer* vide tout et revient au profil
 d'exemple. Les deux passent par un bandeau d'annulation plutôt que par une boîte de

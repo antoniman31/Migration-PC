@@ -955,24 +955,15 @@ if(location.protocol==='file:'){
       <button class="side-act" type="button" id="menu-btn" onclick="basculerMenu()" aria-expanded="false" aria-haspopup="true" aria-controls="hdr-menu-liste"><span aria-hidden="true">⚙️</span> Réglages</button>
       <div class="hdr-menu-liste" id="hdr-menu-liste" role="menu" aria-label="Réglages">
         <button type="button" role="menuitem" onclick="depuisMenu(importerFichier)"><span class="hdr-menu-ico" aria-hidden="true">📥</span>Importer un fichier…</button>
-        <button type="button" role="menuitem" onclick="depuisMenu(importerScanCible)"><span class="hdr-menu-ico" aria-hidden="true">🎯</span>Importer le scan du PC cible…</button>
-        <button type="button" role="menuitem" onclick="depuisMenu(exportJSON)"><span class="hdr-menu-ico" aria-hidden="true">💾</span>Sauvegarder ma progression</button>
-        <div class="hdr-menu-sep" role="separator"></div>
-        <button type="button" role="menuitem" id="btn-normal" aria-pressed="true" onclick="depuisMenu(function(){setMode('normal');})"><span class="hdr-menu-ico" aria-hidden="true">📋</span>Affichage normal</button>
-        <button type="button" role="menuitem" id="btn-compact" aria-pressed="false" onclick="depuisMenu(function(){setMode('compact');})"><span class="hdr-menu-ico" aria-hidden="true">≡</span>Affichage compact</button>
-        <button type="button" role="menuitem" id="theme-btn" onclick="depuisMenu(toggleTheme)"><span class="hdr-menu-ico" aria-hidden="true" id="theme-ico">🌙</span><span id="theme-lbl">Sombre</span></button>
-        <div class="hdr-menu-sep" role="separator"></div>
-        <button type="button" role="menuitem" onclick="depuisMenu(function(){printTab(curTab);})"><span class="hdr-menu-ico" aria-hidden="true">🖨️</span>Imprimer cet onglet</button>
-        <button type="button" role="menuitem" onclick="depuisMenu(function(){resetSection(curTab);})"><span class="hdr-menu-ico" aria-hidden="true">↺</span>Réinitialiser cet onglet</button>
-        <div class="hdr-menu-sep" role="separator"></div>
         <button type="button" role="menuitem" onclick="depuisMenu(exportProfil)"><span class="hdr-menu-ico" aria-hidden="true">🧩</span>Exporter le profil</button>
-        <button type="button" role="menuitem" id="reglages-btn" onclick="depuisMenu(basculerReglages)"><span class="hdr-menu-ico" aria-hidden="true">♻️</span>Réinitialiser…</button>
-        <button type="button" role="menuitem" onclick="depuisMenu(basculerOutils)"><span class="hdr-menu-ico" aria-hidden="true">⬇️</span>Les scripts pour Windows…</button>
-        <button type="button" role="menuitem" onclick="depuisMenu(chargerDemo)"><span class="hdr-menu-ico" aria-hidden="true">👁️</span>Voir un exemple garni</button>
         <button type="button" role="menuitem" id="scan-rejouer" style="display:none" onclick="depuisMenu(rejouerScanLocal)"><span class="hdr-menu-ico" aria-hidden="true">🔄</span>Recharger le scan de la clé</button>
+        <div class="hdr-menu-sep" role="separator"></div>
+        <button type="button" role="menuitem" id="btn-compact" aria-pressed="false" onclick="depuisMenu(basculerAffichage)"><span class="hdr-menu-ico" aria-hidden="true" id="mode-ico">≡</span><span id="mode-lbl">Affichage compact</span></button>
+        <button type="button" role="menuitem" id="theme-btn" onclick="depuisMenu(toggleTheme)"><span class="hdr-menu-ico" aria-hidden="true" id="theme-ico">🌙</span><span id="theme-lbl">Sombre</span></button>
         <button type="button" role="menuitem" id="config-btn" onclick="depuisMenu(basculerConfig)" aria-expanded="false"><span class="hdr-menu-ico" aria-hidden="true">🔧</span>Ma configuration…</button>
-        <button type="button" role="menuitem" onclick="depuisMenu(exportTxt)"><span class="hdr-menu-ico" aria-hidden="true">📄</span>Exporter en texte</button>
-        <button type="button" role="menuitem" onclick="depuisMenu(function(){window.print();})"><span class="hdr-menu-ico" aria-hidden="true">🖨️</span>Imprimer</button>
+        <div class="hdr-menu-sep" role="separator"></div>
+        <button type="button" role="menuitem" onclick="depuisMenu(function(){printTab(curTab);})"><span class="hdr-menu-ico" aria-hidden="true">🖨️</span>Imprimer</button>
+        <button type="button" role="menuitem" id="reglages-btn" onclick="depuisMenu(basculerReglages)"><span class="hdr-menu-ico" aria-hidden="true">♻️</span>Réinitialiser…</button>
       </div>
     </div>
   </div>
@@ -1489,8 +1480,22 @@ function profilCourant(){
   return p;
 }
 
+// Un seul fichier de sortie, qui porte les listes ET les cases cochees.
+//
+// Il y a eu deux boutons : « Exporter le profil » et « Sauvegarder ma
+// progression ». Le second existait parce que la memoire du navigateur est liee
+// au chemin du fichier : si la lettre de lecteur de la cle change d'un PC a
+// l'autre, la progression ne suit pas. C'est un vrai besoin, donc on ne l'a pas
+// supprime — on l'a fondu. Deux fichiers a ne pas confondre valaient moins
+// qu'un seul qui contient tout.
 function exportProfil(){
-  dl(new Blob([JSON.stringify(profilCourant(),null,2)],{type:'application/json'}),'profil-migration-pc.json');
+  const sortie=Object.assign({},profilCourant(),{state:{
+    checked:Object.assign({},S.checked),
+    dates:Object.assign({},S.dates)
+  }});
+  dl(new Blob([JSON.stringify(sortie,null,2)],{type:'application/json'}),'profil-migration-pc.json');
+  S.lastSave=Date.now();saveState();
+  informer('Profil et progression exportés dans un seul fichier.');
 }
 
 // ═══ INVENTAIRE → PROFIL ═══
@@ -2120,8 +2125,7 @@ function traiterDonnees(d,provenance){
       const dits=[p.apps.length+' applications'];
       const ajoutsPwa=p.pwa.filter(function(e){return /^web/.test(String(e.id));}).length;
       if(ajoutsPwa)dits.push(ajoutsPwa+' application'+(ajoutsPwa>1?'s':'')+' web');
-      memoriserAnnulation('Inventaire importé : '+dits.join(', ')
-        +'. L\'onglet Nouveau PC reste celui du profil d\'exemple : il décrit la machine que vous n\'avez pas encore.'+suffixe,true);
+      memoriserAnnulation('Inventaire importé : '+dits.join(', ')+'.'+suffixe,true);
       appliquerProfil(p,true);
       return true;
     }
@@ -2129,7 +2133,16 @@ function traiterDonnees(d,provenance){
       memoriserAnnulation('Profil importé.'+suffixe,true);
       appliquerProfil(d,true);
       appliquerMateriel(d.materiel,false);
-      dire('Profil importé : '+(APPS_DATA.length+PWA_DATA.length)+' éléments.');
+      // Le meme fichier peut porter les cases cochees. Un profil exporte avant
+      // cette fusion n'en porte pas : on ne touche alors pas a la progression
+      // en cours, ce qui est l'ancien comportement.
+      let reprise='';
+      if(d.state&&typeof d.state==='object'){
+        S={checked:d.state.checked||{},dates:d.state.dates||{},lastSave:null};
+        saveState();updateGlobal();
+        reprise=', dont '+Object.keys(S.checked).length+' cochés';
+      }
+      dire('Profil importé : '+(APPS_DATA.length+PWA_DATA.length)+' éléments'+reprise+'.');
       return true;
     }
     if(d && d.state){
@@ -2294,15 +2307,23 @@ function applyTheme(){document.documentElement.setAttribute('data-theme',isDark?
 function toggleTheme(){isDark=!isDark;try{localStorage.setItem(CLE_THEME,isDark?'dark':'light');}catch(e){}applyTheme();}
 
 // ═══ MODE ═══
+// Une bascule, pas deux entrees. « Affichage normal » et « Affichage compact »
+// etaient deux lignes de menu pour un seul reglage a deux etats : l'entree dit
+// maintenant ce vers quoi elle emmene, comme celle du theme juste en dessous.
 function setMode(m){
   viewMode=m;
   document.body.className=m==='compact'?'compact':'';
-  ['normal','compact'].forEach(function(x){
-    const b=document.getElementById('btn-'+x);
-    b.classList.toggle('active',m===x);
-    b.setAttribute('aria-pressed',m===x?'true':'false');
-  });
+  const b=document.getElementById('btn-compact');
+  if(b){
+    b.classList.toggle('active',m==='compact');
+    b.setAttribute('aria-pressed',m==='compact'?'true':'false');
+  }
+  const lbl=document.getElementById('mode-lbl');
+  if(lbl)lbl.textContent=m==='compact'?'Affichage normal':'Affichage compact';
+  const ico=document.getElementById('mode-ico');
+  if(ico)ico.textContent=m==='compact'?'📋':'≡';
 }
+function basculerAffichage(){ setMode(viewMode==='compact'?'normal':'compact'); }
 
 // ═══ TABS ═══
 const LIBELLES_ONGLETS={apps:'📦 Logiciels',pilotes:'🎛️ Pilotes',pwa:'🌍 PWA'};
@@ -3556,29 +3577,9 @@ document.addEventListener('focusout',function(e){
   fermerMenu();
 });
 
-function resetSection(sec){
-  // Même raison que les « Tout cocher » : on ne décoche que ce qui est affiché,
-  // sinon on efface en silence une progression que l'autre mode montrait.
-  const map={};ONGLETS.forEach(function(c){map[c]=visiblesDe(c);});
-  const cochees=map[sec].filter(function(x){return S.checked[x.id];}).length;
-  if(!cochees){
-    informer('Rien à réinitialiser dans « '+(NOM_ONGLET[sec]||sec)+' » : aucune case cochée.');
-    return;
-  }
-  memoriserAnnulation(cochees+' case'+(cochees>1?'s':'')+' décochée'+(cochees>1?'s':'')
-    +' dans « '+(NOM_ONGLET[sec]||sec)+' ».',false);
-  map[sec].forEach(function(x){delete S.checked[x.id];delete S.dates[x.id];});
-  saveState();renderAll();updateGlobal();
-}
-
 // ═══ EXPORT/IMPORT ═══
 function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();document.body.removeChild(a);}
 
-function exportJSON(){
-  const blob=new Blob([JSON.stringify({version:3,exported:Date.now(),state:S},null,2)],{type:'application/json'});
-  dl(blob,'progression-migration-pc.json');
-  S.lastSave=Date.now();saveState();
-}
 // Format officiel de `winget export`, relisible par `winget import`.
 // Avantage sur le script .ps1 : l'import est idempotent — il saute ce qui est
 // déjà installé — et reprend proprement après une interruption.
@@ -3698,30 +3699,6 @@ function categoriePourNom(texte){
     for(var j=0;j<mots.length;j++){if(t.indexOf(mots[j])>=0)return cats[i];}
   }
   return 'system';
-}
-
-// La checklist à emporter sur papier ou à ouvrir dans un éditeur, quand on
-// n'a pas la page sous la main. Elle suit le scénario et ses intitulés, comme
-// tout le reste : un export qui dirait autre chose que l'écran serait pire
-// que pas d'export.
-function exportTxt(){
-  const lines=[(PROFIL_NOM||'MIGRATION PC').toUpperCase(),PROFIL_SOUS||''];
-  lines.push('');
-  const marque=function(e){return estFait(e.id)?'[x]':'[ ]';};
-
-  lines.push('=== LOGICIELS ===');
-  const apps=visiblesDe('apps');
-  Object.keys(CATS).forEach(function(cat){
-    const liste=apps.filter(function(a){return a.c===cat;});
-    if(!liste.length)return;
-    lines.push('','# '+CATS[cat]);
-    liste.forEach(function(a){
-      lines.push('  '+marque(a)+' '+libelleDe(a)+(a.w?' (winget : '+a.w+')':''));
-    });
-  });
-  lines.push('','=== PWA ===');
-  visiblesDe('pwa').forEach(function(e){lines.push(marque(e)+' '+libelleDe(e));});
-  dl(new Blob([lines.join('\n')],{type:'text/plain'}),'migration-pc.txt');
 }
 
 // ═══ INIT ═══

@@ -106,21 +106,34 @@ console.log('\n--- exports ---');
 G('toggle')(G('APPS_DATA')[0].id,G('APPS_DATA')[0].n);
 const sorties=[];
 ctx.URL={createObjectURL:b=>{sorties.push(b);return 'blob:x';},revokeObjectURL:()=>{}};
-G('exportTxt')();
 G('exportProfil')();
 G('exportWingetJSON')(true);
 // Le Blob simule ici garde ses morceaux dans .p plutot que d'avoir une taille.
 const contenu=b=>String((b&&b.p&&b.p[0])||'');
-eq('trois fichiers produits',sorties.length,3);
+eq('deux fichiers produits',sorties.length,2);
 eq('aucun fichier vide',sorties.every(b=>contenu(b).length>0),true);
+const profilSorti=JSON.parse(contenu(sorties[0]));
+eq('le profil exporté est du JSON relisible',Array.isArray(profilSorti.apps),true);
 // Le profil actif ici est l'inventaire importe juste avant : trois apps.
-eq('l\'export texte liste les apps du profil actif',
-  G('APPS_DATA').every(a=>contenu(sorties[0]).indexOf(a.n)>=0),true);
-eq('et coche ce qui est coché',contenu(sorties[0]).indexOf('[x]')>=0,true);
-eq('le profil exporté est du JSON relisible',
-  Array.isArray(JSON.parse(contenu(sorties[1])).apps),true);
+eq('il porte les apps du profil actif',
+  G('APPS_DATA').every(a=>profilSorti.apps.some(x=>x.n===a.n)),true);
+// La fusion des deux exports : un seul fichier porte les listes ET la
+// progression. « Sauvegarder ma progression » etait un second bouton pour la
+// moitie de ce fichier, et deux fichiers a ne pas confondre valaient moins
+// qu'un seul qui contient tout.
+eq('et les cases cochées',
+  Object.keys(profilSorti.state.checked).length,
+  Object.keys(G('S').checked).length);
+eq('avec leurs dates',typeof profilSorti.state.dates,'object');
 eq('le fichier winget porte son schéma',
-  JSON.parse(contenu(sorties[2])).$schema.indexOf('winget')>=0,true);
+  JSON.parse(contenu(sorties[1])).$schema.indexOf('winget')>=0,true);
+
+// Et il se relit : sans ca, le fichier serait un cul-de-sac.
+const avant=Object.keys(G('S').checked).length;
+G('S').checked={};G('S').dates={};
+eq('la progression est bien vidée',Object.keys(G('S').checked).length,0);
+eq('le fichier exporté est reconnu',G('traiterDonnees')(profilSorti,'test'),true);
+eq('et il rend les cases cochées',Object.keys(G('S').checked).length,avant);
 
 console.log('\n--- rechargement avec le profil mémorisé ---');
 const memorise=G('chargerProfilMemorise')();

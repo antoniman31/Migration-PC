@@ -46,14 +46,22 @@ signale comme mal installés.
 Tous ces champs sont facultatifs : un inventaire qui n'en porte aucun reste valide, et la
 page ne montre que ce qu'elle a reçu.
 
-**Profil** — les listes des deux onglets à cocher. C'est le format de `presets/exemple.json`,
-et celui que produit le bouton 🧩.
+**Profil** — les listes à cocher, et la progression avec elles. C'est le format de
+`presets/exemple.json`, et celui que produit **Exporter le profil**. Le fichier porte les
+listes dans `apps` et `pwa`, et les cases cochées dans un champ `state`.
 
-**Progression** — les cases cochées et les dates, sans les listes. C'est ce
-que produit le bouton 💾.
+Il y a eu deux sorties distinctes, un profil et une progression, et deux entrées de menu
+pour les produire. La seconde existait pour une vraie raison : la mémoire du navigateur est
+liée au chemin du fichier, donc si la lettre de lecteur de la clé USB change d'un PC à
+l'autre, la progression ne suit pas. Elles ont fusionné plutôt que disparu — deux fichiers
+qu'on peut confondre valaient moins qu'un seul qui contient tout.
 
-Importer un export winget, un inventaire ou un profil remplace les listes mais conserve
-la progression. Importer une progression fait l'inverse.
+**Progression seule** — les cases cochées et les dates, sans les listes. Plus produit par la
+page, mais toujours accepté à l'import : un fichier exporté avant la fusion se relit.
+
+Importer un export winget ou un inventaire remplace les listes et conserve la progression.
+Importer un profil remplace les listes, et remplace aussi la progression si le fichier en
+porte une. Importer une progression seule ne touche pas aux listes.
 
 ## Écrire son propre profil
 
