@@ -376,18 +376,29 @@ Une seule exception, et elle a une raison : le scan lancé avec `-Role cible` to
 sur le PC qu'on équipe, donc elle seule sait de quelle machine elle parle, et elle seule
 corrige une valeur. Un inventaire vient presque toujours de l'**ancien** PC — c'est tout
 l'intérêt du scan — et un profil décrit peut-être une troisième machine : ceux-là ne
-comblent que les cases vides. Sinon, sur le PC neuf, les intitulés des pilotes
-porteraient le modèle de la carte mère qu'on vient d'abandonner.
+comblent que les cases vides. Sinon, sur le PC neuf, le lien du constructeur de
+l'onglet Pilotes viserait le support de la machine qu'on vient d'abandonner.
 
 La configuration voyage avec le profil exporté, dans un champ `materiel`. Sans cela tout
 le bénéfice disparaissait au moment du transfert, c'est-à-dire exactement là où il sert.
 
-**⋯ Plus → Ma configuration** ouvre les mêmes cinq champs à remplir à la main : carte
-mère, processeur, carte graphique, mémoire, SSD. Ce qu'on y écrit fait deux choses. Les intitulés des pilotes
-portent le modèle — « Pilote chipset — ASUS B850-A » — là où ils disaient « de la carte
-mère », et seulement ceux-là : « Désactiver le CSM » n'a que faire d'un numéro de
-modèle. Et les boutons « Rechercher » visent le support du constructeur au lieu des mots
-génériques de l'intitulé.
+**⋯ Plus → Ma configuration** ouvre les mêmes neuf champs, tous saisissables à la main.
+Cinq décrivent la machine — carte mère, processeur, carte graphique, mémoire, SSD — et
+quatre servent à retrouver un pilote : réseau filaire, Wi-Fi, puce audio, version du
+BIOS.
+
+Le réseau passe devant parce que c'est le pilote dont dépend la recherche de tous les
+autres : sur une machine fraîche sans Ethernet, il n'y a pas d'autre PC sous la main pour
+aller chercher quoi que ce soit. Ethernet et Wi-Fi sont deux champs, parce qu'on ne
+cherche pas le même pilote et qu'un fixe n'a souvent que le premier. La sortie audio
+d'une carte graphique est écartée — elle passe par HDMI et arrive avec le pilote de la
+carte ; c'est la puce de la carte mère qu'on veut. La version du BIOS répond à la
+question qu'on se pose devant la page du constructeur : est-ce que celle-ci est vieille ?
+Elle porte sa date pour ça.
+
+Le scan remplit les neuf. Les cartes virtuelles — Hyper-V, VMware, VirtualBox, les TAP de
+VPN, le Bluetooth qui se déclare en réseau — sont écartées : prendre la première venue
+enverrait chercher le pilote d'un adaptateur qui n'existe pas physiquement.
 
 **Les périphériques sans pilote** sont listés à part, après une vérification du nouveau
 PC. Ce n'est pas une déduction : c'est ce que le gestionnaire de périphériques affiche
@@ -544,7 +555,7 @@ apps   // { id, n, c, src, w?, p, t, d, dep?, warn? }
 pwa    // { id, n, u, d }
 ordre  // [ id, ... ] — l'ordre d'installation conseillé
 requetes // { "Nom de l'app": "requête de recherche" }
-materiel // { cm, cpu, gpu, ram, ssd } — facultatif, le bloc « Ma configuration »
+materiel // { cm, cpu, gpu, ram, ssd, eth, wifi, audio, bios } — le bloc « Ma configuration »
 ```
 
 `p` vaut `high`, `med` ou `ok` · `t` est une durée en minutes · `w` est l'identifiant

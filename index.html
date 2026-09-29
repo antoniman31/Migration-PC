@@ -3424,12 +3424,21 @@ function rejouerScanLocal(){
 // tient à jour, et on servirait des liens faux qui ont l'air vrais. La page
 // vous amène au bon endroit ; c'est vous qui lisez la page du constructeur.
 const CLE_CONFIG='mpc_config_v1';
+// Les quatre derniers ne sont pas là pour décrire la machine mais pour
+// retrouver un pilote. Le réseau d'abord : c'est celui dont dépend la
+// recherche de tous les autres — sans lui, sur une machine fraîche, on ne
+// télécharge rien. Ethernet et Wi-Fi séparément, parce qu'on ne cherche pas le
+// même pilote et qu'un fixe n'a souvent que le premier.
 const COMPOSANTS=[
-  {cle:'cm', label:'Carte mère',      exemple:'ASUS ROG STRIX B850-A'},
-  {cle:'cpu',label:'Processeur',      exemple:'AMD Ryzen 7 9800X3D'},
-  {cle:'gpu',label:'Carte graphique', exemple:'NVIDIA RTX 5070 Ti'},
-  {cle:'ram',label:'Mémoire',         exemple:'32 Go DDR5-6000'},
-  {cle:'ssd',label:'SSD',             exemple:'Samsung 9100 PRO 2 To'}
+  {cle:'cm',   label:'Carte mère',      exemple:'ASUS ROG STRIX B850-A'},
+  {cle:'cpu',  label:'Processeur',      exemple:'AMD Ryzen 7 9800X3D'},
+  {cle:'gpu',  label:'Carte graphique', exemple:'NVIDIA RTX 5070 Ti'},
+  {cle:'ram',  label:'Mémoire',         exemple:'32 Go DDR5-6000'},
+  {cle:'ssd',  label:'SSD',             exemple:'Samsung 9100 PRO 2 To'},
+  {cle:'eth',  label:'Réseau filaire',  exemple:'Realtek Gaming 2.5GbE'},
+  {cle:'wifi', label:'Wi-Fi',           exemple:'Intel Wi-Fi 6E AX211'},
+  {cle:'audio',label:'Puce audio',      exemple:'Realtek(R) Audio'},
+  {cle:'bios', label:'Version du BIOS', exemple:'1402 (2025-03-11)'}
 ];
 let CONFIG={};
 
