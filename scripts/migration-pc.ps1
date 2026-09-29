@@ -107,17 +107,25 @@ function Read-DossierSauvegarde {
 # ---------------------------------------------------------------- menu
 
 function Show-MenuTexte {
-    param($Actions)
+    param($Actions, [string]$Deduction = '')
     while ($true) {
         Write-Host ""
         Write-Host "  Migration PC" -ForegroundColor Cyan
         Write-Host "  ------------"
+        # Ce que la cle sait deja. Affiche avant le menu, pas a la place :
+        # la deduction propose, et l'entree proposee est mise en premier.
+        if ($Deduction) {
+            Write-Host ("  " + $Deduction) -ForegroundColor Cyan
+            Write-Host ""
+        }
         Write-Host "  Que voulez-vous faire ?"
         Write-Host ""
         $i = 0
         foreach ($a in $Actions) {
             $i++
-            $etat = if ($a.possible) { '' } else { '  [indisponible]' }
+            $etat = if (-not $a.possible) { '  [indisponible]' }
+                    elseif ($a.suggere)    { '   <-- proposé' }
+                    else                   { '' }
             Write-Host ("  {0}. {1}{2}" -f $i, $a.titre, $etat) -ForegroundColor $(if ($a.possible) { 'White' } else { 'DarkGray' })
             Write-Host ("     {0}" -f $a.detail) -ForegroundColor DarkGray
             if (-not $a.possible) {
@@ -156,5 +164,16 @@ function Show-MenuTexte {
 
 # ---------------------------------------------------------------- lancement
 
-$actions = @(Get-ActionsMigration -Racine $Racine)
-Show-MenuTexte -Actions $actions
+# Le numero de serie du SMBIOS : le seul identifiant qui survit a une
+# reinstallation de Windows. Indisponible ailleurs que sur Windows, et parfois
+# vide sur une machine assemblee — la deduction s'en passe alors et pose la
+# question.
+$serieLocale = try {
+    ([string](Get-CimInstance Win32_BIOS -ErrorAction Stop).SerialNumber).Trim()
+} catch { '' }
+
+$instantane = Get-InstantaneSourceSurCle -Racine $Racine
+$suggestion = Get-RoleSuggere -Instantane $instantane -SerieLocale $serieLocale -NomLocal $env:COMPUTERNAME
+
+$actions = @(Get-ActionsMigration -Racine $Racine -RoleSuggere $suggestion.role)
+Show-MenuTexte -Actions $actions -Deduction $suggestion.raison

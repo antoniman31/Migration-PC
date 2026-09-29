@@ -199,5 +199,84 @@ try {
 }
 
 Write-Host ""
+Write-Host "--- de quel cote on est, deduit plutot que demande ---" -ForegroundColor Cyan
+# Le menu ne posait qu'une question, et elle a une reponse mecanique : si la
+# cle porte l'instantane d'une AUTRE machine, on est arrive sur la cible. Se
+# tromper coutait la comparaison entiere, sans que rien ne le dise.
+
+function Instantane([string]$Serie, [string]$Nom, [string]$Modele) {
+    $m = [ordered]@{}
+    if ($Serie)  { $m['serie']  = $Serie }
+    if ($Nom)    { $m['nom']    = $Nom }
+    if ($Modele) { $m['modele'] = $Modele }
+    return [pscustomobject]@{ type = 'inventaire-migration-pc'; role = 'source'; machine = [pscustomobject]$m }
+}
+
+# Rien sur la cle : on n'a pas encore scanne, donc on est sur la source.
+$r = Get-RoleSuggere -Instantane $null -SerieLocale 'ABC123' -NomLocal 'PC-NEUF'
+ok 'sans instantane, aucun role impose' $r.role ''
+ok 'et la raison le dit'                ($r.raison -match 'SOURCE') $true
+
+# Deux numeros de serie differents : c'est le cas franc, et le seul ou l'on
+# affirme quelque chose.
+$r = Get-RoleSuggere -Instantane (Instantane 'SERIE-ANCIEN' 'PC-BUREAU' 'ROG STRIX B850-A') -SerieLocale 'SERIE-NEUF' -NomLocal 'PC-NEUF'
+ok 'serie differente, donc la cible'    $r.role 'cible'
+ok 'la raison nomme la machine vue'     ($r.raison -match 'ROG STRIX') $true
+
+# Meme numero de serie : « je reinstalle ce PC-ci ». Genuinement ambigu, parce
+# qu'on peut aussi refaire le relevé avant de formater. On ne devine pas.
+$r = Get-RoleSuggere -Instantane (Instantane 'MEME-SERIE' 'PC-BUREAU' 'X') -SerieLocale 'MEME-SERIE' -NomLocal 'PC-BUREAU'
+ok 'meme serie, on ne devine pas'       $r.role ''
+ok 'et la raison explique les deux cas' ($r.raison -match 'CIBLE' -and $r.raison -match 'SOURCE') $true
+
+# Pas de numero de serie — machine assemblee dont le SMBIOS est vide. On
+# retombe sur le nom de machine, en le disant.
+$r = Get-RoleSuggere -Instantane (Instantane '' 'PC-BUREAU' '') -SerieLocale '' -NomLocal 'PC-NEUF'
+ok 'sans serie, le nom tranche'         $r.role 'cible'
+ok 'et la raison avoue sa faiblesse'    ($r.raison -match 'Num[eé]ro de s[eé]rie indisponible') $true
+$r = Get-RoleSuggere -Instantane (Instantane '' 'PC-BUREAU' '') -SerieLocale '' -NomLocal 'PC-BUREAU'
+ok 'meme nom, on ne devine pas'         $r.role ''
+
+# Un instantane sans aucune information de machine ne doit pas faire echouer le
+# menu : Set-StrictMode rend une propriete absente fatale si on la lit mal.
+$r = Get-RoleSuggere -Instantane ([pscustomobject]@{ type = 'inventaire-migration-pc' }) -SerieLocale 'ABC' -NomLocal 'PC'
+ok 'un instantane muet ne casse rien'   $r.role ''
+ok 'et la raison le dit'                ($r.raison -match 'rien ne permet') $true
+
+# L'ordre du menu : le cote deduit passe en tete, et le reste garde le sien.
+$ac = @(Get-ActionsMigration -Racine $racine -RoleSuggere 'cible')
+ok 'la cible passe en premier'          $ac[0].id 'cible'
+ok 'elle porte la marque'               $ac[0].suggere $true
+ok 'les trois actions restent la'       $ac.Count 3
+ok 'la source reste accessible'         (@($ac | Where-Object { $_.id -eq 'source' })).Count 1
+ok 'une seule est marquee'              (@($ac | Where-Object { $_.suggere })).Count 1
+# L'ordre des non-proposees ne doit pas bouger : Sort-Object -Stable n'existe
+# pas sous Windows PowerShell 5.1, d'ou le tri fait a la main.
+ok 'le reste garde son ordre'           (@($ac | Where-Object { -not $_.suggere }).id -join ',') 'source,checklist'
+$ac = @(Get-ActionsMigration -Racine $racine -RoleSuggere '')
+ok 'sans deduction, l ordre d origine'  ($ac.id -join ',') 'source,cible,checklist'
+ok 'et aucune marque'                   (@($ac | Where-Object { $_.suggere })).Count 0
+
+# La lecture du fichier sur la cle : un JSON abime ne doit rien faire deviner.
+$bacD = Join-Path ([System.IO.Path]::GetTempPath()) ("mpc deduction " + (Get-Random))
+New-Item -ItemType Directory -Path $bacD -Force | Out-Null
+try {
+    ok 'sans fichier, rien a lire' ($null -eq (Get-InstantaneSourceSurCle -Racine $bacD)) $true
+    Set-Content -LiteralPath (Join-Path $bacD 'instantane-source.json') -Value '{ ceci n est pas du json' -Encoding UTF8
+    ok 'un JSON abime rend $null'  ($null -eq (Get-InstantaneSourceSurCle -Racine $bacD)) $true
+    Set-Content -LiteralPath (Join-Path $bacD 'instantane-source.json') -Value '{"machine":{"serie":"S1"}}' -Encoding UTF8
+    $lu = Get-InstantaneSourceSurCle -Racine $bacD
+    ok 'un JSON valide est relu'   $lu.machine.serie 'S1'
+    # Les scripts vivent dans scripts\ et le relais a cote de la page, un cran
+    # au-dessus : il faut chercher les deux.
+    $sous = Join-Path $bacD 'scripts'
+    New-Item -ItemType Directory -Path $sous -Force | Out-Null
+    $lu = Get-InstantaneSourceSurCle -Racine $sous
+    ok 'trouve aussi un cran au-dessus' $lu.machine.serie 'S1'
+} finally {
+    Remove-Item $bacD -Recurse -Force -ErrorAction SilentlyContinue
+}
+
+Write-Host ""
 if ($script:ko -gt 0) { Write-Host "$script:ko EN ECHEC" -ForegroundColor Red; exit 1 }
 Write-Host "LANCEUR OPERATIONNEL" -ForegroundColor Green
