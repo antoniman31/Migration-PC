@@ -1,9 +1,13 @@
 # Migration PC — checklist de réinstallation
 
 Checklist HTML pour réinstaller un PC Windows sans rien oublier. Des scripts PowerShell
-inventorient l'ancienne machine, constatent ce qui est déjà en place sur la nouvelle et
-vérifient que les sauvegardes ont bien été copiées ; la page orchestre le tout en liste
-à cocher, avec un mode guidé pour le jour de l'installation.
+relèvent les logiciels installés sur l'ancienne machine et les pilotes de la nouvelle ;
+la page compare les deux et dit ce qui manque.
+
+**Ce qu'il fait, et rien d'autre** : lister les logiciels du PC source, lister ceux du PC
+cible, dire la différence — et signaler les périphériques sans pilote sur la cible, avec
+le lien du constructeur. Il ne sauvegarde **rien**. Vos fichiers personnels restent
+entièrement à votre charge.
 
 `index.html` se suffit à lui-même : aucune dépendance, aucun serveur, aucune étape de
 construction. Il s'ouvre depuis une clé USB sur un PC fraîchement installé, sans réseau.
@@ -12,21 +16,11 @@ Les scripts sont facultatifs.
 ## Aperçu
 
 L'onglet **Apps** : la liste des logiciels relevés sur l'ancien PC, regroupés par
-catégorie, avec leur version, leur poids et la commande qui les réinstalle. Un badge
-« licence » marque ceux qu'on sait payants, et ouvre le champ où noter la clé.
+catégorie, avec leur version, leur poids et la commande qui les réinstalle.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="captures/checklist-sombre.png">
   <img alt="La checklist, onglet Apps" src="captures/checklist-clair.png">
-</picture>
-
-L'onglet **Données** : ce qu'il faut copier avant d'effacer, par ordre de priorité.
-Les lignes écrites d'avance et celles que le scan a mesurées se mélangent, chacune avec
-son chemin réel — y compris les clés de registre et les fichiers qui *sont* une licence.
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="captures/donnees-sombre.png">
-  <img alt="La checklist, onglet Données" src="captures/donnees-clair.png">
 </picture>
 
 Le **mode guidé**, pour le jour de l'installation : une tâche à l'écran, « c'est fait »
@@ -72,8 +66,6 @@ Un seul fichier à lancer : `Migration PC.bat`. Tout le reste est rangé dans
 - **Les scripts Windows**
   - [Inventorier le PC source](#inventorier-le-pc-source)
   - [Vérifier le PC cible](#vérifier-le-pc-cible)
-  - [Vérifier les sauvegardes](#vérifier-les-sauvegardes)
-  - [Emporter ses réglages, et les remettre](#emporter-ses-réglages-et-les-remettre)
 - [Quatre cas, deux questions](#quatre-cas-deux-questions)
   - [Installer Windows sans rester devant](#installer-windows-sans-rester-devant)
 - [La checklist](#la-checklist)
@@ -94,10 +86,10 @@ Un seul fichier à lancer : `Migration PC.bat`. Tout le reste est rangé dans
 
 ## À quoi ça sert
 
-Réinstaller un PC, c'est trois problèmes : se souvenir de ce qui était installé, le
-réinstaller dans le bon ordre, et ne pas oublier de sauvegarder ce qui n'existe qu'en
-local. Ce projet couvre les trois, dans **deux situations** : passer sur une autre
-machine, ou repartir propre sur celle qu'on a déjà.
+Réinstaller un PC, c'est se souvenir de ce qui était installé et le remettre. Ce projet
+couvre ça, dans **deux situations** : passer sur une autre machine, ou repartir propre
+sur celle qu'on a déjà. Ce qu'il ne couvre pas — la sauvegarde de vos fichiers — il le
+dit au lieu de le laisser croire.
 
 ```
 PC SOURCE                                        PC CIBLE
@@ -107,8 +99,8 @@ scan-pc.ps1 -Role source                  scan-pc.ps1 -Role cible
         │                                           │
         └──► instantane-source-AAAA-MM-JJ.json ──┐  └──► instantane-cible-….json
                                                  │              │
-verifier-sauvegardes.ps1                         └──► index.html ◄┘
-  (relit les dossiers copiés)                       compare les deux
+                                                 └──► index.html ◄┘
+                                                    compare les deux
 ```
 
 **Le même script des deux côtés.** Sur la source il fige l'état de la machine ; sur la
@@ -116,8 +108,7 @@ cible il refait le même relevé, et c'est la page qui compare les deux. Ça a u
 conséquence qui simplifie tout : « PC neuf » et « même PC après réinstallation »
 deviennent exactement le même cas.
 
-`verifier-sauvegardes.ps1` relit les dossiers copiés, `sauvegarder-configs.ps1` les
-copie. Tous partagent leur logique de détection, qui vit une seule fois dans
+Les deux côtés partagent leur logique de détection, qui vit une seule fois dans
 `lib-detection.ps1`.
 
 Chaque instantané porte sa date et n'écrase jamais le précédent : « l'état d'une machine
@@ -198,15 +189,10 @@ Pour qui préfère la ligne de commande, dans l'ordre :
    powershell -ExecutionPolicy Bypass -File .\scripts\scan-pc.ps1 -Role source
    ```
 
-2. Faites vos sauvegardes, puis vérifiez-les. **Le scan liste, il ne copie pas** :
-   cette étape-là est la copie, et elle est à vous.
+2. Sauvegardez vos fichiers personnels. **Le scan liste, il ne copie rien** : cette
+   étape-là n'est pas outillée par ce projet, elle est entièrement à vous.
 
-   ```powershell
-   .\scripts\sauvegarder-configs.ps1 -Destination D:\sauvegarde-migration
-   .\scripts\verifier-sauvegardes.ps1 -Destination D:\sauvegarde-migration
-   ```
-
-3. Copiez la clé : la page, les scripts, l'instantané et vos sauvegardes.
+3. Copiez la clé : la page, les scripts et l'instantané.
 
 4. Sur le **PC cible**, ouvrez `index.html` et importez l'instantané de la source.
    Passez en **🎯 Mode guidé** et suivez les tâches une par une.
@@ -230,16 +216,8 @@ Pour qui préfère la ligne de commande, dans l'ordre :
 | Registre `Uninstall` | Les logiciels installés classiquement (32 et 64 bits, machine et utilisateur) |
 | Paquets APPX | Les applications du Microsoft Store |
 | Steam, Epic, GOG, Xbox, Ubisoft, EA | Les jeux installés, sur tous les disques |
-| VS Code, Chrome, Edge, Brave, Firefox | Les extensions installées |
-| Variables d'environnement | Les variables personnalisées de l'utilisateur |
-| SDK Android, WSL, scoop, Chocolatey, npm, pip | Les chaînes d'outils qu'aucun installateur n'enregistre |
-| Profil et disques fixes | Les gros dossiers que la checklist ne réclame pas, les clés de signature, les logiciels portables |
 | WMI et registre | La machine elle-même : fabricant, modèle, n° de série, portable ou fixe, écrans branchés |
-| `SoftwareLicensingProduct` | Les licences Windows et Office, et surtout si elles suivent la machine |
-| `Get-VpnConnection`, `Get-VM`, `Get-BitLockerVolume` | Les VPN, les machines virtuelles, l'état de chiffrement des disques |
-| Profils de navigateur, `%LOCALAPPDATA%\Microsoft\Outlook` | Les favoris et les archives mail locales |
-| `netsh wlan`, `cmdkey`, `Win32_Printer`, clés `Fonts` | Réseaux Wi-Fi, identifiants, imprimantes, polices ajoutées |
-| `Get-SmbMapping`, `Win32_StartupCommand`, `Get-ScheduledTask`, `Get-NetFirewallRule`, `FileExts` | Lecteurs réseau, démarrage, tâches, pare-feu, associations de fichiers |
+| `Win32_PnPSignedDriver` | Les pilotes qui ne viennent pas de Microsoft, groupés par classe |
 
 Une entrée vue par plusieurs sources est fusionnée : le nom vient du registre,
 l'identifiant winget de winget, la taille sur disque de celle qui la connaît, et rien
@@ -247,150 +225,22 @@ n'apparaît deux fois. Chaque application est classée par catégorie selon des 
 avec une priorité et une durée estimée — tout cela reste modifiable à la main dans le
 JSON.
 
-**Le portable, annoncé pour ce qu'il est.** Un logiciel posé sans installateur — un `.exe`
-dézippé dans un dossier — n'a aucune entrée de désinstallation, aucun identifiant winget,
-rien dans le Store : aucune source du scan ne le voit. Il part donc avec le disque.
-
-Ce relevé-là **n'est pas un inventaire et ne prétend pas l'être** : rien ne permet de
-distinguer à coup sûr un logiciel portable d'un dossier qui contient un exécutable. La
-page le dit en toutes lettres sur chaque ligne, plutôt que de présenter une supposition
-comme un constat. Ce qu'on peut faire, c'est limiter le bruit : les installateurs et les
-mises à jour ne comptent pas comme des logiciels, un dossier qui contient beaucoup
-d'exécutables est une collection et pas une application, `node_modules`, les dossiers de
-construction et les bibliothèques de jeux sont écartés, et ce que le registre a déjà vu
-n'est pas reproposé. Ils vont dans l'onglet Données, pas dans Apps : un portable se
-copie, il ne se réinstalle pas.
-
-**Les clés qui ne se recréent pas.** Un keystore de release Android perdu oblige à passer
-par la procédure de réinitialisation de clé chez l'éditeur, et les applications déjà
-publiées ne peuvent plus être mises à jour avec l'ancienne signature. Il pèse quelques
-kilo-octets et vit là où son propriétaire l'a mis, souvent dans un dossier de projet : on
-ne peut pas deviner, on peut chercher. Le scan relève les `.jks`, `.keystore`, `.pfx` et
-`.p12` du profil et des disques, en écartant ce qui produit du bruit — `node_modules`,
-les caches Gradle, `AppData` — et la page les place en tête de l'onglet Données, en
-priorité haute, avec un avertissement qui dit pourquoi.
-
-**Les gros dossiers qu'on oublie.** Le projet ne détectait aucun fichier personnel :
-l'onglet Données est une liste de chemins écrite à la main, et ce qui n'y figure pas
-n'est rappelé par rien. Un logiciel oublié se réinstalle ; un dossier de photos oublié ne
-revient pas. Le scan mesure donc les dossiers du profil et de chaque disque fixe, un
-niveau sous la racine, et signale ceux qui dépassent un seuil — 1 Go par défaut,
-réglable avec `-SeuilGo`.
-
-Le partage des rôles est net : **le script mesure, la page décide.** Elle seule connaît
-la checklist, donc elle seule peut dire qu'un dossier est déjà réclamé — et ceux-là
-n'apparaissent pas, la ligne existante les couvre. Ne remonte que ce que personne n'avait
-listé.
-
-Un disque de plusieurs téraoctets ne se parcourt pas pendant qu'on attend devant l'écran :
-la mesure a un budget de temps, et un dossier mesuré partiellement le dit au lieu de se
-faire passer pour complet. Les points de jonction ne sont pas suivis — ils bouclent — et
-ce que Windows gère lui-même est écarté.
-
-**Les chaînes d'outils ne sont pas copiées, elles sont listées.** Une machine de
-développement porte des choses qu'aucun installateur n'enregistre : le SDK Android, les
-distributions WSL, les paquets de scoop et de Chocolatey, les outils globaux de npm et
-de pip. Rien de cela n'apparaît dans le registre, ni dans winget, ni dans le Store, donc
-le scan les ignorait entièrement. Les copier n'aurait pas de sens — le seul SDK Android
-pèse vingt à soixante Go et se retélécharge — alors on emporte la liste, et pour chaque
-entrée la commande qui la remet en place. Exactement ce qu'on fait déjà pour les
-logiciels avec winget.
-
-Le SDK se lit dans son arborescence plutôt qu'en lançant `sdkmanager` : c'est plus
-rapide, cela ne demande pas de Java, et les identifiants obtenus — `platforms;android-34`,
-`system-images;android-34;google_apis;x86_64` — sont exactement ceux que `sdkmanager`
-reprend. La commande affichée n'est jamais devinée : le scanner la fournit, la page la
-recopie. Deviner celle d'un paquet scoop reviendrait à servir un ordre faux qui a l'air
-vrai, ce que ce projet évite partout ailleurs.
-
-**Les extensions sont relevées, pas conseillées.** La checklist disait « la
-synchronisation des paramètres restaure extensions et réglages » : un conseil, pas un
-relevé. Celles de VS Code se lisent dans le nom de leur dossier — pas besoin de lancer
-`code` — et donnent l'identifiant exact que `code --install-extension` reprend. Celles des
-navigateurs Chromium donnent leur identifiant et le lien de leur fiche ; quand leur nom
-lisible n'est qu'une référence de traduction (`__MSG_appName__`), l'identifiant est
-affiché plutôt qu'un jeton qui n'aide personne. Firefox tient un `extensions.json` par
-profil, où les noms sont déjà lisibles, et les greffons livrés avec le navigateur sont
-écartés — les proposer à la réinstallation serait faux.
-
-**Deux lanceurs de jeux de plus.** Ubisoft Connect tient ses installations dans une clé
-de registre qui porte le dossier mais pas le nom, donc le nom en est déduit. L'EA App ne
-tient aucun registre : chaque jeu dépose un `__Installer\installerdata.xml` dans son
-dossier, et c'est ce fichier qui distingue un jeu d'un dossier quelconque posé au même
-endroit.
-
-Deux filtres valent d'être connus : `npm` et `corepack` sont livrés avec Node, et `pip`
-est interrogé avec `--not-required`, sans quoi la liste se remplit des dépendances
-transitives que personne n'installe volontairement.
-
-Les variables d'environnement personnalisées sont relevées et remplissent directement
-les champs prévus par la checklist, sans recopie manuelle. Une valeur déjà saisie n'est
-jamais écrasée. Seules les variables de l'utilisateur sont lues : celles du système sont
-recréées par Windows et les installateurs.
-
-Les redistribuables Visual C++, les mises à jour et les composants système sont écartés
-par défaut, sinon la liste dépasse largement ce qu'on réinstalle vraiment.
-
-**Trois endroits où le scan s'arrête volontairement.** La clé de récupération
-BitLocker, les clés Wi-Fi et les mots de passe du gestionnaire d'identification
-Windows sont tous lisibles : `Get-BitLockerVolume` rend le mot de passe à 48
-chiffres, `netsh wlan export profile key=clear` écrit les clés en clair, et le
-gestionnaire est fait pour restituer ce qu'il garde. Le scan ne les relève
-pas, et c'est un choix — cet inventaire voyage sur une clé USB, et une clé de
-récupération lisible dedans annulerait le chiffrement qu'on vient de
-constater. On relève donc le **nom** des réseaux, la **cible** des
-identifiants, l'**état** des volumes, et la page dit où aller chercher le
-secret soi-même. Un test passe une fausse clé à 48 chiffres dans le détecteur
-BitLocker et vérifie qu'elle ne ressort nulle part.
-
-**Les logiciels payants sont marqués, sans prétendre à l'exhaustivité.** Rien
-dans le registre ne distingue un logiciel payant d'un gratuit : ni le prix, ni
-la licence n'y figurent. Une liste tenue à la main marque ceux qu'on connaît —
-Office, Adobe, WinRAR, les antivirus payants, JetBrains, Autodesk — et la ligne
-porte alors un badge « licence » avec le champ où noter la clé. L'absence de
-badge ne veut donc **pas** dire « gratuit », elle veut dire « je ne sais
-pas », et la page le formule ainsi. À côté, les fichiers qui *sont* une
-licence — `rarreg.key`, `wincmd.key`, `BCLicense` — sont relevés par leur
-**chemin**, jamais par leur contenu.
-
-**Ce qui ne se transporte pas est quand même listé.** Les règles de pare-feu
-ajoutées à la main, les associations « ouvrir avec », les tâches planifiées, ce
-qui se lance au démarrage : rien de tout cela ne se rejoue d'une machine à
-l'autre — Windows signe même le choix d'association avec un condensé lié au
-compte et à la machine. La liste sert à **re-décider**, pas à restaurer, et
-chaque ligne le dit plutôt que de promettre ce qu'elle ne peut pas tenir. Le
-filtrage compte autant que le relevé : Windows pose plusieurs centaines de
-tâches planifiées, donc on ne garde que celles rangées à la racine avec un
-auteur qui n'est pas Microsoft ; les installateurs posent des centaines de
-règles de pare-feu, donc on ne garde que les entrantes sans groupe, celles
-qu'un humain a créées.
-
-**Ce que le total « à prévoir sur la clé » compte, et ce qu'il ne compte
-pas.** Les dossiers mesurés, les configurations, les clés de signature, les
-fichiers de licence et les archives Outlook `.pst` y entrent. Les caches
-`.ost` non : ils se reconstruisent seuls à la première connexion, et les
-compter réserverait des gigaoctets pour rien. Les machines virtuelles non plus
-— en emporter 96 Go est une décision, pas un choix par défaut, et le chiffre
-annoncerait une clé qu'on n'a pas.
-
-`COUVERTURE.md` tient la liste complète de ce que le scan couvre, de ce qu'il
-refuse de relever et de ce qui reste hors de portée.
+**Ce que le scan ne relève pas, et pourquoi.** Il a relevé jusqu'à trente-deux familles :
+réglages, favoris, Wi-Fi, polices, tâches planifiées, VPN, machines virtuelles, gros
+dossiers. Tout ça marchait, et tout ça a été retiré. La raison tient en une phrase : le
+programme **listait sans jamais copier**. Une liste de ce qu'on va perdre n'est pas une
+sauvegarde, et la présenter à côté d'une vraie liste de logiciels installables laissait
+croire le contraire au pire moment — juste avant un formatage. `COUVERTURE.md` garde le
+détail de ce qui est parti.
 
 | Option | Effet |
 |---|---|
-| `-Sortie <chemin>` | Change le fichier produit (défaut : `inventaire-pc.json`) |
-| `-ToutInclure` | Désactive le filtrage, garde tout |
+| `-Role source\|cible` | De quel côté on est. `source` par défaut |
+| `-Sortie <chemin>` | Change le fichier produit (défaut : `instantane-<role>-<date>.json`) |
 | `-SansStore` | Ignore les applications du Microsoft Store |
-| `-SansJeux` | Ignore les bibliothèques de jeux (Steam, Epic, GOG, Xbox) |
-| `-SansVariables` | Ne relève pas les variables d'environnement |
-| `-SansConfigs` | Ne cherche pas les dossiers de réglages des logiciels |
-| `-SansOutils` | Ne relève pas les chaînes d'outils ni les extensions |
-| `-SansGrosDossiers` | Saute les mesures lentes : gros dossiers, clés de signature, portables, machines virtuelles |
-| `-SeuilGo <n>` | Seuil à partir duquel un dossier est signalé (défaut : 1) |
-
-Le script n'a pas besoin des droits administrateur, mais sans eux les logiciels
-installés par d'autres comptes utilisateurs peuvent manquer. Il n'écrit qu'un fichier
-local et n'envoie rien sur le réseau.
+| `-SansJeux` | Ignore les bibliothèques de jeux |
+| `-ToutInclure` | Garde aussi les redistribuables et les composants système |
+| `-PasDOuverture` | N'ouvre pas le navigateur à la fin |
 
 ## Vérifier le PC cible
 
@@ -401,53 +251,22 @@ la machine fraîchement installée, on relance **le même script** :
 powershell -ExecutionPolicy Bypass -File .\scripts\scan-pc.ps1 -Role cible
 ```
 
-Il produit un instantané de même forme que celui de la source, et la page les compare :
-la comparaison porte sur les trente-deux familles d'un coup, au lieu d'une règle de
-vérification écrite par famille. Le rapprochement se fait sur le **modèle** des chemins
-(`%APPDATA%\Code\User`) et non sur le chemin réel, parce que le nom d'utilisateur
-diffère souvent d'une machine à l'autre.
+Il produit un instantané de même forme que celui de la source, et la page les compare.
+Le rapprochement se fait sur le nom normalisé du logiciel, avec les mêmes règles des deux
+côtés : sans ça, « Mozilla Firefox (x64 fr) » sur la source et « Mozilla Firefox » sur la
+cible seraient comptés comme deux logiciels différents.
 
-Sur la cible, le script relève en plus deux choses qui n'ont de sens que là : les
-périphériques que Windows signale comme mal installés, et les quatre réglages qui ne se
-voient pas à l'usage (XMP, TRIM, Secure Boot et TPM, heures du SSD). À l'import, la page affiche la liste avec la raison de chaque
-correspondance — identifiant winget, ou nom seul — et **rien n'est coché sans votre
-validation** : un rapprochement par nom peut confondre deux logiciels voisins, et une
-case cochée à tort fait sauter une installation.
+Sur la cible, le script relève en plus ce qui n'a de sens que là : les périphériques que
+Windows signale comme sans pilote ou en erreur. La page affiche la liste et fabrique le
+lien vers la page de support du constructeur à partir du modèle de la machine.
 
-Par défaut, seuls les identifiants winget sont retenus : moins de correspondances,
-aucune fausse.
+Ce que le volet pilotes **ne dit jamais**, c'est qu'une version plus récente existe. Le
+programme ne fait aucun appel réseau : il ne peut pas le savoir, et l'affirmer serait
+mentir. Il signale ce qui manque ou ce qui est en erreur, et donne l'adresse où aller
+comparer.
 
-| Option | Effet |
-|---|---|
-| `-Profil <chemin>` | Le profil à vérifier (par défaut `profil-local.json`, puis l'exemple) |
-| `-Sortie <chemin>` | Change le fichier produit (défaut : `verification-pc.json`) |
-| `-NomsApproximatifs` | Élargit la recherche aux noms, avec un risque de faux positif |
-| `-SansJeux` | Ignore les bibliothèques de jeux |
-
-## Vérifier les sauvegardes
-
-L'onglet Données liste des chemins et on coche en confiance. Ce script compare les deux
-côtés :
-
-```powershell
-.\scripts\verifier-sauvegardes.ps1 -Destination D:\sauvegarde-migration
-```
-
-Pour chaque élément qui désigne un vrai dossier, il compte les fichiers et mesure la
-taille à la source et dans la copie, puis classe : conforme, écart de taille, incomplet,
-copie absente. Un élément qui ne désigne aucun dossier — « Courriels et espaces
-clients » — est rapporté comme non vérifiable plutôt que passé sous silence. Un champ
-peut porter plusieurs chemins séparés par une virgule ou par « et » : ils sont traités
-un par un.
-
-Le rapport produit est aussi une progression : l'importer coche les éléments vérifiés
-conformes. `-ToleranceParCent` règle l'écart de taille toléré, 2 % par défaut.
-
-| Option | Effet |
-|---|---|
-| `-Destination <chemin>` | Le dossier de sauvegarde à comparer (obligatoire) |
-| `-Profil <chemin>` | Le profil à vérifier (par défaut `profil-local.json`, puis l'exemple) |
-| `-ToleranceParCent <n>` | Écart de taille toléré avant signalement |
+Rien n'est coché sans votre validation : un rapprochement par nom peut confondre deux
+logiciels voisins, et une case cochée à tort fait sauter une installation.
 
 ## Quatre cas, deux questions
 
@@ -492,7 +311,7 @@ change de nom : « Sur l'ancien PC » plutôt que « Avant de quitter ».
 
 **Juste mes affaires** fonctionne à l'envers des deux autres. Eux partent de tout et
 retirent le peu qui ne les concerne pas ; celui-ci part de rien et ne garde que ce qu'on
-lui nomme : les onglets Apps, Données et PWA en entier, plus les étapes marquées
+lui nomme : les onglets Apps et PWA en entier, plus les étapes marquées
 `pilote` dans le profil. Ni BIOS, ni installation de Windows, ni vérifications
 matérielles. C'est la vue des soirs où l'on réinstalle ses logiciels et rapatrie ses
 dossiers sur une machine déjà en route. Sans cette inversion, les réglages BIOS — qui ne
@@ -523,9 +342,8 @@ marche tout aussi bien, elle demande juste d'être présent.
 
 ## La checklist
 
-Six onglets : **Avant de quitter** le PC source, **Nouveau PC**, **Apps**, **Données** à
-sauvegarder, **Reste à faire** (la comparaison entre les deux machines), et **PWA**
-(raccourcis web).
+Cinq onglets : **Avant de quitter** le PC source, **Nouveau PC**, **Apps**, **Reste à
+faire** (la comparaison entre les deux machines) et **PWA** (raccourcis web).
 
 Le premier onglet regroupe ce qui se fait sur la machine qu'on abandonne et qui ne se
 rattrape pas ensuite : désactiver les licences Adobe et les autres activations liées au
@@ -540,11 +358,6 @@ les réglages du BIOS — TPM 2.0 et Secure Boot, qui conditionnent l'installati
 Windows 11, désactivation du CSM, profil XMP/EXPO, Resizable BAR, virtualisation — puis
 l'installation elle-même, le système, les pilotes, et enfin les vérifications
 matérielles. Chaque étape dit pourquoi elle existe et ce qu'on risque à l'oublier.
-
-L'onglet Données couvre aussi ce qu'on découvre trop tard : les codes de récupération
-2FA, la clé BitLocker, les profils Wi-Fi exportables avec
-`netsh wlan export profile key=clear`, le Gestionnaire d'identification Windows et les
-archives mail locales.
 
 La progression est enregistrée dans le navigateur au fur et à mesure et peut être
 exportée en JSON pour passer d'une machine à l'autre.
@@ -689,14 +502,8 @@ sont coupées, confettis compris.
 
 ## Formats de fichiers
 
-Le bouton **Importer** accepte cinq formats et les reconnaît tout seul, sans que vous
+Le bouton **Importer** accepte quatre formats et les reconnaît tout seul, sans que vous
 ayez à dire lequel.
-
-**Vérification de PC** — ancien format, produit par `verifier-pc.ps1` avant que
-`scan-pc.ps1 -Role cible` ne le remplace. La page le lit toujours, pour les fichiers
-déjà écrits ; plus rien ne le produit.
-Seul format qui ne s'applique pas directement : la page affiche la liste et attend
-confirmation.
 
 **Export winget** — le fichier produit par `winget export -o apps.json` sur n'importe
 quel PC, sans rien installer de ce projet. Il ne contient que des identifiants, donc les
@@ -718,53 +525,28 @@ du dépôt winget.
       "source": "registre, winget", "winget": "7zip.7zip",
       "cat": "system", "priorite": "med", "duree": 5, "tailleGo": 0.02 }
   ],
-  "variables": { "JAVA_HOME": "C:\\Program Files\\Java\\jdk-21" },
-  "configs": [
-    { "nom": "Visual Studio Code", "chemin": "C:\\Users\\a\\AppData\\Roaming\\Code\\User",
-      "modele": "%APPDATA%\\Code\\User", "quoi": "Réglages, raccourcis, extraits.",
-      "exclure": [], "tailleMo": 4.2, "logiciel": "visualstudiocode" }
-  ],
   "materiel": { "cm": "ASUSTeK ROG STRIX B850-A", "cpu": "AMD Ryzen 7 9800X3D",
                 "gpu": "NVIDIA GeForce RTX 5070 Ti", "ram": "32 Go DDR5 6000 MT/s",
                 "ssd": "Samsung SSD 9100 PRO 2TB" },
-  "outils": [
-    { "famille": "SDK Android", "id": "platforms;android-34", "nom": "platforms;android-34",
-      "version": "", "commande": "sdkmanager \"platforms;android-34\"" }
+  "pilotesTiers": [
+    { "classe": "Net", "fournisseur": "Realtek", "appareils": ["Realtek Gaming GbE"] }
   ],
-  "dossiers": [
-    { "nom": "Projets", "chemin": "D:\\Projets", "modele": "",
-      "tailleMo": 82000, "complet": true }
-  ],
-  "precieux": [
-    { "nom": "release.jks", "chemin": "D:\\dev\\app\\release.jks",
-      "modele": "", "tailleKo": 2.3 }
-  ],
-  "portables": [
-    { "nom": "ffmpeg", "chemin": "D:\\Outils\\ffmpeg", "modele": "",
-      "exes": ["ffmpeg.exe"], "tailleMo": 120 }
-  ],
-  "aPrevoirMo": 82126
+  "pilotes": []
 }
 ```
 
-`configs` porte les dossiers de réglages repérés, `materiel` remplit le bloc « Ma
-configuration », `outils` les chaînes d'outils qu'aucun installateur n'enregistre,
-`dossiers` les gros dossiers du disque, `precieux` les clés de signature, `portables` les
-dossiers qui ressemblent à des logiciels posés sans installateur. `aPrevoirMo` est le
-total de ce que le scan a **mesuré** — pas de ce que la checklist réclame par ailleurs,
-puisque les chemins écrits à la main n'ont pas de taille. Rien n'y est compté deux fois :
-un gros dossier qui contient un portable ou une clé ne les additionne pas.
+`materiel` remplit le bloc « Ma configuration », `pilotesTiers` les pilotes non-Microsoft
+relevés, `pilotes` — sur un instantané de cible seulement — les périphériques que Windows
+signale comme mal installés.
 
 Tous ces champs sont facultatifs : un inventaire qui n'en porte aucun reste valide, et la
 page ne montre que ce qu'elle a reçu.
 
-**Profil** — les listes des cinq onglets. C'est le format de `presets/exemple.json`,
+**Profil** — les listes des quatre onglets. C'est le format de `presets/exemple.json`,
 et celui que produit le bouton 🧩.
 
 **Progression** — les cases cochées, les notes et les dates, sans les listes. C'est ce
-que produit le bouton 💾, et aussi le rapport de `verifier-sauvegardes.ps1`, qui est une
-progression enrichie du détail de la comparaison : importé, il coche les éléments
-vérifiés conformes.
+que produit le bouton 💾.
 
 Importer un export winget, un inventaire ou un profil remplace les listes mais conserve
 la progression. Importer une progression fait l'inverse.
@@ -788,7 +570,6 @@ cats   // { clé: libellé } — les catégories de l'onglet Apps
 quitter // { id, n, p, note, pr, warn? } — facultatif, sur l'ancien PC
 npc    // { id, o, n, src, p, t, d, post?, dep?, warn? }
 apps   // { id, n, c, src, w?, p, t, d, dep?, warn? }
-data   // { id, n, p, note, pr, lic?, env? }
 pwa    // { id, n, u, d }
 ordre  // [ id, ... ] — l'ordre d'installation conseillé
 requetes // { "Nom de l'app": "requête de recherche" }
@@ -804,8 +585,8 @@ onglets, comme avant.
 
 `cas` limite un élément à une situation : `["migration"]` ou `["reinstall"]`. Sans ce
 champ, il vaut pour les deux. Ce que l'élément dit de lui-même passe avant l'onglet où
-il se trouve : « Mes affaires » garde l'onglet Données en entier, mais pas les entrées
-qui se déclarent `["second"]` — elles se réclament d'une autre situation. `pilote: true` marque une étape de l'onglet Nouveau PC
+il se trouve : un onglet gardé en entier ne ramène pas pour autant une entrée qui se
+déclare `["second"]`, parce qu'elle se réclame d'une autre situation. `pilote: true` marque une étape de l'onglet Nouveau PC
 comme relevant des pilotes : c'est la seule chose que le cas « juste mes affaires »
 garde de cet onglet. Un profil qui n'en marque aucune y verra l'onglet vide, avec un
 message qui le dit. `alt` fournit un libellé et une description de
@@ -885,11 +666,10 @@ Données. `tests/test-profil-hostile.js` rejoue un profil piégé à chaque publ
 
 ```bash
 npm install                       # une seule fois
-./verifier-comme-ci.sh            # les 26 étapes du job Linux, dans l'ordre
-npm test                          # les cinq suites sans navigateur, en 2 s
-npm run test:scan                 # les sept suites PowerShell
+./verifier-comme-ci.sh            # les 21 étapes du job Linux, dans l'ordre
+npm test                          # les sept suites sans navigateur, en 2 s
+npm run test:scan                 # les quatre suites PowerShell
 npm run test:navigateur           # rendu réel dans Chromium
-npm run test:verification         # import d'une vérification de PC
 npm run test:pwa                  # installabilité et fonctionnement hors ligne
 npm run test:mobile               # ergonomie tactile
 npm run test:a11y                 # accessibilité et réversibilité
@@ -899,17 +679,17 @@ npm run test:scenarios            # migration ou réinstallation
 npm run test:reinit               # remises à zéro et leur annulation
 npm run test:menu                 # menu « Plus » de la barre du haut
 npm run test:hostile              # profil piégé : aucune injection
-npm run test:sauvegarde           # aucun échec d'enregistrement silencieux
 npm run test:debut                # deux questions d'ouverture et second PC
 npm run test:config               # bloc configuration et affichage grand écran
-npm run test:outils               # scripts proposés et chargement automatique
+npm run test:reconciliation       # comparaison source → cible
+npm run test:archive              # contenu de l'archive téléchargeable
 ```
 
 `npm test` ne lance que ce qui tourne partout sans rien installer. Les suites
 navigateur demandent Chromium (`npm install` le fournit via Playwright), les suites
 PowerShell demandent `pwsh`.
 
-Vingt-sept suites, dans l'ordre où la CI les lance.
+Vingt et une suites, dans l'ordre où la CI les lance.
 
 ### Ce que seul un vrai Windows peut dire
 
@@ -949,7 +729,7 @@ statique interdit ce mélange dans tout le dépôt.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
-identifiants uniques sur les cinq onglets, priorités valides, catégories déclarées,
+identifiants uniques sur les quatre onglets, priorités valides, catégories déclarées,
 ordre conseillé ne citant que des éléments existants. Il contrôle aussi que les fichiers
 dont les tests dépendent sont bien versionnés, et qu'aucune fonction n'est définie deux
 fois dans `index.html` — une redéfinition écrase silencieusement la première et ce piège
@@ -959,14 +739,12 @@ a coûté trois bugs au projet.
 Il rejoue l'import d'un inventaire réellement produit par le scanner
 (`tests/inventaire-exemple.json`), ce qui couvre la chaîne de bout en bout.
 
-`tests/test-scan.ps1` et `tests/test-verification.ps1` couvrent le classement, la fusion
-entre sources, le parsing de la sortie winget et le rapprochement avec le profil, sans
-toucher à la machine.
+`tests/test-scan.ps1` couvre le classement, la fusion entre sources, le parsing de la
+sortie winget et la mise en forme du matériel, des pilotes et de la machine, sans toucher
+à la machine.
 
-`tests/test-sauvegardes.ps1` **exécute réellement** `verifier-sauvegardes.ps1` sur une
-arborescence construite pour l'occasion — copie fidèle, copie tronquée, copie vide,
-source absente, chemins multiples — et constate son verdict. C'est le seul script
-PowerShell du projet qui tourne hors Windows, puisqu'il ne lit que des fichiers.
+`tests/test-reconciliation.js` est la seule partie du projet qui se prouve vraiment : la
+comparaison ne touche ni à Windows ni au DOM, elle prend deux JSON et rend un rapport.
 
 `tests/test-navigateur.js` charge la page dans un vrai Chromium et vérifie ce qu'un DOM
 simulé ne voit pas : que les quatre panneaux sont bien frères et non imbriqués, que les
@@ -1012,11 +790,6 @@ catégorie, identifiant winget, adresse de raccourci, intitulés, descriptions, 
 puis clique tout ce qui est cliquable dans les deux cas et en mode guidé. Il échoue si
 une seule charge s'exécute.
 
-`tests/test-sauvegarde.js` fait refuser l'écriture par le stockage et vérifie que la
-page le dit : l'indicateur passe à « non enregistré », un panneau explique quoi faire,
-l'alarme ne se répète pas à chaque case, et tout revient à la normale quand
-l'enregistrement remarche.
-
 `tests/test-debut.js` couvre les deux questions et le cas qu'elles servent surtout à
 faire connaître : que le bandeau se propose sans barrer la page, ne revient pas une fois
 répondu, se rappelle depuis le menu, et qu'en mode « deux PC » on ne désautorise plus
@@ -1028,12 +801,6 @@ pilotes — et seulement ceux-là, pas « Désactiver le CSM » —, que les rec
 le support du constructeur, qu'un profil ne déclarant aucun composant s'affiche
 normalement, et que l'élargissement sur grand écran ne change rien au téléphone ni à la
 tablette.
-
-`tests/test-outils.js` reconstitue une clé USB — la page plus le fichier qu'un scanner y
-dépose — et vérifie que la page s'ouvre déjà remplie, qu'elle dit d'où viennent les
-données, qu'un rechargement n'écrase pas le travail fait depuis, et qu'une clé sans ce
-fichier ou avec un fichier abîmé s'ouvre normalement. Il contrôle aussi que chaque
-fichier proposé au téléchargement existe réellement dans le dépôt.
 
 `tests/test-lanceur.ps1` couvre ce que le lanceur propose et ce qu'il vérifie avant : que
 chaque action mène à un fichier qui existe, qu'un dossier incomplet grise les actions
@@ -1048,18 +815,12 @@ c'est elle qui décide de tout, et elle se teste partout.
 celui livré avec Windows, et celui qu'on obtient par double-clic — lit un `.ps1` sans
 marqueur d'encodage comme de l'ANSI et non de l'UTF-8. « Clés SSH » y devient
 « ClÃ©s SSH », et ce texte part dans le JSON de l'inventaire, donc dans la page. Le test
-vérifie que chaque script porte le marqueur, que tous parsent, et que les noms accentués
-de la table des configurations arrivent intacts.
-
-`tests/test-configs-aller-retour.ps1` exécute les deux scripts pour de vrai — ils ne font
-que lire et écrire des fichiers, donc ils tournent entièrement ici. Il vérifie que la
-copie est fidèle, que la restauration ne crée pas de dossier imbriqué, que le refus
-d'écraser protège réellement le fichier en place, que `-Remplacer` laisse l'ancien
-lisible, et qu'un dossier sans index est rejeté plutôt que deviné.
+vérifie que chaque script porte le marqueur, que tous parsent, et que les textes accentués
+du lanceur arrivent intacts.
 
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les vingt-six suites à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les vingt et une suites à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 
@@ -1080,9 +841,6 @@ Migration-PC/
 ├── scripts/lib-detection.ps1     # détection partagée par tous les scripts
 ├── scripts/ecrire-resultat.ps1   # pose le résultat à côté de la page et l'ouvre
 ├── scripts/scan-pc.ps1           # fige la source, puis constate sur la cible
-├── scripts/sauvegarder-configs.ps1   # emporte les dossiers de réglages
-├── scripts/restaurer-configs.ps1     # les repose — le seul qui écrit chez vous
-├── scripts/verifier-sauvegardes.ps1  # compare les dossiers copiés
 │
 ├── manifest.json, sw.js, icons/  # installation et fonctionnement hors ligne
 ├── presets/exemple.json          # la checklist livrée, aussi embarquée dans index.html
@@ -1091,7 +849,7 @@ Migration-PC/
 ├── captures/                     # images du README
 ├── resultat-scan.js              # écrit par les scripts, lu par la page en file://
 ├── tests/                        # suites Node, PowerShell et navigateur
-├── verifier-comme-ci.sh          # rejoue localement les 26 étapes du job Linux
+├── verifier-comme-ci.sh          # rejoue localement les 21 étapes du job Linux
 ├── package.json                  # scripts de test uniquement
 ├── COUVERTURE.md                 # ce que le scan détecte, refuse et ne peut pas
 ├── construire-zip.sh             # fabrique l'archive proposée au téléchargement
@@ -1132,7 +890,7 @@ S'ils refusent de démarrer, lancez-les avec `-ExecutionPolicy Bypass`. Ils ont 
 **La détection n'a pas encore été exécutée sur une machine Windows réelle.** Le
 classement, la fusion entre sources, le parsing de la sortie winget et le rapprochement
 avec le profil sont couverts par des tests sur données simulées, et
-`verifier-sauvegardes.ps1` est réellement exécuté par sa suite. Mais la lecture du
+Mais la lecture du
 registre, des paquets du Store et des bibliothèques de jeux demande Windows : ce code
 est relu, pas éprouvé. Si un résultat vous paraît faux, c'est probablement là.
 
@@ -1165,71 +923,16 @@ ponctuation qui porte le nom est transcrite plutôt qu'effacée, sinon `Notepad+
 **Le classement par catégorie est indicatif**, fondé sur des mots-clés. Un logiciel peu
 connu atterrit dans « Utilitaires Système ». Les catégories se corrigent dans le JSON.
 
-### Emporter ses réglages, et les remettre
+**Les étapes « Nouveau PC » et « PWA » ne sont pas scannées** : un inventaire importé
+reprend celles du profil d'exemple, à adapter à votre matériel. Un scan ne peut pas
+deviner qu'il faut activer le profil XMP dans le BIOS.
 
-Repérer les dossiers de configuration ne suffisait pas : il fallait encore les copier à
-la main. **`sauvegarder-configs.ps1`** les copie vers la clé et écrit un index de ce qui
-vient d'où ; **`restaurer-configs.ps1`** les repose à partir de cet index, jamais d'un
-chemin deviné.
-
-Le second est le seul script du projet qui écrit sur votre disque, alors il est prudent
-par défaut. Il **refuse** d'écraser un dossier existant — un profil Firefox déjà créé sur
-la machine neuve vaut mieux que celui d'il y a deux semaines. Avec `-Remplacer`, il met
-l'ancien de côté dans un dossier daté avant d'écrire, pour que l'opération reste
-annulable. Et `-Simuler` montre tout ce qui se passerait sans rien toucher : à faire au
-moins une fois.
-
-À lancer **après** avoir installé les logiciels, et fenêtres fermées : la plupart lisent
-leurs réglages au démarrage et réécriraient par-dessus en se fermant.
-
-**Le nouveau PC n'a pas forcément le même nom d'utilisateur.** L'index garde donc deux
-chemins par entrée : celui de l'ancienne machine, pour mémoire, et le même avant
-expansion des variables — `%APPDATA%\Code\User`. C'est le second qui est déroulé à
-l'arrivée. Sans cela, la restauration créait un `C:\Users\<ancien nom>\` sur la machine
-neuve, sous un profil que personne n'utilise, et l'annonçait en vert. Un index produit
-par une version antérieure n'a pas ce champ : il se restaure encore, sur le chemin
-d'origine.
-
-**Une règle peut laisser des choses derrière elle.** La table copiait des dossiers
-entiers, sans exception possible : une entrée `.gradle` aurait emporté dix Go de caches
-régénérables pour deux kilo-octets de réglages. Chaque règle peut maintenant nommer ce
-qu'elle écarte, et la taille annoncée est celle de ce qui part réellement — annoncer
-10 Go pour en écrire 2 Mo se remarquerait, l'inverse se remarquerait au pire moment.
-
-Ce que les règles écartent est volontairement étroit : des rapports de plantage, de la
-télémétrie, des sauvegardes de session, des index qui se reconstruisent au premier
-démarrage. Un profil Firefox laisse derrière lui ses `minidumps` et sa télémétrie, jamais
-son `storage` — qui porte les données des applications web — ni ses mots de passe.
-Thunderbird laisse son index de recherche, jamais ses courriels. Un cache mal identifié
-qu'on jette est une perte, pas une économie.
-
-Un chemin peut aussi porter un joker, parce qu'Android Studio et les IDE JetBrains
-rangent leurs réglages dans un dossier qui porte leur version. Le modèle enregistré dans
-l'index, lui, est reconstruit sans joker : c'est lui qui permettra de restaurer ailleurs.
-
-**Android : le plus petit fichier de la table est le plus coûteux à perdre.**
-`%USERPROFILE%\.android\debug.keystore` fait quelques kilo-octets et ne se régénère pas à
-l'identique. Sans lui, tous vos builds de debug changent de signature : les clés Maps,
-Firebase et Sign-In liées à son SHA-1 cessent de fonctionner, et chaque application déjà
-posée sur un appareil de test doit être désinstallée avant de pouvoir être réinstallée.
-Les clés ADB du même dossier évitent que chaque téléphone redemande l'autorisation de
-débogage. Les émulateurs, eux, sont comptés à part : plusieurs Go chacun, à emporter
-seulement si les recréer coûte plus cher que la place.
-
-Le SDK Android n'est pas copié et ne doit pas l'être : vingt à soixante Go qui se
-retéléchargent, là où la liste des paquets installés tient en une commande.
-
-**Les dossiers de configuration sont repérés, pas devinés.** Le scanner connaît une
-table d'emplacements — celui de VS Code, de Notepad++, de Firefox, d'OBS, d'une trentaine
-de logiciels courants — et ne retient que ceux qui existent réellement, pour un logiciel
-réellement installé. Le dossier d'un logiciel désinstallé n'est pas proposé : ce sont des
-restes, pas une configuration à emporter. La table est forcément incomplète et s'allonge
-d'une ligne ; ce qu'elle ignore reste à lister à la main, comme avant.
-
-**Les étapes « Nouveau PC », « Données » et « PWA » ne sont pas scannées** : un
-inventaire importé reprend celles du profil d'exemple, à adapter à votre matériel. Un
-scan ne peut pas deviner qu'il faut activer le profil XMP dans le BIOS. Les variables
-d'environnement font exception : elles sont relevées et reportées automatiquement.
+**Le projet ne sauvegarde rien.** C'est la limite la plus importante, et elle est
+volontaire. Il a un temps listé les dossiers de réglages, les favoris, les archives mail
+et les gros dossiers — sans jamais les copier. Lister ce qu'on va perdre n'aide pas à ne
+pas le perdre, et affiché à côté d'une liste de logiciels réellement installables, ça
+laissait croire à une sauvegarde qui n'existait pas. Ces familles ont été retirées ;
+`COUVERTURE.md` dit lesquelles et pourquoi.
 
 **Les tailles sur disque sont partielles.** Steam et Epic les donnent exactement, le
 registre les estime — et se trompe parfois largement —, le Microsoft Store, GOG et Xbox

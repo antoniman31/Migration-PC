@@ -137,31 +137,21 @@ ok('avec les deux versions',apps.differents[0].avant+'→'+apps.differents[0].ap
 ok('une version plus récente ne dit rien',
   apps.differents.filter(d=>/Firefox/.test(d.libelle)).length,0);
 
-// Le test qui compte le plus pour les chemins : le profil utilisateur diffère
-// entre les deux machines. Comparer les chemins réels rendrait tout manquant.
-const cfg=famille(r,'configs');
-ok('les clés SSH sont reconnues malgré un profil différent',cfg.arrives,1);
-ok('et le dossier VS Code manque',cfg.manquants[0].libelle,'Visual Studio Code');
-
-// Un cache .ost ne se copie pas : l'attendre sur la cible ferait compter
-// comme manquant un fichier que personne ne doit emporter.
-const mail=famille(r,'mail');
-ok('seule l\'archive est attendue',mail.total,1);
-ok('et elle manque',mail.manquants[0].libelle,'archive.pst');
-
-ok('un réseau Wi-Fi sur deux',famille(r,'wifi').arrives,1);
-ok('une variable sur deux',famille(r,'variables').arrives,1);
-ok('la manquante est nommée',famille(r,'variables').manquants[0].libelle,'ANDROID_HOME');
-
 // Personne n'attend que le PC neuf ait la même carte mère ni la même licence.
 ok('le matériel n\'est pas comparé',famille(r,'materiel'),undefined);
 ok('les licences non plus',famille(r,'licences'),undefined);
+// Les familles retirées du projet ne doivent plus apparaître, même si un
+// vieil instantané en porte encore.
+ok('les réglages ne sont plus comparés',famille(r,'configs'),undefined);
+ok('les archives mail non plus',famille(r,'mail'),undefined);
+ok('le Wi-Fi non plus',famille(r,'wifi'),undefined);
+ok('une seule famille en tout',r.familles.length,1);
 
 console.log('\n--- le compte global ---');
-// 4 apps + 2 outils + 2 configs + 1 archive + 2 wifi + 2 variables = 13
-ok('total attendu',r.total.attendu,13);
-// 3 apps + 1 outil + 1 config + 0 mail + 1 wifi + 1 variable = 7
-ok('total arrivé',r.total.arrive,7);
+// 4 apps, et rien d'autre : c'est tout ce que le projet compare.
+ok('total attendu',r.total.attendu,4);
+// Firefox, 7-Zip et VS Code sont là ; Krita manque.
+ok('total arrivé',r.total.arrive,3);
 
 console.log('\n--- une migration terminée ---');
 const fini=comparer(source,Object.assign({},source,{genere:'2026-09-28T10:00:00Z'}));
@@ -173,17 +163,17 @@ console.log('\n--- entrées hostiles ---');
 // Un instantané vient d'un fichier qu'on n'a pas écrit : il peut porter
 // n'importe quoi. La comparaison ne doit pas tomber.
 const hostile=comparer(
-  {apps:'pas un tableau',configs:[null,'x',{},{nom:'ok',modele:'%A%\\b'}],variables:'nope'},
-  {apps:[{nom:null}],configs:null,variables:[1,2]});
+  {apps:[null,'x',{},{nom:'Krita'}]},
+  {apps:'pas un tableau'});
 ok('rien ne tombe',hostile.ok,true);
-ok('les entrées vides sont ignorées',famille(hostile,'configs').total,1);
+ok('les entrées vides sont ignorées',famille(hostile,'apps').total,1);
 // Le compte doit toujours boucler : ce qui est attendu se retrouve soit
 // arrivé, soit manquant, jamais nulle part.
 const boucle=r.familles.every(f=>f.arrives+f.manquants.length===f.total);
 ok('arrivés + manquants = attendus, partout',boucle,true);
 ok('et sur le total global',
   r.familles.reduce((n,f)=>n+f.total,0),r.total.attendu);
-ok('une famille non-tableau est ignorée',famille(hostile,'apps'),undefined);
+ok('une famille non-tableau est ignorée',famille(hostile,'jeux'),undefined);
 
 console.log('\n--- l\'onglet, vie 1 : sur le PC source ---');
 // Rien à comparer : la machine d'arrivée n'existe pas encore. L'onglet doit
@@ -199,11 +189,11 @@ vm.runInContext('INV_SOURCE='+JSON.stringify(
 const prep=G('etatPreparation()');
 ok('trois points de préparation',prep.length,3);
 ok('l\'instantané est constaté fait',prep[0].etat,'ok');
-// Le scan LISTE, il ne copie pas. Confondre les deux est la seule façon de
-// perdre des données dans ce projet : la ligne doit le dire en toutes lettres.
-ok('la ligne dit que le scan ne copie pas',/il ne les a pas copiés/.test(prep[1].quoi),true);
-ok('et renvoie au bon script',/sauvegarder-configs/.test(prep[1].quoi),true);
-ok('les fichiers perso restent à toi',/aucun script ne les copie/.test(prep[2].quoi),true);
+ok('la liste des logiciels est constatée',/logiciels relevés/.test(prep[1].quoi),true);
+// Le programme ne sauvegarde rien et ne doit surtout pas laisser croire le
+// contraire avant un formatage : c'est le seul geste irréversible ici.
+ok('les fichiers perso restent à toi',/ne les copie pas/.test(prep[2].quoi),true);
+ok('et c\'est dit comme irréversible',/irréversible/.test(prep[2].quoi),true);
 
 // Un instantané vieux de trois jours ne décrit plus la machine.
 const vieux=Object.assign({},source,{genere:new Date(Date.now()-72*3600000).toISOString()});
@@ -220,7 +210,7 @@ vm.runInContext('INV_SOURCE='+JSON.stringify(source)
 ok('le scan de la cible fait basculer l\'onglet',G('surLaCible()'),true);
 G('renderReste()');
 const vue=els['list-reste'].innerHTML;
-ok('le compte est annoncé',/6 éléments à remettre/.test(vue),true);
+ok('le compte est annoncé',/1 élément à remettre/.test(vue),true);
 ok('avec les deux machines',/PC-SOURCE/.test(vue)&&/PC-CIBLE/.test(vue),true);
 ok('ce qui manque est nommé',/Krita/.test(vue),true);
 ok('la régression aussi',/1\.98\.2/.test(vue)&&/1\.90\.0/.test(vue),true);
@@ -234,12 +224,8 @@ G('appliquerProfil')(G('inventaireVersProfil')(source),true);
 vm.runInContext('INV_SOURCE='+JSON.stringify(source)
   +';INV_CIBLE='+JSON.stringify(cible)+';',ctx);
 const avant=G('lignesConstatees()');
-// Trois applications ET un outil : la cible porte pnpm, pas Ubuntu.
-ok('quatre lignes constatées présentes',avant.length,4);
-// Le piège : une ligne de chaîne d'outils absente de la cible ne doit pas
-// être cochée sous prétexte qu'elle n'est pas une application manquante.
-const ubuntu=G('APPS_DATA').filter(a=>/Ubuntu/.test(a.n))[0];
-ok('l\'outil absent n\'est pas constaté',avant.indexOf(ubuntu.id),-1);
+// Trois applications sur quatre : Krita n'est pas arrivé.
+ok('trois lignes constatées présentes',avant.length,3);
 // Une ligne cochée à la main sur une application absente ne doit pas bouger.
 const absente=G('APPS_DATA').filter(a=>/Krita/.test(a.n))[0];
 G('toggle')(absente.id,absente.n);

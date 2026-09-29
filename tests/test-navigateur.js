@@ -13,7 +13,7 @@ const HTML='file://'+path.join(racine,'index.html');
 // retoucher ce fichier a chaque enrichissement du contenu, ce qui finit par
 // le faire mentir.
 const PROFIL=JSON.parse(fs.readFileSync(path.join(racine,'presets','exemple.json'),'utf8'));
-const SECTIONS=['quitter','npc','apps','data','pwa'];
+const SECTIONS=['quitter','npc','apps','pwa'];
 const TOTAL=SECTIONS.reduce(function(n,s){return n+((PROFIL[s]||[]).length);},0);
 let ko=0;
 const ok=(l,a,b)=>{const p=(b===undefined?!!a:a===b);console.log((p?'  ok   ':'  FAIL ')+l+' → '+a+(p?'':' (attendu '+b+')'));if(!p)ko++;};
@@ -39,14 +39,6 @@ async function ouvrirSituation(pg){
 // qui s'ouvre au clic. On le deplie avant de les chercher.
 async function deplierApps(pg){
   await pg.evaluate(()=>{APPS_DATA.forEach(a=>{lignesOuvertes[a.id]=true;});renderApps();});
-}
-
-
-// Les champs à remplir d'une ligne de « Données » — clé de licence, variables
-// d'environnement, note — vivent dans le détail, qu'on ouvre. On le déplie
-// plutôt que de chercher dans une ligne repliée ce qui n'y est plus.
-async function deplierData(pg){
-  await pg.evaluate(()=>{DATA_SAVES.forEach(s=>{lignesOuvertes[s.id]=true;});renderData();});
 }
 
 
@@ -91,7 +83,7 @@ ok('filtres catégories',(await pg.$$('#cat-filters input[type=checkbox]')).leng
 // invisibles des qu'on quitte le premier. On compare les parents entre eux
 // plutot qu'a un conteneur nomme : ajouter un <main> ne doit pas casser ce test.
 const memeParent=await pg.evaluate(()=>{
-  const p=['npc','apps','data','pwa'].map(t=>document.getElementById('panel-'+t).parentElement);
+  const p=['npc','apps','pwa'].map(t=>document.getElementById('panel-'+t).parentElement);
   return p.every(x=>x===p[0]) && !p[0].closest('.panel');
 });
 ok('panneaux frères',memeParent,true);
@@ -126,23 +118,7 @@ await pg.waitForTimeout(150);
 ok('recherche globale',(await pg.textContent('#gsearch-count')).length>0);
 await pg.fill('#gsearch-input','');
 
-console.log('\n--- onglets Données et PWA ---');
-await pg.click('#tab-data');
-ok('données rendues',(await pg.$$('#list-data .lg-l')).length,PROFIL.data.length);
-await deplierData(pg);
-ok('champ licence présent',(await pg.$$('#list-data .lic-field')).length>0);
-ok('champs env présents',(await pg.$$('#list-data .env-row')).length,3);
-await pg.fill('#list-data .lic-input','ABCD-1234-EFGH');
-await pg.fill('#list-data .env-input','D:/outils/java');
-await pg.waitForTimeout(200);
-const sto=await pg.evaluate(()=>JSON.parse(localStorage.getItem('mpc_state_v1')));
-ok('licence persistée',Object.values(sto.lic)[0],'ABCD-1234-EFGH');
-ok('variable persistée',Object.values(sto.env)[0],'D:/outils/java');
-await pg.reload({waitUntil:'networkidle'});
-await pg.click('#tab-data');
-await pg.waitForTimeout(300);
-await deplierData(pg);
-ok('licence relue après rechargement',await pg.inputValue('#list-data .lic-input'),'ABCD-1234-EFGH');
+console.log('\n--- onglet PWA ---');
 await pg.click('#tab-pwa');
 ok('pwa rendues',(await pg.$$('#list-pwa .item')).length,3);
 

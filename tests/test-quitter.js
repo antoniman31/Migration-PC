@@ -47,7 +47,7 @@ ok('badge à jour',await pg.textContent('#badge-quitter'),'1/'+PROFIL.quitter.le
 await pg.click('#panel-quitter .chk-all');
 await pg.waitForTimeout(250);
 ok('groupe entier coché',await pg.evaluate(()=>QUITTER_DATA.filter(e=>e.pr==='high'&&S.checked[e.id]).length),PROFIL.quitter.filter(e=>e.pr==='high').length);
-ok('les autres onglets intacts',await pg.evaluate(()=>DATA_SAVES.filter(e=>S.checked[e.id]).length),0);
+ok('les autres onglets intacts',await pg.evaluate(()=>APPS_DATA.filter(e=>S.checked[e.id]).length),0);
 await pg.evaluate(()=>resetSection('quitter'));
 await pg.waitForTimeout(250);
 ok('réinitialisation',await pg.evaluate(()=>Object.keys(S.checked).length),0);

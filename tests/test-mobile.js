@@ -41,7 +41,7 @@ for(const ec of ECRANS){
     await pg.evaluate(t=>document.documentElement.setAttribute('data-theme',t),theme);
 
     // Chaque onglet a sa propre mise en page : les mesurer tous.
-    for(const onglet of ['npc','apps','data','pwa']){
+    for(const onglet of ['npc','apps','pwa']){
       await pg.click('#tab-'+onglet);
       await pg.waitForTimeout(120);
       const ou=ec.nom+'/'+theme+'/'+onglet;

@@ -34,7 +34,7 @@ const errs=[];pg.on('pageerror',e=>errs.push(e.message));
 await pg.goto(HTML,{waitUntil:'networkidle'});
 let ko=0;const ok=(l,a,c)=>{const p=(c===undefined?!!a:a===c);console.log((p?'  ok  ':' FAIL ')+l+' → '+JSON.stringify(a)+(p?'':' (attendu '+JSON.stringify(c)+')'));if(!p)ko++;};
 const P=JSON.parse(fs.readFileSync(path.join(racine,'presets','exemple.json'),'utf8'));
-const tous=[...P.quitter,...P.npc,...P.apps,...P.data,...P.pwa];
+const tous=[...P.quitter,...P.npc,...P.apps,...P.pwa];
 const vis=sc=>tous.filter(e=>!e.cas||e.cas.includes(sc)).length;
 
 console.log('--- au premier lancement ---');
@@ -81,14 +81,6 @@ ok('l\'authentificateur s\'ajoute au lieu de se transférer',
   q.some(n=>/Ajouter la seconde machine/.test(n)),true);
 ok('les deux clés BitLocker sont demandées',
   q.some(n=>/DEUX machines/.test(n)),true);
-// Ce qui apparait, et qui n'existait nulle part.
-const d=await pg.evaluate(()=>[...document.querySelectorAll('#list-data .lg-n')]
-  .map(x=>x.textContent));
-['Décider quels dossiers','Mettre en place la synchronisation',
- 'marche dans les deux sens','versions divergentes'].forEach(t=>
-  ok('« '+t+' » apparaît',d.some(n=>n.indexOf(t)>=0),true));
-ok('la répartition précède la synchronisation',
-  d.findIndex(n=>/Décider quels dossiers/.test(n))<d.findIndex(n=>/Mettre en place la synchro/.test(n)),true);
 
 console.log('\n--- et en migration, tout redevient comme avant ---');
 await ouvrirSituation(pg);await pg.click('#sc-migration');await pg.waitForTimeout(300);
@@ -97,9 +89,6 @@ const qm=await pg.evaluate(()=>[...document.querySelectorAll('#list-quitter .ite
 ok('Steam se désautorise de nouveau',qm.some(n=>/Désautoriser Steam/.test(n)),true);
 ok('Adobe se désactive de nouveau',qm.some(n=>/Désactiver les logiciels Adobe/.test(n)),true);
 ok('le disque s\'efface',qm.some(n=>/Effacer le disque/.test(n)),true);
-ok('la synchronisation disparaît',await pg.evaluate(()=>
-  [...document.querySelectorAll('#list-data .item-name')]
-    .some(x=>/synchronisation/i.test(x.textContent))),false);
 ok('l\'onglet reprend son nom',await pg.evaluate(()=>
   document.getElementById('tab-quitter').textContent.indexOf('Avant de quitter')>=0),true);
 ok('et le total est celui de la migration',await pg.textContent('#gp-total'),String(vis('migration')));

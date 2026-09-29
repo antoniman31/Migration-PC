@@ -56,11 +56,11 @@ const P=JSON.parse(fs.readFileSync(path.join(racine,'presets','exemple.json'),'u
 // Les sections qui ont besoin des cinq onglets garnis chargent celui-ci, et
 // comptent alors sur lui.
 const DEMO=JSON.parse(fs.readFileSync(path.join(racine,'presets','demonstration.json'),'utf8'));
-const tous=[...P.quitter,...P.npc,...P.apps,...P.data,...P.pwa];
+const tous=[...P.quitter,...P.npc,...P.apps,...P.pwa];
 const vis=sc=>tous.filter(e=>!e.cas||e.cas.includes(sc)).length;
 // Les mêmes comptes, sur la démonstration : les dernières sections tournent
 // avec elle chargée.
-const tousDemo=[...DEMO.quitter,...DEMO.npc,...DEMO.apps,...DEMO.data,...DEMO.pwa];
+const tousDemo=[...DEMO.quitter,...DEMO.npc,...DEMO.apps,...DEMO.pwa];
 const visDemo=sc=>tousDemo.filter(e=>!e.cas||e.cas.includes(sc)).length;
 
 console.log('--- au départ : tout ---');
@@ -169,7 +169,7 @@ console.log('\n--- les libelles alternatifs, sur les cinq onglets ---');
 // voie. On en pose un par onglet et on verifie qu'il s'affiche vraiment.
 const parOnglet=await pg.evaluate(()=>{
   const cibles={quitter:QUITTER_DATA,npc:NPC_DATA,apps:APPS_DATA,
-    data:DATA_SAVES,pwa:PWA_DATA};
+    pwa:PWA_DATA};
   const avant={},resultat={};
   Object.keys(cibles).forEach(k=>{
     const e=cibles[k][0];
@@ -205,7 +205,7 @@ const parOnglet=await pg.evaluate(()=>{
   // Et le mode guide.
   basculerGuide();
   const g=document.getElementById('guide').textContent;
-  resultat.guide=/LIBELLE-(QUITTER|NPC|APPS|DATA|PWA)/.test(g);
+  resultat.guide=/LIBELLE-(QUITTER|NPC|APPS|PWA)/.test(g);
   basculerGuide();
   Object.keys(cibles).forEach(k=>{
     const e=cibles[k][0];
@@ -214,7 +214,7 @@ const parOnglet=await pg.evaluate(()=>{
   viderIndex();changerScenario('tout');renderAll();updateGlobal();
   return resultat;
 });
-['quitter','npc','apps','data','pwa'].forEach(k=>
+['quitter','npc','apps','pwa'].forEach(k=>
   ok('l\'intitulé alternatif s\'affiche dans « '+k+' »',parOnglet[k].nom,true));
 ['npc','apps','pwa'].forEach(k=>
   ok('la description alternative aussi dans « '+k+' »',parOnglet[k].desc,true));
@@ -272,10 +272,9 @@ await ouvrirSituation(pg);await pg.click('#sc-affaires');await pg.waitForTimeout
 // situation : ce qu'il dit de lui-meme passe avant l'onglet ou il se trouve.
 const pourAffaires=e=>!Array.isArray(e.cas)||!e.cas.length||e.cas.indexOf('affaires')>=0;
 const pilotes=DEMO.npc.filter(e=>e.pilote&&pourAffaires(e)).length;
-const dataAff=DEMO.data.filter(pourAffaires).length;
 const appsAff=DEMO.apps.filter(pourAffaires).length;
 const pwaAff=DEMO.pwa.filter(pourAffaires).length;
-const attendu=pilotes+appsAff+dataAff+pwaAff;
+const attendu=pilotes+appsAff+pwaAff;
 ok('bouton actif',await pg.getAttribute('#sc-affaires','aria-pressed'),'true');
 ok('le total ne compte que les affaires',await pg.textContent('#gp-total'),String(attendu));
 ok('le profil declare bien des pilotes',pilotes>0,true);
@@ -287,17 +286,7 @@ ok('aucun reglage BIOS',npcVus.some(n=>/BIOS|Secure Boot|CSM|XMP|EXPO/.test(n)),
 ok('ni l\'installation de Windows',npcVus.some(n=>/Installer Windows|NON-RETOUR/.test(n)),false);
 ok('les applications sont toutes la',
   (await pg.$$('#list-apps .lg-l')).length,appsAff);
-ok('les donnees aussi',(await pg.$$('#list-data .lg-l')).length,dataAff);
 ok('les PWA aussi',(await pg.$$('#list-pwa .item')).length,pwaAff);
-
-// Un onglet garde en entier ne ramene pas pour autant ce qui appartient a un
-// autre cas : « synchroniser les deux PC » se declare second:, il n'a rien a
-// faire ici, meme dans un onglet qu'on garde.
-const dAutresCas=DEMO.data.filter(e=>Array.isArray(e.cas)&&e.cas.length&&e.cas.indexOf('affaires')<0);
-ok('le profil declare bien des elements d\'un autre cas',dAutresCas.length>0,true);
-const nomsData=await pg.evaluate(()=>
-  [...document.querySelectorAll('#list-data .item-name')].map(x=>x.textContent));
-ok('aucun ne passe',dAutresCas.some(e=>nomsData.indexOf(e.n)>=0),false);
 
 console.log('\n--- un onglet vide dit pourquoi ---');
 const vide=await pg.textContent('#list-quitter');

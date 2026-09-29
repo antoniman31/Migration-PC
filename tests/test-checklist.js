@@ -56,7 +56,6 @@ console.log('\n--- profil par défaut ---');
 const DEF=G('PROFIL_DEFAUT');
 eq('apps chargées',G('APPS_DATA').length,DEF.apps.length);
 eq('étapes nouveau PC',G('NPC_DATA').length,DEF.npc.length);
-eq('données',G('DATA_SAVES').length,DEF.data.length);
 eq('pwa',G('PWA_DATA').length,DEF.pwa.length);
 eq('titre du profil',G('PROFIL_NOM'),DEF.meta.nom);
 eq('entête rendue',els['profil-titre'].textContent,DEF.meta.nom);
@@ -70,7 +69,7 @@ eq('liste apps rendue avec la démonstration',els['list-apps'].innerHTML.length>
 G('appliquerProfil')(DEF,true);
 eq('liste npc rendue',els['list-npc'].innerHTML.length>500,true);
 // Somme de toutes les sections du profil, y compris celles ajoutées depuis.
-const SECTIONS=['quitter','npc','apps','data','pwa'];
+const SECTIONS=['quitter','npc','apps','pwa'];
 const TOT=SECTIONS.reduce(function(n,s){return n+((DEF[s]||[]).length);},0);
 eq('total global',String(els['gp-total'].textContent),String(TOT));
 

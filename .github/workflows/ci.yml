@@ -76,26 +76,14 @@ jobs:
       - name: Scanner — classement, fusion, parsing
         run: pwsh -File tests/test-scan.ps1
 
-      # Le seul script PowerShell du projet qui tourne vraiment hors Windows :
-      # il ne lit que des fichiers. Le test l'execute sur une arborescence
-      # construite pour l'occasion, au lieu de simuler ses resultats.
-      - name: Vérification des sauvegardes — exécution réelle
-        run: pwsh -File tests/test-sauvegardes.ps1
-
       - name: Lanceur — actions et fichiers
         run: pwsh -File tests/test-lanceur.ps1
-
-      - name: Configurations — aller-retour réel
-        run: pwsh -File tests/test-configs-aller-retour.ps1
 
       - name: Compatibilité Windows PowerShell 5.1
         run: pwsh -File tests/test-powershell-compatibility.ps1
 
       - name: Checklist — rendu navigateur
         run: node tests/test-navigateur.js
-
-      - name: Import d'une vérification de PC
-        run: node tests/test-verification-pc.js
 
       - name: Installabilité et fonctionnement hors ligne
         run: node tests/test-pwa.js
@@ -126,17 +114,11 @@ jobs:
       - name: Profil hostile — aucune injection
         run: node tests/test-profil-hostile.js
 
-      - name: Sauvegarde — aucun échec silencieux
-        run: node tests/test-sauvegarde.js
-
       - name: Deux questions et second PC
         run: node tests/test-debut.js
 
       - name: Configuration et affichage
         run: node tests/test-config.js
-
-      - name: Scripts et chargement automatique
-        run: node tests/test-outils.js
 
   # Tout le job ci-dessus tourne sur Linux, contre des donnees fabriquees a la
   # main : cela verifie le raisonnement, jamais Windows. Le registre,
@@ -164,17 +146,9 @@ jobs:
         shell: pwsh
         run: pwsh -File tests/test-scan.ps1
 
-      - name: Vérification des sauvegardes — PowerShell 7
-        shell: pwsh
-        run: pwsh -File tests/test-sauvegardes.ps1
-
       - name: Lanceur — PowerShell 7
         shell: pwsh
         run: pwsh -File tests/test-lanceur.ps1
-
-      - name: Configurations — PowerShell 7
-        shell: pwsh
-        run: pwsh -File tests/test-configs-aller-retour.ps1
 
       - name: Marqueurs d'encodage — PowerShell 7
         shell: pwsh
@@ -187,17 +161,9 @@ jobs:
         shell: powershell
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/test-scan.ps1
 
-      - name: Vérification des sauvegardes — Windows PowerShell 5.1
-        shell: powershell
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/test-sauvegardes.ps1
-
       - name: Lanceur — Windows PowerShell 5.1
         shell: powershell
         run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/test-lanceur.ps1
-
-      - name: Configurations — Windows PowerShell 5.1
-        shell: powershell
-        run: powershell -NoProfile -ExecutionPolicy Bypass -File tests/test-configs-aller-retour.ps1
 
       # Le vrai scan de la vraie machine : registre, paquets APPX, WMI. C'est
       # la seule etape du projet qui exerce la detection Windows telle qu'elle
