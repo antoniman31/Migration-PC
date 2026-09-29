@@ -227,21 +227,60 @@ ok('les pilotes en place sont listés',/Realtek/.test(pil),true);
 ok('rien ne prétend qu\'une version est plus récente',
   /plus récente est disponible|mise à jour disponible/.test(pil),false);
 
-console.log('\n--- cocher ce qui est constaté ---');
-// La comparaison ne coche rien dans ton dos : elle propose. Et surtout elle
-// ne décoche JAMAIS — une détection ratée effacerait un suivi fait à la main.
+console.log('\n--- le constat règle la ligne, la case décide ---');
+// Avant, une case voulait dire « c'est installé » — ce que le scan sait déjà.
+// Il fallait donc cocher soixante cases pour redire un constat, et un bouton
+// « cocher ce qui est constaté » existait pour rattraper cette comptabilité en
+// double. Les deux sont partis : le fait vient du scan, la case reste une
+// décision, et la progression compte l'union des deux.
 G('appliquerProfil')(G('inventaireVersProfil')(source),true);
 vm.runInContext('INV_SOURCE='+JSON.stringify(source)
   +';INV_CIBLE='+JSON.stringify(cible)+';',ctx);
 const avant=G('lignesConstatees()');
 // Trois applications sur quatre : Krita n'est pas arrivé.
 ok('trois lignes constatées présentes',avant.length,3);
-// Une ligne cochée à la main sur une application absente ne doit pas bouger.
+ok('elles comptent comme faites',avant.every(id=>G('estFait')(id)),true);
+// Et rien n'a été écrit dans le suivi manuel : c'est tout l'intérêt.
+ok('sans rien écrire dans les cases',
+  avant.filter(id=>G('S').checked[id]).length,0);
+
+// La ligne que le scan n'a pas trouvée reste à décider, et cocher à la main
+// marche toujours.
 const absente=G('APPS_DATA').filter(a=>/Krita/.test(a.n))[0];
+ok('la manquante n est pas faite',G('estFait')(absente.id),false);
 G('toggle')(absente.id,absente.n);
-G('cocherLeConstate()');
-ok('les constatées sont cochées',avant.every(id=>G('S').checked[id]),true);
-ok('et la ligne cochée à la main reste cochée',G('S').checked[absente.id],true);
+ok('cochée à la main, elle est faite',G('estFait')(absente.id),true);
+ok('et la case porte bien la décision',G('S').checked[absente.id],true);
+
+// Le bouton disparu ne doit pas revenir par une autre porte.
+ok('plus de bouton « cocher le constaté »',
+  typeof G('window').cocherLeConstate,'undefined');
+
+// La ligne constatée s'affiche réglée et non cliquable : un contrôle qui ne
+// répond pas au clic sans le dire passe pour un défaut.
+G('renderApps()');
+const htmlApps=G('document').getElementById('list-apps').innerHTML;
+ok('la ligne constatée est marquée',/lg-constate/.test(htmlApps),true);
+ok('et annoncée désactivée',/aria-disabled="true"/.test(htmlApps),true);
+ok('le bandeau explique la règle',/r[ée]gl[ée]e?s? d.office/.test(htmlApps),true);
+// Une ligne constatée ne porte pas de gestionnaire de bascule : c'est ce qui
+// garantit qu'un clic ne peut pas décocher un fait. Vérifié sur le HTML plutôt
+// que par un sélecteur : le DOM de ces tests est un mannequin, son
+// querySelectorAll ne reconstruit pas l'arbre depuis innerHTML.
+const blocsLignes=htmlApps.split('<div class="lg-l').slice(1);
+const cst=blocsLignes.filter(function(b){return /^[^>]*lg-constate/.test(b);});
+ok('des lignes constatées sont rendues',cst.length,3);
+ok('aucune bascule sur une ligne constatée',
+  cst.every(function(b){return !/onclick="toggle/.test(b.split('lg-n')[0]);}),true);
+// Et une ligne encore à décider garde la sienne, sinon on aurait tout bloqué.
+const libres=blocsLignes.filter(function(b){return !/^[^>]*lg-constate/.test(b);});
+ok('la ligne à décider reste cliquable',
+  libres.length>0&&libres.every(function(b){return /onclick="toggle/.test(b.split('lg-n')[0]);}),true);
+
+// Le mode guidé ne propose pas d'installer ce que la machine porte déjà.
+const restantes=G('tachesRestantes')().map(function(e){return e.id;});
+ok('le guidé saute les constatées',
+  avant.filter(id=>restantes.indexOf(id)>=0).length,0);
 
 
 console.log('\n--- le relais par la clé USB ---');

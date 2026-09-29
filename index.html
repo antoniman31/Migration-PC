@@ -310,6 +310,9 @@ body.compact .item{padding:5px 0}
 .lg-plus:hover{background:var(--bg3);color:var(--tx)}
 .lg-br{display:none}
 .lg-l.done .lg-n{text-decoration:line-through;color:var(--tx3)}
+/* Une ligne que le scan a constatee : reglee par un fait, pas par une case.
+   Le curseur par defaut plutot que la main, pour ne pas promettre un clic. */
+.lg-l.lg-constate .lg-r{cursor:default}
 .lg-det{padding:2px 0 12px 34px;cursor:default}
 .lg-det-d{font-size:12px;color:var(--tx2);line-height:1.5;margin-bottom:8px}
 /* Sur un ecran etroit, sept colonnes ne tiennent pas : la version et la
@@ -1741,13 +1744,18 @@ function banniereComparaison(){
     +' → '+esc(e.cible.nom||'PC cible')+(e.cible.date?' du '+esc(e.cible.date):'')
     +(e.differents?' · '+e.differents+' en version plus ancienne':'')
     +'</div>';
-  // La comparaison sait ce qui est là ; elle ne coche rien dans ton dos.
-  const cochables=lignesConstatees().filter(function(id){return !S.checked[id];}).length;
-  if(cochables){
-    h+='<div class="cmp-act">'+cochables+' ligne'+(cochables>1?'s':'')
-      +' correspond'+(cochables>1?'ent':'')+' à un logiciel trouvé sur cette machine, '
-      +'sans être cochée'+(cochables>1?'s':'')+'. '
-      +'<button type="button" class="sm-btn warn-btn" onclick="cocherLeConstate()">✓ Cocher ce qui est constaté</button></div>';
+  // Ce que le scan a trouvé est réglé d'office : il n'y a rien à cocher pour
+  // redire un constat. Dit une fois ici, parce qu'une ligne qui ne réagit pas
+  // au clic sans explication passe pour un bug.
+  const constatees=lignesConstatees().length;
+  if(constatees){
+    h+='<div class="cmp-act">'+constatees+' ligne'+(constatees>1?'s':'')
+      +' marquée'+(constatees>1?'s':'')+' « là » : le scan '+(constatees>1?'les':'l\'')
+      +'a trouvée'+(constatees>1?'s':'')+' sur cette machine, '
+      +(constatees>1?'elles sont réglées':'elle est réglée')
+      +' d\'office et ne se décoche'+(constatees>1?'nt':'')+' pas. '
+      +'Une ligne fausse ici veut dire que le rapprochement par nom s\'est trompé : '
+      +'corrigez le nom dans le JSON et relancez le scan.</div>';
   }
   if(manque===0&&e.total)h+='<div class="cmp-act">Rien ne manque.</div>';
   return h+'</div>';
@@ -1778,15 +1786,29 @@ function lignesConstatees(){
     .map(function(a){return a.id;});
 }
 
-function cocherLeConstate(){
-  const ids=lignesConstatees().filter(function(id){return !S.checked[id];});
-  if(!ids.length)return;
-  const now=Date.now();
-  ids.forEach(function(id){S.checked[id]=true;S.dates[id]=now;});
-  saveState();renderApps();updateGlobal();
-  memoriserAnnulation(ids.length+' ligne'+(ids.length>1?'s':'')+' cochée'
-    +(ids.length>1?'s':'')+' d\'après le scan du PC cible.',true);
+// Une ligne est FAITE de deux façons : quelqu'un l'a cochée, ou le scan du PC
+// cible l'a trouvée sur la machine. Le second est un constat, pas une
+// supposition.
+//
+// Avant, la case voulait dire « c'est installé » — ce que le scan sait déjà. Il
+// fallait donc cocher soixante cases pour redire ce que le programme venait de
+// constater, et un bouton « cocher ce qui est constaté » existait pour rattraper
+// cette comptabilité en double. Il est parti avec elle. La case garde son sens
+// entier avant le scan de la cible, et devient après une DÉCISION : réglé, ou je
+// m'en passe.
+//
+// Le scan n'écrit jamais dans S.checked : rien de ce qui a été coché à la main
+// n'est effacé ni contredit en silence.
+let _cstCache=null,_cstCible=null,_cstApps=null;
+function constates(){
+  if(_cstCache&&_cstCible===INV_CIBLE&&_cstApps===APPS_DATA)return _cstCache;
+  const s={};
+  try{lignesConstatees().forEach(function(id){s[id]=true;});}
+  catch(e){console.error(e);}
+  _cstCache=s;_cstCible=INV_CIBLE;_cstApps=APPS_DATA;
+  return s;
 }
+function estFait(id){ return !!S.checked[id]||!!constates()[id]; }
 
 // ═══ L'ONGLET PILOTES ═══
 //
@@ -2448,14 +2470,19 @@ function checkTabComplete(){
   const tabs={};ONGLETS.forEach(function(c){tabs[c]=visiblesDe(c);});
   Object.keys(tabs).forEach(function(tab){
     const data=tabs[tab];
-    const done=data.filter(function(x){return S.checked[x.id];}).length;
+    const done=data.filter(function(x){return estFait(x.id);}).length;
     if(done===data.length&&data.length>0&&donePerTab[tab]!==data.length){launchConfetti();}
     donePerTab[tab]=done;
   });
 }
 function launchConfetti(){
-  const c=document.getElementById('confetti-canvas');c.style.display='block';c.width=window.innerWidth;c.height=window.innerHeight;
+  const c=document.getElementById('confetti-canvas');
+  // Un canvas absent ou sans contexte 2d — navigateur qui le refuse, DOM
+  // simule — ne doit pas faire tomber le rendu entier : c'est une decoration.
+  if(!c||typeof c.getContext!=='function')return;
   const ctx=c.getContext('2d');
+  if(!ctx)return;
+  c.style.display='block';c.width=window.innerWidth;c.height=window.innerHeight;
   const pieces=[];for(let i=0;i<120;i++)pieces.push({x:Math.random()*c.width,y:Math.random()*-c.height*0.5-20,r:Math.random()*6+3,col:'hsl('+(Math.random()*360)+',80%,55%)',vx:(Math.random()-0.5)*4,vy:Math.random()*4+2,rot:Math.random()*360,vrot:(Math.random()-0.5)*8});
   let frame=0;
   function draw(){
@@ -2539,10 +2566,14 @@ function renderApps(){
     let first=true;
     Object.keys(grouped).forEach(function(cat){
       const grp=grouped[cat];
-      const dn=grp.filter(function(a){return S.checked[a.id];}).length;
+      const dn=grp.filter(function(a){return estFait(a.id);}).length;
       const hasW=grp.filter(function(a){return a.w;}).length>0;
-      const allDone=dn===grp.length;
-      html+='<div class="sec-hdr'+(first?' first':'')+'">'+esc(CATS[cat]||cat)+'<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+grp.length+'</span>'+(hasW?'<button class="cat-winget" onclick="copyCatWinget(\''+escJS(cat)+'\',event)">📋 winget</button>':'')+'<button class="chk-all" onclick="checkAllCat(\''+escJS(cat)+'\',event)">'+(allDone?'Décocher tout':'Tout cocher')+'</button></div></div>';
+      // « Tout cocher » ne parle que des lignes qui se décident encore. Quand
+      // le scan a tout constaté il n'y a plus rien à basculer, et un bouton qui
+      // ne fait rien est pire que pas de bouton.
+      const decidables=grp.filter(function(a){return !constates()[a.id];});
+      const allDone=decidables.length>0&&decidables.every(function(a){return !!S.checked[a.id];});
+      html+='<div class="sec-hdr'+(first?' first':'')+'">'+esc(CATS[cat]||cat)+'<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+grp.length+'</span>'+(hasW?'<button class="cat-winget" onclick="copyCatWinget(\''+escJS(cat)+'\',event)">📋 winget</button>':'')+(decidables.length?'<button class="chk-all" onclick="checkAllCat(\''+escJS(cat)+'\',event)">'+(allDone?'Décocher tout':'Tout cocher')+'</button>':'')+'</div></div>';
       grp.forEach(function(a){html+=mkAppItem(a,etats);});
       first=false;
     });
@@ -2588,9 +2619,12 @@ function renderApps(){
 // des gens et il est deja dans le bouton qui copie la commande. La priorite ne
 // s'affiche que haute : une etiquette presente sur chaque ligne n'informe plus.
 function mkAppItem(a,etats){
-  const ck=!!S.checked[a.id];
+  // Le constat du scan et la case cochée arrivent au même endroit, mais pas au
+  // même titre : un constat n'est pas une décision, donc il ne se décoche pas.
+  const constate=!!constates()[a.id];
+  const ck=constate||!!S.checked[a.id];
   const ouvert=!!lignesOuvertes[a.id];
-  const dt=ck&&S.dates[a.id]?'<span class="item-date">✓ '+fmtDate(S.dates[a.id])+'</span>':'';
+  const dt=(!constate&&ck&&S.dates[a.id])?'<span class="item-date">✓ '+fmtDate(S.dates[a.id])+'</span>':'';
   const pBadge=a.p==='high'?'<span class="badge b-high">⚡</span>':'';
   const meta=[];
   if(a.ver)meta.push(esc(String(a.ver)));
@@ -2612,8 +2646,14 @@ function mkAppItem(a,etats){
       +'</div>';
   }
 
-  return '<div class="lg-l'+(ck?' done':'')+'">'
-    +'<div class="lg-r" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(a)+'">'
+  // Une ligne constatée reste annoncée comme cochée aux lecteurs d'écran — elle
+  // l'est, en fait — mais désactivée : un contrôle qui ne répond pas au clic
+  // sans le dire passe pour un défaut.
+  return '<div class="lg-l'+(ck?' done':'')+(constate?' lg-constate':'')+'">'
+    +'<div class="lg-r" role="checkbox" tabindex="0" aria-checked="'+ck+'"'
+      +(constate
+        ?' aria-disabled="true" title="Trouvé sur le PC cible par le scan : réglé, rien à cocher."'
+        :' onclick="'+attrToggle(a)+'"')+'>'
       +mkChkbox()
       +'<span class="lg-n">'+esc(libelleDe(a))+dt+'</span>'
       +'<span class="lg-br" aria-hidden="true"></span>'
@@ -2655,7 +2695,10 @@ function basculerFiltres(){
 
 function checkAllCat(cat,evt){
   evt.stopPropagation();
-  const items=visiblesDe('apps').filter(function(a){return a.c===cat;});
+  const items=visiblesDe('apps').filter(function(a){
+    return a.c===cat&&!constates()[a.id];
+  });
+  if(!items.length)return;
   const all=items.every(function(a){return S.checked[a.id];});
   const now=Date.now();
   items.forEach(function(a){if(all){delete S.checked[a.id];delete S.dates[a.id];}else{S.checked[a.id]=true;S.dates[a.id]=now;}});
@@ -2727,9 +2770,9 @@ function globalSearch(){
 
 // ═══ PROGRESS ═══
 function updateSecProg(sec,data){
-  const done=data.filter(function(x){return S.checked[x.id];}).length;
+  const done=data.filter(function(x){return estFait(x.id);}).length;
   const total=data.length;
-  const rem=data.filter(function(x){return !S.checked[x.id];}).reduce(function(s,x){return s+(x.t||0);},0);
+  const rem=data.filter(function(x){return !estFait(x.id);}).reduce(function(s,x){return s+(x.t||0);},0);
   const pct=total?Math.round(done/total*100):0;
   const dEl=document.getElementById('done-'+sec);if(dEl)dEl.textContent=done;
   const tEl=document.getElementById('total-'+sec);if(tEl)tEl.textContent=total;
@@ -2743,10 +2786,10 @@ function updateGlobal(){
   // cible : il se rafraîchit ici pour rester d'accord avec le reste.
   try{majBadgePilotes();}catch(e){console.error(e);}
   const all=itemsVisibles();
-  const done=all.filter(function(x){return S.checked[x.id];}).length;
+  const done=all.filter(function(x){return estFait(x.id);}).length;
   const total=all.length;
   const pct=total?Math.round(done/total*100):0;
-  const remMins=visiblesDe('apps').filter(function(x){return !S.checked[x.id];}).reduce(function(s,x){return s+(x.t||0);},0);
+  const remMins=visiblesDe('apps').filter(function(x){return !estFait(x.id);}).reduce(function(s,x){return s+(x.t||0);},0);
   document.getElementById('gp-pct').textContent=pct+'%';
   document.getElementById('gp-done').textContent=done;
   document.getElementById('gp-total').textContent=total;
@@ -2757,7 +2800,7 @@ function updateGlobal(){
 
 function updateTitle(){
   const all=itemsVisibles();
-  const done=all.filter(function(x){return S.checked[x.id];}).length;
+  const done=all.filter(function(x){return estFait(x.id);}).length;
   document.title='('+done+'/'+all.length+') '+(PROFIL_NOM||'Migration PC');
 }
 
@@ -2951,7 +2994,9 @@ function fileGuide(){
 }
 
 function tachesRestantes(){
-  return fileGuide().filter(function(e){return !S.checked[e.id];});
+  // Le constat du scan compte ici aussi : proposer d'installer un logiciel que
+  // la machine porte deja serait le contraire d'un mode guide.
+  return fileGuide().filter(function(e){return !estFait(e.id);});
 }
 
 function basculerGuide(){
@@ -3120,7 +3165,7 @@ function depsDe(item){
 function depsManquantes(item){
   return depsDe(item).filter(function(id){
     const d=indexParId()[id];
-    return !S.checked[id];
+    return !estFait(id);
   });
 }
 
@@ -3135,7 +3180,7 @@ function mkDepBadge(dep){
   });
   if(!vus.length)return '';
   const noms=vus.map(nomDe);
-  const manquantes=vus.filter(function(id){return !S.checked[id];});
+  const manquantes=vus.filter(function(id){return !estFait(id);});
   const classe=manquantes.length?'badge b-dep b-dep-manque':'badge b-dep';
   const titre=manquantes.length
     ? 'À installer avant : '+manquantes.map(nomDe).join(', ')
@@ -3648,7 +3693,7 @@ function construireWingetJSON(apps){
 
 function exportWingetJSON(restantesSeulement){
   var apps=visiblesDe('apps').filter(function(a){
-    return a.w && (!restantesSeulement || !S.checked[a.id]);
+    return a.w && (!restantesSeulement || !estFait(a.id));
   });
   if(!apps.length){
     informer(restantesSeulement
@@ -3749,7 +3794,7 @@ function categoriePourNom(texte){
 function exportTxt(){
   const lines=[(PROFIL_NOM||'MIGRATION PC').toUpperCase(),PROFIL_SOUS||''];
   lines.push('');
-  const marque=function(e){return S.checked[e.id]?'[x]':'[ ]';};
+  const marque=function(e){return estFait(e.id)?'[x]':'[ ]';};
   const note=function(id){return S.notes[id]?' [Note : '+S.notes[id]+']':'';};
 
   lines.push('=== LOGICIELS ===');
@@ -3816,7 +3861,7 @@ function updateNextBtns(){
     var btn=document.getElementById(t.btnId);
     var cnt=document.getElementById(t.cntId);
     if(!btn||!cnt)return;
-    var rem=t.data.filter(function(x){return !S.checked[x.id];}).length;
+    var rem=t.data.filter(function(x){return !estFait(x.id);}).length;
     if(rem===0){
       btn.classList.remove('incomplete');
       cnt.textContent='✓';
