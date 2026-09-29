@@ -248,7 +248,7 @@ body.compact .item{padding:5px 0}
 .cat-winget:hover{color:var(--acc-fort);border-color:var(--accb);background:var(--accl)}
 
 /* ITEMS */
-/* ═══ Onglet Apps : filtres a gauche, liste a droite ═══
+/* ═══ Onglet Logiciels : filtres a gauche, liste a droite ═══
    La rangee de puces de categorie doublait les titres de section juste en
    dessous, et le menu deroulant « Par categorie » doublait la rangee. Les
    trois deviennent un panneau, ou les categories se cumulent. */
@@ -1436,14 +1436,6 @@ function messageOngletVide(cle){
     +'</div></div>';
 }
 
-function ongletDe(id){
-  for(let i=0;i<ONGLETS.length;i++){
-    const liste=donneesDe(ONGLETS[i]);
-    for(let j=0;j<liste.length;j++){if(liste[j].id===id)return ONGLETS[i];}
-  }
-  return '';
-}
-
 function libelleDe(e){ return e?(e.n||''):''; }
 function descDe(e){ return e?(e.d||''):''; }
 
@@ -1567,10 +1559,9 @@ const CAT_PAR_DEFAUT='system';
 //
 // Tout le reste ne remplit que les cases vides, parce qu'un inventaire comme
 // un profil décrit peut-être une AUTRE machine : celui qu'on rapporte de
-// l'ancien PC porte l'ancienne carte mère. Sinon, sur le PC neuf, les
-// intitulés des pilotes porteraient le modèle de la machine qu'on vient de
-// quitter et les recherches viseraient le mauvais support — exactement là où
-// la configuration sert le plus.
+// l'ancien PC porte l'ancienne carte mère. Sinon, sur le PC neuf, le lien du
+// constructeur de l'onglet Pilotes viserait le support de la machine qu'on
+// vient de quitter — exactement là où il sert le plus.
 function appliquerMateriel(materiel,constate){
   if(!materiel||typeof materiel!=='object')return 0;
   let repris=0;

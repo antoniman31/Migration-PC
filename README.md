@@ -78,8 +78,7 @@ Un seul fichier à lancer : `Migration PC.bat`. Tout le reste est rangé dans
 - **Les scripts Windows**
   - [Inventorier le PC source](#inventorier-le-pc-source)
   - [Vérifier le PC cible](#vérifier-le-pc-cible)
-- [Quatre cas, deux questions](#quatre-cas-deux-questions)
-  - [Installer Windows sans rester devant](#installer-windows-sans-rester-devant)
+- [Trois onglets](#trois-onglets)
 - [La checklist](#la-checklist)
   - [La barre du haut](#la-barre-du-haut)
   - [Ma configuration](#ma-configuration)
@@ -301,21 +300,6 @@ BIOS quand elles ne s'appliquaient pas et à renommer « Avant de quitter » qua
 l'ancienne machine restait en service. Ces onglets ont disparu avec la réduction du
 projet aux logiciels et aux pilotes : plus un seul élément ne portait de mention `cas`,
 et tout le mécanisme filtrait une liste qu'il ne réduisait jamais. Il est parti avec eux.
-
-### Installer Windows sans rester devant
-
-L'étape « Préparer la clé d'installation Windows » renvoie vers le générateur de
-[Christoph Schneegans](https://schneegans.de/windows/unattend-generator/). On y coche ce
-qu'on veut — langue, fuseau, partitionnement, compte local plutôt qu'un compte
-Microsoft, réglages de confidentialité, applications préinstallées à retirer — et il
-produit un `autounattend.xml`. Déposé à la racine de la clé, ce fichier répond à votre
-place aux questions de l'installation.
-
-Le projet ne génère pas ce fichier lui-même : il contient des réponses propres à une
-machine et parfois un mot de passe, il n'a rien à faire dans un dépôt public, et le
-générateur en amont est maintenu et couvre bien plus de cas que ce qu'on écrirait ici.
-C'est une suggestion, pas une étape obligatoire — une installation cliquée à la main
-marche tout aussi bien, elle demande juste d'être présent.
 
 ## La checklist
 
@@ -703,7 +687,7 @@ statique interdit ce mélange dans tout le dépôt.
 
 `tests/test-profil-sync.js` garantit que le profil embarqué dans `index.html` et
 `presets/exemple.json` ne divergent pas, et vérifie les invariants du profil :
-identifiants uniques sur les quatre onglets, priorités valides, catégories déclarées,
+identifiants uniques sur les deux listes, priorités valides, catégories déclarées,
 ordre conseillé ne citant que des éléments existants. Il contrôle aussi que les fichiers
 dont les tests dépendent sont bien versionnés, et qu'aucune fonction n'est définie deux
 fois dans `index.html` — une redéfinition écrase silencieusement la première et ce piège
