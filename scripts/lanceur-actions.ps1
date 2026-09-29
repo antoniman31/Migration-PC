@@ -161,6 +161,18 @@ function Get-ActionsMigration {
             )
         },
         [ordered]@{
+            id      = 'installer'
+            titre   = "Installer ce qui manque"
+            detail  = "Joue « winget import » sur la liste calculee par le scan de la cible. La liste est montree, et rien ne part sans confirmation."
+            requis  = @('..\winget-restant.json')
+            duree   = "variable : ca telecharge"
+            winget  = $true
+            suite   = @(
+                "Onglet « Logiciels » : relancez le scan CIBLE pour voir le resultat.",
+                "Ce que winget n'a pas pu installer reste marque « manque »."
+            )
+        },
+        [ordered]@{
             id      = 'checklist'
             titre   = "Ouvrir la checklist"
             detail  = "La page seule, sans rien scanner."
@@ -222,6 +234,64 @@ function Get-Parcours {
         "  Vous gardez les deux PC",
         "    Même chose, mais ne déliez rien sur l'ancien : il reste en service."
     )
+}
+
+# ------------------------------------------------ installer ce qui manque
+#
+# Jusqu'ici la page fabriquait un fichier « winget import » parfaitement
+# utilisable, puis demandait d'ouvrir PowerShell et de coller une commande. Le
+# programme savait quoi faire et laissait le faire a la main.
+#
+# Ce qui est installe sur la machine de quelqu'un ne se decide pas a sa place :
+# la liste complete est montree, la confirmation est un mot tape et non une
+# touche, et rien ne s'enchaine automatiquement apres un scan.
+
+# Les identifiants d'un fichier winget import, dans l'ordre du fichier —
+# « winget import » les traite dans cet ordre.
+function Read-WingetImport {
+    param([Parameter(Mandatory)][string]$Chemin)
+    if (-not (Test-Path -LiteralPath $Chemin)) { return @() }
+    try {
+        $d = Get-Content -LiteralPath $Chemin -Raw -Encoding UTF8 | ConvertFrom-Json
+    } catch { return @() }
+    if ($null -eq $d -or -not $d.PSObject.Properties['Sources']) { return @() }
+    $ids = @()
+    foreach ($s in @($d.Sources)) {
+        if (-not $s -or -not $s.PSObject.Properties['Packages']) { continue }
+        foreach ($p in @($s.Packages)) {
+            if (-not $p -or -not $p.PSObject.Properties['PackageIdentifier']) { continue }
+            $id = ([string]$p.PackageIdentifier).Trim()
+            if ($id) { $ids += $id }
+        }
+    }
+    return @($ids)
+}
+
+# Le mot a taper. En francais et sans ambiguite : « o », « y » ou Entree se
+# tapent par reflexe, et ce qui suit installe des logiciels.
+$MotDeConfirmation = 'INSTALLER'
+
+function Test-Confirmation {
+    param([string]$Saisi)
+    return (([string]$Saisi).Trim().ToUpperInvariant() -eq $MotDeConfirmation)
+}
+
+function Get-InviteInstallation {
+    param([string[]]$Identifiants)
+    $n = @($Identifiants).Count
+    if ($n -eq 0) {
+        return @("Rien a installer : la liste est vide.")
+    }
+    $l = @()
+    $l += "$n logiciel(s) vont etre installes par winget sur CETTE machine :"
+    $l += ""
+    foreach ($id in $Identifiants) { $l += "  - $id" }
+    $l += ""
+    $l += "winget telecharge depuis le depot Microsoft et lance chaque installeur."
+    $l += "L'operation saute ce qui est deja present et peut etre longue."
+    $l += ""
+    $l += "Tapez $MotDeConfirmation pour lancer, ou n'importe quoi d'autre pour annuler."
+    return $l
 }
 
 function Get-MessageManquants {

@@ -64,6 +64,17 @@ ok('Notepad++ n\'est pas Notepad',cleNom('Notepad++')===cleNom('Notepad'),false)
 ok('un nom vide',cleNom(''),'');
 ok('un null',cleNom(null),'');
 
+// Le contrat partagé avec PowerShell. La liste des manquants est calculée deux
+// fois — ici par la page, et par le scan de la cible qui écrit le fichier
+// « winget import » que le lanceur joue. Deux normalisations différentes
+// rapprocheraient des logiciels différents de chaque côté, et personne ne
+// verrait pourquoi. Ce fichier est la référence : tests/test-scan.ps1 le rejoue
+// à l'identique, donc une divergence fait tomber l'un des deux.
+const casCles=require('./cles-normalisation.json');
+const divergents=casCles.filter(function(c){return cleNom(c.nom)!==c.cle;});
+ok('les '+casCles.length+' clés du contrat partagé',
+  divergents.map(function(c){return c.nom+'→'+cleNom(c.nom);}).join(', '),'');
+
 console.log('\n--- comparaison de versions ---');
 const cv=G('comparerVersions');
 // Le piège classique : en texte, « 1.2.9 » est plus grand que « 1.2.10 ».

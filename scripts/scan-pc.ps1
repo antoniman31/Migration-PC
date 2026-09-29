@@ -205,6 +205,34 @@ if ($Role -eq 'source') {
     }
 }
 
+# ------------------------------------------- ce qui manque, pret a installer
+#
+# Calcule ici et non par la page, pour une raison prosaique : le fichier que la
+# page produit part dans le dossier des telechargements du navigateur, et le
+# lanceur n'a aucun moyen fiable de le retrouver. Le scan de la cible, lui, a
+# les deux instantanes en main. On l'ecrit a cote de la page, ou le lanceur
+# saura le lire.
+#
+# Ce fichier n'installe rien tout seul : c'est le lanceur qui propose de le
+# jouer, apres avoir montre la liste et demande une confirmation.
+$restant = $null
+if ($Role -eq 'cible' -and $instantaneSource -and $dossierPage) {
+    try {
+        $manquantes = @(Get-AppsManquantes -Source $instantaneSource -Cible $inventaire)
+        $restant = Join-Path $dossierPage 'winget-restant.json'
+        if ($manquantes.Count) {
+            Write-TexteUtf8 -Chemin $restant -Contenu ((Format-WingetImport -Manquantes $manquantes) | ConvertTo-Json -Depth 6)
+        } else {
+            # Rien a installer : le fichier d'un scan precedent mentirait.
+            if (Test-Path -LiteralPath $restant) { Remove-Item -LiteralPath $restant -Force }
+            $restant = $null
+        }
+    } catch {
+        Write-Host "  (liste des manquants non ecrite : $_)" -ForegroundColor DarkGray
+        $restant = $null
+    }
+}
+
 # Sans ce fichier a cote, la page ne se remplit pas toute seule. C'est un
 # confort, pas le resultat — le JSON est ecrit dans tous les cas — mais son
 # absence se taisait, et on cherchait longtemps pourquoi la page restait vide.
@@ -250,6 +278,12 @@ if ($Role -eq 'source') {
 } else {
     if ($instantaneSource) {
         Write-Host "La page s'ouvre sur ce qu'il reste a installer : les deux instantanes y sont."
+        if ($restant) {
+            Write-Host ""
+            Write-Host "Etape suivante" -ForegroundColor Cyan
+            Write-Host "  Relancez « Migration PC.bat » : il propose maintenant d'installer"
+            Write-Host "  ce qui manque, apres vous avoir montre la liste."
+        }
     } else {
         Write-Host "Aucun instantane du PC source sur cette cle : la page n'a rien a comparer." -ForegroundColor Yellow
         Write-Host "Scannez d'abord le PC source, ou importez son fichier a la main."

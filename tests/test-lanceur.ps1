@@ -26,12 +26,16 @@ function ok($libelle, $obtenu, $attendu) {
 
 "--- dans un dossier complet ---"
 $a = @(Get-ActionsMigration -Racine $racine)
-ok 'trois actions proposees'       $a.Count 3
-ok 'toutes realisables'            (@($a | Where-Object { -not $_.possible })).Count 0
+ok 'quatre actions proposees'      $a.Count 4
+# « Installer ce qui manque » a besoin du fichier ecrit par le scan de la
+# cible. Dans le depot il n'existe pas, et c'est normal : l'action reste
+# montree, grisee, avec la raison. Les trois autres sont toujours realisables.
+$sansInstall = @($a | Where-Object { $_.id -ne 'installer' })
+ok 'les trois autres realisables'  (@($sansInstall | Where-Object { -not $_.possible })).Count 0
 ok 'chacune a un intitule'         (@($a | Where-Object { [string]::IsNullOrWhiteSpace($_.titre) })).Count 0
 ok 'et une explication'            (@($a | Where-Object { [string]::IsNullOrWhiteSpace($_.detail) })).Count 0
 ok 'et une duree annoncee'         (@($a | Where-Object { [string]::IsNullOrWhiteSpace($_.duree) })).Count 0
-ok 'identifiants uniques'          (@($a.id | Sort-Object -Unique)).Count 3
+ok 'identifiants uniques'          (@($a.id | Sort-Object -Unique)).Count 4
 
 # Les deux premieres actions disent SUR QUELLE MACHINE on est : c'est la seule
 # question a laquelle on ne peut pas repondre a la place de l'utilisateur.
@@ -42,11 +46,14 @@ ok 'une action pour la source'     (@($a | Where-Object { $_.titre -match 'SOURC
 ok 'une action pour la cible'      (@($a | Where-Object { $_.titre -match 'CIBLE' })).Count 1
 ok 'plus de vocabulaire ancien/nouveau' (@($a | Where-Object { $_.titre -match 'ANCIEN|NOUVEAU' })).Count 0
 
-# Chaque action mene quelque part : un script a lancer, ou un fichier a ouvrir.
+# Chaque action mene quelque part : un script a lancer, un fichier a ouvrir, ou
+# winget a jouer sur une liste deja calculee.
 ok 'chaque action mene quelque part' (@($a | Where-Object {
-      -not ($_.PSObject.Properties['script'] -or $_.PSObject.Properties['fichier']) })).Count 0
-# Et ce quelque part existe vraiment dans le depot.
-$cibles = @($a | ForEach-Object {
+      -not ($_.PSObject.Properties['script'] -or $_.PSObject.Properties['fichier'] `
+            -or $_.PSObject.Properties['winget']) })).Count 0
+# Et ce quelque part existe vraiment dans le depot. L'installation est a part :
+# ce qu'elle joue est produit par un scan, pas versionne.
+$cibles = @($sansInstall | ForEach-Object {
     if ($_.PSObject.Properties['script']) { $_.script } else { $_.fichier } })
 ok 'les cibles existent'           (@($cibles | Where-Object {
       -not (Test-Path -LiteralPath (Join-Path $racine $_)) })).Count 0
@@ -56,7 +63,7 @@ $t = Join-Path ([System.IO.Path]::GetTempPath()) ("lanceur-" + [guid]::NewGuid()
 $null = New-Item -ItemType Directory -Path $t -Force
 Copy-Item (Join-Path $racine 'scan-pc.ps1') $t
 $b = @(Get-ActionsMigration -Racine $t)
-ok 'les actions restent montrees'  $b.Count 3
+ok 'les actions restent montrees'  $b.Count 4
 ok 'mais aucune n est realisable'  (@($b | Where-Object { $_.possible })).Count 0
 # scan-pc.ps1 est la, mais il ne tourne pas sans lib-detection.ps1 : l'action
 # doit le dire au lieu de laisser lancer un script qui echouera.
@@ -83,6 +90,13 @@ ok 'elle parle des pilotes'       ((@($verif.suite) -join ' ') -match 'pilote') 
 # qui rend « PC neuf » et « meme PC reinstalle » identiques.
 ok 'les deux lancent le meme script' ($inventaire.script) ($verif.script)
 ok 'la source se declare telle'   ((@($inventaire.arguments) -join ' ')) '-Role source'
+# L'installation est la seule action qui change la machine, et la seule qui n'a
+# pas de script a lancer : elle joue une liste deja calculee.
+$inst = $a | Where-Object { $_.id -eq 'installer' }
+ok 'une action pour installer'     ($null -ne $inst) $true
+ok 'elle passe par winget'         $inst.winget $true
+ok 'sans script a lancer'          ($inst.PSObject.Properties['script']) $null
+ok 'et elle attend le fichier du scan' ($inst.manquants -contains '..\winget-restant.json') $true
 ok 'et la cible aussi'            ((@($verif.arguments) -join ' ')) '-Role cible'
 
 $parcours = @(Get-Parcours)
@@ -247,14 +261,14 @@ ok 'et la raison le dit'                ($r.raison -match 'rien ne permet') $tru
 $ac = @(Get-ActionsMigration -Racine $racine -RoleSuggere 'cible')
 ok 'la cible passe en premier'          $ac[0].id 'cible'
 ok 'elle porte la marque'               $ac[0].suggere $true
-ok 'les trois actions restent la'       $ac.Count 3
+ok 'les quatre actions restent la'      $ac.Count 4
 ok 'la source reste accessible'         (@($ac | Where-Object { $_.id -eq 'source' })).Count 1
 ok 'une seule est marquee'              (@($ac | Where-Object { $_.suggere })).Count 1
 # L'ordre des non-proposees ne doit pas bouger : Sort-Object -Stable n'existe
 # pas sous Windows PowerShell 5.1, d'ou le tri fait a la main.
-ok 'le reste garde son ordre'           (@($ac | Where-Object { -not $_.suggere }).id -join ',') 'source,checklist'
+ok 'le reste garde son ordre'           (@($ac | Where-Object { -not $_.suggere }).id -join ',') 'source,installer,checklist'
 $ac = @(Get-ActionsMigration -Racine $racine -RoleSuggere '')
-ok 'sans deduction, l ordre d origine'  ($ac.id -join ',') 'source,cible,checklist'
+ok 'sans deduction, l ordre d origine'  ($ac.id -join ',') 'source,cible,installer,checklist'
 ok 'et aucune marque'                   (@($ac | Where-Object { $_.suggere })).Count 0
 
 # La lecture du fichier sur la cle : un JSON abime ne doit rien faire deviner.

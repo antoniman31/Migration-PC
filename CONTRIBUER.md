@@ -87,6 +87,16 @@ sortie winget et la mise en forme du matériel, des pilotes et de la machine, sa
 `tests/test-reconciliation.js` est la seule partie du projet qui se prouve vraiment : la
 comparaison ne touche ni à Windows ni au DOM, elle prend deux JSON et rend un rapport.
 
+`tests/cles-normalisation.json` est un contrat partagé, et il mérite une explication. La
+liste de ce qui manque est calculée **deux fois** : par la page, en JavaScript, pour
+l'afficher ; et par le scan de la cible, en PowerShell, pour écrire le
+`winget-restant.json` que le menu joue. C'est une duplication assumée — le fichier de la
+page part dans les téléchargements du navigateur, où le menu ne peut pas le retrouver.
+Deux normalisations de noms différentes rapprocheraient alors des logiciels différents de
+chaque côté, sans que rien ne le signale. Ce fichier liste vingt noms et la clé attendue ;
+`test-reconciliation.js` et `test-scan.ps1` le rejouent tous les deux, donc une divergence
+fait tomber l'un des deux. Si vous touchez à `cleNom` ou à `Get-CleNom`, touchez aux deux.
+
 `tests/test-navigateur.js` charge la page dans un vrai Chromium et vérifie ce qu'un DOM
 simulé ne voit pas : que les quatre panneaux sont bien frères et non imbriqués, que les
 éléments ont une taille non nulle, que la saisie des clés de licence survit à un
@@ -187,6 +197,7 @@ Migration-PC/
 ├── tests/                        # suites Node, PowerShell et navigateur
 ├── verifier-comme-ci.sh          # rejoue localement les 18 étapes du job Linux
 ├── package.json                  # scripts de test uniquement
+├── winget-restant.json           # écrit par le scan cible, joué par le menu
 ├── COUVERTURE.md                 # ce que le scan détecte, refuse et ne peut pas
 ├── FORMATS.md                    # les fichiers que la page lit et écrit
 ├── CONTRIBUER.md                 # ce fichier : tests, CI, publication
