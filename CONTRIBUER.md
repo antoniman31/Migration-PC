@@ -131,9 +131,14 @@ les deux cas ce qui avait été effacé, profil importé compris. Il mesure
 aussi le panneau à 360 px de large, dans les deux thèmes.
 
 `tests/test-menu.js` compte les boutons restés dans la barre, vérifie qu'aucun n'y est
-réduit à une icône muette, que les cinq actions du menu agissent réellement (la session
-démarre, le profil se télécharge, l'export texte porte ce qui est affiché), que le menu se referme par les trois chemins attendus et qu'il reste
-utilisable au clavier comme au doigt.
+réduit à une icône muette, que les actions du menu agissent réellement (l'affichage compact
+s'applique, le profil se télécharge, l'export texte porte ce qui est affiché), que le menu se
+referme par les trois chemins attendus et qu'il reste utilisable au clavier comme au doigt.
+
+`tests/test-profil-sync.js` garde aussi une porte fermée : il échoue si `Get-Duree`,
+`Get-Priorite`, `PRIO[` ou `fmtTime(` reviennent dans le dépôt. Ces durées et priorités
+étaient inventées par mots-clés et alimentaient un « temps restant » fabriqué. « On pourrait
+estimer » n'est pas une raison de les rétablir.
 
 `tests/test-profil-hostile.js` charge un profil piégé sur quinze champs — nom de
 catégorie, identifiant winget, adresse de raccourci, intitulés, descriptions, chemins —

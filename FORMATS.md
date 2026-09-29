@@ -73,19 +73,21 @@ meta   // { nom, soustitre } — affichés dans l'en-tête
 cats   // { clé: libellé } — les catégories de l'onglet Logiciels
 quitter // { id, n, p, note, pr, warn? } — facultatif, sur l'ancien PC
 npc    // { id, o, n, src, p, t, d, post?, dep?, warn? }
-apps   // { id, n, c, src, w?, p, t, d, dep?, warn? }
+apps   // { id, n, c, src, w?, d, dep?, warn? }
 pwa    // { id, n, u, d }
 ordre  // [ id, ... ] — l'ordre d'installation conseillé
 requetes // { "Nom de l'app": "requête de recherche" }
 materiel // { cm, cpu, gpu, ram, ssd, eth, wifi, audio, bios } — le bloc « Ma configuration »
 ```
 
-`p` vaut `high`, `med` ou `ok` · `t` est une durée en minutes · `w` est l'identifiant
-winget · `warn` affiche un avertissement.
+`w` est l'identifiant winget · `warn` affiche un avertissement.
 
 Les champs `cas`, `alt`, `o`, `post` et `pilote` ont existé : ils servaient aux onglets
-« Avant de quitter » et « Nouveau PC » et aux quatre cas qui les filtraient. Ils ne sont
-plus lus. Un profil qui les porte encore reste valide, ils sont simplement ignorés.
+« Avant de quitter » et « Nouveau PC » et aux quatre cas qui les filtraient. `p` (priorité)
+et `t` (durée en minutes) les ont rejoints : le scan les inventait par mots-clés, et la page
+les additionnait en un « temps restant » que personne ne pouvait vérifier. Aucun de ces
+champs n'est plus lu. Un profil qui les porte encore reste valide, ils sont simplement
+ignorés.
 
 `dep` accepte deux formes. Une **chaîne** est un libellé affiché tel quel, sans
 vérification possible — c'est le format d'origine, toujours accepté. Un **tableau

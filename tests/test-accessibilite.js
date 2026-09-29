@@ -222,9 +222,8 @@ const pg2=await ctx2.newPage();
 await pg2.goto(HTML,{waitUntil:'networkidle'});
 const m=await pg2.evaluate(()=>{
   const bar=document.querySelector('.gp-bar-fill');
-  const dot=document.querySelector('.session-dot');
   return {transition:getComputedStyle(bar).transitionDuration,
-          animation:getComputedStyle(dot).animationDuration,
+          animation:getComputedStyle(bar).animationDuration,
           media:window.matchMedia('(prefers-reduced-motion: reduce)').matches};
 });
 ok('média détecté',m.media,true);
