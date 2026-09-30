@@ -38,7 +38,7 @@ async function chargerExemple(pg){
 
 (async()=>{
 const b=await chromium.launch(lancement);
-const pg=await (await b.newContext()).newPage();
+const pg=await (await b.newContext({locale:'fr-FR'})).newPage();
 const execute=[];
 await pg.exposeFunction('__boum',t=>execute.push(t));
 const errs=[];

@@ -55,7 +55,7 @@ async function chargerExemple(pg){
 const lancement={args:['--no-sandbox']};
 if(process.env.CHROME)lancement.executablePath=process.env.CHROME;
 const b=await chromium.launch(lancement);
-const pg=await b.newPage();
+const pg=await (await b.newContext({locale:'fr-FR'})).newPage();
 const erreurs=[];
 pg.on('pageerror',e=>erreurs.push(e.message));
 // Une seule absence est attendue et benigne : resultat-scan.js n'existe que

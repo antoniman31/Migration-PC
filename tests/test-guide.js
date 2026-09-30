@@ -39,7 +39,7 @@ const b=await chromium.launch(lancement);
 
 // ─────────── parcours ───────────
 {
-const ctx=await b.newContext({viewport:{width:1200,height:820},permissions:['clipboard-read','clipboard-write']});
+const ctx=await b.newContext({locale:'fr-FR',viewport:{width:1200,height:820},permissions:['clipboard-read','clipboard-write']});
 const pg=await ctx.newPage();
 pg.on('pageerror',e=>{console.log(' FAIL erreur JS → '+e.message);ko++;});
 await pg.goto(HTML,{waitUntil:'networkidle'});
@@ -147,7 +147,7 @@ await pg.close();
 // ─────────── accessibilité, tactile et clavier ───────────
 for(const [nom,w,h] of [['mobile',360,740],['bureau',1280,900]]){
 for(const theme of ['light','dark']){
-const pg=await (await b.newContext({viewport:{width:w,height:h},hasTouch:w<500})).newPage();
+const pg=await (await b.newContext({locale:'fr-FR',viewport:{width:w,height:h},hasTouch:w<500})).newPage();
 await pg.goto(HTML,{waitUntil:'networkidle'});
 await pg.evaluate(t=>document.documentElement.setAttribute('data-theme',t),theme);
 await pg.click('#guide-btn');await pg.waitForTimeout(250);
@@ -187,7 +187,7 @@ await pg.close();
 }}
 
 // clavier
-const pg=await (await b.newContext({viewport:{width:1280,height:900}})).newPage();
+const pg=await (await b.newContext({locale:'fr-FR',viewport:{width:1280,height:900}})).newPage();
 await pg.goto(HTML,{waitUntil:'networkidle'});
 await chargerExemple(pg);
 await pg.click('#guide-btn');await pg.waitForTimeout(200);

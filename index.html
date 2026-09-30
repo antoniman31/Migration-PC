@@ -1383,7 +1383,49 @@ const TRADUCTIONS={
     'résultats':'results',
     'Logiciels':'Software',
     'Pilotes':'Drivers',
-    'PWA':'Web apps'
+    'PWA':'Web apps',
+
+    'Les scripts pour Windows':'The Windows scripts',
+    "Trois scripts font le travail que cette page ne peut pas faire : un navigateur n'a pas le droit de lire votre registre ni la liste de vos logiciels. Ils sont écrits en PowerShell, donc lisibles dans le Bloc-notes avant d'être lancés.":'Three scripts do the work this page cannot: a browser is not allowed to read your registry or the list of your software. They are written in PowerShell, so you can read them in Notepad before running them.',
+    '⬇️ Télécharger le programme':'⬇️ Download the program',
+    "Une seule archive, tout ce qu'il faut dedans. Décompressez-la sur une clé USB, et double-cliquez <code>Migration PC.bat</code> sur le PC source.":'One archive, everything needed inside. Unzip it onto a USB stick, then double-click <code>Migration PC.bat</code> on the source PC.',
+    "<b>Ne prenez pas les fichiers un par un.</b> Les scripts ont tous besoin de <code>lib-detection.ps1</code> à côté d'eux, et le <code>.bat</code> a besoin du dossier <code>scripts</code> : un fichier isolé s'arrête au démarrage. C'est pour ça qu'il n'y a qu'un seul bouton.":"<b>Don't take the files one by one.</b> Every script needs <code>lib-detection.ps1</code> next to it, and the <code>.bat</code> needs the <code>scripts</code> folder: a file on its own stops at startup. That is why there is only one button.",
+    'Fermer':'Close',
+    'Les scripts':'The scripts',
+
+    'Ma configuration':'My hardware',
+    "Les intitulés des pilotes portent le modèle, et les boutons « Rechercher » visent le support du constructeur au lieu de mots génériques. Tout est facultatif, et reste dans ce navigateur.":'Driver labels carry the model, and the « Search » buttons aim at the maker\'s support page instead of generic words. All of it is optional, and stays in this browser.',
+    'Tout effacer':'Erase everything',
+    'La machine':'The machine',
+    'Ce que le scan relève tout seul. Utile pour reconnaître le PC au SAV.':'What the scan fills in by itself. Useful to identify the PC with support.',
+    'Pour retrouver un pilote':'To find a driver',
+    "Le réseau d'abord : sans lui, sur une machine fraîche, on ne télécharge rien.":'Network first: without it, on a fresh machine, you cannot download anything.',
+    'Carte mère':'Motherboard',
+    'Processeur':'Processor',
+    'Carte graphique':'Graphics card',
+    'Mémoire':'Memory',
+    'SSD':'SSD',
+    'Réseau filaire':'Wired network',
+    'Wi-Fi':'Wi-Fi',
+    'Puce audio':'Audio chip',
+    'Version du BIOS':'BIOS version',
+    'Rien de rempli. Un scan remplit tout.':'Nothing filled in. A scan fills all of it.',
+    '{0} · manque pour les pilotes : {1}':'{0} · missing for drivers: {1}',
+    '{0} · tout ce qui sert aux pilotes est là':'{0} · everything drivers need is there',
+
+    'Réinitialiser':'Reset',
+    'Décocher toute la checklist':'Uncheck the whole checklist',
+    'Remet la progression à zéro sur les trois onglets. Le profil chargé, votre configuration matérielle et les lignes que vous avez écartées sont conservés.':'Sets progress back to zero on all three tabs. The loaded profile, your hardware settings and the rows you set aside are kept.',
+    'Tout décocher':'Uncheck all',
+    'Remettre le site à zéro':'Reset the site',
+    "Efface tout ce que ce navigateur a mémorisé — progression, configuration matérielle, lignes écartées, profil importé — et revient au profil d'exemple. Vos fichiers exportés ne sont pas touchés.":'Erases everything this browser remembered — progress, hardware settings, rows set aside, imported profile — and goes back to the example profile. Your exported files are untouched.',
+    'Éléments détectés sur cette machine':'Items found on this machine',
+    '↩ Annuler':'↩ Undo',
+    'Masquer':'Hide',
+    "Un problème est survenu pendant l'affichage.":'Something went wrong while displaying the page.',
+    'Le reste de la page continue de fonctionner. Si cela se répète, réinitialiser le profil ou recharger la page.':'The rest of the page keeps working. If this happens again, reset the profile or reload the page.',
+    'Sections':'Sections',
+    'Sections de la checklist':'Checklist sections'
   }
 };
 //
@@ -3819,7 +3861,7 @@ function construireConfig(){
   if(!zone)return;
   const champ=function(c){
     return '<label class="config-ligne">'
-      +'<span class="config-label">'+esc(c.label)+'</span>'
+      +'<span class="config-label">'+esc(tr(c.label))+'</span>'
       +'<input type="text" class="config-input" id="cfg-'+esc(c.cle)+'"'
       +' value="'+esc(CONFIG[c.cle]||'')+'"'
       +' placeholder="'+esc(c.exemple)+'"'
@@ -3830,8 +3872,8 @@ function construireConfig(){
     const champs=COMPOSANTS.filter(function(c){return c.grp===g.cle;});
     if(!champs.length)return '';
     return '<div class="config-grp">'
-      +'<div class="config-grp-t">'+esc(g.titre)+'</div>'
-      +'<div class="config-grp-s">'+esc(g.sous)+'</div>'
+      +'<div class="config-grp-t">'+esc(tr(g.titre))+'</div>'
+      +'<div class="config-grp-s">'+esc(tr(g.sous))+'</div>'
       +champs.map(champ).join('')
       +'</div>';
   }).join('');
@@ -3843,13 +3885,14 @@ function majResumeConfig(){
   // Un compte — « 4 sur 9 » — n'aide pas a savoir s'il faut remplir la suite.
   // Ce qui manque pour retrouver un pilote, si.
   const remplis=COMPOSANTS.filter(function(c){return CONFIG[c.cle];});
-  if(!remplis.length){ r.textContent='Rien de rempli. Un scan remplit tout.'; return; }
+  if(!remplis.length){ r.textContent=tr('Rien de rempli. Un scan remplit tout.'); return; }
   const pilote=COMPOSANTS.filter(function(c){return c.grp==='pilote';});
   const vides=pilote.filter(function(c){return !CONFIG[c.cle];});
+  const compte=remplis.length+'/'+COMPOSANTS.length;
   r.textContent=vides.length
-    ? remplis.length+'/'+COMPOSANTS.length+' · manque pour les pilotes : '
-      +vides.map(function(c){return c.label.toLowerCase();}).join(', ')
-    : remplis.length+'/'+COMPOSANTS.length+' · tout ce qui sert aux pilotes est là';
+    ? tr('{0} · manque pour les pilotes : {1}',compte,
+        vides.map(function(c){return tr(c.label).toLowerCase();}).join(', '))
+    : tr('{0} · tout ce qui sert aux pilotes est là',compte);
 }
 function viderConfig(){
   if(!Object.keys(CONFIG).length){informer('La configuration est déjà vide.');return;}
