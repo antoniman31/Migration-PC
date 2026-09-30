@@ -13,6 +13,8 @@ entièrement à votre charge.
 construction. Il s'ouvre depuis une clé USB sur un PC fraîchement installé, sans réseau.
 Les scripts sont facultatifs.
 
+*An English version of this page: [README.en.md](README.en.md).*
+
 La page existe en **français et en anglais**. Elle s'ouvre dans la langue du
 navigateur, et les boutons **FR** / **EN** en haut la changent ; le choix reste dans ce
 navigateur. Le profil d'exemple est traduit lui aussi, puisque c'est nous qui l'écrivons.
