@@ -101,7 +101,11 @@ ok 'et la cible aussi'            ((@($verif.arguments) -join ' ')) '-Role cible
 
 $parcours = @(Get-Parcours)
 ok 'un parcours complet existe'   ($parcours.Count -gt 0) $true
-$texte = $parcours -join ' '
+# Recolle ET espaces normalises : le parcours est habille a la largeur de la
+# console, donc une phrase se coupe ou elle veut. Chercher un morceau exact
+# dans les lignes brutes reviendrait a tester la mise en page au lieu du
+# contenu — et c'est ce qui a echoue le jour ou l'habillage est arrive.
+$texte = ($parcours -join ' ') -replace '\s+', ' '
 # Les trois situations que la page sait traiter doivent y figurer : c'est la
 # question posee par le lanceur, et la reponse doit couvrir les trois.
 ok 'il couvre le changement de PC' ($texte -match "d'un PC vers un autre") $true
@@ -151,9 +155,16 @@ ok 'aucune dependance graphique'   ($avecFenetre -join ', ') ''
 $sansUtf8 = @()
 foreach ($f in @('scan-pc.ps1', 'migration-pc.ps1')) {
     $t = [System.IO.File]::ReadAllText((Join-Path $racine $f))
-    if ($t -notmatch 'OutputEncoding') { $sansUtf8 += $f }
+    # Soit le script le fait lui-meme, soit il appelle le fichier partage qui
+    # le fait. Les deux valent : ce qui compte est que la console soit en UTF-8
+    # avant le premier affichage.
+    if ($t -notmatch 'OutputEncoding' -and $t -notmatch 'Set-SortieUTF8') { $sansUtf8 += $f }
 }
 ok 'la sortie console est en UTF-8' ($sansUtf8 -join ', ') ''
+# Et le fichier partage doit vraiment le faire, sinon l'appel ci-dessus ne
+# prouve rien.
+$libLangue = [System.IO.File]::ReadAllText((Join-Path $racine 'lib-langue.ps1'))
+ok 'et lib-langue.ps1 le fait vraiment' ($libLangue -match 'OutputEncoding') $true
 
 # Le menu est ce que les gens lisent : il doit etre en francais correct.
 . (Join-Path $racine 'lanceur-actions.ps1')
