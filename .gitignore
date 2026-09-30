@@ -22,4 +22,8 @@ node_modules/
 /instantane-source-*.json
 /instantane-cible-*.json
 /verification-pc.json
+# Produit par scripts/diagnostic.ps1 a cote de lui. Il ne porte aucun nom de
+# logiciel ni de machine, mais un message d'erreur peut contenir un chemin :
+# il n'a pas a etre versionne.
+/scripts/diagnostic-migration-pc.txt
 migration-pc.zip
