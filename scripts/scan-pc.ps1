@@ -104,7 +104,7 @@ Set-SortieUTF8
 # exemplaire, quel que soit le cote sur lequel on tourne.
 $lib = Join-Path $PSScriptRoot 'lib-detection.ps1'
 if (-not (Test-Path $lib)) {
-    Write-Error (Tr "lib-detection.ps1 est introuvable a cote de ce script. Copiez les deux fichiers ensemble.")
+    Write-Error (Texte "lib-detection.ps1 est introuvable a cote de ce script. Copiez les deux fichiers ensemble.")
     exit 1
 }
 . $lib
@@ -116,7 +116,7 @@ if (Test-Path $aide) { . $aide }
 # ---------------------------------------------------------------- execution
 
 Write-Host ""
-$titreScan = Tr "Inventaire des logiciels installes"
+$titreScan = Texte "Inventaire des logiciels installes"
 Write-Host $titreScan -ForegroundColor Cyan
 # Le trait suit le titre : traduit, il n'a plus la meme longueur.
 Write-Host ('-' * $titreScan.Length)
@@ -183,7 +183,7 @@ Write-TexteUtf8 -Chemin $cheminSortie -Contenu $json
 $raccourci = Join-Path (Split-Path $cheminSortie -Parent) 'inventaire-pc.json'
 if ($raccourci -ne $cheminSortie) {
     try { Write-TexteUtf8 -Chemin $raccourci -Contenu $json }
-    catch { Write-Host ("  " + (Tr "(raccourci inventaire-pc.json non ecrit : {0})" $_)) -ForegroundColor DarkGray }
+    catch { Write-Host ("  " + (Texte "(raccourci inventaire-pc.json non ecrit : {0})" $_)) -ForegroundColor DarkGray }
 }
 
 # ------------------------------------------------- le relais par la cle USB
@@ -207,7 +207,7 @@ $instantaneSource = $null
 if ($Role -eq 'source') {
     if ($relais) {
         try { Write-TexteUtf8 -Chemin $relais -Contenu $json }
-        catch { Write-Host ("  " + (Tr "(copie pour la cle non ecrite : {0})" $_)) -ForegroundColor DarkGray }
+        catch { Write-Host ("  " + (Texte "(copie pour la cle non ecrite : {0})" $_)) -ForegroundColor DarkGray }
     }
 } elseif ($relais -and (Test-Path -LiteralPath $relais)) {
     # Un fichier illisible ou abime ne doit pas faire echouer le scan : la page
@@ -215,7 +215,7 @@ if ($Role -eq 'source') {
     try {
         $instantaneSource = Get-Content -LiteralPath $relais -Raw -Encoding UTF8 | ConvertFrom-Json
     } catch {
-        Write-Host ("  " + (Tr "(instantane de la source illisible, ignore)")) -ForegroundColor Yellow
+        Write-Host ("  " + (Texte "(instantane de la source illisible, ignore)")) -ForegroundColor Yellow
     }
 }
 
@@ -242,7 +242,7 @@ if ($Role -eq 'cible' -and $instantaneSource -and $dossierPage) {
             $restant = $null
         }
     } catch {
-        Write-Host ("  " + (Tr "(liste des manquants non ecrite : {0})" $_)) -ForegroundColor DarkGray
+        Write-Host ("  " + (Texte "(liste des manquants non ecrite : {0})" $_)) -ForegroundColor DarkGray
         $restant = $null
     }
 }
@@ -252,7 +252,7 @@ if ($Role -eq 'cible' -and $instantaneSource -and $dossierPage) {
 # absence se taisait, et on cherchait longtemps pourquoi la page restait vide.
 if (-not (Get-Command Write-ResultatPourSite -ErrorAction SilentlyContinue)) {
     Write-Host ""
-    Format-Paragraphe (Tr "ecrire-resultat.ps1 n'est pas a cote de ce script : la page ne se remplira pas toute seule. Importez le fichier JSON a la main, ou reprenez le dossier complet depuis le site.") |
+    Format-Paragraphe (Texte "ecrire-resultat.ps1 n'est pas a cote de ce script : la page ne se remplira pas toute seule. Importez le fichier JSON a la main, ou reprenez le dossier complet depuis le site.") |
         ForEach-Object { Write-Host $_ -ForegroundColor Yellow }
 }
 if (Get-Command Write-ResultatPourSite -ErrorAction SilentlyContinue) {
@@ -266,53 +266,53 @@ $chemin = (Resolve-Path $Sortie).Path
 
 Write-Host ""
 $nbApps = @($apps).Count
-Write-Host $(if ($nbApps -eq 1) { Tr "1 application retenue, dont {0} avec un identifiant winget." $avecWinget }
-            else { Tr "{0} applications retenues, dont {1} avec un identifiant winget." $nbApps $avecWinget }) -ForegroundColor Green
+Write-Host $(if ($nbApps -eq 1) { Texte "1 application retenue, dont {0} avec un identifiant winget." $avecWinget }
+            else { Texte "{0} applications retenues, dont {1} avec un identifiant winget." $nbApps $avecWinget }) -ForegroundColor Green
 if ($totalGo) {
-    Write-Host (Tr "Taille connue : {0} Go — partielle, toutes les sources ne la donnent pas." ([math]::Round($totalGo, 1)))
+    Write-Host (Texte "Taille connue : {0} Go — partielle, toutes les sources ne la donnent pas." ([math]::Round($totalGo, 1)))
 }
 if (@($pilotesTiers).Count) {
     $nbTiers = @($pilotesTiers).Count
-    Write-Host $(if ($nbTiers -eq 1) { Tr "1 pilote non-Microsoft releve." }
-                else { Tr "{0} pilotes non-Microsoft releves." $nbTiers })
+    Write-Host $(if ($nbTiers -eq 1) { Texte "1 pilote non-Microsoft releve." }
+                else { Texte "{0} pilotes non-Microsoft releves." $nbTiers })
 }
 if (@($pilotes).Count) {
     $nbPil = @($pilotes).Count
-    Write-Host $(if ($nbPil -eq 1) { Tr "1 peripherique sans pilote ou en erreur." }
-                else { Tr "{0} peripheriques sans pilote ou en erreur." $nbPil }) -ForegroundColor Yellow
-    Write-Host ("  " + (Tr "La page donne le lien du constructeur a partir du modele de la machine."))
+    Write-Host $(if ($nbPil -eq 1) { Texte "1 peripherique sans pilote ou en erreur." }
+                else { Texte "{0} peripheriques sans pilote ou en erreur." $nbPil }) -ForegroundColor Yellow
+    Write-Host ("  " + (Texte "La page donne le lien du constructeur a partir du modele de la machine."))
 }
-Write-Host (Tr "Fichier ecrit : {0}" $chemin)
+Write-Host (Texte "Fichier ecrit : {0}" $chemin)
 Write-Host ""
 if ($Role -eq 'source') {
-    Write-Host (Tr "Etape suivante") -ForegroundColor Cyan
-    Format-Paragraphe (Tr "1. Debranchez cette cle USB.") 2 5 | ForEach-Object { Write-Host $_ }
-    Format-Paragraphe (Tr "2. Branchez-la sur le PC cible : le neuf, ou celui-ci une fois reinstalle.") 2 5 | ForEach-Object { Write-Host $_ }
-    Format-Paragraphe (Tr "3. Lancez « Migration PC.bat » et choisissez CIBLE.") 2 5 | ForEach-Object { Write-Host $_ }
+    Write-Host (Texte "Etape suivante") -ForegroundColor Cyan
+    Format-Paragraphe (Texte "1. Debranchez cette cle USB.") 2 5 | ForEach-Object { Write-Host $_ }
+    Format-Paragraphe (Texte "2. Branchez-la sur le PC cible : le neuf, ou celui-ci une fois reinstalle.") 2 5 | ForEach-Object { Write-Host $_ }
+    Format-Paragraphe (Texte "3. Lancez « Migration PC.bat » et choisissez CIBLE.") 2 5 | ForEach-Object { Write-Host $_ }
     if (-not $relais) {
         Write-Host ""
-        Format-Paragraphe (Tr "index.html n'est pas a cote des scripts : copiez le dossier entier sur la cle, sinon le PC cible n'aura rien a comparer.") |
+        Format-Paragraphe (Texte "index.html n'est pas a cote des scripts : copiez le dossier entier sur la cle, sinon le PC cible n'aura rien a comparer.") |
             ForEach-Object { Write-Host $_ -ForegroundColor Yellow }
     }
 } else {
     if ($instantaneSource) {
-        Format-Paragraphe (Tr "La page s'ouvre sur ce qu'il reste a installer : les deux instantanes y sont.") |
+        Format-Paragraphe (Texte "La page s'ouvre sur ce qu'il reste a installer : les deux instantanes y sont.") |
             ForEach-Object { Write-Host $_ }
         if ($restant) {
             Write-Host ""
-            Write-Host (Tr "Etape suivante") -ForegroundColor Cyan
-            Format-Paragraphe (Tr "Relancez « Migration PC.bat » : il propose maintenant d'installer ce qui manque, apres vous avoir montre la liste.") 2 |
+            Write-Host (Texte "Etape suivante") -ForegroundColor Cyan
+            Format-Paragraphe (Texte "Relancez « Migration PC.bat » : il propose maintenant d'installer ce qui manque, apres vous avoir montre la liste.") 2 |
                 ForEach-Object { Write-Host $_ }
         }
     } else {
-        Format-Paragraphe (Tr "Aucun instantane du PC source sur cette cle : la page n'a rien a comparer.") |
+        Format-Paragraphe (Texte "Aucun instantane du PC source sur cette cle : la page n'a rien a comparer.") |
             ForEach-Object { Write-Host $_ -ForegroundColor Yellow }
-        Format-Paragraphe (Tr "Scannez d'abord le PC source, ou importez son fichier a la main.") |
+        Format-Paragraphe (Texte "Scannez d'abord le PC source, ou importez son fichier a la main.") |
             ForEach-Object { Write-Host $_ }
     }
 }
 if (-not $ToutInclure) {
-    Format-Paragraphe (Tr "Une entree manque ? Relancer avec -ToutInclure pour desactiver le filtrage.") |
+    Format-Paragraphe (Texte "Une entree manque ? Relancer avec -ToutInclure pour desactiver le filtrage.") |
         ForEach-Object { Write-Host $_ }
 }
 Write-Host ""

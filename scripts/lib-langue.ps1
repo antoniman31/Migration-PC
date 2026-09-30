@@ -27,7 +27,15 @@
 
 # La langue en cours. 'fr' par defaut : si quelque chose se passe mal dans la
 # detection, on retombe sur la langue d'origine des scripts.
-$script:LangueActive = 'fr'
+#
+# On ne l'ecrase PAS si elle existe deja. Ce fichier est charge par plusieurs
+# scripts, et sans cette precaution le second chargement remettait la langue a
+# 'fr' apres que le premier l'ait posee : le menu choisissait l'anglais, puis
+# repassait au francais en chargeant lanceur-actions.ps1. C'est le meme motif
+# que lib-detection.ps1 emploie pour ses propres defauts.
+if (-not (Get-Variable -Name 'LangueActive' -Scope Script -ErrorAction SilentlyContinue)) {
+    $script:LangueActive = 'fr'
+}
 
 $script:LANGUES_DISPO = @('fr', 'en')
 
@@ -74,13 +82,21 @@ function Get-LangueActive { return $script:LangueActive }
 
 <#
 .SYNOPSIS
-    La phrase a afficher. Tr comme la fonction tr() de la page.
+    La phrase a afficher. Le pendant de la fonction tr() de la page.
+
+    LE NOM COMPTE. Cette fonction s'appelait « Tr », et « tr » est un binaire
+    d'Unix — que Git for Windows installe. Sur Windows les noms de fichiers
+    ignorent la casse : « Get-Command Tr » trouvait donc tr.exe, le garde qui
+    chargeait ce fichier en concluait que la fonction existait deja, et les
+    appels partaient vers le binaire. Sur Linux la casse compte, « Tr » ne
+    trouvait rien, et tout marchait. Seul le travail sur Windows pouvait le
+    voir. Un nom qu'aucun binaire ne porte ferme la porte.
 .EXAMPLE
-    Tr 'non installe, ignore'
+    Texte 'non installe, ignore'
 .EXAMPLE
-    Tr '{0} jeux' $n
+    Texte '{0} jeux' $n
 #>
-function Tr {
+function Texte {
     param(
         [Parameter(Mandatory = $true, Position = 0)][string]$Fr,
         [Parameter(ValueFromRemainingArguments = $true)][object[]]$Trous
@@ -116,7 +132,7 @@ function Set-SortieUTF8 {
 # la bonne taille.
 function Format-Paragraphe {
     param(
-        [Parameter(Mandatory = $true, Position = 0)][string]$Texte,
+        [Parameter(Mandatory = $true, Position = 0)][string]$Paragraphe,
         [Parameter(Position = 1)][int]$Marge = 0,
         [Parameter(Position = 2)][int]$MargeSuite = -1,
         [Parameter(Position = 3)][int]$Largeur = 76
@@ -127,7 +143,7 @@ function Format-Paragraphe {
     # PAS $marge : PowerShell ignore la casse, ce serait le parametre [int]
     # $Marge, et « prefixe + texte » deviendrait une addition d'entiers.
     $prefixe = ' ' * $Marge
-    foreach ($mot in ($Texte -split ' +')) {
+    foreach ($mot in ($Paragraphe -split ' +')) {
         if (-not $mot) { continue }
         $essai = if ($courante) { "$courante $mot" } else { $mot }
         if (($prefixe.Length + $essai.Length) -gt $Largeur -and $courante) {

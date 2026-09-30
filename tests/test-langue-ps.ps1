@@ -29,6 +29,33 @@ function ok($libelle, $obtenu, $attendu) {
 . (Join-Path $racine 'lib-langue.ps1')
 . (Join-Path $racine 'lanceur-actions.ps1')
 
+"--- la fonction ne se laisse pas masquer par une commande du systeme ---"
+# LE DEFAUT QUE SEUL WINDOWS A VU. La fonction s'appelait « Tr », et « tr » est
+# un binaire d'Unix que Git for Windows installe. Sur Windows les noms de
+# fichiers ignorent la casse : « Get-Command Tr » trouvait tr.exe, le garde qui
+# chargeait la table en concluait qu'elle etait deja la, et chaque appel partait
+# vers le binaire — « tr: missing operand ». Sur Linux la casse compte, « Tr »
+# ne trouvait rien, et la CI locale passait.
+#
+# Deux verrous, et les deux comptent. Le nom ne peut plus correspondre a un
+# binaire courant, et le chargement ne demande plus la permission a
+# Get-Command : il a lieu dans tous les cas.
+ok 'Texte est bien une fonction' (Get-Command Texte).CommandType 'Function'
+$chargements = @()
+foreach ($f in @('lanceur-actions.ps1', 'lib-detection.ps1')) {
+    $src = [System.IO.File]::ReadAllText((Join-Path $racine $f))
+    # Un chargement garde par Get-Command est precisement ce qui a echoue.
+    if ($src -match "Get-Command Texte[^\n]*\r?\n\s*\.\s*\(Join-Path") { $chargements += $f }
+}
+ok 'aucun chargement garde par Get-Command' ($chargements -join ', ') ''
+
+# Et la langue deja choisie survit a un rechargement : migration-pc.ps1 charge
+# la table, pose la langue, puis charge lanceur-actions.ps1 qui la recharge.
+# Sans precaution le second chargement remettait tout en francais.
+[void](Set-Langue 'en')
+. (Join-Path $racine 'lib-langue.ps1')
+ok 'la langue survit a un rechargement' (Get-LangueActive) 'en'
+
 "--- la mecanique ---"
 ok 'la langue demandee gagne'        (Resolve-Langue 'en') 'en'
 ok 'et le francais aussi'            (Resolve-Langue 'fr') 'fr'
@@ -38,20 +65,20 @@ ok 'une valeur inconnue rend quand meme une langue' `
     ((Resolve-Langue 'klingon' 3>$null) -in @('fr', 'en')) $true
 
 [void](Set-Langue 'fr')
-ok 'en francais, la cle est rendue'  (Tr 'non installe, ignore') 'non installe, ignore'
+ok 'en francais, la cle est rendue'  (Texte 'non installe, ignore') 'non installe, ignore'
 [void](Set-Langue 'en')
-ok 'en anglais, la traduction'       (Tr 'non installe, ignore') 'not installed, skipped'
+ok 'en anglais, la traduction'       (Texte 'non installe, ignore') 'not installed, skipped'
 ok 'une cle absente retombe sur le francais' `
-    (Tr 'Une phrase que personne n a traduite') 'Une phrase que personne n a traduite'
+    (Texte 'Une phrase que personne n a traduite') 'Une phrase que personne n a traduite'
 
 # LE PIEGE QUI A MORDU. PowerShell deroule un tableau d'un seul element dans un
 # test booleen : @(0) est FAUX. « if ($Trous) » laissait donc « {0} entrees »
 # a l'ecran, et seulement quand le compte valait zero — le cas le plus courant
 # sur une machine ou une source est absente, donc celui qu'on voit le plus.
-ok 'un trou rempli par zero'         (Tr '{0} entrees' 0) '0 entries'
-ok 'un trou rempli par un nombre'    (Tr '{0} entrees' 7) '7 entries'
-ok 'un trou rempli par du vide'      (Tr '{0} a regler' '') ' to sort out'
-ok 'deux trous'                      (Tr '{0} : ignore, {1}' 'Steam' 'zut') 'Steam: skipped, zut'
+ok 'un trou rempli par zero'         (Texte '{0} entrees' 0) '0 entries'
+ok 'un trou rempli par un nombre'    (Texte '{0} entrees' 7) '7 entries'
+ok 'un trou rempli par du vide'      (Texte '{0} a regler' '') ' to sort out'
+ok 'deux trous'                      (Texte '{0} : ignore, {1}' 'Steam' 'zut') 'Steam: skipped, zut'
 
 "--- l'habillage suit la langue affichee ---"
 # Les phrases sont entieres dans la table et coupees a l'affichage : une coupe
