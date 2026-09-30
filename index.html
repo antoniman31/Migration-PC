@@ -179,7 +179,16 @@ h1{font-size:18px;font-weight:600;color:var(--tx);letter-spacing:-.3px}
 
 /* L'état de la sauvegarde, à droite de la barre : discret quand tout va bien,
    visible quand le navigateur refuse d'enregistrer. */
-.save-state{margin-left:auto;flex-shrink:0;color:var(--tx3);font-variant-numeric:tabular-nums}
+/* Le selecteur de langue reste a l'ecran plutot que dans le menu : quelqu'un
+   qui arrive sur la page en ligne et ne lit pas le francais ne pensera pas a
+   ouvrir un menu nomme « Reglages ». */
+.hdr-lang{display:flex;gap:8px;flex-shrink:0;margin-left:auto}
+.lang-btn{min-width:44px;min-height:28px;font-size:12px;font-weight:600;
+  border:.5px solid var(--brd2);background:var(--bg2);color:var(--tx3);
+  border-radius:6px;cursor:pointer}
+.lang-btn:hover{color:var(--tx)}
+.lang-btn.actif{background:var(--accl);border-color:var(--accb);color:var(--acc-fort)}
+.save-state{flex-shrink:0;color:var(--tx3);font-variant-numeric:tabular-nums}
 .save-state.save-ko{color:var(--bh-tx);font-weight:600}
 
 /* TABS */
@@ -990,8 +999,15 @@ if(location.protocol==='file:'){
 <header class="hdr">
   <h2 class="hdr-titre" id="page-titre">📦 Logiciels</h2>
   <div class="hdr-rech">
-    <input type="search" id="gsearch-input" aria-label="Rechercher dans toute la checklist" placeholder="🔍 Rechercher…" oninput="globalSearch()">
-    <span class="gsearch-count" id="gsearch-count" style="display:none"><b id="gsearch-n">0</b> résultats</span>
+    <input type="search" id="gsearch-input" data-t-aria="rech.globale" data-t-ph="rech.globale.ph"
+      aria-label="Rechercher dans toute la checklist" placeholder="🔍 Rechercher…" oninput="globalSearch()">
+    <span class="gsearch-count" id="gsearch-count" style="display:none"><b id="gsearch-n">0</b> <span data-t="rech.resultats">résultats</span></span>
+  </div>
+  <div class="hdr-lang" role="group" data-t-aria="langue.groupe" aria-label="Langue">
+    <button type="button" id="lang-fr" class="lang-btn actif" aria-pressed="true"
+      onclick="setLangue('fr')" title="Français" aria-label="Français">FR</button>
+    <button type="button" id="lang-en" class="lang-btn" aria-pressed="false"
+      onclick="setLangue('en')" title="English" aria-label="English">EN</button>
   </div>
   <span class="save-state" id="save-state" role="status"></span>
 </header>
@@ -1344,6 +1360,127 @@ const PROFIL_DEMO = {
 };
 
 const CLE_PROFIL='mpc_profil_v1', CLE_ETAT='mpc_state_v1', CLE_THEME='mpc_theme';
+const CLE_LANGUE='mpc_langue_v1';
+
+// ═══ LANGUES ═══
+//
+// La table. Une cle par texte affiche, le francais d'abord parce qu'il est la
+// reference : quand une cle manque en anglais, t() rend la francaise plutot
+// qu'une cle brute — une page a moitie traduite reste utilisable, et le test de
+// langue signale l'oubli sans que l'utilisateur en paie le prix.
+//
+// Les cles sont nommees par emplacement et non par contenu : « onglet.apps »
+// survit a une reformulation, « logiciels » non.
+const TEXTES={
+  fr:{
+    'langue.groupe':'Langue',
+    'rech.globale':'Rechercher dans toute la checklist',
+    'rech.globale.ph':'🔍 Rechercher…',
+    'rech.resultats':'résultats',
+    'onglet.apps':'Logiciels',
+    'onglet.pilotes':'Pilotes',
+    'onglet.pwa':'PWA'
+  },
+  en:{
+    'langue.groupe':'Language',
+    'rech.globale':'Search the whole checklist',
+    'rech.globale.ph':'🔍 Search…',
+    'rech.resultats':'results',
+    'onglet.apps':'Software',
+    'onglet.pilotes':'Drivers',
+    'onglet.pwa':'Web apps'
+  }
+};
+//
+// Le francais est la langue par defaut et la reference : c'est celle dans
+// laquelle le projet a ete pense, et celle sur laquelle la quasi-totalite des
+// tests assertent. L'anglais est une traduction, pas une seconde source.
+//
+// Une table de cles plutot que deux fichiers HTML : un second fichier
+// obligerait a porter chaque changement deux fois, et dans six mois l'un des
+// deux decrirait un programme qui n'existe plus. C'est exactement le piege
+// qu'on a passe la soiree a retirer ailleurs.
+//
+// La langue au premier chargement suit le navigateur ; un choix explicite
+// l'emporte ensuite et survit au rechargement, comme le theme.
+let LANG='fr';
+const LANGUES_DISPO=['fr','en'];
+
+function langueDuNavigateur(){
+  try{
+    const l=String((navigator.languages&&navigator.languages[0])||navigator.language||'')
+      .toLowerCase();
+    if(l.indexOf('fr')===0)return 'fr';
+    if(l)return 'en';
+  }catch(e){}
+  return 'fr';
+}
+
+function chargerLangue(){
+  let choisi=null;
+  try{choisi=localStorage.getItem(CLE_LANGUE);}catch(e){}
+  LANG=(LANGUES_DISPO.indexOf(choisi)>=0)?choisi:langueDuNavigateur();
+}
+
+// Traduit une cle. Rend la version francaise quand l'anglaise manque — une
+// page a moitie traduite reste utilisable, alors qu'une cle brute a l'ecran
+// ne dit rien a personne. Le test de langue echoue sur ce cas, donc l'oubli
+// se voit sans que l'utilisateur en paie le prix.
+function t(cle){
+  const table=(TEXTES[LANG]||TEXTES.fr)||{};
+  let s=table[cle];
+  if(s===undefined)s=(TEXTES.fr||{})[cle];
+  if(s===undefined)return cle;
+  // t('cle', a, b) remplace {0} et {1} : les nombres et les noms se placent
+  // differemment d'une langue a l'autre, donc on ne concatene pas.
+  for(let i=1;i<arguments.length;i++){
+    s=s.split('{'+(i-1)+'}').join(String(arguments[i]));
+  }
+  return s;
+}
+
+function setLangue(l){
+  if(LANGUES_DISPO.indexOf(l)<0)return;
+  LANG=l;
+  try{localStorage.setItem(CLE_LANGUE,l);}catch(e){}
+  try{document.documentElement.setAttribute('lang',l);}catch(e){}
+  majSelecteurLangue();
+  appliquerTextesFixes();
+  renderAll();updateGlobal();
+}
+
+// Les textes fixes du balisage portent une cle en attribut, et cette fonction
+// les remplit. Un attribut plutot qu'un appel a t() dans chaque noeud : le
+// balisage reste lisible en francais dans le fichier, ce qui compte pour
+// quelqu'un qui ouvre index.html dans un editeur.
+//
+//   data-t        le contenu texte
+//   data-t-ph     l'attribut placeholder
+//   data-t-aria   l'attribut aria-label
+//   data-t-titre  l'attribut title
+function appliquerTextesFixes(){
+  const passe=function(sel,f){
+    let noeuds=[];
+    try{noeuds=Array.prototype.slice.call(document.querySelectorAll(sel));}
+    catch(e){return;}
+    noeuds.forEach(function(n){
+      try{f(n);}catch(e){console.error(e);}
+    });
+  };
+  passe('[data-t]',function(n){n.textContent=t(n.getAttribute('data-t'));});
+  passe('[data-t-ph]',function(n){n.setAttribute('placeholder',t(n.getAttribute('data-t-ph')));});
+  passe('[data-t-aria]',function(n){n.setAttribute('aria-label',t(n.getAttribute('data-t-aria')));});
+  passe('[data-t-titre]',function(n){n.setAttribute('title',t(n.getAttribute('data-t-titre')));});
+}
+
+function majSelecteurLangue(){
+  LANGUES_DISPO.forEach(function(l){
+    const b=document.getElementById('lang-'+l);
+    if(!b)return;
+    b.setAttribute('aria-pressed',l===LANG?'true':'false');
+    b.classList.toggle('actif',l===LANG);
+  });
+}
 // Le profil est une TRANSFORMATION de l'inventaire : il perd les tailles, les
 // modèles de chemin et les familles que la checklist n'affiche pas. La
 // comparaison a besoin des inventaires bruts, donc on les garde tels quels à
@@ -3913,6 +4050,12 @@ window.addEventListener('DOMContentLoaded',function(){
   chargerInstantanes();
   chargerConfig();
   chargerIgnores();
+  // Avant tout rendu : la langue decide de ce que les fonctions de rendu
+  // produisent, donc elle doit etre connue avant qu'elles tournent.
+  chargerLangue();
+  try{document.documentElement.setAttribute('lang',LANG);}catch(e){}
+  majSelecteurLangue();
+  appliquerTextesFixes();
   document.addEventListener('input',function(e){
   });
   document.addEventListener('keydown',clavierGlobal);

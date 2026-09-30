@@ -78,6 +78,7 @@ for(const theme of ['light','dark']){
         .filter(e=>visible(e)&&!e.getAttribute('aria-label')&&!e.getAttribute('title')
           &&!document.querySelector('label[for="'+e.id+'"]')&&!e.closest('label')).length,
       lang:document.documentElement.getAttribute('lang'),
+      langActive:(typeof LANG==='string'?LANG:null),
       h1:document.querySelectorAll('h1').length,
       reperes:['header','main'].filter(t=>document.querySelector(t)).length
     };
@@ -92,7 +93,8 @@ for(const theme of ['light','dark']){
     ok('les lignes portent aria-checked',r.sansEtat,0);
     ok('les onglets ont role=tab',r.ongletsSansRole,0);
     ok('les champs ont un nom accessible',r.champsSansNom,0);
-    ok('langue déclarée',r.lang,'fr');
+    ok('langue déclarée',['fr','en'].indexOf(r.lang)>=0,true);
+    ok('et elle correspond à celle affichée',r.lang,r.langActive);
     ok('un seul titre de niveau 1',r.h1,1);
     ok('repères header et main',r.reperes,2);
   }
