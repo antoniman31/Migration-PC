@@ -1355,14 +1355,14 @@ const CLE_LANGUE='mpc_langue_v1';
 // ═══ LANGUES ═══
 //
 // La table. Une cle par texte affiche, le francais d'abord parce qu'il est la
-// reference : quand une cle manque en anglais, t() rend la francaise plutot
+// reference : quand une cle manque en anglais, tr() rend la francaise plutot
 // qu'une cle brute — une page a moitie traduite reste utilisable, et le test de
 // langue signale l'oubli sans que l'utilisateur en paie le prix.
 //
 // Les cles sont nommees par emplacement et non par contenu : « onglet.apps »
 // survit a une reformulation, « logiciels » non.
 // LE TEXTE FRANCAIS EST LA CLE. Il n'y a donc pas de noms de cles a inventer :
-// t('Rien a installer') cherche la traduction anglaise et rend son propre
+// tr('Rien a installer') cherche la traduction anglaise et rend son propre
 // argument a defaut. Trois consequences qui ont decide de ce choix.
 //
 // Le fichier reste lisible en francais pour qui l'ouvre dans un editeur : on lit
@@ -1420,13 +1420,18 @@ function chargerLangue(){
 // Traduit un texte francais. Sans traduction, rend le francais : une page a
 // moitie traduite reste utilisable, alors qu'une cle brute a l'ecran ne dit rien
 // a personne. C'est le test qui signale l'oubli, pas l'utilisateur.
-function t(fr){
+//
+// Nommee « tr » et non « t » : onze endroits de ce fichier declarent deja une
+// variable ou un parametre nomme t — switchTab(t), tacheCourante, l'export
+// texte. Y appeler t('...') aurait leve une erreur, et seulement dans ces
+// fonctions-la : le genre de defaut qui ne se voit qu'en production.
+function tr(fr){
   let s=fr;
   if(LANG!=='fr'){
     const table=TRADUCTIONS[LANG];
     if(table&&table[fr]!==undefined)s=table[fr];
   }
-  // t(texte, a, b) remplace {0} et {1} : les nombres et les noms ne se placent
+  // tr(texte, a, b) remplace {0} et {1} : les nombres et les noms ne se placent
   // pas au meme endroit d'une langue a l'autre, donc on ne concatene pas.
   for(let i=1;i<arguments.length;i++){
     s=s.split('{'+(i-1)+'}').join(String(arguments[i]));
@@ -1445,7 +1450,7 @@ function setLangue(l){
 }
 
 // Les textes fixes du balisage portent une cle en attribut, et cette fonction
-// les remplit. Un attribut plutot qu'un appel a t() dans chaque noeud : le
+// les remplit. Un attribut plutot qu'un appel a tr() dans chaque noeud : le
 // balisage reste lisible en francais dans le fichier, ce qui compte pour
 // quelqu'un qui ouvre index.html dans un editeur.
 //
@@ -1466,7 +1471,7 @@ function passeTextes(sel,lire,ecrire){
     try{
       let fr=n.getAttribute(sel);
       if(!fr){ fr=lire(n)||''; n.setAttribute(sel,fr); }
-      ecrire(n,t(fr));
+      ecrire(n,tr(fr));
     }catch(e){console.error(e);}
   });
 }

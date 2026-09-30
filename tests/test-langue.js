@@ -81,22 +81,22 @@ ok('aucune traduction orpheline',orphelines.slice(0,5).join(' | '),'');
 const identiques=clesEn.filter(k=>TR.en[k]===k);
 ok('la plupart des textes different',identiques.length<clesEn.length/2,true);
 
-console.log('\n--- t() rend le bon texte ---');
-const t=G('t');
+console.log('\n--- tr() rend le bon texte ---');
+const tr=G('tr');
 G('LANG="fr";');
-ok('en francais, le texte passe tel quel',t('Logiciels'),'Logiciels');
+ok('en francais, le texte passe tel quel',tr('Logiciels'),'Logiciels');
 G('LANG="en";');
-ok('en anglais, il est traduit',t('Logiciels'),TR.en['Logiciels']);
+ok('en anglais, il est traduit',tr('Logiciels'),TR.en['Logiciels']);
 // Un texte sans traduction rend le francais : une page a moitie traduite reste
 // utilisable, et c'est le test qui signale l'oubli.
-ok('sans traduction, le francais',t('Texte jamais traduit'),'Texte jamais traduit');
+ok('sans traduction, le francais',tr('Texte jamais traduit'),'Texte jamais traduit');
 // Les nombres et les noms ne se placent pas au meme endroit d'une langue a
 // l'autre : on substitue plutot que de concatener.
 vm.runInContext('TRADUCTIONS.en["{0} sur {1}"]="{0} of {1}";',ctx);
-ok('les trous sont remplis, en anglais',t('{0} sur {1}',3,7),'3 of 7');
+ok('les trous sont remplis, en anglais',tr('{0} sur {1}',3,7),'3 of 7');
 G('LANG="fr";');
-ok('et en francais aussi',t('{0} sur {1}',3,7),'3 sur 7');
-ok('un trou repete l\'est partout',t('{0}, encore {0}','x'),'x, encore x');
+ok('et en francais aussi',tr('{0} sur {1}',3,7),'3 sur 7');
+ok('un trou repete l\'est partout',tr('{0}, encore {0}','x'),'x, encore x');
 
 console.log('\n--- le choix se memorise ---');
 G('setLangue("en");');
