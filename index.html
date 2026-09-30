@@ -1466,6 +1466,36 @@ const TRADUCTIONS={
     'Absent du PC cible':'Absent from the target PC',
     'manque':'missing',
     'Décocher tout':'Uncheck all',
+    'Aucun résultat pour « {0} »':'No result for « {0} »',
+    'Migration Windows — exemple garni':'Windows migration — filled-in example',
+    "Exemple : la liste d'une autre machine, pour voir à quoi ça ressemble":"Example: another machine's list, to see what it looks like",
+    'Navigateur web':'Web browser',
+    'Suite bureautique':'Office suite',
+    'Client de stockage en ligne':'Cloud storage client',
+    'Lecteur PDF':'PDF reader',
+    'Client VPN':'VPN client',
+    'Messagerie web':'Webmail',
+    'Agenda':'Calendar',
+    'Prise de notes':'Note taking',
+    "Gestionnaire d'archives. À installer en premier pour ouvrir tout le reste.":'Archive manager. Install it first, so you can open everything else.',
+    'Se connecter au compte pour récupérer favoris, mots de passe et extensions.':'Sign in to the account to get bookmarks, passwords and extensions back.',
+    'Lecteur multimédia qui lit à peu près tous les formats sans codec supplémentaire.':'Media player that reads just about every format without extra codecs.',
+    'Boîte à outils Microsoft : gestion de fenêtres, renommage par lot, sélecteur de couleur.':'Microsoft toolbox: window management, batch renaming, colour picker.',
+    'Surveillance des températures, tensions et fréquences. Utile pour valider le montage.':'Watches temperatures, voltages and clocks. Useful to check a fresh build.',
+    'État de santé S.M.A.R.T. des disques.':'S.M.A.R.T. health of the drives.',
+    'Gestion de versions. Penser à recopier la configuration et les clés SSH.':'Version control. Remember to copy the config and the SSH keys over.',
+    'Runtime JavaScript et npm.':'JavaScript runtime and npm.',
+    "Cocher « Add to PATH » pendant l'installation.":'Tick « Add to PATH » during setup.',
+    'Éditeur de code. La synchronisation des paramètres restaure extensions et réglages.':'Code editor. Settings sync restores extensions and preferences.',
+    'Terminal moderne, déjà présent sur Windows 11 récent.':'Modern terminal, already there on a recent Windows 11.',
+    'Version actuelle de PowerShell, installée à côté de celle de Windows.':'Current PowerShell, installed alongside the one Windows ships.',
+    "Bibliothèque de jeux. Penser à pointer le dossier d'installation vers le bon disque.":'Game library. Remember to point the install folder at the right drive.',
+    'Messagerie vocale et texte.':'Voice and text chat.',
+    'Se connecter au compte pour activer la licence.':'Sign in to the account to activate the licence.',
+    "Attendre la fin de la synchronisation initiale avant de débrancher l'ancien PC.":'Wait for the first sync to finish before unplugging the old PC.',
+    'Le navigateur suffit souvent ; utile pour les formulaires et les signatures.':'The browser is often enough; useful for forms and signatures.',
+    'Si tu en utilises un : réinstaller et se reconnecter avant de remettre le pare-feu en place.':'If you use one: reinstall and sign in again before putting the firewall back.',
+    'Raccourci navigateur — revient avec la synchronisation du compte.':'Browser shortcut — comes back with the account sync.',
     'Site officiel':'Official site',
     '▶ Par où commencer':'▶ Where to start',
     "Le seul fichier à double-cliquer. Il demande sur quelle machine vous êtes et lance ce qu'il faut. Les autres sont là pour être lus, pas pour être lancés à la main.":'The only file to double-click. It asks which machine you are on and runs what is needed. The others are there to be read, not to be run by hand.',
@@ -1745,6 +1775,19 @@ function messageOngletVide(cle){
 
 function libelleDe(e){ return e?(e.n||''):''; }
 function descDe(e){ return e?(e.d||''):''; }
+// Le profil d'exemple est de nous, pas d'une machine etrangere : ses textes se
+// traduisent. Un profil releve par un scan, lui, n'a aucune entree dans la
+// table, donc tr() rend son texte tel quel — c'est le repli qui fait la
+// distinction, sans avoir a savoir d'ou vient le profil.
+//
+// CES DEUX FONCTIONS SONT POUR L'AFFICHAGE, ET RIEN D'AUTRE. libelleDe et
+// descDe restent le texte d'origine, celui qu'on reecrit dans le fichier a
+// l'export et celui qu'on met dans une recherche web : traduire un nom dans
+// une requete Google chercherait un logiciel qui n'existe pas, et traduire un
+// profil a l'export le reecrirait dans une langue que son auteur n'a pas
+// choisie.
+function libelleAff(e){ return tr(libelleDe(e)); }
+function descAff(e){ return tr(descDe(e)); }
 
 // La liste des onglets vivait en sept exemplaires dans le fichier. En ajouter
 // un obligeait à les retrouver tous, et en oublier un ne se voyait pas.
@@ -1805,8 +1848,8 @@ function appliquerProfil(p,memoriser){
 }
 
 function majEnteteProfil(){
-  const h=document.getElementById('profil-titre');if(h)h.textContent=PROFIL_NOM;
-  const s=document.getElementById('profil-sous');if(s){s.textContent=PROFIL_SOUS;s.style.display=PROFIL_SOUS?'':'none';}
+  const h=document.getElementById('profil-titre');if(h)h.textContent=tr(PROFIL_NOM);
+  const s=document.getElementById('profil-sous');if(s){s.textContent=tr(PROFIL_SOUS);s.style.display=PROFIL_SOUS?'':'none';}
 }
 
 function construireFiltresCats(){
@@ -2640,7 +2683,7 @@ let curTab='apps',noWinget=false,viewMode='normal',isDark=false;
 // Le libellé passé à toggle() finit dans l'historique et dans les bandeaux :
 // il doit être celui qu'on a sous les yeux, donc celui du scénario courant.
 function attrToggle(e){
-  return 'toggle(\''+escJS(e.id)+'\',\''+escJS(libelleDe(e))+'\')';
+  return 'toggle(\''+escJS(e.id)+'\',\''+escJS(libelleAff(e))+'\')';
 }
 // Un profil vient d'un fichier qu'on n'a pas ecrit : le projet est bati sur
 // l'echange de profils, donc son contenu est une entree non fiable, au meme
@@ -3045,12 +3088,12 @@ function mkAppItem(a,etats){
   const meta=[];
   if(a.ver)meta.push(esc(String(a.ver)));
   if(a.go)meta.push(esc(fmtTaille(a.go)));
-  if(a.src)meta.push(esc(String(a.src)));
+  if(a.src)meta.push(esc(tr(String(a.src))));
   const cmd=a.w?'winget install --id '+a.w+' -e':(a.cmd||'');
 
   let detail='';
   if(ouvert){
-    const d=texte(descDe(a));
+    const d=texte(descAff(a));
     detail='<div class="lg-det" onclick="event.stopPropagation()">'
       +(d?'<p class="lg-det-d">'+esc(d)+'</p>':'')
       +(a.warn?'<div class="warn-badge">⚠️ '+esc(a.warn)+'</div>':'')
@@ -3071,16 +3114,16 @@ function mkAppItem(a,etats){
         ?' aria-disabled="true" title="'+esc(tr('Trouvé sur le PC cible par le scan : réglé, rien à cocher.'))+'"'
         :' onclick="'+attrToggle(a)+'"')+'>'
       +mkChkbox()
-      +'<span class="lg-n">'+esc(libelleDe(a))+dt+'</span>'
+      +'<span class="lg-n">'+esc(libelleAff(a))+dt+'</span>'
       +'<span class="lg-br" aria-hidden="true"></span>'
       +'<span class="lg-m">'+meta.join(' · ')+'</span>'
       +'<span class="lg-t">'+(ignore
           ?'<span class="badge b-ignore" title="'+esc(tr('Écarté : ne compte plus et ne sort pas dans le script winget'))+'">'+esc(tr('ignoré'))+'</span>'
           :badgeComparaison(a,etats))+'</span>'
-      +mkBoutonIgnore(a.id,libelleDe(a),ignore)
+      +mkBoutonIgnore(a.id,libelleAff(a),ignore)
       +'<button type="button" class="lg-plus" aria-expanded="'+ouvert+'" '
-        +'aria-label="'+esc(ouvert?tr('Masquer le détail de {0}',libelleDe(a))
-                                  :tr('Afficher le détail de {0}',libelleDe(a)))+'" '
+        +'aria-label="'+esc(ouvert?tr('Masquer le détail de {0}',libelleAff(a))
+                                  :tr('Afficher le détail de {0}',libelleAff(a)))+'" '
         +'onclick="basculerDetail(\''+escJS(a.id)+'\',event)">'+(ouvert?'▴':'▾')+'</button>'
       +mkLink(libelleDe(a),a)
     +'</div>'
@@ -3149,9 +3192,9 @@ function renderPWA(){
     html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(p)+'">'
       +mkChkbox()
       +'<div class="item-body">'
-        +'<div class="item-name-row"><span class="item-name">'+esc(libelleDe(p))+'</span>'+dt+'</div>'
+        +'<div class="item-name-row"><span class="item-name">'+esc(libelleAff(p))+'</span>'+dt+'</div>'
         +'<div class="item-badges"><span class="badge b-sync">✓ '+esc(tr('Raccourci OK'))+'</span><span class="badge b-pwa">'+esc(tr('PWA Chrome'))+'</span></div>'
-        +'<div class="item-desc">'+esc(texte(descDe(p)))+'</div>'
+        +'<div class="item-desc">'+esc(texte(descAff(p)))+'</div>'
       +'</div>'
       +mkDirectLink(p.u)
     +'</div>';
@@ -3174,24 +3217,28 @@ function globalSearch(){
   const cnt=document.getElementById('gsearch-count');
   const res=document.getElementById('gsearch-results');
   if(!q){cnt.style.display='none';res.classList.remove('active');res.innerHTML='';return;}
+  function contient(s){ return String(s||'').toLowerCase().indexOf(q)>=0; }
   const sections=[
-    {label:'📦 Logiciels',items:visiblesDe('apps').filter(function(x){return libelleDe(x).toLowerCase().indexOf(q)>=0||(x.w&&x.w.toLowerCase().indexOf(q)>=0)||descDe(x).toLowerCase().indexOf(q)>=0;})},
-    {label:'🌍 PWA',items:visiblesDe('pwa').filter(function(x){return libelleDe(x).toLowerCase().indexOf(q)>=0;})}
+    {label:'📦 '+tr('Logiciels'),items:visiblesDe('apps').filter(function(x){
+      return contient(libelleDe(x))||contient(libelleAff(x))||contient(x.w)
+        ||contient(descDe(x))||contient(descAff(x));})},
+    {label:'🌍 '+tr('PWA'),items:visiblesDe('pwa').filter(function(x){
+      return contient(libelleDe(x))||contient(libelleAff(x));})}
   ];
   const total=sections.reduce(function(s,x){return s+x.items.length;},0);
   cnt.style.display='';document.getElementById('gsearch-n').textContent=total;
-  if(total===0){res.classList.add('active');res.innerHTML='<div style="padding:12px 0;color:var(--tx2);font-size:13px">Aucun résultat pour "'+esc(q)+'"</div>';return;}
+  if(total===0){res.classList.add('active');res.innerHTML='<div style="padding:12px 0;color:var(--tx2);font-size:13px">'+esc(tr('Aucun résultat pour « {0} »',q))+'</div>';return;}
   let html='';
   sections.forEach(function(sec){
     if(!sec.items.length)return;
     html+='<div class="gsr-tab">'+sec.label+' ('+sec.items.length+')</div>';
     sec.items.forEach(function(item){
       const ck=!!S.checked[item.id];
-      const name=libelleDe(item);
+      const name=libelleAff(item);
       html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(item)+';globalSearch()">'
         +mkChkbox()
         +'<div class="item-body"><div class="item-name-row"><span class="item-name">'+esc(name)+'</span></div>'
-        +'<div class="item-desc" style="margin-top:2px">'+esc(item.d||item.p||'')+'</div></div>'
+        +'<div class="item-desc" style="margin-top:2px">'+esc(item.d?descAff(item):(item.p||''))+'</div></div>'
       +'</div>';
     });
   });
@@ -3228,7 +3275,7 @@ function updateGlobal(){
 function updateTitle(){
   const all=aCompter(itemsVisibles());
   const done=all.filter(function(x){return estFait(x.id);}).length;
-  document.title='('+done+'/'+all.length+') '+(PROFIL_NOM||'Migration PC');
+  document.title='('+done+'/'+all.length+') '+(PROFIL_NOM?tr(PROFIL_NOM):'Migration PC');
 }
 
 // Entrée et Espace activent une case, comme sur une vraie case à cocher.
@@ -3501,7 +3548,7 @@ function renderGuide(){
   const t=tacheCourante();
   const onglet=ONGLET_DE[t.id]||'';
   // Les sauvegardes portent un chemin plutôt qu'une description.
-  const desc=descDe(t)||t.note||t.p||'';
+  const desc=descAff(t)||t.note||t.p||'';
   const cmd=t.w?cmdWinget(t.w):'';
   const manque=depsManquantes(t);
 
@@ -3512,7 +3559,7 @@ function renderGuide(){
     +'</div>'
     +'<div class="guide-corps">'
       +'<div class="guide-onglet">'+esc(onglet?tr(onglet):'')+'</div>'
-      +'<h2 class="guide-titre">'+esc(preciser(t,libelleDe(t)))+'</h2>';
+      +'<h2 class="guide-titre">'+esc(preciser(t,libelleAff(t)))+'</h2>';
 
   if(desc)html+='<p class="guide-desc">'+esc(desc)+'</p>';
 
@@ -3601,7 +3648,7 @@ function viderIndex(){_index=null;}
 
 function nomDe(id){
   const e=indexParId()[id];
-  return e?libelleDe(e):id;
+  return e?libelleAff(e):id;
 }
 
 // Les identifiants seulement : une chaîne ne décrit aucun lien vérifiable.
