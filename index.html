@@ -1480,7 +1480,30 @@ const TRADUCTIONS={
     '🔧 Utilitaires Système':'🔧 System utilities',
     '💬 Communication':'💬 Communication',
     '🛡️ Sécurité':'🛡️ Security',
-    '🎛️ Pilotes & Périphériques':'🎛️ Drivers & devices'
+    '🎛️ Pilotes & Périphériques':'🎛️ Drivers & devices',
+
+    'Fournisseur inconnu':'Unknown vendor',
+    'En attente du PC receveur':'Waiting for the target PC',
+    "Cet onglet se remplit quand tu scannes la machine d'arrivée. D'ici là, voici ce que portait l'ancienne.":'This tab fills in when you scan the machine you are moving to. Until then, here is what the old one had.',
+    '1 pilote non-Microsoft sur le PC source':'1 non-Microsoft driver on the source PC',
+    '{0} pilotes non-Microsoft sur le PC source':'{0} non-Microsoft drivers on the source PC',
+    "Relevés sur la machine que tu quittes, groupés par fournisseur. C'est une idée de ce qu'il faudra retrouver, pas une liste à installer telle quelle.":'Taken from the machine you are leaving, grouped by vendor. It gives an idea of what you will have to find again, not a list to install as is.',
+    'Aucun pilote non-Microsoft relevé sur le PC source.':'No non-Microsoft driver found on the source PC.',
+    'Aucun périphérique en défaut':'No device in trouble',
+    '1 périphérique à régler':'1 device to sort out',
+    '{0} périphériques à régler':'{0} devices to sort out',
+
+    'Périphérique inconnu':'Unknown device',
+    'pilote':'driver',
+    '🔍 Chercher':'🔍 Search',
+    '✓ Plus aucun périphérique à régler':'✓ No device left to sort out',
+    '⚠️ 1 périphérique sans pilote utilisable':'⚠️ 1 device without a usable driver',
+    '⚠️ {0} périphériques sans pilote utilisable':'⚠️ {0} devices without a usable driver',
+    'Ceux que Windows signale, vous les avez écartés.':'The ones Windows reports, you have set aside.',
+    'Windows les signale comme mal installés. Le support de {0} est le bon endroit pour la plupart.':'Windows reports them as badly installed. The {0} support page is the right place for most of them.',
+    'Windows les signale comme mal installés. Le site du fabricant de la carte mère est le bon endroit pour la plupart.':'Windows reports them as badly installed. The motherboard maker’s site is the right place for most of them.',
+    "1 écarté, gardé à l'écran pour ne pas l'oublier.":'1 set aside, kept on screen so you do not forget it.',
+    "{0} écartés, gardés à l'écran pour ne pas l'oublier.":'{0} set aside, kept on screen so you do not forget them.'
   }
 };
 //
@@ -2144,7 +2167,7 @@ function lignesPilotesTiers(liste,titre,sous){
   const items=liste.map(function(p){
     const app=Array.isArray(p.appareils)?p.appareils:[];
     return '<div class="pil-item"><div class="pil-txt">'
-      +'<div class="pil-nom">'+esc(String(p.fournisseur||'Fournisseur inconnu'))+'</div>'
+      +'<div class="pil-nom">'+esc(String(p.fournisseur||tr('Fournisseur inconnu')))+'</div>'
       +'<div class="pil-quoi">'+esc(String(p.classe||''))
       +(app.length?' · '+esc(app.slice(0,3).join(', '))+(app.length>3?' …':''):'')
       +'</div></div></div>';
@@ -2156,13 +2179,16 @@ function lignesPilotesTiers(liste,titre,sous){
 function vuePilotesSource(){
   const tiers=listePilotesTiers(INV_SOURCE);
   if(!INV_SOURCE)return messageOngletVide('pilotes');
-  let h='<div class="cmp-tete"><div class="cmp-titre">En attente du PC receveur</div>'
-    +'<div class="cmp-sous">Cet onglet se remplit quand tu scannes la machine '
-    +'d\'arrivée. D\'ici là, voici ce que portait l\'ancienne.</div></div>';
+  let h='<div class="cmp-tete"><div class="cmp-titre">'+esc(tr('En attente du PC receveur'))+'</div>'
+    +'<div class="cmp-sous">'
+    +esc(tr("Cet onglet se remplit quand tu scannes la machine d'arrivée. D'ici là, voici ce que portait l'ancienne."))
+    +'</div></div>';
   h+=lignesPilotesTiers(tiers,
-    tiers.length+' pilote'+(tiers.length>1?'s':'')+' non-Microsoft sur le PC source',
-    'Relevés sur la machine que tu quittes, groupés par fournisseur. C\'est une idée de ce qu\'il faudra retrouver, pas une liste à installer telle quelle.');
-  if(!tiers.length)h+='<div class="pilotes"><div class="pil-sous">Aucun pilote non-Microsoft relevé sur le PC source.</div></div>';
+    tiers.length===1?tr('1 pilote non-Microsoft sur le PC source')
+                    :tr('{0} pilotes non-Microsoft sur le PC source',tiers.length),
+    tr("Relevés sur la machine que tu quittes, groupés par fournisseur. C'est une idée de ce qu'il faudra retrouver, pas une liste à installer telle quelle."));
+  if(!tiers.length)h+='<div class="pilotes"><div class="pil-sous">'
+    +esc(tr('Aucun pilote non-Microsoft relevé sur le PC source.'))+'</div></div>';
   return h;
 }
 
@@ -2172,10 +2198,10 @@ function vuePilotesCible(){
   const mat=(INV_CIBLE&&INV_CIBLE.materiel)||{};
   const machine=(INV_CIBLE&&INV_CIBLE.machine)||{};
   let h='<div class="cmp-tete">'
-    +'<div class="cmp-titre">'+(manquants.length
-        ?manquants.length+' périphérique'+(manquants.length>1?'s':'')+' à régler'
-        :'Aucun périphérique en défaut')+'</div>'
-    +'<div class="cmp-sous">'+esc(String(machine.nom||'PC cible'))
+    +'<div class="cmp-titre">'+esc(manquants.length===0?tr('Aucun périphérique en défaut')
+        :(manquants.length===1?tr('1 périphérique à régler')
+          :tr('{0} périphériques à régler',manquants.length)))+'</div>'
+    +'<div class="cmp-sous">'+esc(String(machine.nom||tr('PC cible')))
     +(machine.os?' · '+esc(String(machine.os)):'')
     +(mat.cm?' · '+esc(String(mat.cm)):'')+'</div>';
   // Le lien du constructeur, construit depuis ce que le SMBIOS a donné. On ne
@@ -3180,35 +3206,41 @@ function mkPilotesManquants(d){
   // s'ecarte comme un logiciel. Il reste affiche, grise, et sort du compte.
   const aRegler=liste.filter(function(p){return !estIgnore(idPilote(p));});
   const lignes=liste.map(function(p){
-    const nom=String(p&&p.nom||'Périphérique inconnu');
+    const nom=String(p&&p.nom||tr('Périphérique inconnu'));
     const quoi=String(p&&p.probleme||'');
     const id=idPilote(p);
     const ignore=!!id&&estIgnore(id);
     // On cherche avec le modèle de la carte mère quand on le connaît : c'est
     // elle qui porte le réseau, l'audio et les contrôleurs.
+    //
+    // Le mot de la requete suit la langue : « driver » ne ramene pas les memes
+    // pages que « pilote », et quelqu'un qui lit la page en anglais cherche en
+    // anglais.
     const base=mat.cm?String(mat.cm)+' ':'';
-    const req=base+nom+' pilote';
+    const req=base+nom+' '+tr('pilote');
     return '<div class="pil-item'+(ignore?' pil-ignore':'')+'">'
       +'<div class="pil-txt"><div class="pil-nom">'+esc(nom)+'</div>'
       +'<div class="pil-quoi">'+esc(quoi)+(p&&p.classe?' · '+esc(String(p.classe)):'')
-      +(ignore?' · ignoré':'')+'</div></div>'
+      +(ignore?' · '+esc(tr('ignoré')):'')+'</div></div>'
       +(ignore?'':'<button type="button" class="sm-btn" onclick="ouvrirAdresse(\''
-      +escJS('https://www.google.com/search?q='+encodeURIComponent(req))+'\')">🔍 Chercher</button>')
+      +escJS('https://www.google.com/search?q='+encodeURIComponent(req))+'\')">'
+      +esc(tr('🔍 Chercher'))+'</button>')
       +(id?mkBoutonIgnore(id,nom,ignore):'')
       +'</div>';
   }).join('');
   const n=aRegler.length;
   const ecartes=liste.length-n;
-  return '<div class="pilotes"><div class="pil-titre">'
-    +(n?'⚠️ '+n+' périphérique'+(n>1?'s':'')+' sans pilote utilisable'
-       :'✓ Plus aucun périphérique à régler')+'</div>'
-    +'<div class="pil-sous">'
-    +(n?'Windows les signale comme mal installés. '
-        +(mat.cm?'Le support de '+esc(String(mat.cm))+' est le bon endroit pour la plupart.'
-               :'Le site du fabricant de la carte mère est le bon endroit pour la plupart.')
-      :'Ceux que Windows signale, vous les avez écartés.')
-    +(ecartes?' '+ecartes+' écarté'+(ecartes>1?'s':'')+', gardé'+(ecartes>1?'s':'')
-       +' à l\'écran pour ne pas l\'oublier.':'')
+  const titre=n===0?tr('✓ Plus aucun périphérique à régler')
+    :(n===1?tr('⚠️ 1 périphérique sans pilote utilisable')
+           :tr('⚠️ {0} périphériques sans pilote utilisable',n));
+  const sous=n===0?tr('Ceux que Windows signale, vous les avez écartés.')
+    :(mat.cm?tr('Windows les signale comme mal installés. Le support de {0} est le bon endroit pour la plupart.',esc(String(mat.cm)))
+            :tr('Windows les signale comme mal installés. Le site du fabricant de la carte mère est le bon endroit pour la plupart.'));
+  const note=ecartes===0?''
+    :(ecartes===1?' '+tr("1 écarté, gardé à l'écran pour ne pas l'oublier.")
+                 :' '+tr("{0} écartés, gardés à l'écran pour ne pas l'oublier.",ecartes));
+  return '<div class="pilotes"><div class="pil-titre">'+esc(titre)+'</div>'
+    +'<div class="pil-sous">'+sous+esc(note)
     +'</div>'+lignes+'</div>';
 }
 
