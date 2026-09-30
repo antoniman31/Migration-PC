@@ -891,7 +891,7 @@ if(location.protocol==='file:'){
   </div>
 </div>
 
-<div class="reglages" id="reglages" role="region" aria-label="Réinitialiser">
+<div class="reglages" id="reglages" role="region" data-t-aria aria-label="Réinitialiser">
   <div class="reglages-titre" data-t>Réinitialiser</div>
   <div class="reglages-choix">
     <div class="reglages-item">
@@ -944,17 +944,17 @@ if(location.protocol==='file:'){
 
   <div class="side-nav" role="tablist" data-t-aria aria-label="Sections de la checklist">
       <button class="snav active" type="button" role="tab" aria-selected="true" aria-controls="panel-apps" onclick="switchTab('apps')" id="tab-apps">
-        <span class="snav-t"><span class="snav-i" aria-hidden="true">📦</span>Logiciels</span>
+        <span class="snav-t"><span class="snav-i" aria-hidden="true">📦</span><span data-t>Logiciels</span></span>
         <span class="snav-bar"><span class="snav-fill" id="bar-apps" style="width:0%"></span></span>
         <span class="tab-badge" id="badge-apps">0/0</span>
       </button>
       <button class="snav" type="button" role="tab" aria-selected="false" aria-controls="panel-pilotes" onclick="switchTab('pilotes')" id="tab-pilotes">
-        <span class="snav-t"><span class="snav-i" aria-hidden="true">🎛️</span>Pilotes</span>
+        <span class="snav-t"><span class="snav-i" aria-hidden="true">🎛️</span><span data-t>Pilotes</span></span>
         <span class="snav-bar"><span class="snav-fill" id="bar-pilotes" style="width:0%"></span></span>
         <span class="tab-badge" id="badge-pilotes">—</span>
       </button>
       <button class="snav" type="button" role="tab" aria-selected="false" aria-controls="panel-pwa" onclick="switchTab('pwa')" id="tab-pwa">
-        <span class="snav-t"><span class="snav-i" aria-hidden="true">🌍</span>PWA</span>
+        <span class="snav-t"><span class="snav-i" aria-hidden="true">🌍</span><span data-t>PWA</span></span>
         <span class="snav-bar"><span class="snav-fill" id="bar-pwa" style="width:0%"></span></span>
         <span class="tab-badge" id="badge-pwa">0/0</span>
       </button>
@@ -962,23 +962,23 @@ if(location.protocol==='file:'){
 
   <div class="side-bas">
     <div class="side-gp">
-      <div class="side-gp-l"><span class="gp-pct" id="gp-pct">0%</span> · <span id="gp-done">0</span>/<span id="gp-total">0</span> tâches</div>
-      <div class="gp-bar-bg" role="progressbar" id="gp-bar-wrap" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Progression globale"><div class="gp-bar-fill" id="gp-bar" style="width:0%"></div></div>
+      <div class="side-gp-l"><span class="gp-pct" id="gp-pct">0%</span> · <span id="gp-done">0</span>/<span id="gp-total">0</span> <span data-t>tâches</span></div>
+      <div class="gp-bar-bg" role="progressbar" id="gp-bar-wrap" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" data-t-aria aria-label="Progression globale"><div class="gp-bar-fill" id="gp-bar" style="width:0%"></div></div>
     </div>
-    <button class="side-act" type="button" id="guide-btn" onclick="basculerGuide()" aria-pressed="false" title="Afficher une seule tâche à la fois"><span aria-hidden="true">🎯</span> Mode guidé</button>
+    <button class="side-act" type="button" id="guide-btn" onclick="basculerGuide()" aria-pressed="false" data-t-titre title="Afficher une seule tâche à la fois"><span aria-hidden="true">🎯</span><span data-t> Mode guidé</span></button>
     <div class="hdr-menu">
-      <button class="side-act" type="button" id="menu-btn" onclick="basculerMenu()" aria-expanded="false" aria-haspopup="true" aria-controls="hdr-menu-liste"><span aria-hidden="true">⚙️</span> Réglages</button>
-      <div class="hdr-menu-liste" id="hdr-menu-liste" role="menu" aria-label="Réglages">
-        <button type="button" role="menuitem" onclick="depuisMenu(importerFichier)"><span class="hdr-menu-ico" aria-hidden="true">📥</span>Importer un fichier…</button>
-        <button type="button" role="menuitem" onclick="depuisMenu(exportProfil)"><span class="hdr-menu-ico" aria-hidden="true">🧩</span>Exporter le profil</button>
-        <button type="button" role="menuitem" id="scan-rejouer" style="display:none" onclick="depuisMenu(rejouerScanLocal)"><span class="hdr-menu-ico" aria-hidden="true">🔄</span>Recharger le scan de la clé</button>
+      <button class="side-act" type="button" id="menu-btn" onclick="basculerMenu()" aria-expanded="false" aria-haspopup="true" aria-controls="hdr-menu-liste"><span aria-hidden="true">⚙️</span><span data-t> Réglages</span></button>
+      <div class="hdr-menu-liste" id="hdr-menu-liste" role="menu" data-t-aria aria-label="Réglages">
+        <button type="button" role="menuitem" onclick="depuisMenu(importerFichier)"><span class="hdr-menu-ico" aria-hidden="true">📥</span><span data-t>Importer un fichier…</span></button>
+        <button type="button" role="menuitem" onclick="depuisMenu(exportProfil)"><span class="hdr-menu-ico" aria-hidden="true">🧩</span><span data-t>Exporter le profil</span></button>
+        <button type="button" role="menuitem" id="scan-rejouer" style="display:none" onclick="depuisMenu(rejouerScanLocal)"><span class="hdr-menu-ico" aria-hidden="true">🔄</span><span data-t>Recharger le scan de la clé</span></button>
         <div class="hdr-menu-sep" role="separator"></div>
-        <button type="button" role="menuitem" id="btn-compact" aria-pressed="false" onclick="depuisMenu(basculerAffichage)"><span class="hdr-menu-ico" aria-hidden="true" id="mode-ico">≡</span><span id="mode-lbl">Affichage compact</span></button>
-        <button type="button" role="menuitem" id="theme-btn" onclick="depuisMenu(toggleTheme)"><span class="hdr-menu-ico" aria-hidden="true" id="theme-ico">🌙</span><span id="theme-lbl">Sombre</span></button>
-        <button type="button" role="menuitem" id="config-btn" onclick="depuisMenu(basculerConfig)" aria-expanded="false"><span class="hdr-menu-ico" aria-hidden="true">🔧</span>Ma configuration…</button>
+        <button type="button" role="menuitem" id="btn-compact" aria-pressed="false" onclick="depuisMenu(basculerAffichage)"><span class="hdr-menu-ico" aria-hidden="true" id="mode-ico">≡</span><span id="mode-lbl" data-t>Affichage compact</span></button>
+        <button type="button" role="menuitem" id="theme-btn" onclick="depuisMenu(toggleTheme)"><span class="hdr-menu-ico" aria-hidden="true" id="theme-ico">🌙</span><span id="theme-lbl" data-t>Sombre</span></button>
+        <button type="button" role="menuitem" id="config-btn" onclick="depuisMenu(basculerConfig)" aria-expanded="false"><span class="hdr-menu-ico" aria-hidden="true">🔧</span><span data-t>Ma configuration…</span></button>
         <div class="hdr-menu-sep" role="separator"></div>
-        <button type="button" role="menuitem" onclick="depuisMenu(function(){printTab(curTab);})"><span class="hdr-menu-ico" aria-hidden="true">🖨️</span>Imprimer</button>
-        <button type="button" role="menuitem" id="reglages-btn" onclick="depuisMenu(basculerReglages)"><span class="hdr-menu-ico" aria-hidden="true">♻️</span>Réinitialiser…</button>
+        <button type="button" role="menuitem" onclick="depuisMenu(function(){printTab(curTab);})"><span class="hdr-menu-ico" aria-hidden="true">🖨️</span><span data-t>Imprimer</span></button>
+        <button type="button" role="menuitem" id="reglages-btn" onclick="depuisMenu(basculerReglages)"><span class="hdr-menu-ico" aria-hidden="true">♻️</span><span data-t>Réinitialiser…</span></button>
       </div>
     </div>
   </div>
@@ -987,7 +987,7 @@ if(location.protocol==='file:'){
 <div class="col">
 
 <header class="hdr">
-  <h2 class="hdr-titre" id="page-titre">📦 Logiciels</h2>
+  <h2 class="hdr-titre" id="page-titre">📦 <span data-t>Logiciels</span></h2>
   <div class="hdr-rech">
     <input type="search" id="gsearch-input" data-t-aria data-t-ph
       aria-label="Rechercher dans toute la checklist" placeholder="🔍 Rechercher…" oninput="globalSearch()">
@@ -1012,28 +1012,28 @@ if(location.protocol==='file:'){
 
 <div class="panel active" id="panel-apps" role="tabpanel" aria-labelledby="tab-apps" tabindex="0">
   <div class="apps-wrap">
-    <aside class="apps-filtres" id="apps-filtres" aria-label="Filtres">
+    <aside class="apps-filtres" id="apps-filtres" data-t-aria aria-label="Filtres">
       <button type="button" class="af-t" id="af-toggle" aria-expanded="true" aria-controls="af-corps"
-        onclick="basculerFiltres()">Filtres<span class="af-t-chev" aria-hidden="true">▾</span></button>
+        onclick="basculerFiltres()"><span data-t>Filtres</span><span class="af-t-chev" aria-hidden="true">▾</span></button>
       <div class="af-corps" id="af-corps">
         <div class="fbs" id="cat-filters"></div>
         <div class="af-sep" aria-hidden="true"></div>
-        <label class="af-c"><input type="checkbox" id="btn-no-winget" onchange="toggleNoWinget()"> Sans winget seulement</label>
+        <label class="af-c"><input type="checkbox" id="btn-no-winget" onchange="toggleNoWinget()"> <span data-t>Sans winget seulement</span></label>
       </div>
     </aside>
     <div class="apps-col">
       <div class="apps-act">
         <div class="search-wrap">
-          <input type="search" id="apps-search" aria-label="Rechercher une application" placeholder="🔍 Filtrer cette liste..." oninput="renderApps()">
+          <input type="search" id="apps-search" data-t-aria data-t-ph aria-label="Rechercher une application" placeholder="🔍 Filtrer cette liste…" oninput="renderApps()">
         </div>
-        <button class="sm-btn warn-btn" onclick="exportWingetRemaining()" title="Un script qui installe tout ce qui n'est pas encore coché">⬇️ Script des restants</button>
-        <button class="sm-btn warn-btn" onclick="exportWingetJSON(true)" title="Format officiel winget import — idempotent et rejouable">⬇️ winget .json</button>
+        <button class="sm-btn warn-btn" onclick="exportWingetRemaining()" data-t-titre title="Un script qui installe tout ce qui n'est pas encore coché"><span data-t>⬇️ Script des restants</span></button>
+        <button class="sm-btn warn-btn" onclick="exportWingetJSON(true)" data-t-titre title="Format officiel winget import — idempotent et rejouable"><span data-t>⬇️ winget .json</span></button>
       </div>
       <div class="sec-content" id="list-apps"></div>
       <div class="next-tab-btn" id="next-apps">
-        <button class="next-btn" onclick="switchTab('pilotes')" id="next-apps-btn">Pilotes <span id="next-apps-count"></span> →</button>
+        <button class="next-btn" onclick="switchTab('pilotes')" id="next-apps-btn"><span data-t>Pilotes</span> <span id="next-apps-count"></span> →</button>
       </div>
-      <div id="apps-empty" style="display:none;padding:24px;text-align:center;color:var(--tx2);font-size:13px">Aucune app trouvée</div>
+      <div id="apps-empty" style="display:none;padding:24px;text-align:center;color:var(--tx2);font-size:13px" data-t>Aucune app trouvée</div>
     </div>
   </div>
 </div>
@@ -1045,7 +1045,7 @@ if(location.protocol==='file:'){
 
 <div class="panel" id="panel-pwa" role="tabpanel" aria-labelledby="tab-pwa" tabindex="0">
   <div class="tbar">
-    <span class="tbar-info">🌍 Raccourcis Chrome — se restaurent automatiquement avec la sync Google après install Chrome</span>
+    <span class="tbar-info">🌍 <span data-t>Raccourcis Chrome — se restaurent automatiquement avec la sync Google après install Chrome</span></span>
   </div>
   <div class="sec-content" id="list-pwa"></div>
 </div>
@@ -1466,6 +1466,51 @@ const TRADUCTIONS={
     'Absent du PC cible':'Absent from the target PC',
     'manque':'missing',
     'Décocher tout':'Uncheck all',
+    'Site officiel':'Official site',
+    '▶ Par où commencer':'▶ Where to start',
+    "Le seul fichier à double-cliquer. Il demande sur quelle machine vous êtes et lance ce qu'il faut. Les autres sont là pour être lus, pas pour être lancés à la main.":'The only file to double-click. It asks which machine you are on and runs what is needed. The others are there to be read, not to be run by hand.',
+    'Réglages':'Settings',
+    'Trouvé sur le PC cible par le scan : réglé, rien à cocher.':'Found on the target PC by the scan: settled, nothing to check.',
+    'Masquer le détail de {0}':'Hide the detail of {0}',
+    'Afficher le détail de {0}':'Show the detail of {0}',
+    'Trois scripts font le travail que cette page ne peut pas faire : un navigateur n\'a pas le droit de lire votre registre ni la liste de vos logiciels. Ils sont écrits en PowerShell, donc lisibles dans le Bloc-notes avant d\'être lancés.':'Three scripts do the work this page cannot: a browser is not allowed to read your registry or the list of your software. They are written in PowerShell, so you can read them in Notepad before running them.',
+    "Une seule archive, tout ce qu'il faut dedans. Décompressez-la sur une clé USB, et double-cliquez <code>Migration PC.bat</code> sur le PC source.":'One archive, everything needed inside. Unzip it onto a USB stick, and double-click <code>Migration PC.bat</code> on the old PC.',
+    "<b>Ne prenez pas les fichiers un par un.</b> Les scripts ont tous besoin de <code>lib-detection.ps1</code> à côté d'eux, et le <code>.bat</code> a besoin du dossier <code>scripts</code> : un fichier isolé s'arrête au démarrage. C'est pour ça qu'il n'y a qu'un seul bouton.":'<b>Do not take the files one by one.</b> Every script needs <code>lib-detection.ps1</code> beside it, and the <code>.bat</code> needs the <code>scripts</code> folder: a file on its own stops at startup. That is why there is a single button.',
+    'Fermer':'Close',
+    "Dans l'archive :":'Inside the archive:',
+    "Le releve, des deux cotes : « -Role source » fige le PC qu'on quitte, « -Role cible » constate celui qu'on equipe.":'The survey, on both sides: « -Role source » freezes the PC you are leaving, « -Role cible » records the one you are setting up.',
+    "La détection partagée. Sans ce fichier à côté, le scan s'arrête.":'The shared detection code. Without this file beside them, the scan stops.',
+    'Le menu, appelé par « Migration PC.bat ».':'The menu, called by « Migration PC.bat ».',
+    "Ce que le lanceur propose, et ce qu'il vérifie avant.":'What the launcher offers, and what it checks first.',
+    'Ce qui remplit cette page toute seule après un scan. Sans lui, tout marche, mais il faut importer le fichier à la main.':'What fills this page on its own after a scan. Without it everything still works, but you import the file by hand.',
+    'Raccourcis Chrome — se restaurent automatiquement avec la sync Google après install Chrome':'Chrome shortcuts — they come back on their own with Google sync once Chrome is installed',
+    'Tout est coché':'Everything is checked',
+    '1 tâche terminée. Repasse en vue liste pour revoir le détail.':'1 task done. Switch back to list view to go over the detail.',
+    '{0} tâches terminées. Repasse en vue liste pour revoir le détail.':'{0} tasks done. Switch back to list view to go over the detail.',
+    'Aucune tâche dans ce mode':'No task in this mode',
+    'Le cas choisi ne laisse rien à faire, ou le profil chargé est vide. Change de cas en haut de page, ou importe un profil.':'The case you picked leaves nothing to do, or the loaded profile is empty. Change case at the top of the page, or import a profile.',
+    'Tâche {0} sur {1}':'Task {0} of {1}',
+    '1 restante':'1 left',
+    '{0} restantes':'{0} left',
+    'Se fait normalement après :':'Normally comes after:',
+    'Copier':'Copy',
+    "C'est fait":'Done',
+    'Passer':'Skip',
+    'Ouvrir':'Open',
+    '(1 restante)':'(1 left)',
+    '({0} restantes)':'({0} left)',
+    'Aucune app trouvée':'No program found',
+    '🔍 Rechercher':'🔍 Search',
+    '🔍 Ouvrir':'🔍 Open',
+    'Raccourcis Chrome existants — sync Google automatique':'Existing Chrome shortcuts — Google sync is automatic',
+    'Raccourci OK':'Shortcut fine',
+    'PWA Chrome':'Chrome web app',
+    'Page de support du constructeur pour {0}':"The maker's support page for {0}",
+    'Page de support du constructeur pour {0} (série {1})':"The maker's support page for {0} (serial {1})",
+    'Windows ne signale aucun périphérique sans pilote sur cette machine. Ça ne veut pas dire que tous les pilotes sont à jour : le programme ne fait aucun appel réseau, il ne peut pas le savoir. Les versions se comparent sur le site du constructeur.':'Windows reports no device without a driver on this machine. That does not mean every driver is up to date: the program makes no network call, it cannot know. Compare versions on the maker\'s website.',
+    '1 pilote non-Microsoft en place':'1 non-Microsoft driver in place',
+    '{0} pilotes non-Microsoft en place':'{0} non-Microsoft drivers in place',
+    "Ce que la machine d'arrivée porte déjà, groupé par fournisseur.":'What the new machine already carries, grouped by vendor.',
     'Tout cocher':'Check all',
     'Écarté : ne compte plus et ne sort pas dans le script winget':'Set aside: no longer counted, and left out of the winget script',
     'ignoré':'ignored',
@@ -1503,7 +1548,33 @@ const TRADUCTIONS={
     'Windows les signale comme mal installés. Le support de {0} est le bon endroit pour la plupart.':'Windows reports them as badly installed. The {0} support page is the right place for most of them.',
     'Windows les signale comme mal installés. Le site du fabricant de la carte mère est le bon endroit pour la plupart.':'Windows reports them as badly installed. The motherboard maker’s site is the right place for most of them.',
     "1 écarté, gardé à l'écran pour ne pas l'oublier.":'1 set aside, kept on screen so you do not forget it.',
-    "{0} écartés, gardés à l'écran pour ne pas l'oublier.":'{0} set aside, kept on screen so you do not forget them.'
+    "{0} écartés, gardés à l'écran pour ne pas l'oublier.":'{0} set aside, kept on screen so you do not forget them.',
+
+    'tâches':'tasks',
+    'Progression globale':'Overall progress',
+    'Afficher une seule tâche à la fois':'Show one task at a time',
+    ' Mode guidé':' Guided mode',
+    ' Réglages':' Settings',
+    'Importer un fichier…':'Import a file…',
+    'Exporter le profil':'Export the profile',
+    'Recharger le scan de la clé':'Reload the scan from the stick',
+    'Ma configuration…':'My hardware…',
+    'Imprimer':'Print',
+    'Réinitialiser…':'Reset…',
+    'Affichage compact':'Compact view',
+    'Affichage normal':'Normal view',
+    'Sombre':'Dark',
+    'Clair':'Light',
+    'Filtres':'Filters',
+    'Sans winget seulement':'Without winget only',
+    'Rechercher une application':'Search for a program',
+    '🔍 Filtrer cette liste…':'🔍 Filter this list…',
+    "Un script qui installe tout ce qui n'est pas encore coché":'A script that installs everything not yet checked',
+    '⬇️ Script des restants':'⬇️ Script for what is left',
+    '⬇️ winget .json':'⬇️ winget .json',
+
+    'Exemple indisponible.':'Example unavailable.',
+    "Exemple chargé : ces logiciels sont ceux d'une autre machine, pas les tiens. Réglages → Remettre le site à zéro pour revenir à la checklist vide.":'Example loaded: this software belongs to another machine, not yours. Settings → Reset the site to go back to the empty checklist.'
   }
 };
 //
@@ -1747,7 +1818,7 @@ function construireFiltresCats(){
   Object.keys(CATS).forEach(function(k){
     const coche=curCats.indexOf(k)>=0?' checked':'';
     html+='<label class="af-c"><input type="checkbox" data-cat="'+esc(k)+'"'+coche
-      +' onchange="basculerCat(\''+escJS(k)+'\')"> '+esc(CATS[k])+'</label>';
+      +' onchange="basculerCat(\''+escJS(k)+'\')"> '+esc(tr(CATS[k]))+'</label>';
   });
   c.innerHTML=html;
 }
@@ -1757,10 +1828,9 @@ function construireFiltresCats(){
 // que c'est sa liste et se demanderait d'ou sortent ces logiciels. On le
 // charge quand il est demande, et on le dit.
 function chargerDemo(){
-  if(!PROFIL_DEMO||!PROFIL_DEMO.apps){informer('Exemple indisponible.');return;}
+  if(!PROFIL_DEMO||!PROFIL_DEMO.apps){informer(tr('Exemple indisponible.'));return;}
   appliquerProfil(PROFIL_DEMO,true);
-  informer('Exemple chargé : ces logiciels sont ceux d\'une autre machine, '
-    +'pas les tiens. Réglages → Repartir de zéro pour revenir à la checklist vide.');
+  informer(tr("Exemple chargé : ces logiciels sont ceux d'une autre machine, pas les tiens. Réglages → Remettre le site à zéro pour revenir à la checklist vide."));
 }
 
 function chargerProfilMemorise(){
@@ -2211,25 +2281,28 @@ function vuePilotesCible(){
   const cible=modele||(mat.cm?String(mat.cm):'');
   if(cible){
     const req=cible+' support pilotes'+(machine.serie?' '+String(machine.serie):'');
-    h+='<div class="cmp-act">Page de support du constructeur pour '+esc(cible)
-      +(machine.serie?' (série '+esc(String(machine.serie))+')':'')+' : '
+    h+='<div class="cmp-act">'
+      +esc(machine.serie
+        ?tr("Page de support du constructeur pour {0} (série {1})",cible,String(machine.serie))
+        :tr("Page de support du constructeur pour {0}",cible))
+      +' : '
       +'<button type="button" class="sm-btn" onclick="ouvrirAdresse(\''
-      +escJS('https://www.google.com/search?q='+encodeURIComponent(req))+'\')">🔍 Ouvrir</button>'
+      +escJS('https://www.google.com/search?q='+encodeURIComponent(req))+'\')">'
+      +esc(tr('🔍 Ouvrir'))+'</button>'
       +'</div>';
   }
   h+='</div>';
   h+=mkPilotesManquants(INV_CIBLE);
   if(!manquants.length){
-    h+='<div class="pilotes"><div class="pil-sous">Windows ne signale aucun '
-      +'périphérique sans pilote sur cette machine. Ça ne veut pas dire que tous '
-      +'les pilotes sont à jour : le programme ne fait aucun appel réseau, il ne '
-      +'peut pas le savoir. Les versions se comparent sur le site du constructeur.'
+    h+='<div class="pilotes"><div class="pil-sous">'
+      +esc(tr("Windows ne signale aucun périphérique sans pilote sur cette machine. Ça ne veut pas dire que tous les pilotes sont à jour : le programme ne fait aucun appel réseau, il ne peut pas le savoir. Les versions se comparent sur le site du constructeur."))
       +'</div></div>';
   }
   const tiersCible=listePilotesTiers(INV_CIBLE);
   h+=lignesPilotesTiers(tiersCible,
-    tiersCible.length+' pilote'+(tiersCible.length>1?'s':'')+' non-Microsoft en place',
-    'Ce que la machine d\'arrivée porte déjà, groupé par fournisseur.');
+    tiersCible.length===1?tr('1 pilote non-Microsoft en place')
+                         :tr('{0} pilotes non-Microsoft en place',tiersCible.length),
+    tr("Ce que la machine d'arrivée porte déjà, groupé par fournisseur."));
   return h;
 }
 
@@ -2712,12 +2785,18 @@ function setMode(m){
 function basculerAffichage(){ setMode(viewMode==='compact'?'normal':'compact'); }
 
 // ═══ TABS ═══
-const LIBELLES_ONGLETS={apps:'📦 Logiciels',pilotes:'🎛️ Pilotes',pwa:'🌍 PWA'};
+// L'icone et le mot sont separes : le mot passe par tr(), l'icone non. Ecrire
+// « 📦 Logiciels » en un bloc obligerait a redire l'icone dans chaque langue.
+const LIBELLES_ONGLETS={apps:['📦','Logiciels'],pilotes:['🎛️','Pilotes'],pwa:['🌍','PWA']};
+function libelleOnglet(t){
+  const l=LIBELLES_ONGLETS[t];
+  return l?l[0]+' '+tr(l[1]):t;
+}
 
 function switchTab(t){
   curTab=t;
   const titre=document.getElementById('page-titre');
-  if(titre)titre.textContent=LIBELLES_ONGLETS[t]||t;
+  if(titre)titre.textContent=libelleOnglet(t);
   ONGLETS_VUE.forEach(x=>{
     const onglet=document.getElementById('tab-'+x);
     if(!onglet)return;
@@ -2815,15 +2894,15 @@ function mkBoutonIgnore(id,libelle,ignore){
 
 function mkLink(name,e){
   const u=urlSure(e&&e.u);
-  if(u)return '<div class="item-link"><a class="lnk-btn" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 Site officiel</a></div>';
-  return '<div class="item-link"><a class="lnk-btn" href="'+esc(searchUrl(name,e))+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔍 Rechercher</a></div>';
+  if(u)return '<div class="item-link"><a class="lnk-btn" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 '+esc(tr('Site officiel'))+'</a></div>';
+  return '<div class="item-link"><a class="lnk-btn" href="'+esc(searchUrl(name,e))+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">'+esc(tr('🔍 Rechercher'))+'</a></div>';
 }
 function mkDirectLink(url){
   const u=urlSure(url);
   // Pas d'adresse utilisable : plutot que d'offrir un bouton qui ne mene nulle
   // part ou pire, on dit ce qui se passe.
   if(!u)return '<div class="item-link"><span class="lnk-btn lnk-mort" title="Adresse absente ou non prise en charge">🔗 Pas de lien</span></div>';
-  return '<div class="item-link"><a class="lnk-btn" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 Ouvrir</a></div>';
+  return '<div class="item-link"><a class="lnk-btn" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 '+esc(tr('Ouvrir'))+'</a></div>';
 }
 // ═══ RENDER APPS ═══
 // curCats vit avec les autres etats d'affichage, plus haut : declare ici, il
@@ -2989,7 +3068,7 @@ function mkAppItem(a,etats){
       +(ignore?' lg-ignore':'')+'">'
     +'<div class="lg-r" role="checkbox" tabindex="0" aria-checked="'+ck+'"'
       +(constate
-        ?' aria-disabled="true" title="Trouvé sur le PC cible par le scan : réglé, rien à cocher."'
+        ?' aria-disabled="true" title="'+esc(tr('Trouvé sur le PC cible par le scan : réglé, rien à cocher.'))+'"'
         :' onclick="'+attrToggle(a)+'"')+'>'
       +mkChkbox()
       +'<span class="lg-n">'+esc(libelleDe(a))+dt+'</span>'
@@ -3000,7 +3079,8 @@ function mkAppItem(a,etats){
           :badgeComparaison(a,etats))+'</span>'
       +mkBoutonIgnore(a.id,libelleDe(a),ignore)
       +'<button type="button" class="lg-plus" aria-expanded="'+ouvert+'" '
-        +'aria-label="'+(ouvert?'Masquer':'Afficher')+' le détail de '+esc(libelleDe(a))+'" '
+        +'aria-label="'+esc(ouvert?tr('Masquer le détail de {0}',libelleDe(a))
+                                  :tr('Afficher le détail de {0}',libelleDe(a)))+'" '
         +'onclick="basculerDetail(\''+escJS(a.id)+'\',event)">'+(ouvert?'▴':'▾')+'</button>'
       +mkLink(libelleDe(a),a)
     +'</div>'
@@ -3062,7 +3142,7 @@ function renderPWA(){
   const pwaVues=visiblesDe('pwa');
   const dn=pwaVues.filter(function(p){return S.checked[p.id];}).length;
   const allDone=dn===pwaVues.length;
-  let html='<div class="sec-hdr first">🌍 Raccourcis Chrome existants — sync Google automatique<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+pwaVues.length+'</span><button class="chk-all" onclick="checkAllPWA(event)">'+(allDone?'Décocher tout':'Tout cocher')+'</button></div></div>';
+  let html='<div class="sec-hdr first">🌍 '+esc(tr('Raccourcis Chrome existants — sync Google automatique'))+'<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+pwaVues.length+'</span><button class="chk-all" onclick="checkAllPWA(event)">'+esc(allDone?tr('Décocher tout'):tr('Tout cocher'))+'</button></div></div>';
   pwaVues.forEach(function(p){
     const ck=!!S.checked[p.id];
     const dt=ck&&S.dates[p.id]?'<span class="item-date">✓ '+fmtDate(S.dates[p.id])+'</span>':'';
@@ -3070,7 +3150,7 @@ function renderPWA(){
       +mkChkbox()
       +'<div class="item-body">'
         +'<div class="item-name-row"><span class="item-name">'+esc(libelleDe(p))+'</span>'+dt+'</div>'
-        +'<div class="item-badges"><span class="badge b-sync">✓ Raccourci OK</span><span class="badge b-pwa">PWA Chrome</span></div>'
+        +'<div class="item-badges"><span class="badge b-sync">✓ '+esc(tr('Raccourci OK'))+'</span><span class="badge b-pwa">'+esc(tr('PWA Chrome'))+'</span></div>'
         +'<div class="item-desc">'+esc(texte(descDe(p)))+'</div>'
       +'</div>'
       +mkDirectLink(p.u)
@@ -3406,12 +3486,14 @@ function renderGuide(){
     // rien : féliciter dans le second cas serait un mensonge.
     bloc.innerHTML=total
       ? '<div class="guide-fin">'
-        +'<div class="guide-fin-titre">🎉 Tout est coché</div>'
-        +'<div class="guide-fin-txt">'+total+' tâche'+(total>1?'s':'')+' terminée'+(total>1?'s':'')+'. Repasse en vue liste pour revoir le détail.</div>'
+        +'<div class="guide-fin-titre">🎉 '+esc(tr('Tout est coché'))+'</div>'
+        +'<div class="guide-fin-txt">'+esc(total===1
+            ?tr('1 tâche terminée. Repasse en vue liste pour revoir le détail.')
+            :tr('{0} tâches terminées. Repasse en vue liste pour revoir le détail.',total))+'</div>'
         +'</div>'
       : '<div class="guide-fin">'
-        +'<div class="guide-fin-titre">Aucune tâche dans ce mode</div>'
-        +'<div class="guide-fin-txt">Le cas choisi ne laisse rien à faire, ou le profil chargé est vide. Change de cas en haut de page, ou importe un profil.</div>'
+        +'<div class="guide-fin-titre">'+esc(tr('Aucune tâche dans ce mode'))+'</div>'
+        +'<div class="guide-fin-txt">'+esc(tr('Le cas choisi ne laisse rien à faire, ou le profil chargé est vide. Change de cas en haut de page, ou importe un profil.'))+'</div>'
         +'</div>';
     return;
   }
@@ -3424,24 +3506,25 @@ function renderGuide(){
   const manque=depsManquantes(t);
 
   let html='<div class="guide-tete">'
-    +'<span class="guide-etape">Tâche '+(faites+1)+' sur '+total+'</span>'
-    +'<span class="guide-reste">'+restantes.length+' restante'+(restantes.length>1?'s':'')+'</span>'
+    +'<span class="guide-etape">'+esc(tr('Tâche {0} sur {1}',faites+1,total))+'</span>'
+    +'<span class="guide-reste">'+esc(restantes.length===1?tr('1 restante')
+        :tr('{0} restantes',restantes.length))+'</span>'
     +'</div>'
     +'<div class="guide-corps">'
-      +'<div class="guide-onglet">'+esc(onglet)+'</div>'
+      +'<div class="guide-onglet">'+esc(onglet?tr(onglet):'')+'</div>'
       +'<h2 class="guide-titre">'+esc(preciser(t,libelleDe(t)))+'</h2>';
 
   if(desc)html+='<p class="guide-desc">'+esc(desc)+'</p>';
 
   if(manque.length){
-    html+='<div class="guide-manque">↳ Se fait normalement après : '
+    html+='<div class="guide-manque">↳ '+esc(tr('Se fait normalement après :'))+' '
       +esc(manque.map(nomDe).join(', '))+'</div>';
   }
 
   if(cmd){
     html+='<div class="guide-cmd">'
       +'<code id="guide-cmd-txt">'+esc(cmd)+'</code>'
-      +'<button type="button" onclick="copierCmdGuide()" id="guide-copier">📋 Copier</button>'
+      +'<button type="button" onclick="copierCmdGuide()" id="guide-copier">📋 '+esc(tr('Copier'))+'</button>'
       +'</div>';
   }
 
@@ -3450,11 +3533,11 @@ function renderGuide(){
   }
 
   html+='<div class="guide-actions">'
-    +'<button type="button" class="guide-fait" onclick="guideFait(\''+escJS(t.id)+'\')">✓ C\'est fait</button>'
-    +'<button type="button" onclick="sauterTache(\''+escJS(t.id)+'\')">Passer</button>'
+    +'<button type="button" class="guide-fait" onclick="guideFait(\''+escJS(t.id)+'\')">✓ '+esc(tr('C\'est fait'))+'</button>'
+    +'<button type="button" onclick="sauterTache(\''+escJS(t.id)+'\')">'+esc(tr('Passer'))+'</button>'
     +(urlSure(t.u)
-        ?'<button type="button" onclick="ouvrirAdresse(\''+escJS(urlSure(t.u))+'\')">🔗 Ouvrir</button>'
-        :'<button type="button" onclick="ouvrirAdresse(\''+escJS(searchUrl(libelleDe(t),t))+'\')">🔍 Rechercher</button>')
+        ?'<button type="button" onclick="ouvrirAdresse(\''+escJS(urlSure(t.u))+'\')">🔗 '+esc(tr('Ouvrir'))+'</button>'
+        :'<button type="button" onclick="ouvrirAdresse(\''+escJS(searchUrl(libelleDe(t),t))+'\')">'+esc(tr('🔍 Rechercher'))+'</button>')
     +'</div>'
   +'</div>';
   bloc.innerHTML=html;
@@ -3765,11 +3848,11 @@ const OUTILS=[
 function construireOutils(){
   const z=document.getElementById('outils-liste');
   if(!z)return;
-  z.innerHTML='<div class="outils-dedans">Dans l\'archive :</div>'
+  z.innerHTML='<div class="outils-dedans">'+esc(tr("Dans l'archive :"))+'</div>'
     +OUTILS.map(function(o){
       return '<div class="outils-item"><div class="outils-txt">'
-        +'<div class="outils-nom">'+esc(o.n)+'</div>'
-        +'<div class="outils-desc">'+esc(o.d)+'</div></div>'
+        +'<div class="outils-nom">'+esc(tr(o.n))+'</div>'
+        +'<div class="outils-desc">'+esc(tr(o.d))+'</div></div>'
         +'<code class="outils-f">'+esc(o.f)+'</code></div>';
     }).join('');
 }
@@ -4260,7 +4343,7 @@ function updateNextBtns(){
       cnt.textContent='✓';
     }else{
       btn.classList.add('incomplete');
-      cnt.textContent='('+rem+' restantes)';
+      cnt.textContent=rem===1?tr('(1 restante)'):tr('({0} restantes)',rem);
     }
   });
 }
