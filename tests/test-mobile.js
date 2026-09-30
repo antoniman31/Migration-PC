@@ -19,6 +19,7 @@
 //   STRICT=1 node tests/test-mobile.js
 const {chromium}=require('playwright');
 const path=require('path');
+const {annoncerNavigateur}=require('./lib-tests');
 
 const ECRANS=[{nom:'petit',largeur:360,hauteur:740},{nom:'courant',largeur:414,hauteur:896}];
 const THEMES=['light','dark'];
@@ -28,6 +29,7 @@ const CIBLE_MIN_L=44, CIBLE_MIN_H=24, ECART_MIN=8, TEXTE_MIN=12, CHAMP_MIN=16;
 const lancement={args:['--no-sandbox']};
 if(process.env.CHROME)lancement.executablePath=process.env.CHROME;
 const b=await chromium.launch(lancement);
+annoncerNavigateur(b);
 const HTML='file://'+path.join(__dirname,'..','index.html');
 const constats=[];
 

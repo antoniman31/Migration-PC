@@ -130,7 +130,12 @@ await pg.setInputFiles('#json-file',{name:'inventaire-pc.json',mimeType:'applica
 await pg.waitForTimeout(400);
 ok('apps remplacées',(await pg.$$('#list-apps .lg-l')).length,4);
 ok('en-tête mis à jour',await pg.textContent('#profil-titre'),'Migration PC — inventaire importé');
-ok('progression conservée',(await pg.$$('#list-apps .lg-l.done')).length>=0);
+const apresImport=await pg.evaluate(()=>({
+  vivant:Object.keys(S.checked).length,
+  range:Object.keys(JSON.parse(localStorage.getItem('mpc_state_v1')).checked).length
+}));
+ok('progression conservée en mémoire',apresImport.vivant,1);
+ok('et rangée telle quelle',apresImport.range,1);
 
 // Un profil local, s'il y en a un : permet de verifier son propre fichier.
 const profilLocal=process.env.PROFIL||path.join(racine,'profil-local.json');

@@ -7,6 +7,7 @@
 //   node tests/test-guide.js
 const {chromium}=require('playwright');
 const fs=require('fs'),path=require('path');
+const {annoncerNavigateur}=require('./lib-tests');
 const racine=path.join(__dirname,'..');
 const HTML='file://'+path.join(racine,'index.html');
 // La checklist livrée est vide : c'est la démonstration qui fournit les tâches
@@ -36,6 +37,7 @@ async function chargerExemple(pg){
 
 (async()=>{
 const b=await chromium.launch(lancement);
+annoncerNavigateur(b);
 
 // ─────────── parcours ───────────
 {

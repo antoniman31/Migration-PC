@@ -30,7 +30,7 @@ npm run test:archive              # contenu de l'archive téléchargeable
 navigateur demandent Chromium (`npm install` le fournit via Playwright), les suites
 PowerShell demandent `pwsh`.
 
-Vingt-cinq suites. Vingt-quatre tournent dans le job Linux, dans l'ordre où la CI les
+Vingt-six suites. Vingt-cinq tournent dans le job Linux, dans l'ordre où la CI les
 lance ; `tests/test-windows-reel.ps1` n'a de sens que dans le job Windows.
 
 ### Ce que seul un vrai Windows peut dire
@@ -95,6 +95,33 @@ puisque sa position dans la liste bouge d'un scan à l'autre ; que « Tout déco
 lignes écartées et « Tout effacer » les enlève ; et que l'annulation les rende — ce dernier
 point parce que le bandeau promet une annulation, et qu'un instantané incomplet la rendrait
 menteuse, comme ce fut le cas pour la configuration matérielle.
+
+### Un verdict de mise en page dépend du navigateur qui le rend
+
+`tests/test-mobile.js` a été **vert en intégration et rouge en local pendant des
+semaines**, sur un défaut réel : un `<code>` de 104 × 13 px affiché dans le bandeau de
+comparaison, à 10,8 px. Les deux machines ne faisaient pas tourner le même Chromium.
+Playwright est donc épinglé à une version exacte dans `package.json` — sans le `^`, qui
+suffisait à changer le navigateur d'un jour à l'autre sans que personne le voie — et les
+quatre suites qui mesurent des pixels annoncent leur navigateur à chaque passage, avec un
+avertissement quand `CHROME` est forcé.
+
+`tests/test-plancher-texte.js` existe pour la même raison, et ne rend rien : il lit les
+déclarations du CSS. Il attrape ce que la mesure ne visite pas — tout ce qui vit derrière
+un bouton ou dans un état qu'elle ne parcourt pas — et il donne le même résultat partout.
+Le projet s'est fixé 12 px comme plancher et son CSS descend plus bas en vingt-quatre
+endroits : compteurs, badges, pastilles. Le test les demande **nommés un par un avec leur
+raison**, et refuse aussi bien une règle nouvelle sous le plancher qu'une exception
+devenue inutile. Vingt-quatre exceptions veut dire que le plancher décrit une intention
+plus qu'une règle ; le test ne tranche pas cette question de conception, il refuse qu'elle
+grossisse en silence.
+
+La leçon vaut au-delà : `tests/test-config.js` exigeait une taille calculée **exactement**
+égale à `13px`. Ce n'était pas ce qu'on voulait garantir. Il vérifie maintenant les
+relations — le texte ne rétrécit pas, il ne change pas entre téléphone et tablette, il
+grandit sur grand écran — ce qui dit la même chose, survit à un changement de navigateur,
+et vérifie en plus le « grandit » qui n'était qu'impliqué par deux nombres écrits à la
+main.
 
 `tests/test-langue.js` vérifie la mécanique de traduction, et `tests/test-anglais.js`
 vérifie qu'elle a été appliquée partout. Le second est écrit à l'envers des autres : il
@@ -225,7 +252,7 @@ du lanceur arrivent intacts.
 
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les vingt-quatre suites Linux à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les vingt-cinq suites Linux à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 
