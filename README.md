@@ -460,6 +460,8 @@ clé USB la page fonctionne mais ne s'installe pas, et elle n'en a pas besoin.
   détecter, et les vingt-sept familles retirées.
 - [FORMATS.md](FORMATS.md) — les quatre formats que la page importe, et comment écrire son
   propre profil.
+- [RESTE-A-FAIRE.md](RESTE-A-FAIRE.md) — ce qui est en attente, et les deux réglages qui ne
+  sont pas du code.
 - [VERIFIER-SUR-WINDOWS.md](VERIFIER-SUR-WINDOWS.md) — la marche à suivre pour le premier essai
   sur une vraie machine, et surtout ce qui **n'est pas** un défaut.
 - [CONTRIBUER.md](CONTRIBUER.md) — les vingt-six suites de tests, la CI, la publication.
