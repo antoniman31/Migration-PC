@@ -104,9 +104,24 @@ plus. Il a quatre détections, parce qu'aucune ne suffit seule — les accents, 
 mots, les clés de la table cherchées telles quelles, et la comparaison ligne à ligne de la
 page française avec la page anglaise. Les trois premières dépendent de quelque chose écrit
 à la main, et la deuxième a laissé passer « Passer » : pas d'accent, pas dans la liste. La
-quatrième ne dépend de rien et l'a trouvé. Ce qu'aucune des quatre ne voit est écrit en
-tête du fichier : un intitulé d'interface dont le texte est exactement celui d'une valeur
-du profil est effacé des deux côtés par le retrait du profil.
+quatrième ne dépend de rien et l'a trouvé.
+
+Le retrait du texte de profil, qui protège ces contrôles des noms propres, ne se fait plus
+en bloc : il ne retire que ce qui n'a **aucune** entrée dans la table de traduction. Un
+texte qui en a une est attendu traduit, donc il reste sous les yeux des contrôles — sans
+quoi traduire le profil d'exemple n'aurait rien prouvé, puisque le retrait effaçait
+justement ce qu'il fallait vérifier. Et comme le profil d'exemple est de nous, le test
+exige que **chacun** de ses textes soit traduit ou déclaré nom propre dans
+`NOMS_PROPRES` : ajouter une description française à l'exemple fait échouer le test tant
+que personne ne l'a traduite.
+
+Le test vérifie aussi ce que la traduction ne doit **pas** toucher : un profil exporté
+depuis la page anglaise repart avec son texte d'origine, et un lien de recherche porte le
+nom réel du logiciel. Chercher « Web browser » ne trouverait aucun programme.
+
+Ce qu'aucun des contrôles ne voit est écrit en tête du fichier : un intitulé d'interface
+dont le texte est exactement celui d'une valeur du profil sans entrée dans la table est
+effacé des deux côtés par le retrait.
 
 `tests/cles-normalisation.json` est un contrat partagé, et il mérite une explication. La
 liste de ce qui manque est calculée **deux fois** : par la page, en JavaScript, pour

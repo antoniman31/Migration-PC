@@ -176,11 +176,16 @@ const duProfil=await pg.evaluate(()=>{
   return bouts;
 });
 
+const aTraduire=await pg.evaluate(bouts=>bouts.filter(function(s){
+  return TRADUCTIONS.en[s]!==undefined;
+}),duProfil);
+const sansEntree=duProfil.filter(s=>aTraduire.indexOf(s)<0);
+
 function retirerProfil(texte){
   let t=texte;
   // Les plus longs d'abord : retirer « Firefox » avant « Mozilla Firefox »
   // laisserait « Mozilla », qui n'est pas du francais mais brouille la lecture.
-  duProfil.slice().sort((a,b)=>b.length-a.length).forEach(function(s){
+  sansEntree.slice().sort((a,b)=>b.length-a.length).forEach(function(s){
     if(s.length<3)return;
     t=t.split(s).join(' ');
   });
@@ -212,6 +217,21 @@ async function parcourir(page){
     out.push(['panneau '+nom,await page.evaluate(()=>document.body.innerText)]);
     await page.evaluate(f=>{window[f]();},fn);
   }
+  // La recherche globale ne rend rien tant que le champ est vide. Deux
+  // passages : une requete qui trouve, une qui ne trouve rien.
+  for(const q of ['e','zzzzzz']){
+    await page.evaluate(r=>{
+      const c=document.getElementById('gsearch-input');
+      c.value=r; globalSearch();
+    },q);
+    await page.waitForTimeout(200);
+    out.push(['recherche globale « '+q+' »',await page.evaluate(()=>document.body.innerText)]);
+  }
+  await page.evaluate(()=>{
+    const c=document.getElementById('gsearch-input');
+    c.value=''; globalSearch();
+  });
+
   // Le mode guide, qui a ses propres textes.
   await page.evaluate(()=>{basculerGuide();});
   await page.waitForTimeout(250);
@@ -250,6 +270,32 @@ const attrs=await pg.evaluate(()=>{
 const coupablesAttrs=francaisDans(retirerProfil(attrs.join(' | ')));
 if(coupablesAttrs.length)coupablesAttrs.slice(0,15).forEach(c=>console.log('      '+c));
 ok('rien de francais dans les attributs',coupablesAttrs.length,0);
+
+console.log('\n--- le profil d\'exemple est declare en entier ---');
+// Les noms propres de l'exemple, nommes un par un. Un nom de logiciel ne se
+// traduit pas ; le jour ou l'exemple change, cette liste le dit tout de suite
+// au lieu de laisser passer un texte francais.
+const NOMS_PROPRES=['7-Zip','VLC','PowerToys','HWiNFO64','CrystalDiskInfo','Git',
+  'Node.js','Python','Visual Studio Code','Windows Terminal','PowerShell 7',
+  'Steam','Discord','GitHub','Microsoft Store'];
+const nonDeclares=await pg.evaluate(props=>{
+  const manque=[];
+  function voir(s){
+    if(!s||typeof s!=='string')return;
+    if(props.indexOf(s)>=0)return;
+    if(TRADUCTIONS.en[s]!==undefined)return;
+    if(manque.indexOf(s)<0)manque.push(s);
+  }
+  (PROFIL_DEMO.apps||[]).forEach(function(a){voir(a.n);voir(a.d);voir(a.src);});
+  (PROFIL_DEMO.pwa||[]).forEach(function(p){voir(p.n);voir(p.d);});
+  Object.keys(PROFIL_DEMO.cats||{}).forEach(function(k){voir(PROFIL_DEMO.cats[k]);});
+  voir((PROFIL_DEMO.meta||{}).nom); voir((PROFIL_DEMO.meta||{}).soustitre);
+  return manque;
+},NOMS_PROPRES);
+nonDeclares.slice(0,15).forEach(function(s){
+  console.log('      ni traduit ni declare nom propre : '+JSON.stringify(s));
+});
+ok('tout le profil d\'exemple est traduit ou declare',nonDeclares.length,0);
 
 console.log('\n--- ni aucune cle de la table, lue telle quelle ---');
 const tousTextes=zones.map(function(z){return z[1];}).join('\n')+'\n'+attrs.join(' | ');
@@ -319,6 +365,30 @@ identiques.slice(0,15).forEach(function(l){
   console.log('      identique dans les deux langues : '+JSON.stringify(l));
 });
 ok('aucune ligne francaise ne survit en anglais',identiques.length,0);
+
+// ── ce que la traduction ne doit PAS toucher ────────────────────────────
+// Un profil exporte depuis la page anglaise doit repartir avec son texte
+// d'origine : le reecrire en anglais rendrait a son auteur un fichier dans une
+// langue qu'il n'a pas choisie, et la page francaise de la machine suivante
+// afficherait de l'anglais. De meme une recherche web doit porter le nom reel
+// du logiciel : chercher « Web browser » ne trouve aucun programme.
+console.log('\n--- la traduction ne touche ni l\'export ni les liens ---');
+const garde=await pg.evaluate(()=>{
+  const p=profilCourant();
+  const app=(p.apps||[]).find(function(a){return a.n==='7-Zip';})||{};
+  switchTab('apps'); basculerListeComplete();
+  const liens=[].slice.call(document.querySelectorAll('#list-apps .lnk-btn'))
+    .map(function(a){return a.getAttribute('href')||'';});
+  basculerListeComplete();
+  return {nom:p.meta.nom,desc:app.d||'',pwa:(p.pwa[0]||{}).n||'',
+    href:liens.filter(function(h){return h.indexOf('7-zip')>=0;})[0]||liens.join(' ')};
+});
+ok('le nom du profil exporte reste le francais',
+  garde.nom,'Migration Windows — exemple garni');
+ok('la description exportee reste le francais',
+  garde.desc,"Gestionnaire d'archives. À installer en premier pour ouvrir tout le reste.");
+ok('le nom de raccourci exporte reste le francais',garde.pwa,'Messagerie web');
+ok('le lien de recherche porte le nom reel',garde.href.indexOf('7-zip')>=0,true);
 
 ok('aucune erreur JS',erreurs.length?erreurs[0]:'aucune','aucune');
 await b.close();
