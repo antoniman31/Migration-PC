@@ -129,6 +129,11 @@ jobs:
       - name: Aucun francais sur la page anglaise
         run: node tests/test-anglais.js
 
+      # Le pendant du precedent, pour les scripts. Meme facon de raisonner :
+      # il cherche ce qui ne doit pas etre la.
+      - name: Aucun francais dans les scripts en anglais
+        run: pwsh -File tests/test-langue-ps.ps1
+
   # Tout le job ci-dessus tourne sur Linux, contre des donnees fabriquees a la
   # main : cela verifie le raisonnement, jamais Windows. Le registre,
   # Get-AppxPackage, WMI et l'encodage d'une console reelle n'y sont jamais

@@ -90,7 +90,7 @@ function Tr {
     if ($script:LangueActive -ne 'fr' -and $script:MESSAGES.ContainsKey($Fr)) {
         $s = $script:MESSAGES[$Fr]
     }
-    if ($Trous) {
+    if ($null -ne $Trous -and $Trous.Count -gt 0) {
         for ($i = 0; $i -lt $Trous.Count; $i++) {
             $s = $s.Replace('{' + $i + '}', [string]$Trous[$i])
         }
@@ -105,6 +105,41 @@ function Tr {
 # refuse (sortie redirigee, console absente).
 function Set-SortieUTF8 {
     try { [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new() } catch { }
+}
+
+# Couper un paragraphe a la largeur d'une console, avec une marge a gauche et
+# une marge supplementaire pour les lignes suivantes — de quoi aligner le texte
+# d'une puce sous son numero au lieu de le ramener sous le chiffre.
+#
+# 76 colonnes : une console Windows en fait 80 par defaut, et les deux qui
+# restent evitent un retour a la ligne involontaire quand la fenetre est pile a
+# la bonne taille.
+function Format-Paragraphe {
+    param(
+        [Parameter(Mandatory = $true, Position = 0)][string]$Texte,
+        [Parameter(Position = 1)][int]$Marge = 0,
+        [Parameter(Position = 2)][int]$MargeSuite = -1,
+        [Parameter(Position = 3)][int]$Largeur = 76
+    )
+    if ($MargeSuite -lt 0) { $MargeSuite = $Marge }
+    $lignes = @()
+    $courante = ''
+    # PAS $marge : PowerShell ignore la casse, ce serait le parametre [int]
+    # $Marge, et « prefixe + texte » deviendrait une addition d'entiers.
+    $prefixe = ' ' * $Marge
+    foreach ($mot in ($Texte -split ' +')) {
+        if (-not $mot) { continue }
+        $essai = if ($courante) { "$courante $mot" } else { $mot }
+        if (($prefixe.Length + $essai.Length) -gt $Largeur -and $courante) {
+            $lignes += ($prefixe + $courante)
+            $prefixe = ' ' * $MargeSuite
+            $courante = $mot
+        } else {
+            $courante = $essai
+        }
+    }
+    if ($courante) { $lignes += ($prefixe + $courante) }
+    return $lignes
 }
 
 # ── La table ────────────────────────────────────────────────────────────────
@@ -207,9 +242,60 @@ $script:MESSAGES = @{
     'aucun paquet du catalogue'                   = 'no package from the catalogue'
     '{0} identifiant(s), {1} pose(s), {2} ligne(s) ajoutee(s)' = '{0} identifier(s), {1} matched, {2} line(s) added'
 
+    'winget...' = 'winget...'
+    'registre...' = 'registry...'
+    'Microsoft Store...' = 'Microsoft Store...'
+    'Steam...' = 'Steam...'
+    'Epic Games...' = 'Epic Games...'
+    'GOG...' = 'GOG...'
+    'Xbox / Game Pass...' = 'Xbox / Game Pass...'
+    'Ubisoft Connect...' = 'Ubisoft Connect...'
+    'EA App...' = 'EA App...'
+    'materiel...' = 'hardware...'
+    'machine...' = 'machine...'
+    'pilotes tiers...' = 'third-party drivers...'
+    'peripheriques sans pilote...' = 'devices with no driver...'
+    'winget export... aucun paquet du catalogue' = 'winget export... no package from the catalogue'
+    'winget export... {0} identifiant(s), {1} pose(s), {2} ligne(s) ajoutee(s)' = 'winget export... {0} identifier(s), {1} matched, {2} line(s) added'
+    'winget export... erreur ignoree : {0}' = 'winget export... error ignored: {0}'
+    '{0} : ignore, {1}' = '{0}: skipped, {1}'
+    'aucun' = 'none'
+    '1 composant' = '1 component'
+    '{0} composants' = '{0} components'
+    '1 information' = '1 detail'
+    '{0} informations' = '{0} details'
+    '1 fournisseur' = '1 vendor'
+    '{0} fournisseurs' = '{0} vendors'
+    '{0} a regler' = '{0} to sort out'
+
     # ── scan-pc.ps1 et ecrire-resultat.ps1 : la fin du travail ──
-    "index.html n'est pas a cote de ce script : le fichier JSON est ecrit," = 'index.html is not beside this script: the JSON file has been written,'
-    'a importer a la main depuis le site.'         = 'to import by hand from the site.'
+    'lib-detection.ps1 est introuvable a cote de ce script. Copiez les deux fichiers ensemble.' = 'lib-detection.ps1 cannot be found beside this script. Copy both files together.'
+    'Inventaire des logiciels installes' = 'Inventory of installed software'
+    '(raccourci inventaire-pc.json non ecrit : {0})' = '(inventaire-pc.json shortcut not written: {0})'
+    '(copie pour la cle non ecrite : {0})' = '(copy for the stick not written: {0})'
+    '(instantane de la source illisible, ignore)' = '(source snapshot unreadable, skipped)'
+    '(liste des manquants non ecrite : {0})' = '(list of missing items not written: {0})'
+    'ecrire-resultat.ps1 n''est pas a cote de ce script : la page ne se remplira pas toute seule. Importez le fichier JSON a la main, ou reprenez le dossier complet depuis le site.' = 'ecrire-resultat.ps1 is not beside this script: the page will not fill itself in. Import the JSON file by hand, or take the whole folder again from the site.'
+    '1 application retenue, dont {0} avec un identifiant winget.' = '1 program kept, of which {0} with a winget identifier.'
+    '{0} applications retenues, dont {1} avec un identifiant winget.' = '{0} programs kept, of which {1} with a winget identifier.'
+    'Taille connue : {0} Go — partielle, toutes les sources ne la donnent pas.' = 'Known size: {0} GB — partial, not every source gives it.'
+    '1 pilote non-Microsoft releve.' = '1 non-Microsoft driver found.'
+    '{0} pilotes non-Microsoft releves.' = '{0} non-Microsoft drivers found.'
+    '1 peripherique sans pilote ou en erreur.' = '1 device with no driver, or in error.'
+    '{0} peripheriques sans pilote ou en erreur.' = '{0} devices with no driver, or in error.'
+    'La page donne le lien du constructeur a partir du modele de la machine.' = 'The page gives the maker''s link from the machine model.'
+    'Fichier ecrit : {0}' = 'File written: {0}'
+    'Etape suivante' = 'Next step'
+    '1. Debranchez cette cle USB.' = '1. Unplug this USB stick.'
+    '2. Branchez-la sur le PC cible : le neuf, ou celui-ci une fois reinstalle.' = '2. Plug it into the target PC: the new one, or this one once reinstalled.'
+    '3. Lancez « Migration PC.bat » et choisissez CIBLE.' = '3. Run « Migration PC.bat » and choose TARGET.'
+    'index.html n''est pas a cote des scripts : copiez le dossier entier sur la cle, sinon le PC cible n''aura rien a comparer.' = 'index.html is not beside the scripts: copy the whole folder onto the stick, or the target PC will have nothing to compare.'
+    'La page s''ouvre sur ce qu''il reste a installer : les deux instantanes y sont.' = 'The page opens on what is left to install: both snapshots are there.'
+    'Relancez « Migration PC.bat » : il propose maintenant d''installer ce qui manque, apres vous avoir montre la liste.' = 'Run « Migration PC.bat » again: it now offers to install what is missing, after showing you the list.'
+    'Aucun instantane du PC source sur cette cle : la page n''a rien a comparer.' = 'No source PC snapshot on this stick: the page has nothing to compare.'
+    'Scannez d''abord le PC source, ou importez son fichier a la main.' = 'Scan the source PC first, or import its file by hand.'
+    'Une entree manque ? Relancer avec -ToutInclure pour desactiver le filtrage.' = 'An entry missing? Run again with -ToutInclure to turn the filtering off.'
+    'index.html n''est pas a cote de ce script : le fichier JSON est ecrit, a importer a la main depuis le site.' = 'index.html is not beside this script: the JSON file has been written, to import by hand from the site.'
     'Impossible de poser le resultat a cote de la page :' = 'Could not put the result beside the page:'
     'Le fichier JSON est ecrit : importez-le a la main depuis le site.' = 'The JSON file has been written: import it by hand from the site.'
     'Resultat pose a cote de la page.'            = 'Result put beside the page.'

@@ -20,8 +20,15 @@ navigateur. Le profil d'exemple est traduit lui aussi, puisque c'est nous qui l'
 Un profil que **vous** chargez n'est pas touché : ses noms et ses descriptions
 s'affichent tels qu'ils sont écrits dans le fichier, comme le nom d'un logiciel relevé
 sur la machine. Et un profil exporté depuis la page anglaise repart avec son texte
-d'origine — la traduction est un affichage, elle ne réécrit pas vos fichiers. Les scripts
-PowerShell, eux, parlent encore français.
+d'origine — la traduction est un affichage, elle ne réécrit pas vos fichiers.
+
+Les scripts parlent les deux langues aussi. Ils prennent celle de l'interface Windows,
+et `-Langue fr` ou `-Langue en` tranche — utile pour un francophone sur un Windows
+anglais. Le paramètre se pose sur `Migration PC.bat`, qui le transmet :
+
+```
+Migration PC.bat -Langue en
+```
 
 ## Aperçu
 

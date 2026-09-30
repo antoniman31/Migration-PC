@@ -218,41 +218,6 @@ function Get-ActionsMigration {
 }
 
 # Le parcours complet, pour qui ouvre le lanceur sans savoir par ou commencer.
-# Couper un paragraphe a la largeur d'une console, avec une marge a gauche et
-# une marge supplementaire pour les lignes suivantes — de quoi aligner le texte
-# d'une puce sous son numero au lieu de le ramener sous le chiffre.
-#
-# 76 colonnes : une console Windows en fait 80 par defaut, et les deux qui
-# restent evitent un retour a la ligne involontaire quand la fenetre est pile a
-# la bonne taille.
-function Format-Paragraphe {
-    param(
-        [Parameter(Mandatory = $true, Position = 0)][string]$Texte,
-        [Parameter(Position = 1)][int]$Marge = 0,
-        [Parameter(Position = 2)][int]$MargeSuite = -1,
-        [Parameter(Position = 3)][int]$Largeur = 76
-    )
-    if ($MargeSuite -lt 0) { $MargeSuite = $Marge }
-    $lignes = @()
-    $courante = ''
-    # PAS $marge : PowerShell ignore la casse, ce serait le parametre [int]
-    # $Marge, et « prefixe + texte » deviendrait une addition d'entiers.
-    $prefixe = ' ' * $Marge
-    foreach ($mot in ($Texte -split ' +')) {
-        if (-not $mot) { continue }
-        $essai = if ($courante) { "$courante $mot" } else { $mot }
-        if (($prefixe.Length + $essai.Length) -gt $Largeur -and $courante) {
-            $lignes += ($prefixe + $courante)
-            $prefixe = ' ' * $MargeSuite
-            $courante = $mot
-        } else {
-            $courante = $essai
-        }
-    }
-    if ($courante) { $lignes += ($prefixe + $courante) }
-    return $lignes
-}
-
 function Get-Parcours {
     # LES PHRASES SONT ENTIERES ET L'HABILLAGE EST CALCULE. Elles etaient
     # coupees a la main en fragments de ligne — « La page s'ouvre remplie »,

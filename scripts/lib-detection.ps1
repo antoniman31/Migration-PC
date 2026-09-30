@@ -21,6 +21,18 @@
       $resultats    (hashtable) receptacle d'Add-App
 #>
 
+# La fonction Tr, pour l'avancement affiche pendant le releve. Ce fichier est
+# aussi charge seul par les tests : on la charge si elle n'est pas deja la.
+#
+# RIEN DE CE QUI PART DANS LE JSON NE PASSE PAR Tr. Les noms de categories et
+# de logiciels ecrits ici sont relus et normalises par la page, et
+# tests/cles-normalisation.json est le contrat partage entre les deux : les
+# traduire casserait la reconciliation sans que rien ne le dise a l'ecran.
+# Seul l'avancement lu par un humain est traduit.
+if (-not (Get-Command Tr -ErrorAction SilentlyContinue)) {
+    . (Join-Path $PSScriptRoot 'lib-langue.ps1')
+}
+
 # Valeurs par defaut quand l'appelant ne les fournit pas : le fichier reste
 # chargeable seul, par exemple depuis une suite de tests.
 #
@@ -364,9 +376,9 @@ function Merge-IdsWinget {
 }
 
 function Read-Winget {
-    Write-Host "  winget..." -NoNewline
+    Write-Host ("  " + (Tr 'winget...')) -NoNewline
     if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-        Write-Host " absent, ignore" -ForegroundColor Yellow
+        Write-Host (" " + (Tr 'absent, ignore')) -ForegroundColor Yellow
         return 0
     }
     $n = 0
@@ -380,12 +392,12 @@ function Read-Winget {
         # La sortie est un tableau a colonnes fixes : on lit la ligne d'entete
         # pour connaitre la position des colonnes Id et Version.
         $entete = $lignes | Where-Object { $_ -match '^\s*(Name|Nom)\s+(Id|ID)\s+' } | Select-Object -First 1
-        if (-not $entete) { Write-Host " sortie illisible, ignore" -ForegroundColor Yellow; return 0 }
+        if (-not $entete) { Write-Host (" " + (Tr 'sortie illisible, ignore')) -ForegroundColor Yellow; return 0 }
 
         $posId  = $entete.IndexOf('Id')
         if ($posId -lt 0) { $posId = $entete.IndexOf('ID') }
         $posVer = [Math]::Max($entete.IndexOf('Version'), $entete.IndexOf('Versio'))
-        if ($posId -lt 0 -or $posVer -le $posId) { Write-Host " colonnes illisibles, ignore" -ForegroundColor Yellow; return 0 }
+        if ($posId -lt 0 -or $posVer -le $posId) { Write-Host (" " + (Tr 'colonnes illisibles, ignore')) -ForegroundColor Yellow; return 0 }
 
         $debut = $false
         foreach ($l in $lignes) {
@@ -412,10 +424,10 @@ function Read-Winget {
             $n++
         }
     } catch {
-        Write-Host " erreur ignoree : $($_.Exception.Message)" -ForegroundColor Yellow
+        Write-Host (" " + (Tr "erreur ignoree : {0}" $_.Exception.Message)) -ForegroundColor Yellow
         return $n
     }
-    Write-Host " $n entrees"
+    Write-Host (" " + $(if ($n -eq 1) { Tr '1 entree' } else { Tr '{0} entrees' $n }))
 
     # Deuxieme passe, autoritaire : l'export ne contient que des identifiants
     # reellement reinstallables. Une panne ici ne doit pas perdre la premiere.
@@ -428,13 +440,13 @@ function Read-Winget {
             $entrees = @(Read-ExportWinget -Json $json)
             if ($entrees.Count) {
                 $r = Merge-IdsWinget -Entrees $entrees
-                Write-Host "  winget export... $($entrees.Count) identifiant(s), $($r.poses) pose(s), $($r.crees) ligne(s) ajoutee(s)"
+                Write-Host ("  " + (Tr "winget export... {0} identifiant(s), {1} pose(s), {2} ligne(s) ajoutee(s)" $entrees.Count $r.poses $r.crees))
             } else {
-                Write-Host "  winget export... aucun paquet du catalogue" -ForegroundColor Yellow
+                Write-Host ("  " + (Tr 'winget export... aucun paquet du catalogue')) -ForegroundColor Yellow
             }
         }
     } catch {
-        Write-Host "  winget export... erreur ignoree : $($_.Exception.Message)" -ForegroundColor Yellow
+        Write-Host ("  " + (Tr "winget export... erreur ignoree : {0}" $_.Exception.Message)) -ForegroundColor Yellow
     }
     return $n
 }
@@ -478,7 +490,7 @@ function Format-DateInstallation {
 }
 
 function Read-Registre {
-    Write-Host "  registre..." -NoNewline
+    Write-Host ("  " + (Tr 'registre...')) -NoNewline
     $chemins = @(
         'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
         'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*',
@@ -518,7 +530,7 @@ function Read-Registre {
             $n++
         }
     }
-    Write-Host " $n entrees"
+    Write-Host (" " + $(if ($n -eq 1) { Tr '1 entree' } else { Tr '{0} entrees' $n }))
     return $n
 }
 
@@ -557,7 +569,7 @@ function Get-NomPaquetStore {
 
 # --- source 3 : Microsoft Store ----------------------------------------
 function Read-Store {
-    Write-Host "  Microsoft Store..." -NoNewline
+    Write-Host ("  " + (Tr 'Microsoft Store...')) -NoNewline
     $n = 0
     try {
         $paquets = Get-AppxPackage -ErrorAction Stop |
@@ -570,16 +582,16 @@ function Read-Store {
             $n++
         }
     } catch {
-        Write-Host " indisponible, ignore" -ForegroundColor Yellow
+        Write-Host (" " + (Tr 'indisponible, ignore')) -ForegroundColor Yellow
         return 0
     }
-    Write-Host " $n entrees"
+    Write-Host (" " + $(if ($n -eq 1) { Tr '1 entree' } else { Tr '{0} entrees' $n }))
     return $n
 }
 
 # --- source 4 : Steam ---------------------------------------------------
 function Read-Steam {
-    Write-Host "  Steam..." -NoNewline
+    Write-Host ("  " + (Tr 'Steam...')) -NoNewline
     $racine = $null
     foreach ($k in @('HKCU:\SOFTWARE\Valve\Steam', 'HKLM:\SOFTWARE\WOW6432Node\Valve\Steam')) {
         $v = Get-ItemProperty -Path $k -ErrorAction SilentlyContinue
@@ -587,7 +599,7 @@ function Read-Steam {
         if ($v -and $v.PSObject.Properties['InstallPath']) { $racine = $v.InstallPath; break }
     }
     if (-not $racine -or -not (Test-Path $racine)) {
-        Write-Host " non installe, ignore" -ForegroundColor Yellow
+        Write-Host (" " + (Tr 'non installe, ignore')) -ForegroundColor Yellow
         return 0
     }
 
@@ -620,18 +632,18 @@ function Read-Steam {
             }
         }
     }
-    Write-Host " $n jeux"
+    Write-Host (" " + $(if ($n -eq 1) { Tr '1 jeu' } else { Tr '{0} jeux' $n }))
     return $n
 }
 
 # --- source 5 : Epic Games ---------------------------------------------
 function Read-Epic {
-    Write-Host "  Epic Games..." -NoNewline
+    Write-Host ("  " + (Tr 'Epic Games...')) -NoNewline
     # Epic depose un manifeste JSON par jeu installe. Le dossier est fixe et
     # partage par toutes les installations, quel que soit le disque des jeux.
     $dossier = Join-CheminSur $env:ProgramData 'Epic\EpicGamesLauncher\Data\Manifests'
     if (-not $dossier -or -not (Test-Path $dossier)) {
-        Write-Host " non installe, ignore" -ForegroundColor Yellow
+        Write-Host (" " + (Tr 'non installe, ignore')) -ForegroundColor Yellow
         return 0
     }
     $n = 0
@@ -652,13 +664,13 @@ function Read-Epic {
             $n++
         } catch { }
     }
-    Write-Host " $n jeux"
+    Write-Host (" " + $(if ($n -eq 1) { Tr '1 jeu' } else { Tr '{0} jeux' $n }))
     return $n
 }
 
 # --- source 6 : GOG Galaxy ---------------------------------------------
 function Read-GOG {
-    Write-Host "  GOG..." -NoNewline
+    Write-Host ("  " + (Tr 'GOG...')) -NoNewline
     $n = 0
     foreach ($k in @('HKLM:\SOFTWARE\WOW6432Node\GOG.com\Games\*', 'HKLM:\SOFTWARE\GOG.com\Games\*')) {
         Get-ItemProperty -Path $k -ErrorAction SilentlyContinue | ForEach-Object {
@@ -671,8 +683,8 @@ function Read-GOG {
             $n++
         }
     }
-    if ($n -eq 0) { Write-Host " non installe, ignore" -ForegroundColor Yellow; return 0 }
-    Write-Host " $n jeux"
+    if ($n -eq 0) { Write-Host (" " + (Tr 'non installe, ignore')) -ForegroundColor Yellow; return 0 }
+    Write-Host (" " + $(if ($n -eq 1) { Tr '1 jeu' } else { Tr '{0} jeux' $n }))
     return $n
 }
 
@@ -702,7 +714,7 @@ function Test-JeuXbox {
 }
 
 function Read-Xbox {
-    Write-Host "  Xbox / Game Pass..." -NoNewline
+    Write-Host ("  " + (Tr 'Xbox / Game Pass...')) -NoNewline
     # Les jeux Xbox sont des paquets APPX poses hors du dossier habituel :
     # c'est leur emplacement qui les distingue des applications du Store.
     $n = 0
@@ -715,11 +727,11 @@ function Read-Xbox {
                 $n++
             }
     } catch {
-        Write-Host " indisponible, ignore" -ForegroundColor Yellow
+        Write-Host (" " + (Tr 'indisponible, ignore')) -ForegroundColor Yellow
         return 0
     }
-    if ($n -eq 0) { Write-Host " aucun jeu, ignore" -ForegroundColor Yellow; return 0 }
-    Write-Host " $n jeux"
+    if ($n -eq 0) { Write-Host (" " + (Tr 'aucun jeu, ignore')) -ForegroundColor Yellow; return 0 }
+    Write-Host (" " + $(if ($n -eq 1) { Tr '1 jeu' } else { Tr '{0} jeux' $n }))
     return $n
 }
 
@@ -747,7 +759,7 @@ function Format-JeuxUbisoft {
 }
 
 function Read-Ubisoft {
-    Write-Host "  Ubisoft Connect..." -NoNewline
+    Write-Host ("  " + (Tr 'Ubisoft Connect...')) -NoNewline
     $entrees = @()
     foreach ($k in @('HKLM:\SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs\*',
                      'HKLM:\SOFTWARE\Ubisoft\Launcher\Installs\*')) {
@@ -757,13 +769,13 @@ function Read-Ubisoft {
         }
     }
     $jeux = @(Format-JeuxUbisoft -Entrees $entrees)
-    if (-not $jeux.Count) { Write-Host " non installe, ignore" -ForegroundColor Yellow; return 0 }
+    if (-not $jeux.Count) { Write-Host (" " + (Tr 'non installe, ignore')) -ForegroundColor Yellow; return 0 }
     $n = 0
     foreach ($j in $jeux) {
         Add-App -Nom $j.nom -Editeur 'Ubisoft' -Version '' -Source 'Ubisoft Connect' -Winget ''
         $n++
     }
-    Write-Host " $n jeux"
+    Write-Host (" " + $(if ($n -eq 1) { Tr '1 jeu' } else { Tr '{0} jeux' $n }))
     return $n
 }
 
@@ -799,15 +811,15 @@ function Get-RacinesEa {
 }
 
 function Read-Ea {
-    Write-Host "  EA App..." -NoNewline
+    Write-Host ("  " + (Tr 'EA App...')) -NoNewline
     $jeux = @(Format-JeuxEa -Racines (Get-RacinesEa))
-    if (-not $jeux.Count) { Write-Host " non installe, ignore" -ForegroundColor Yellow; return 0 }
+    if (-not $jeux.Count) { Write-Host (" " + (Tr 'non installe, ignore')) -ForegroundColor Yellow; return 0 }
     $n = 0
     foreach ($j in $jeux) {
         Add-App -Nom $j.nom -Editeur 'Electronic Arts' -Version '' -Source 'EA App' -Winget ''
         $n++
     }
-    Write-Host " $n jeux"
+    Write-Host (" " + $(if ($n -eq 1) { Tr '1 jeu' } else { Tr '{0} jeux' $n }))
     return $n
 }
 
@@ -827,7 +839,7 @@ function Invoke-Detecteur {
     } catch {
         # Le Write-Host du detecteur s'est arrete en cours de ligne.
         Write-Host ""
-        Write-Host ("  {0} : ignore, {1}" -f $Nom, $_.Exception.Message) -ForegroundColor Yellow
+        Write-Host ("  " + (Tr "{0} : ignore, {1}" $Nom $_.Exception.Message)) -ForegroundColor Yellow
         return 0
     }
 }
@@ -1063,7 +1075,7 @@ function Format-Materiel {
 }
 
 function Read-Materiel {
-    Write-Host "  materiel..." -NoNewline
+    Write-Host ("  " + (Tr 'materiel...')) -NoNewline
     $config = [ordered]@{}
     try {
         $config = Format-Materiel `
@@ -1076,10 +1088,11 @@ function Read-Materiel {
             -Audio      (Get-CimInstance Win32_SoundDevice -ErrorAction SilentlyContinue) `
             -Bios       (Get-CimInstance Win32_BIOS -ErrorAction SilentlyContinue)
     } catch {
-        Write-Host " indisponible, ignore" -ForegroundColor Yellow
+        Write-Host (" " + (Tr 'indisponible, ignore')) -ForegroundColor Yellow
         return [ordered]@{}
     }
-    Write-Host " $(@($config.Keys).Count) composant(s)"
+    $nbComp = @($config.Keys).Count
+    Write-Host (" " + $(if ($nbComp -eq 1) { Tr '1 composant' } else { Tr '{0} composants' $nbComp }))
     return $config
 }
 
@@ -1174,7 +1187,7 @@ function Merge-Machine {
 }
 
 function Read-Machine {
-    Write-Host "  machine..." -NoNewline
+    Write-Host ("  " + (Tr 'machine...')) -NoNewline
     $out = [ordered]@{}
     try {
         $out = Format-Machine `
@@ -1183,10 +1196,11 @@ function Read-Machine {
             -Chassis (Get-CimInstance Win32_SystemEnclosure -ErrorAction SilentlyContinue) `
             -Ecrans  (Get-CimInstance -Namespace root\wmi -ClassName WmiMonitorID -ErrorAction SilentlyContinue)
     } catch {
-        Write-Host " indisponible, ignore" -ForegroundColor Yellow
+        Write-Host (" " + (Tr 'indisponible, ignore')) -ForegroundColor Yellow
         return [ordered]@{}
     }
-    Write-Host " $(@($out.Keys).Count) information(s)"
+    $nbInfo = @($out.Keys).Count
+    Write-Host (" " + $(if ($nbInfo -eq 1) { Tr '1 information' } else { Tr '{0} informations' $nbInfo }))
     return $out
 }
 
@@ -1245,15 +1259,15 @@ function Format-PilotesTiers {
 }
 
 function Read-PilotesTiers {
-    Write-Host "  pilotes tiers..." -NoNewline
+    Write-Host ("  " + (Tr 'pilotes tiers...')) -NoNewline
     try {
         $p = Get-CimInstance Win32_PnPSignedDriver -ErrorAction Stop
         $out = @(Format-PilotesTiers -Pilotes $p)
-        if (-not $out.Count) { Write-Host " aucun"; return @() }
-        Write-Host " $($out.Count) fournisseur(s)"
+        if (-not $out.Count) { Write-Host (" " + (Tr 'aucun')); return @() }
+        Write-Host (" " + $(if ($out.Count -eq 1) { Tr '1 fournisseur' } else { Tr '{0} fournisseurs' $out.Count }))
         return $out
     } catch {
-        Write-Host " indisponible, ignore" -ForegroundColor Yellow
+        Write-Host (" " + (Tr 'indisponible, ignore')) -ForegroundColor Yellow
         return @()
     }
 }
@@ -1305,18 +1319,18 @@ function Format-Pilotes {
 }
 
 function Read-PilotesManquants {
-    Write-Host "  peripheriques sans pilote..." -NoNewline
+    Write-Host ("  " + (Tr 'peripheriques sans pilote...')) -NoNewline
     try {
         $tout = Get-CimInstance Win32_PnPEntity -ErrorAction Stop
         $r = Format-Pilotes -Peripheriques $tout
         if (@($r).Count) {
-            Write-Host " $(@($r).Count) a regler" -ForegroundColor Yellow
+            Write-Host (" " + (Tr '{0} a regler' @($r).Count)) -ForegroundColor Yellow
         } else {
-            Write-Host " aucun"
+            Write-Host (" " + (Tr 'aucun'))
         }
         return $r
     } catch {
-        Write-Host " indisponible, ignore" -ForegroundColor Yellow
+        Write-Host (" " + (Tr 'indisponible, ignore')) -ForegroundColor Yellow
         return @()
     }
 }

@@ -67,7 +67,12 @@ param(
     [string]$Sortie = "",
     [switch]$SansStore,
     [switch]$SansJeux,
-    [switch]$ToutInclure
+    [switch]$ToutInclure,
+    # La langue de ce que le scan ecrit. Vide : celle de l'interface Windows.
+    # Le menu la transmet, pour qu'une fenetre ouverte depuis lui reponde dans
+    # la langue qu'on vient d'y choisir.
+    [ValidateSet('fr', 'en')]
+    [string]$Langue = ''
 )
 
 # Le nom porte le role et le jour : on garde plusieurs instantanes sans qu'ils
@@ -80,19 +85,26 @@ if ([string]::IsNullOrWhiteSpace($Sortie)) {
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
-# La console de Windows n'ecrit pas en UTF-8 par defaut : les accents de ce
-# script y arriveraient en charabia. Les .bat font un « chcp 65001 », mais on
-# peut aussi lancer ce fichier directement, et sous Windows PowerShell 5.1
-# chcp ne suffit pas toujours. On le fixe ici, sans rien casser si l'hote
-# refuse (redirection, console absente).
-try { [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new() } catch { }
+
+# La langue et l'encodage avant le premier affichage. Set-SortieUTF8 pose la
+# console en UTF-8 : sans cela les accents y arrivent en charabia, les .bat
+# font bien un « chcp 65001 » mais ce fichier peut aussi etre lance
+# directement, et sous Windows PowerShell 5.1 chcp ne suffit pas toujours.
+$langueFichier = Join-Path $PSScriptRoot 'lib-langue.ps1'
+if (-not (Test-Path -LiteralPath $langueFichier)) {
+    Write-Error "lib-langue.ps1 est introuvable a cote de ce script. Copiez les fichiers ensemble."
+    exit 1
+}
+. $langueFichier
+Set-SortieUTF8
+[void](Set-Langue $Langue)
 
 # ---------------------------------------------------------------- detection
 # La detection vit dans lib-detection.ps1 pour n'exister qu'en un seul
 # exemplaire, quel que soit le cote sur lequel on tourne.
 $lib = Join-Path $PSScriptRoot 'lib-detection.ps1'
 if (-not (Test-Path $lib)) {
-    Write-Error "lib-detection.ps1 est introuvable a cote de ce script. Copiez les deux fichiers ensemble."
+    Write-Error (Tr "lib-detection.ps1 est introuvable a cote de ce script. Copiez les deux fichiers ensemble.")
     exit 1
 }
 . $lib
@@ -104,8 +116,10 @@ if (Test-Path $aide) { . $aide }
 # ---------------------------------------------------------------- execution
 
 Write-Host ""
-Write-Host "Inventaire des logiciels installes" -ForegroundColor Cyan
-Write-Host "----------------------------------"
+$titreScan = Tr "Inventaire des logiciels installes"
+Write-Host $titreScan -ForegroundColor Cyan
+# Le trait suit le titre : traduit, il n'a plus la meme longueur.
+Write-Host ('-' * $titreScan.Length)
 
 $null = Invoke-Detecteur -Nom 'Winget' -Bloc { Read-Winget }
 $null = Invoke-Detecteur -Nom 'Registre' -Bloc { Read-Registre }
@@ -169,7 +183,7 @@ Write-TexteUtf8 -Chemin $cheminSortie -Contenu $json
 $raccourci = Join-Path (Split-Path $cheminSortie -Parent) 'inventaire-pc.json'
 if ($raccourci -ne $cheminSortie) {
     try { Write-TexteUtf8 -Chemin $raccourci -Contenu $json }
-    catch { Write-Host "  (raccourci inventaire-pc.json non ecrit : $_)" -ForegroundColor DarkGray }
+    catch { Write-Host ("  " + (Tr "(raccourci inventaire-pc.json non ecrit : {0})" $_)) -ForegroundColor DarkGray }
 }
 
 # ------------------------------------------------- le relais par la cle USB
@@ -193,7 +207,7 @@ $instantaneSource = $null
 if ($Role -eq 'source') {
     if ($relais) {
         try { Write-TexteUtf8 -Chemin $relais -Contenu $json }
-        catch { Write-Host "  (copie pour la cle non ecrite : $_)" -ForegroundColor DarkGray }
+        catch { Write-Host ("  " + (Tr "(copie pour la cle non ecrite : {0})" $_)) -ForegroundColor DarkGray }
     }
 } elseif ($relais -and (Test-Path -LiteralPath $relais)) {
     # Un fichier illisible ou abime ne doit pas faire echouer le scan : la page
@@ -201,7 +215,7 @@ if ($Role -eq 'source') {
     try {
         $instantaneSource = Get-Content -LiteralPath $relais -Raw -Encoding UTF8 | ConvertFrom-Json
     } catch {
-        Write-Host "  (instantane de la source illisible, ignore)" -ForegroundColor Yellow
+        Write-Host ("  " + (Tr "(instantane de la source illisible, ignore)")) -ForegroundColor Yellow
     }
 }
 
@@ -228,7 +242,7 @@ if ($Role -eq 'cible' -and $instantaneSource -and $dossierPage) {
             $restant = $null
         }
     } catch {
-        Write-Host "  (liste des manquants non ecrite : $_)" -ForegroundColor DarkGray
+        Write-Host ("  " + (Tr "(liste des manquants non ecrite : {0})" $_)) -ForegroundColor DarkGray
         $restant = $null
     }
 }
@@ -238,9 +252,8 @@ if ($Role -eq 'cible' -and $instantaneSource -and $dossierPage) {
 # absence se taisait, et on cherchait longtemps pourquoi la page restait vide.
 if (-not (Get-Command Write-ResultatPourSite -ErrorAction SilentlyContinue)) {
     Write-Host ""
-    Write-Host "ecrire-resultat.ps1 n'est pas a cote de ce script : la page ne se" -ForegroundColor Yellow
-    Write-Host "remplira pas toute seule. Importez le fichier JSON a la main, ou" -ForegroundColor Yellow
-    Write-Host "reprenez le dossier complet depuis le site." -ForegroundColor Yellow
+    Format-Paragraphe (Tr "ecrire-resultat.ps1 n'est pas a cote de ce script : la page ne se remplira pas toute seule. Importez le fichier JSON a la main, ou reprenez le dossier complet depuis le site.") |
+        ForEach-Object { Write-Host $_ -ForegroundColor Yellow }
 }
 if (Get-Command Write-ResultatPourSite -ErrorAction SilentlyContinue) {
     Write-ResultatPourSite -Donnees $inventaire -DossierScript $PSScriptRoot `
@@ -252,44 +265,54 @@ $totalGo = Get-Somme $apps 'tailleGo'
 $chemin = (Resolve-Path $Sortie).Path
 
 Write-Host ""
-Write-Host "$(@($apps).Count) applications retenues, dont $avecWinget avec un identifiant winget." -ForegroundColor Green
+$nbApps = @($apps).Count
+Write-Host $(if ($nbApps -eq 1) { Tr "1 application retenue, dont {0} avec un identifiant winget." $avecWinget }
+            else { Tr "{0} applications retenues, dont {1} avec un identifiant winget." $nbApps $avecWinget }) -ForegroundColor Green
 if ($totalGo) {
-    Write-Host "Taille connue : $([math]::Round($totalGo, 1)) Go — partielle, toutes les sources ne la donnent pas."
+    Write-Host (Tr "Taille connue : {0} Go — partielle, toutes les sources ne la donnent pas." ([math]::Round($totalGo, 1)))
 }
 if (@($pilotesTiers).Count) {
-    Write-Host "$(@($pilotesTiers).Count) pilote(s) non-Microsoft releve(s)."
+    $nbTiers = @($pilotesTiers).Count
+    Write-Host $(if ($nbTiers -eq 1) { Tr "1 pilote non-Microsoft releve." }
+                else { Tr "{0} pilotes non-Microsoft releves." $nbTiers })
 }
 if (@($pilotes).Count) {
-    Write-Host "$(@($pilotes).Count) peripherique(s) sans pilote ou en erreur." -ForegroundColor Yellow
-    Write-Host "  La page donne le lien du constructeur a partir du modele de la machine."
+    $nbPil = @($pilotes).Count
+    Write-Host $(if ($nbPil -eq 1) { Tr "1 peripherique sans pilote ou en erreur." }
+                else { Tr "{0} peripheriques sans pilote ou en erreur." $nbPil }) -ForegroundColor Yellow
+    Write-Host ("  " + (Tr "La page donne le lien du constructeur a partir du modele de la machine."))
 }
-Write-Host "Fichier ecrit : $chemin"
+Write-Host (Tr "Fichier ecrit : {0}" $chemin)
 Write-Host ""
 if ($Role -eq 'source') {
-    Write-Host "Etape suivante" -ForegroundColor Cyan
-    Write-Host "  1. Debranchez cette cle USB."
-    Write-Host "  2. Branchez-la sur le PC cible : le neuf, ou celui-ci une fois reinstalle."
-    Write-Host "  3. Lancez « Migration PC.bat » et choisissez CIBLE."
+    Write-Host (Tr "Etape suivante") -ForegroundColor Cyan
+    Format-Paragraphe (Tr "1. Debranchez cette cle USB.") 2 5 | ForEach-Object { Write-Host $_ }
+    Format-Paragraphe (Tr "2. Branchez-la sur le PC cible : le neuf, ou celui-ci une fois reinstalle.") 2 5 | ForEach-Object { Write-Host $_ }
+    Format-Paragraphe (Tr "3. Lancez « Migration PC.bat » et choisissez CIBLE.") 2 5 | ForEach-Object { Write-Host $_ }
     if (-not $relais) {
         Write-Host ""
-        Write-Host "index.html n'est pas a cote des scripts : copiez le dossier entier sur la" -ForegroundColor Yellow
-        Write-Host "cle, sinon le PC cible n'aura rien a comparer." -ForegroundColor Yellow
+        Format-Paragraphe (Tr "index.html n'est pas a cote des scripts : copiez le dossier entier sur la cle, sinon le PC cible n'aura rien a comparer.") |
+            ForEach-Object { Write-Host $_ -ForegroundColor Yellow }
     }
 } else {
     if ($instantaneSource) {
-        Write-Host "La page s'ouvre sur ce qu'il reste a installer : les deux instantanes y sont."
+        Format-Paragraphe (Tr "La page s'ouvre sur ce qu'il reste a installer : les deux instantanes y sont.") |
+            ForEach-Object { Write-Host $_ }
         if ($restant) {
             Write-Host ""
-            Write-Host "Etape suivante" -ForegroundColor Cyan
-            Write-Host "  Relancez « Migration PC.bat » : il propose maintenant d'installer"
-            Write-Host "  ce qui manque, apres vous avoir montre la liste."
+            Write-Host (Tr "Etape suivante") -ForegroundColor Cyan
+            Format-Paragraphe (Tr "Relancez « Migration PC.bat » : il propose maintenant d'installer ce qui manque, apres vous avoir montre la liste.") 2 |
+                ForEach-Object { Write-Host $_ }
         }
     } else {
-        Write-Host "Aucun instantane du PC source sur cette cle : la page n'a rien a comparer." -ForegroundColor Yellow
-        Write-Host "Scannez d'abord le PC source, ou importez son fichier a la main."
+        Format-Paragraphe (Tr "Aucun instantane du PC source sur cette cle : la page n'a rien a comparer.") |
+            ForEach-Object { Write-Host $_ -ForegroundColor Yellow }
+        Format-Paragraphe (Tr "Scannez d'abord le PC source, ou importez son fichier a la main.") |
+            ForEach-Object { Write-Host $_ }
     }
 }
 if (-not $ToutInclure) {
-    Write-Host "Une entree manque ? Relancer avec -ToutInclure pour desactiver le filtrage."
+    Format-Paragraphe (Tr "Une entree manque ? Relancer avec -ToutInclure pour desactiver le filtrage.") |
+        ForEach-Object { Write-Host $_ }
 }
 Write-Host ""
