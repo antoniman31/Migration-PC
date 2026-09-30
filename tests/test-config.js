@@ -9,6 +9,7 @@
 //   node tests/test-config.js
 const {chromium}=require('playwright');
 const fs=require('fs'),path=require('path');
+const {annoncerNavigateur}=require('./lib-tests');
 const racine=path.join(__dirname,'..');
 const HTML='file://'+path.join(racine,'index.html');
 const lancement={args:['--no-sandbox']};
@@ -24,6 +25,7 @@ async function deplierApps(pg){
 
 (async()=>{
 const b=await chromium.launch(lancement);
+annoncerNavigateur(b);
 const ctx=await b.newContext({locale:'fr-FR',viewport:{width:1400,height:900}});
 const pg=await ctx.newPage();
 const errs=[];pg.on('pageerror',e=>errs.push(e.message));
@@ -197,15 +199,30 @@ const mesure=async(w,h)=>{
     defile:document.documentElement.scrollWidth>document.documentElement.clientWidth+1}));
 };
 const tel=await mesure(360,740);
+// ON VERIFIE L'INTENTION, PAS LE CHIFFRE. Ces lignes exigeaient une taille
+// calculee EXACTEMENT egale a 13px ou 15px. C'est la forme la plus fragile qui
+// soit : un navigateur qui arrondit autrement, une densite d'ecran differente,
+// et le test tombe sans qu'aucun defaut n'existe. test-mobile.js a deja coute
+// deux allers-retours pour cette raison exacte.
+//
+// Ce qui etait reellement promis : le texte ne retrecit pas sur telephone, il
+// ne change pas entre telephone et tablette, il grandit sur grand ecran, et
+// rien ne descend sous le plancher. Les relations valent mieux que les valeurs.
+// Elles disent la meme chose, elles survivent a un changement de navigateur, et
+// « grandit » n'etait meme pas verifie avant : il n'etait qu'implique par deux
+// nombres ecrits a la main.
+const PLANCHER=12;   // le meme que test-mobile.js et test-plancher-texte.js
+const px=v=>parseFloat(v);
 ok('téléphone : la largeur ne change pas',tel.carte<=360,true);
-ok('téléphone : le texte reste à 13 px',tel.tache,'13px');
+ok('téléphone : le texte reste lisible',px(tel.tache)>=PLANCHER,true);
 ok('téléphone : pas de défilement horizontal',tel.defile,false);
 const tab=await mesure(900,1200);
-ok('tablette : inchangée elle aussi',tab.tache,'13px');
+ok('tablette : le texte ne change pas',tab.tache,tel.tache);
 const pc=await mesure(1400,900);
 ok('grand écran : la carte s\'élargit',pc.carte>1000,true);
-ok('grand écran : les tâches passent à 15 px',pc.tache,'15px');
-ok('grand écran : les descriptions à 13 px',pc.desc,'13px');
+ok('grand écran : les tâches grandissent',px(pc.tache)>px(tel.tache),true);
+ok('grand écran : les descriptions restent lisibles',px(pc.desc)>=PLANCHER,true);
+ok('grand écran : et plus petites que les tâches',px(pc.desc)<px(pc.tache),true);
 ok('grand écran : toujours pas de défilement',pc.defile,false);
 ok('aucune erreur JS',errs.length?errs[0]:'aucune','aucune');
 

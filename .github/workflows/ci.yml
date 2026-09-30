@@ -78,6 +78,12 @@ jobs:
       - name: Archive de téléchargement
         run: node tests/test-archive.js
 
+      # Il lit le CSS, il ne rend rien : son verdict ne depend pas du
+      # navigateur, contrairement a celui de test-mobile.js. C'est pour ca
+      # qu'il existe.
+      - name: Plancher de taille de texte, par déclaration
+        run: node tests/test-plancher-texte.js
+
       # pwsh est preinstalle sur les runners ubuntu-latest.
       - name: Scanner — classement, fusion, parsing
         run: pwsh -File tests/test-scan.ps1

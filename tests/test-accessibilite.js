@@ -9,6 +9,7 @@
 //   CHROME=/chemin/vers/chromium node tests/test-accessibilite.js
 const {chromium}=require('playwright');
 const fs=require('fs'),path=require('path');
+const {annoncerNavigateur}=require('./lib-tests');
 const racine=path.join(__dirname,'..');
 const HTML='file://'+path.join(racine,'index.html');
 const lancement={args:['--no-sandbox']};
@@ -31,6 +32,7 @@ async function chargerExemple(pg){
 
 (async()=>{
 const b=await chromium.launch(lancement);
+annoncerNavigateur(b);
 
 // ─────────── contraste et sémantique, dans les deux thèmes ───────────
 for(const theme of ['light','dark']){
