@@ -69,6 +69,9 @@ jobs:
       - name: Réconciliation source → cible
         run: node tests/test-reconciliation.js
 
+      - name: Ignorer un logiciel ou un périphérique
+        run: node tests/test-ignorer.js
+
       - name: Archive de téléchargement
         run: node tests/test-archive.js
 

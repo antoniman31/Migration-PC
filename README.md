@@ -197,6 +197,26 @@ arrive sur « N à installer », les N lignes concernées et le bouton qui produ
 `winget import` ; la liste complète se replie derrière « Voir les X logiciels relevés ». Sans
 scan de la cible il n'y a pas de réponse à donner, et la liste reste groupée par catégorie.
 
+**Écarter ce dont vous ne voulez pas.** Tout ce que l'ancien PC portait n'est pas à
+reprendre. Le bouton ⊘ de chaque ligne l'écarte : elle reste affichée, grisée et barrée avec
+une étiquette « ignoré », mais elle sort du « N à installer », des barres de progression, du
+mode guidé et du script winget. Elle reste visible exprès — ce qu'on a mis de côté doit
+rester sous les yeux, sinon on oublie pourquoi la liste est courte. Le ↩ la remet.
+
+Ça marche pareil sur l'onglet Pilotes : un périphérique en défaut dont vous n'avez que faire
+— un lecteur de cartes, un port série — s'écarte et sort du badge de l'onglet.
+
+Écarter et cocher disent le contraire l'un de l'autre, « je m'en passe » et « c'est réglé » :
+l'un chasse l'autre, dans les deux sens. Les lignes écartées vivent dans ce navigateur
+seulement, comme la progression : elles ne voyagent ni avec le profil ni avec la progression
+exportée, survivent à « Tout décocher » et partent avec « Tout effacer ».
+
+**Une limite à connaître.** Le `winget-restant.json` que le scan du PC cible dépose sur la
+clé est calculé par PowerShell, qui ne peut pas lire la mémoire de votre navigateur : il
+**ignore vos lignes écartées**. Si vous vous servez de « Installer ce qui manque » depuis le
+menu du lanceur, relisez la liste qu'il affiche avant de taper `INSTALLER`. L'export
+**⬇️ winget .json** de la page, lui, respecte ce que vous avez écarté.
+
 Une ligne que le scan a trouvée est **réglée d'office** : elle s'affiche cochée et ne se
 décoche pas, parce qu'un constat n'est pas une décision. Une version **plus ancienne**
 qu'avant fait exception : le logiciel est là, mais on veut peut-être le remettre à niveau,

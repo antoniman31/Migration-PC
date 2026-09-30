@@ -87,6 +87,14 @@ sortie winget et la mise en forme du matériel, des pilotes et de la machine, sa
 `tests/test-reconciliation.js` est la seule partie du projet qui se prouve vraiment : la
 comparaison ne touche ni à Windows ni au DOM, elle prend deux JSON et rend un rapport.
 
+`tests/test-ignorer.js` couvre le fait d'écarter une ligne : qu'elle reste affichée mais
+sorte du total, du script winget et du mode guidé ; que cocher et écarter se chassent dans
+les deux sens ; que l'identifiant fabriqué pour un périphérique ne dépende que de son nom,
+puisque sa position dans la liste bouge d'un scan à l'autre ; que « Tout décocher » garde les
+lignes écartées et « Tout effacer » les enlève ; et que l'annulation les rende — ce dernier
+point parce que le bandeau promet une annulation, et qu'un instantané incomplet la rendrait
+menteuse, comme ce fut le cas pour la configuration matérielle.
+
 `tests/cles-normalisation.json` est un contrat partagé, et il mérite une explication. La
 liste de ce qui manque est calculée **deux fois** : par la page, en JavaScript, pour
 l'afficher ; et par le scan de la cible, en PowerShell, pour écrire le
