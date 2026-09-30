@@ -65,7 +65,16 @@ ok('la table anglaise existe',typeof TR.en,'object');
 const clesEn=Object.keys(TR.en);
 ok('elle n\'est pas vide',clesEn.length>0,true);
 
-const source=fs.readFileSync(path.join(racine,'index.html'),'utf8');
+const brut=fs.readFileSync(path.join(racine,'index.html'),'utf8');
+const debutTable=brut.indexOf('const TRADUCTIONS=');
+const finTable=brut.indexOf('\n};',debutTable);
+if(debutTable<0||finTable<0)throw new Error('table de traductions introuvable');
+// LA TABLE EST EXCLUE DE LA RECHERCHE. Sans cette coupe, chaque cle se trouvait
+// elle-meme dans la table, et le controle des orphelines ne prouvait rien : il a
+// laisse passer neuf cles de categories fausses, ecrites sans l'emoji que portent
+// les vrais libelles, en les declarant presentes dans le code.
+const source=brut.slice(0,debutTable)+brut.slice(finTable);
+ok('la table est exclue de la recherche',source.indexOf('const TRADUCTIONS=')<0,true);
 // On cherche la cle telle qu'elle apparait dans le code : entre apostrophes
 // simples, ou comme contenu d'un noeud marque data-t. Une cle absente des deux
 // est orpheline.

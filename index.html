@@ -1425,7 +1425,62 @@ const TRADUCTIONS={
     "Un problème est survenu pendant l'affichage.":'Something went wrong while displaying the page.',
     'Le reste de la page continue de fonctionner. Si cela se répète, réinitialiser le profil ou recharger la page.':'The rest of the page keeps working. If this happens again, reset the profile or reload the page.',
     'Sections':'Sections',
-    'Sections de la checklist':'Checklist sections'
+    'Sections de la checklist':'Checklist sections',
+
+    '⬇️ Les scripts pour Windows…':'⬇️ The Windows scripts…',
+    '👁️ Voir un exemple garni':'👁️ See a filled example',
+    'Les pilotes du PC receveur apparaissent ici après son scan.':'The target PC drivers show up here after its scan.',
+    "Lance <code>Migration PC.bat</code> sur la machine d'arrivée et choisis CIBLE : elle relève les périphériques que Windows signale sans pilote, et donne le lien du constructeur.":'Run <code>Migration PC.bat</code> on the machine you are moving to and pick TARGET: it lists the devices Windows reports without a driver, and gives the maker\'s link.',
+    'Cette liste se remplit avec le scan de ton ancien PC.':'This list fills in from the scan of your old PC.',
+    'Lance <code>Migration PC.bat</code> sur la machine que tu quittes : il relève tes logiciels et remplit cet onglet.':'Run <code>Migration PC.bat</code> on the machine you are leaving: it lists your software and fills this tab.',
+
+    'Liste relevée sur le PC source. Scanne le PC receveur — <code>Migration PC.bat</code>, choix CIBLE — et cette liste dira ce qui manque.':'List taken from the source PC. Scan the target PC — <code>Migration PC.bat</code>, choice TARGET — and this list will say what is missing.',
+    'Rien à comparer':'Nothing to compare',
+    'Le scan du PC cible est là, mais pas celui de la source.':'The target PC scan is here, but not the source one.',
+    'Tous les logiciels sont là':'All the software is here',
+    '1 logiciel à installer':'1 program to install',
+    '{0} logiciels à installer':'{0} programs to install',
+    'PC source':'source PC',
+    'PC cible':'target PC',
+    'du {0}':'from {0}',
+    '{0} sur {1} ({2} %)':'{0} of {1} ({2}%)',
+    '1 en version plus ancienne':'1 in an older version',
+    '{0} en version plus ancienne':'{0} in an older version',
+    "1 ligne marquée « là » : le scan l'a trouvée sur cette machine, elle est réglée d'office et ne se décoche pas. Une ligne fausse ici veut dire que le rapprochement par nom s'est trompé : corrigez le nom dans le JSON et relancez le scan.":'1 row marked « here »: the scan found it on this machine, so it is settled and cannot be unchecked. A wrong verdict here means the name matching got it wrong: fix the name in the JSON and scan again.',
+    "{0} lignes marquées « là » : le scan les a trouvées sur cette machine, elles sont réglées d'office et ne se décochent pas. Une ligne fausse ici veut dire que le rapprochement par nom s'est trompé : corrigez le nom dans le JSON et relancez le scan.":'{0} rows marked « here »: the scan found them on this machine, so they are settled and cannot be unchecked. A wrong verdict here means the name matching got it wrong: fix the name in the JSON and scan again.',
+    'Rien ne manque.':'Nothing is missing.',
+
+    '{0} à installer':'{0} to install',
+    'Format officiel winget import — idempotent et rejouable':'Official winget import format — idempotent and replayable',
+    '⬇️ winget .json ({0})':'⬇️ winget .json ({0})',
+    "Aucun de ces logiciels n'a d'identifiant winget : chaque ligne porte un lien de recherche vers le site officiel.":'None of these programs has a winget id: each row carries a search link to the official site.',
+    'Rien à installer':'Nothing to install',
+    'Tout ce qui était sur le PC source est là.':'Everything that was on the source PC is here.',
+    'Voir les {0} logiciels relevés':'See all {0} programs found',
+    '← Revenir à ce qui manque':'← Back to what is missing',
+
+    'Trouvé sur le PC cible':'Found on the target PC',
+    'là':'here',
+    "Version plus ancienne qu'avant : {0} → {1}":'Older version than before: {0} → {1}',
+    'plus ancien':'older',
+    'Absent du PC cible':'Absent from the target PC',
+    'manque':'missing',
+    'Décocher tout':'Uncheck all',
+    'Tout cocher':'Check all',
+    'Écarté : ne compte plus et ne sort pas dans le script winget':'Set aside: no longer counted, and left out of the winget script',
+    'ignoré':'ignored',
+    'Remettre « {0} » dans la liste':'Put « {0} » back in the list',
+    'Ignorer « {0} » : sort des comptes et du script winget':'Ignore « {0} »: leaves the counts and the winget script',
+
+    '🛠️ Développement':'🛠️ Development',
+    '🎮 Jeux & Launchers':'🎮 Games & launchers',
+    '🌐 Réseau & Sécurité':'🌐 Network & security',
+    '📄 Bureautique & Web':'📄 Office & web',
+    '🎵 Médias':'🎵 Media',
+    '🔧 Utilitaires Système':'🔧 System utilities',
+    '💬 Communication':'💬 Communication',
+    '🛡️ Sécurité':'🛡️ Security',
+    '🎛️ Pilotes & Périphériques':'🎛️ Drivers & devices'
   }
 };
 //
@@ -1573,27 +1628,24 @@ let CATS={}, APPS_DATA=[], PWA_DATA=[], INSTALL_ORDER=[], SEARCH_QUERIES={};
 // Un onglet que le cas choisi vide entierement n'affichait rien du tout : ni
 // liste, ni explication. On dit ce qui se passe et comment en sortir.
 function messageOngletVide(cle){
+  const btnScripts='<button type="button" class="sm-btn" onclick="basculerOutils()">'
+    +esc(tr('⬇️ Les scripts pour Windows…'))+'</button>';
   if(cle==='pilotes'){
     return '<div class="onglet-vide">'
-      +'<b>Les pilotes du PC receveur apparaissent ici après son scan.</b><br>'
-      +'Lance <code>Migration PC.bat</code> sur la machine d\'arrivée et choisis '
-      +'CIBLE : elle relève les périphériques que Windows signale sans pilote, '
-      +'et donne le lien du constructeur.'
-      +'<div class="onglet-vide-act">'
-      +'<button type="button" class="sm-btn" onclick="basculerOutils()">⬇️ Les scripts pour Windows…</button>'
-      +'</div></div>';
+      +'<b>'+esc(tr('Les pilotes du PC receveur apparaissent ici après son scan.'))+'</b><br>'
+      +tr('Lance <code>Migration PC.bat</code> sur la machine d\'arrivée et choisis CIBLE : elle relève les périphériques que Windows signale sans pilote, et donne le lien du constructeur.')
+      +'<div class="onglet-vide-act">'+btnScripts+'</div></div>';
   }
   // Les onglets Logiciels et PWA arrivent vides : la checklist livrée ne
   // contient rien, et la liste des logiciels est celle de TA machine, que seul
   // le scan connaît. Un onglet vide qui dit quoi faire vaut mieux qu'un onglet
   // rempli des logiciels de quelqu'un d'autre.
   return '<div class="onglet-vide">'
-    +'<b>Cette liste se remplit avec le scan de ton ancien PC.</b><br>'
-    +'Lance <code>Migration PC.bat</code> sur la machine que tu quittes : '
-    +'il releve tes logiciels et remplit cet onglet.'
-    +'<div class="onglet-vide-act">'
-    +'<button type="button" class="sm-btn" onclick="basculerOutils()">⬇️ Les scripts pour Windows…</button>'
-    +'<button type="button" class="sm-btn" onclick="chargerDemo()">👁️ Voir un exemple garni</button>'
+    +'<b>'+esc(tr('Cette liste se remplit avec le scan de ton ancien PC.'))+'</b><br>'
+    +tr('Lance <code>Migration PC.bat</code> sur la machine que tu quittes : il relève tes logiciels et remplit cet onglet.')
+    +'<div class="onglet-vide-act">'+btnScripts
+    +'<button type="button" class="sm-btn" onclick="chargerDemo()">'
+      +esc(tr('👁️ Voir un exemple garni'))+'</button>'
     +'</div></div>';
 }
 
@@ -1901,40 +1953,44 @@ function banniereComparaison(){
   if(!surLaCible()){
     if(!INV_SOURCE)return '';
     return '<div class="cmp-tete"><div class="cmp-sous">'
-      +'Liste relevée sur le PC source. Scanne le PC receveur — '
-      +'<code>Migration PC.bat</code>, choix CIBLE — et cette liste dira ce qui manque.'
+      +tr('Liste relevée sur le PC source. Scanne le PC receveur — <code>Migration PC.bat</code>, choix CIBLE — et cette liste dira ce qui manque.')
       +'</div></div>';
   }
   const e=etatsLogiciels();
   if(!e){
-    return '<div class="cmp-tete"><div class="cmp-titre">Rien à comparer</div>'
-      +'<div class="cmp-sous">Le scan du PC cible est là, mais pas celui de la source.</div></div>';
+    return '<div class="cmp-tete"><div class="cmp-titre">'+esc(tr('Rien à comparer'))+'</div>'
+      +'<div class="cmp-sous">'+esc(tr('Le scan du PC cible est là, mais pas celui de la source.'))+'</div></div>';
   }
   const manque=e.manquants+e.differents;
   const pct=e.total?Math.round(e.arrives/e.total*100):100;
+  // Les accords de pluriel ne se transposent pas d'une langue a l'autre : on
+  // traduit des phrases entieres, une par cas, plutot que de recoller des
+  // morceaux. Le francais accorde « marquée / marquées », l'anglais non, et
+  // l'inverse arrive aussi.
+  const titre=e.manquants===0 ? tr('Tous les logiciels sont là')
+    : (e.manquants===1 ? tr('1 logiciel à installer') : tr('{0} logiciels à installer',e.manquants));
+  const depuis=esc(e.source.nom||tr('PC source'))
+    +(e.source.date?' '+tr('du {0}',esc(e.source.date)):'');
+  const vers=esc(e.cible.nom||tr('PC cible'))
+    +(e.cible.date?' '+tr('du {0}',esc(e.cible.date)):'');
   let h='<div class="cmp-tete">'
-    +'<div class="cmp-titre">'+(e.manquants
-        ?e.manquants+' logiciel'+(e.manquants>1?'s':'')+' à installer'
-        :'Tous les logiciels sont là')+'</div>'
-    +'<div class="cmp-sous">'+e.arrives+' sur '+e.total+' ('+pct+' %) · '
-    +esc(e.source.nom||'PC source')+(e.source.date?' du '+esc(e.source.date):'')
-    +' → '+esc(e.cible.nom||'PC cible')+(e.cible.date?' du '+esc(e.cible.date):'')
-    +(e.differents?' · '+e.differents+' en version plus ancienne':'')
+    +'<div class="cmp-titre">'+esc(titre)+'</div>'
+    +'<div class="cmp-sous">'+tr('{0} sur {1} ({2} %)',e.arrives,e.total,pct)+' · '
+    +depuis+' → '+vers
+    +(e.differents?' · '+esc(e.differents===1?tr('1 en version plus ancienne')
+        :tr('{0} en version plus ancienne',e.differents)):'')
     +'</div>';
   // Ce que le scan a trouvé est réglé d'office : il n'y a rien à cocher pour
   // redire un constat. Dit une fois ici, parce qu'une ligne qui ne réagit pas
   // au clic sans explication passe pour un bug.
   const constatees=lignesConstatees().length;
   if(constatees){
-    h+='<div class="cmp-act">'+constatees+' ligne'+(constatees>1?'s':'')
-      +' marquée'+(constatees>1?'s':'')+' « là » : le scan '+(constatees>1?'les':'l\'')
-      +'a trouvée'+(constatees>1?'s':'')+' sur cette machine, '
-      +(constatees>1?'elles sont réglées':'elle est réglée')
-      +' d\'office et ne se décoche'+(constatees>1?'nt':'')+' pas. '
-      +'Une ligne fausse ici veut dire que le rapprochement par nom s\'est trompé : '
-      +'corrigez le nom dans le JSON et relancez le scan.</div>';
+    h+='<div class="cmp-act">'+esc(constatees===1
+      ? tr('1 ligne marquée « là » : le scan l\'a trouvée sur cette machine, elle est réglée d\'office et ne se décoche pas. Une ligne fausse ici veut dire que le rapprochement par nom s\'est trompé : corrigez le nom dans le JSON et relancez le scan.')
+      : tr('{0} lignes marquées « là » : le scan les a trouvées sur cette machine, elles sont réglées d\'office et ne se décochent pas. Une ligne fausse ici veut dire que le rapprochement par nom s\'est trompé : corrigez le nom dans le JSON et relancez le scan.',constatees))
+      +'</div>';
   }
-  if(manque===0&&e.total)h+='<div class="cmp-act">Rien ne manque.</div>';
+  if(manque===0&&e.total)h+='<div class="cmp-act">'+esc(tr('Rien ne manque.'))+'</div>';
   return h+'</div>';
 }
 
@@ -1942,11 +1998,14 @@ function banniereComparaison(){
 function badgeComparaison(a,etats){
   if(!etats)return '';
   const e=etats.par[cleNom(a&&a.n)];
-  if(!e)return '<span class="badge b-arrive" title="Trouvé sur le PC cible">là</span>';
+  if(!e)return '<span class="badge b-arrive" title="'+esc(tr('Trouvé sur le PC cible'))+'">'
+    +esc(tr('là'))+'</span>';
   if(e.etat==='ancienne')
-    return '<span class="badge b-vieux" title="Version plus ancienne qu\'avant : '
-      +esc(String(e.avant))+' → '+esc(String(e.apres))+'">plus ancien</span>';
-  return '<span class="badge b-manque" title="Absent du PC cible">manque</span>';
+    return '<span class="badge b-vieux" title="'
+      +esc(tr("Version plus ancienne qu'avant : {0} → {1}",String(e.avant),String(e.apres)))
+      +'">'+esc(tr('plus ancien'))+'</span>';
+  return '<span class="badge b-manque" title="'+esc(tr('Absent du PC cible'))+'">'
+    +esc(tr('manque'))+'</span>';
 }
 
 // Ce qu'on peut cocher sans rien supposer : une ligne dont le scan de la cible
@@ -2720,8 +2779,8 @@ function mkChkbox(){return '<div class="chkbox" aria-hidden="true"><span class="
 // Le bouton qui ecarte une ligne. Presque muet par defaut — la barre d'une liste
 // de soixante lignes ne doit pas crier — et explicite une fois actif.
 function mkBoutonIgnore(id,libelle,ignore){
-  const titre=ignore?'Remettre « '+libelle+' » dans la liste'
-                    :'Ignorer « '+libelle+' » : sort des comptes et du script winget';
+  const titre=ignore?tr('Remettre « {0} » dans la liste',libelle)
+                    :tr('Ignorer « {0} » : sort des comptes et du script winget',libelle);
   return '<button type="button" class="ign-btn'+(ignore?' actif':'')+'"'
     +' title="'+esc(titre)+'" aria-label="'+esc(titre)+'" aria-pressed="'+(ignore?'true':'false')+'"'
     +' onclick="basculerIgnore(\''+escJS(id)+'\',\''+escJS(libelle)+'\');event.stopPropagation()">'
@@ -2798,25 +2857,25 @@ function renderApps(){
     const reste=items.length-manquants.length;
     if(manquants.length){
       const avecW=manquants.filter(function(a){return a.w;}).length;
-      html+='<div class="sec-hdr first">'+manquants.length+' à installer'
+      html+='<div class="sec-hdr first">'+esc(tr('{0} à installer',manquants.length))
         +'<div class="sec-hdr-r">'
         +(avecW?'<button class="cat-winget" onclick="exportWingetJSON(true)" '
-          +'title="Format officiel winget import — idempotent et rejouable">'
-          +'⬇️ winget .json ('+avecW+')</button>':'')
+          +'title="'+esc(tr('Format officiel winget import — idempotent et rejouable'))+'">'
+          +esc(tr('⬇️ winget .json ({0})',avecW))+'</button>':'')
         +'</div></div>';
       manquants.forEach(function(a){html+=mkAppItem(a,etats);});
       if(!avecW){
-        html+='<div class="cmp-act">Aucun de ces logiciels n\'a d\'identifiant '
-          +'winget : chaque ligne porte un lien de recherche vers le site officiel.</div>';
+        html+='<div class="cmp-act">'
+          +esc(tr("Aucun de ces logiciels n'a d'identifiant winget : chaque ligne porte un lien de recherche vers le site officiel."))+'</div>';
       }
     }else{
-      html+='<div class="sec-hdr first">Rien à installer</div>'
-        +'<div class="cmp-act">Tout ce qui était sur le PC source est là.</div>';
+      html+='<div class="sec-hdr first">'+esc(tr('Rien à installer'))+'</div>'
+        +'<div class="cmp-act">'+esc(tr('Tout ce qui était sur le PC source est là.'))+'</div>';
     }
     if(reste>0){
       html+='<div class="voir-tout"><button type="button" class="sm-btn" '
-        +'onclick="basculerListeComplete()">Voir les '+items.length
-        +' logiciels relevés</button></div>';
+        +'onclick="basculerListeComplete()">'
+        +esc(tr('Voir les {0} logiciels relevés',items.length))+'</button></div>';
     }
     cont.innerHTML=html;
     updateSecProg('apps',visiblesDe('apps'));
@@ -2824,7 +2883,8 @@ function renderApps(){
   }
   if(etats&&listeComplete){
     html+='<div class="voir-tout"><button type="button" class="sm-btn" '
-      +'onclick="basculerListeComplete()">← Revenir à ce qui manque</button></div>';
+      +'onclick="basculerListeComplete()">'
+      +esc(tr('← Revenir à ce qui manque'))+'</button></div>';
   }
 
   // Une seule vue : groupee par categorie. Il y a eu quatre tris — categorie,
@@ -2846,7 +2906,7 @@ function renderApps(){
       // ne fait rien est pire que pas de bouton.
       const decidables=grp.filter(function(a){return !constates()[a.id];});
       const allDone=decidables.length>0&&decidables.every(function(a){return !!S.checked[a.id];});
-      html+='<div class="sec-hdr'+(first?' first':'')+'">'+esc(CATS[cat]||cat)+'<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+grp.length+'</span>'+(hasW?'<button class="cat-winget" onclick="copyCatWinget(\''+escJS(cat)+'\',event)">📋 winget</button>':'')+(decidables.length?'<button class="chk-all" onclick="checkAllCat(\''+escJS(cat)+'\',event)">'+(allDone?'Décocher tout':'Tout cocher')+'</button>':'')+'</div></div>';
+      html+='<div class="sec-hdr'+(first?' first':'')+'">'+esc(tr(CATS[cat]||cat))+'<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+grp.length+'</span>'+(hasW?'<button class="cat-winget" onclick="copyCatWinget(\''+escJS(cat)+'\',event)">📋 winget</button>':'')+(decidables.length?'<button class="chk-all" onclick="checkAllCat(\''+escJS(cat)+'\',event)">'+esc(allDone?tr('Décocher tout'):tr('Tout cocher'))+'</button>':'')+'</div></div>';
       grp.forEach(function(a){html+=mkAppItem(a,etats);});
       first=false;
     });
@@ -2910,7 +2970,7 @@ function mkAppItem(a,etats){
       +'<span class="lg-br" aria-hidden="true"></span>'
       +'<span class="lg-m">'+meta.join(' · ')+'</span>'
       +'<span class="lg-t">'+(ignore
-          ?'<span class="badge b-ignore" title="Écarté : ne compte plus et ne sort pas dans le script winget">ignoré</span>'
+          ?'<span class="badge b-ignore" title="'+esc(tr('Écarté : ne compte plus et ne sort pas dans le script winget'))+'">'+esc(tr('ignoré'))+'</span>'
           :badgeComparaison(a,etats))+'</span>'
       +mkBoutonIgnore(a.id,libelleDe(a),ignore)
       +'<button type="button" class="lg-plus" aria-expanded="'+ouvert+'" '
