@@ -72,6 +72,9 @@ jobs:
       - name: Ignorer un logiciel ou un périphérique
         run: node tests/test-ignorer.js
 
+      - name: Mécanique de traduction
+        run: node tests/test-langue.js
+
       - name: Archive de téléchargement
         run: node tests/test-archive.js
 
