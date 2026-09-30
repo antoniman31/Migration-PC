@@ -143,23 +143,55 @@ try {
     $rien = Join-Path $bac 'rien.txt'
     Set-Content -LiteralPath $rien -Value '' -NoNewline
     $exe = (Get-Process -Id $PID).Path
-    $p = Start-Process -FilePath $exe `
-        -ArgumentList @('-NoProfile', '-File', ('"' + (Join-Path $racine 'scripts/migration-pc.ps1') + '"')) `
-        -RedirectStandardOutput $jl -RedirectStandardInput $rien -NoNewWindow -PassThru
-    $fini = $p.WaitForExit(60000)
-    if (-not $fini) { $p.Kill() }
-    ok 'il ne reste pas bloque'      $fini $true
-    # -Encoding UTF8 : les scripts forcent leur sortie en UTF-8, donc le fichier
-    # de redirection en est. Relu sans le dire, Windows PowerShell 5.1 le prend
-    # pour de l'ANSI et « Par ou commencer » arrive en charabia — ce qui a fait
-    # tomber ce test des que le menu a pris ses accents.
-    $l = if (Test-Path -LiteralPath $jl) { Get-Content -LiteralPath $jl -Raw -Encoding UTF8 } else { '' }
-    ok 'il a liste ses actions'      ($l -match 'Ce PC est la SOURCE') $true
-    ok 'et les deux cotes'           ($l -match 'Ce PC est la CIBLE') $true
-    ok 'et le parcours complet'      ($l -match 'Par où commencer') $true
+
+    # LA LANGUE EST EPINGLEE, et ce test a servi a l'apprendre. Il lancait le
+    # menu sans rien preciser et cherchait « Ce PC est la SOURCE ». Le jour ou
+    # les scripts ont su parler anglais, le menu a suivi l'interface Windows du
+    # runner — anglaise — et les trois assertions sont tombees. Le menu avait
+    # raison, le test avait tort : demander du francais sans le demander n'est
+    # pas une verification, c'est une supposition sur la machine qui execute.
+    #
+    # Les deux langues sont donc exercees, et c'est le seul endroit du projet
+    # qui le fait sur un vrai Windows : ailleurs la traduction n'est verifiee
+    # que sous Linux, ou l'encodage de console ne se comporte pas pareil.
+    function Lancer-Menu {
+        param([string]$Langue)
+        $sortie = Join-Path $bac ("lanceur-$Langue.txt")
+        $proc = Start-Process -FilePath $exe `
+            -ArgumentList @('-NoProfile', '-File',
+                ('"' + (Join-Path $racine 'scripts/migration-pc.ps1') + '"'),
+                '-Langue', $Langue) `
+            -RedirectStandardOutput $sortie -RedirectStandardInput $rien -NoNewWindow -PassThru
+        $arrete = $proc.WaitForExit(60000)
+        if (-not $arrete) { $proc.Kill() }
+        # -Encoding UTF8 : les scripts forcent leur sortie en UTF-8, donc le
+        # fichier de redirection en est. Relu sans le dire, Windows PowerShell
+        # 5.1 le prend pour de l'ANSI et « Par ou commencer » arrive en
+        # charabia — ce qui a fait tomber ce test des que le menu a pris ses
+        # accents.
+        $texte = if (Test-Path -LiteralPath $sortie) {
+            Get-Content -LiteralPath $sortie -Raw -Encoding UTF8
+        } else { '' }
+        return @{ fini = $arrete; texte = $texte }
+    }
+
+    $fr = Lancer-Menu 'fr'
+    ok 'il ne reste pas bloque'      $fr.fini $true
+    ok 'il a liste ses actions'      ($fr.texte -match 'Ce PC est la SOURCE') $true
+    ok 'et les deux cotes'           ($fr.texte -match 'Ce PC est la CIBLE') $true
+    ok 'et le parcours complet'      ($fr.texte -match 'Par où commencer') $true
     # C'est tout l'interet d'avoir force l'UTF-8 : si les accents n'arrivaient
     # pas, ils arriveraient en « Ã¹ » ou en « ├¹ ».
-    ok 'les accents arrivent intacts' ($l -match 'Ã|├|Â') $false
+    ok 'les accents arrivent intacts' ($fr.texte -match 'Ã|├|Â') $false
+
+    $en = Lancer-Menu 'en'
+    ok 'en anglais il rend la main aussi' $en.fini $true
+    ok 'et il parle anglais'         ($en.texte -match 'This PC is the SOURCE') $true
+    ok 'les deux cotes aussi'        ($en.texte -match 'This PC is the TARGET') $true
+    ok 'et le parcours'              ($en.texte -match 'Where to start') $true
+    # Et il ne doit plus rester de francais : c'est ici, sur un vrai Windows,
+    # que « tr: missing operand » se serait vu du premier coup.
+    ok 'plus de francais en anglais' ($en.texte -match 'Ce PC est la|Que voulez-vous|Quitter') $false
 }
 finally {
     Remove-Item -LiteralPath $bac -Recurse -Force -ErrorAction SilentlyContinue
