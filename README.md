@@ -13,6 +13,12 @@ entièrement à votre charge.
 construction. Il s'ouvre depuis une clé USB sur un PC fraîchement installé, sans réseau.
 Les scripts sont facultatifs.
 
+La page existe en **français et en anglais**. Elle s'ouvre dans la langue du
+navigateur, et les boutons **FR** / **EN** en haut la changent ; le choix reste dans ce
+navigateur. Seule l'interface est traduite : les noms et les descriptions qui viennent
+d'un profil restent tels qu'ils sont écrits dans le profil, comme le nom d'un logiciel
+relevé sur la machine. Les scripts PowerShell, eux, parlent encore français.
+
 ## Aperçu
 
 Ces images se refabriquent par `node refaire-captures.js` : une capture ne casse
@@ -441,4 +447,4 @@ clé USB la page fonctionne mais ne s'installe pas, et elle n'en a pas besoin.
   détecter, et les vingt-sept familles retirées.
 - [FORMATS.md](FORMATS.md) — les quatre formats que la page importe, et comment écrire son
   propre profil.
-- [CONTRIBUER.md](CONTRIBUER.md) — les dix-huit suites de tests, la CI, la publication.
+- [CONTRIBUER.md](CONTRIBUER.md) — les vingt-quatre suites de tests, la CI, la publication.

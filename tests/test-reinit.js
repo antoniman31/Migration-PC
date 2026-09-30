@@ -23,7 +23,7 @@ async function ouvrirReglages(pg){
 
 (async()=>{
 const b=await chromium.launch(lancement);
-const pg=await (await b.newContext({viewport:{width:1200,height:900}})).newPage();
+const pg=await (await b.newContext({locale:'fr-FR',viewport:{width:1200,height:900}})).newPage();
 pg.on('pageerror',e=>console.log('ERREUR JS:',e.message));
 await pg.goto(HTML,{waitUntil:'networkidle'});
 const ouvrirPanneau=async()=>{

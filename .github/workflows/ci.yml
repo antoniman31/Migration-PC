@@ -117,6 +117,18 @@ jobs:
       - name: Configuration et affichage
         run: node tests/test-config.js
 
+      # Ce fichier existait sans etre lance : il a pourri pendant des semaines,
+      # cherchant une entree de menu et un onglet supprimes. Un test qui n'est
+      # pas dans cette liste ne garde rien.
+      - name: Scripts et chargement automatique
+        run: node tests/test-outils.js
+
+      # Ce test cherche ce qui ne doit pas etre la : du francais sur la page
+      # anglaise. Tant qu'il passe, la traduction est finie ; le jour ou un
+      # texte est ajoute sans passer par tr(), il le dit.
+      - name: Aucun francais sur la page anglaise
+        run: node tests/test-anglais.js
+
   # Tout le job ci-dessus tourne sur Linux, contre des donnees fabriquees a la
   # main : cela verifie le raisonnement, jamais Windows. Le registre,
   # Get-AppxPackage, WMI et l'encodage d'une console reelle n'y sont jamais

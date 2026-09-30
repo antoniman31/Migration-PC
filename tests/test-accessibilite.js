@@ -34,7 +34,7 @@ const b=await chromium.launch(lancement);
 
 // ─────────── contraste et sémantique, dans les deux thèmes ───────────
 for(const theme of ['light','dark']){
-  const pg=await (await b.newContext({viewport:{width:1280,height:900}})).newPage();
+  const pg=await (await b.newContext({locale:'fr-FR',viewport:{width:1280,height:900}})).newPage();
   await pg.goto(HTML,{waitUntil:'networkidle'});
   await pg.evaluate(t=>document.documentElement.setAttribute('data-theme',t),theme);
   await pg.click('#tab-apps'); await pg.waitForTimeout(200);
@@ -103,7 +103,7 @@ for(const theme of ['light','dark']){
 
 // ─────────── clavier et focus ───────────
 {
-const pg=await (await b.newContext({viewport:{width:1280,height:900}})).newPage();
+const pg=await (await b.newContext({locale:'fr-FR',viewport:{width:1280,height:900}})).newPage();
 pg.on('pageerror',e=>{console.log(' FAIL erreur JS → '+e.message);ko++;});
 await pg.goto(HTML,{waitUntil:'networkidle'});
 // La checklist livrée est vide : sans l'exemple garni il n'y a aucune case à
@@ -173,7 +173,7 @@ await pg.close();
 
 // ─────────── annulation et mouvement réduit ───────────
 {
-const pg=await (await b.newContext({viewport:{width:1280,height:900}})).newPage();
+const pg=await (await b.newContext({locale:'fr-FR',viewport:{width:1280,height:900}})).newPage();
 pg.on('pageerror',e=>{console.log(' FAIL erreur JS → '+e.message);ko++;});
 const dialogues=[];pg.on('dialog',d=>{dialogues.push(d.type());d.accept();});
 await pg.goto(HTML,{waitUntil:'networkidle'});
@@ -223,7 +223,7 @@ ok('progression restaurée',await pg.evaluate(()=>!!S.checked.a1),true);
 ok('profil mémorisé restauré',await pg.evaluate(()=>JSON.parse(localStorage.getItem('mpc_profil_v1')).apps.length),avantApps);
 
 console.log('\n--- mouvement réduit ---');
-const ctx2=await b.newContext({viewport:{width:1280,height:900},reducedMotion:'reduce'});
+const ctx2=await b.newContext({locale:'fr-FR',viewport:{width:1280,height:900},reducedMotion:'reduce'});
 const pg2=await ctx2.newPage();
 await pg2.goto(HTML,{waitUntil:'networkidle'});
 const m=await pg2.evaluate(()=>{
@@ -237,7 +237,7 @@ ok('transitions coupées',parseFloat(m.transition)<0.05,true);
 ok('animations coupées',parseFloat(m.animation)<0.05,true);
 
 // et sans le reglage, les animations restent
-const pg3=await (await b.newContext({viewport:{width:1280,height:900}})).newPage();
+const pg3=await (await b.newContext({locale:'fr-FR',viewport:{width:1280,height:900}})).newPage();
 await pg3.goto(HTML,{waitUntil:'networkidle'});
 const n=await pg3.evaluate(()=>getComputedStyle(document.querySelector('.gp-bar-fill')).transitionDuration);
 ok('transitions conservées par défaut',parseFloat(n)>0.1,true);

@@ -30,7 +30,8 @@ npm run test:archive              # contenu de l'archive téléchargeable
 navigateur demandent Chromium (`npm install` le fournit via Playwright), les suites
 PowerShell demandent `pwsh`.
 
-Dix-huit suites, dans l'ordre où la CI les lance.
+Vingt-quatre suites. Vingt-trois tournent dans le job Linux, dans l'ordre où la CI les
+lance ; `tests/test-windows-reel.ps1` n'a de sens que dans le job Windows.
 
 ### Ce que seul un vrai Windows peut dire
 
@@ -94,6 +95,18 @@ puisque sa position dans la liste bouge d'un scan à l'autre ; que « Tout déco
 lignes écartées et « Tout effacer » les enlève ; et que l'annulation les rende — ce dernier
 point parce que le bandeau promet une annulation, et qu'un instantané incomplet la rendrait
 menteuse, comme ce fut le cas pour la configuration matérielle.
+
+`tests/test-langue.js` vérifie la mécanique de traduction, et `tests/test-anglais.js`
+vérifie qu'elle a été appliquée partout. Le second est écrit à l'envers des autres : il
+cherche ce qui **ne doit pas** être là. Un test qui vérifie la présence de traductions se
+satisfait de la première ; un test qui refuse le français ne passe que quand il n'en reste
+plus. Il a quatre détections, parce qu'aucune ne suffit seule — les accents, une liste de
+mots, les clés de la table cherchées telles quelles, et la comparaison ligne à ligne de la
+page française avec la page anglaise. Les trois premières dépendent de quelque chose écrit
+à la main, et la deuxième a laissé passer « Passer » : pas d'accent, pas dans la liste. La
+quatrième ne dépend de rien et l'a trouvé. Ce qu'aucune des quatre ne voit est écrit en
+tête du fichier : un intitulé d'interface dont le texte est exactement celui d'une valeur
+du profil est effacé des deux côtés par le retrait du profil.
 
 `tests/cles-normalisation.json` est un contrat partagé, et il mérite une explication. La
 liste de ce qui manque est calculée **deux fois** : par la page, en JavaScript, pour
@@ -178,7 +191,7 @@ du lanceur arrivent intacts.
 
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les dix-huit suites à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les vingt-trois suites Linux à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 

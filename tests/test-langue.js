@@ -54,43 +54,58 @@ function ok(label,a,b){
   if(!bon)ko++;
 }
 
-console.log('--- la table est coherente ---');
-const T=G('TEXTES');
-ok('les deux langues existent',Object.keys(T).sort().join(','),'en,fr');
-const clesFr=Object.keys(T.fr).sort(), clesEn=Object.keys(T.en).sort();
-// Le francais est la reference : chaque cle francaise doit avoir sa traduction.
-const sansTrad=clesFr.filter(c=>T.en[c]===undefined);
-ok('chaque cle francaise est traduite',sansTrad.join(', '),'');
-// Et l'inverse : une cle anglaise sans equivalent francais est une cle morte,
-// que plus rien n'appelle.
-const orphelines=clesEn.filter(c=>T.fr[c]===undefined);
-ok('aucune cle anglaise orpheline',orphelines.join(', '),'');
-ok('la table n\'est pas vide',clesFr.length>0,true);
-// Deux traductions identiques passent parfois — « PWA », un nom propre — mais
-// une majorite identique voudrait dire que la traduction n'a pas eu lieu.
-const identiques=clesFr.filter(c=>T.fr[c]===T.en[c]);
-ok('la plupart des textes diffferent',identiques.length<clesFr.length/2,true);
+console.log('--- la table et le code se repondent ---');
+// Le texte francais EST la cle : il n'y a donc pas de parite de cles a verifier,
+// mais quelque chose de plus utile. Une entree anglaise dont le francais
+// n'apparait nulle part dans le code est ORPHELINE — signe qu'on a reformule le
+// francais sans toucher a sa traduction. C'est le seul risque reel de cette
+// methode, et c'est ce test qui le tient.
+const TR=G('TRADUCTIONS');
+ok('la table anglaise existe',typeof TR.en,'object');
+const clesEn=Object.keys(TR.en);
+ok('elle n\'est pas vide',clesEn.length>0,true);
 
-console.log('\n--- t() rend le bon texte ---');
-const t=G('t');
+const brut=fs.readFileSync(path.join(racine,'index.html'),'utf8');
+const debutTable=brut.indexOf('const TRADUCTIONS=');
+const finTable=brut.indexOf('\n};',debutTable);
+if(debutTable<0||finTable<0)throw new Error('table de traductions introuvable');
+// LA TABLE EST EXCLUE DE LA RECHERCHE. Sans cette coupe, chaque cle se trouvait
+// elle-meme dans la table, et le controle des orphelines ne prouvait rien : il a
+// laisse passer neuf cles de categories fausses, ecrites sans l'emoji que portent
+// les vrais libelles, en les declarant presentes dans le code.
+const source=brut.slice(0,debutTable)+brut.slice(finTable);
+ok('la table est exclue de la recherche',source.indexOf('const TRADUCTIONS=')<0,true);
+// On cherche la cle telle qu'elle apparait dans le code : entre apostrophes
+// simples, ou comme contenu d'un noeud marque data-t. Une cle absente des deux
+// est orpheline.
+const orphelines=clesEn.filter(function(k){
+  if(source.indexOf("'"+k.replace(/'/g,"\\'")+"'")>=0)return false;
+  if(source.indexOf('>'+k+'<')>=0)return false;
+  if(source.indexOf('"'+k+'"')>=0)return false;
+  return true;
+});
+ok('aucune traduction orpheline',orphelines.slice(0,5).join(' | '),'');
+// Une traduction identique au francais passe parfois — un nom propre — mais une
+// majorite identique voudrait dire que la traduction n'a pas eu lieu.
+const identiques=clesEn.filter(k=>TR.en[k]===k);
+ok('la plupart des textes different',identiques.length<clesEn.length/2,true);
+
+console.log('\n--- tr() rend le bon texte ---');
+const tr=G('tr');
 G('LANG="fr";');
-ok('en francais',t('onglet.apps'),T.fr['onglet.apps']);
+ok('en francais, le texte passe tel quel',tr('Logiciels'),'Logiciels');
 G('LANG="en";');
-ok('en anglais',t('onglet.apps'),T.en['onglet.apps']);
-// Une cle inconnue rend la cle : visible, donc reperable, et jamais « undefined ».
-ok('une cle inconnue rend la cle',t('cle.qui.n.existe.pas'),'cle.qui.n.existe.pas');
-// Une cle presente en francais mais pas en anglais retombe sur le francais :
-// une page a moitie traduite reste utilisable.
-vm.runInContext('TEXTES.fr["test.repli"]="texte francais";',ctx);
-ok('repli sur le francais',t('test.repli'),'texte francais');
-// Les nombres et les noms se placent differemment d'une langue a l'autre : on
-// substitue plutot que de concatener.
-vm.runInContext('TEXTES.fr["test.trous"]="{0} sur {1}";',ctx);
+ok('en anglais, il est traduit',tr('Logiciels'),TR.en['Logiciels']);
+// Un texte sans traduction rend le francais : une page a moitie traduite reste
+// utilisable, et c'est le test qui signale l'oubli.
+ok('sans traduction, le francais',tr('Texte jamais traduit'),'Texte jamais traduit');
+// Les nombres et les noms ne se placent pas au meme endroit d'une langue a
+// l'autre : on substitue plutot que de concatener.
+vm.runInContext('TRADUCTIONS.en["{0} sur {1}"]="{0} of {1}";',ctx);
+ok('les trous sont remplis, en anglais',tr('{0} sur {1}',3,7),'3 of 7');
 G('LANG="fr";');
-ok('les trous sont remplis',t('test.trous',3,7),'3 sur 7');
-ok('un trou repete l\'est partout',
-  (function(){vm.runInContext('TEXTES.fr["test.deux"]="{0}, encore {0}";',ctx);
-   return t('test.deux','x');})(),'x, encore x');
+ok('et en francais aussi',tr('{0} sur {1}',3,7),'3 sur 7');
+ok('un trou repete l\'est partout',tr('{0}, encore {0}','x'),'x, encore x');
 
 console.log('\n--- le choix se memorise ---');
 G('setLangue("en");');

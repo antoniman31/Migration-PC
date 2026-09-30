@@ -20,6 +20,8 @@
     "test:reconciliation": "node tests/test-reconciliation.js",
     "test:ignorer": "node tests/test-ignorer.js",
     "test:langue": "node tests/test-langue.js",
+    "test:outils": "node tests/test-outils.js",
+    "test:anglais": "node tests/test-anglais.js",
     "test:archive": "node tests/test-archive.js"
   },
   "devDependencies": {

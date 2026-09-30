@@ -14,7 +14,7 @@ if(process.env.CHROME)lancement.executablePath=process.env.CHROME;
 
 (async()=>{
 const b=await chromium.launch(lancement);
-const pg=await (await b.newContext()).newPage();
+const pg=await (await b.newContext({locale:'fr-FR'})).newPage();
 const errs=[];pg.on('pageerror',e=>errs.push(e.message));
 let ko=0;const ok=(l,a,c)=>{const p=(c===undefined?!!a:a===c);console.log((p?'  ok  ':' FAIL ')+l+' → '+JSON.stringify(a)+(p?'':' (attendu '+JSON.stringify(c)+')'));if(!p)ko++;};
 
@@ -53,10 +53,14 @@ ok('un lanceur a double-cliquer est propose',
 ok('le point d\'entree vient en tete',/\.bat$/.test(proposes[0]),true);
 ok('la bibliothèque partagée aussi',proposes.indexOf('scripts/lib-detection.ps1')>=0,true);
 
-console.log('\n--- le bloc s\'ouvre depuis le menu ---');
+console.log('\n--- le bloc s\'ouvre depuis le bandeau de la page vide ---');
 ok('fermé au départ',await pg.isVisible('#outils'),false);
-await pg.click('#menu-btn');await pg.waitForTimeout(150);
-await pg.getByRole('menuitem',{name:/Les scripts pour Windows/}).click();
+// La liste des logiciels arrive vide : c'est la que le bandeau propose les
+// scripts, et c'est le seul endroit ou le bouton vit depuis que le menu a
+// perdu son doublon.
+const boutonScripts=pg.locator('.onglet-vide-act button',{hasText:'scripts pour Windows'});
+ok('le bandeau le propose',await boutonScripts.count()>0,true);
+await boutonScripts.first().click();
 await pg.waitForTimeout(300);
 ok('ouvert',await pg.isVisible('#outils'),true);
 // Un seul lien, vers l'archive. Proposer les fichiers un par un revenait a
@@ -91,7 +95,7 @@ const scan={type:'inventaire-migration-pc',genere:'2026-09-24T11:00:00',
 fs.writeFileSync(path.join(cle,'resultat-scan.js'),
   'window.MIGRATION_PC_SCAN='+JSON.stringify(scan)+';\n');
 
-const pg2=await (await b.newContext()).newPage();
+const pg2=await (await b.newContext({locale:'fr-FR'})).newPage();
 const errs2=[];pg2.on('pageerror',e=>errs2.push(e.message));
 await pg2.goto('file://'+path.join(cle,'index.html'),{waitUntil:'networkidle'});
 await pg2.waitForTimeout(500);
@@ -127,7 +131,7 @@ ok('et il se rejoue',await pg2.evaluate(()=>APPS_DATA.length),scan.apps.length);
 console.log('\n--- sans fichier à côté, rien ne change ---');
 const vide=fs.mkdtempSync(path.join(os.tmpdir(),'cle-'));
 fs.copyFileSync(path.join(racine,'index.html'),path.join(vide,'index.html'));
-const pg3=await (await b.newContext()).newPage();
+const pg3=await (await b.newContext({locale:'fr-FR'})).newPage();
 const errs3=[];pg3.on('pageerror',e=>errs3.push(e.message));
 await pg3.goto('file://'+path.join(vide,'index.html'),{waitUntil:'networkidle'});
 await pg3.waitForTimeout(400);
@@ -145,11 +149,13 @@ const casse=fs.mkdtempSync(path.join(os.tmpdir(),'cle-'));
 fs.copyFileSync(path.join(racine,'index.html'),path.join(casse,'index.html'));
 fs.writeFileSync(path.join(casse,'resultat-scan.js'),
   'window.MIGRATION_PC_SCAN={type:"inventaire-migration-pc",apps:"pas un tableau"};\n');
-const pg4=await (await b.newContext()).newPage();
+const pg4=await (await b.newContext({locale:'fr-FR'})).newPage();
 await pg4.goto('file://'+path.join(casse,'index.html'),{waitUntil:'networkidle'});
 await pg4.waitForTimeout(400);
-ok('la checklist s\'affiche quand même',
-  (await pg4.$$('#list-npc .item')).length>0,true);
+ok('la page s\'affiche quand même',await pg4.isVisible('#panel-apps'),true);
+ok('et rien ne signale une panne',await pg4.isVisible('#panne'),false);
+ok('le bandeau de la page vide explique quoi faire',
+  (await pg4.textContent('#list-apps')).indexOf('Migration PC.bat')>=0,true);
 
 ok('aucune erreur JS ailleurs',errs.concat(errs2).length?errs.concat(errs2)[0]:'aucune','aucune');
 await b.close();

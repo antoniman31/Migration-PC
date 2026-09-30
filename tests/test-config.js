@@ -24,7 +24,7 @@ async function deplierApps(pg){
 
 (async()=>{
 const b=await chromium.launch(lancement);
-const ctx=await b.newContext({viewport:{width:1400,height:900}});
+const ctx=await b.newContext({locale:'fr-FR',viewport:{width:1400,height:900}});
 const pg=await ctx.newPage();
 const errs=[];pg.on('pageerror',e=>errs.push(e.message));
 await pg.goto(HTML,{waitUntil:'networkidle'});

@@ -302,7 +302,8 @@ ok('avec le retour vers ce qui manque',/Revenir à ce qui manque/.test(htmlApps)
 // répond pas au clic sans le dire passe pour un défaut.
 ok('la ligne constatée est marquée',/lg-constate/.test(htmlApps),true);
 ok('et annoncée désactivée',/aria-disabled="true"/.test(htmlApps),true);
-ok('le bandeau explique la règle',/r[ée]gl[ée]e?s? d.office/.test(htmlApps),true);
+ok('le bandeau explique la règle',
+  /r[ée]gl[ée]e?s? d(&#39;|&#039;|')office/.test(htmlApps),true);
 // Une ligne constatée ne porte pas de gestionnaire de bascule : c'est ce qui
 // garantit qu'un clic ne peut pas décocher un fait. Vérifié sur le HTML plutôt
 // que par un sélecteur : le DOM de ces tests est un mannequin, son

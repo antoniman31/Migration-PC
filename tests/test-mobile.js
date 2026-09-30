@@ -33,7 +33,7 @@ const constats=[];
 
 for(const ec of ECRANS){
   for(const theme of THEMES){
-    const ctx=await b.newContext({viewport:{width:ec.largeur,height:ec.hauteur},hasTouch:true});
+    const ctx=await b.newContext({locale:'fr-FR',viewport:{width:ec.largeur,height:ec.hauteur},hasTouch:true});
     const pg=await ctx.newPage();
     const erreurs=[];
     pg.on('pageerror',e=>erreurs.push(e.message));

@@ -33,7 +33,7 @@ const base='http://127.0.0.1:'+serveur.address().port;
 const lancement={args:['--no-sandbox']};
 if(process.env.CHROME)lancement.executablePath=process.env.CHROME;
 const b=await chromium.launch(lancement);
-const ctx=await b.newContext();
+const ctx=await b.newContext({locale:'fr-FR'});
 const pg=await ctx.newPage();
 
 console.log('--- manifeste ---');
@@ -79,7 +79,7 @@ ok('titre présent hors ligne',(await pg.textContent('#profil-titre')).length>0,
 await ctx.setOffline(false);
 
 console.log('\n--- file:// : la page reste autonome ---');
-const pg2=await (await b.newContext()).newPage();
+const pg2=await (await b.newContext({locale:'fr-FR'})).newPage();
 const erreurs=[];
 pg2.on('pageerror',e=>erreurs.push(e.message));
 await pg2.goto('file://'+path.join(racine,'index.html'),{waitUntil:'networkidle'});

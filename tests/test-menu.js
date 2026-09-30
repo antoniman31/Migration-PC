@@ -13,7 +13,7 @@ if(process.env.CHROME)lancement.executablePath=process.env.CHROME;
 
 (async()=>{
 const b=await chromium.launch(lancement);
-const ctx=await b.newContext({viewport:{width:1200,height:900},permissions:[]});
+const ctx=await b.newContext({locale:'fr-FR',viewport:{width:1200,height:900},permissions:[]});
 const pg=await ctx.newPage();
 pg.on('pageerror',e=>console.log('ERREUR JS:',e.message));
 await pg.goto(HTML,{waitUntil:'networkidle'});
