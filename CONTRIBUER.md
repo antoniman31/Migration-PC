@@ -30,7 +30,7 @@ npm run test:archive              # contenu de l'archive téléchargeable
 navigateur demandent Chromium (`npm install` le fournit via Playwright), les suites
 PowerShell demandent `pwsh`.
 
-Vingt-quatre suites. Vingt-trois tournent dans le job Linux, dans l'ordre où la CI les
+Vingt-cinq suites. Vingt-quatre tournent dans le job Linux, dans l'ordre où la CI les
 lance ; `tests/test-windows-reel.ps1` n'a de sens que dans le job Windows.
 
 ### Ce que seul un vrai Windows peut dire
@@ -123,6 +123,25 @@ Ce qu'aucun des contrôles ne voit est écrit en tête du fichier : un intitulé
 dont le texte est exactement celui d'une valeur du profil sans entrée dans la table est
 effacé des deux côtés par le retrait.
 
+`scripts/lib-langue.ps1` porte la même mécanique que la page, volontairement : la clé
+est la phrase française, donc une clé absente affiche du français et jamais
+`MENU_TITRE_2` à quelqu'un qui réinstalle son PC. `tests/test-langue-ps.ps1` le vérifie
+comme `test-anglais.js` vérifie la page — en refusant le français, pas en cherchant des
+traductions.
+
+**Ce qui ne passe jamais par `Tr`** : tout ce qui part dans le fichier JSON.
+`lib-detection.ps1` y écrit des noms de catégories et de logiciels que la page relit et
+normalise, et `tests/cles-normalisation.json` est le contrat partagé entre les deux. Les
+traduire casserait la réconciliation sans que rien ne le dise à l'écran. Seul ce qu'un
+humain lit dans la console est traduit.
+
+Deux pièges PowerShell valent d'être connus, parce que les deux ont mordu ici. Les noms
+de variables **ignorent la casse** : un `$marge` local est le même objet qu'un paramètre
+`$Marge` typé `[int]`, et y ranger des espaces transforme la concaténation suivante en
+addition. Et un tableau d'un seul élément **se déroule** dans un test booléen, donc
+`@(0)` est faux : `if ($Trous)` laissait `{0} entrees` à l'écran, et seulement quand le
+compte valait zéro — le cas le plus fréquent, donc le plus visible.
+
 `tests/cles-normalisation.json` est un contrat partagé, et il mérite une explication. La
 liste de ce qui manque est calculée **deux fois** : par la page, en JavaScript, pour
 l'afficher ; et par le scan de la cible, en PowerShell, pour écrire le
@@ -206,7 +225,7 @@ du lanceur arrivent intacts.
 
 ### Intégration continue
 
-`.github/workflows/ci.yml` lance les vingt-trois suites Linux à chaque push et sur chaque pull
+`.github/workflows/ci.yml` lance les vingt-quatre suites Linux à chaque push et sur chaque pull
 request. La publication sur GitHub Pages dépend de ce job : un test rouge, et rien n'est
 mis en ligne.
 

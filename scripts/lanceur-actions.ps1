@@ -24,6 +24,13 @@ function Format-Argument {
     return '"' + ($Valeur -replace '"', '""') + '"'
 }
 
+# La table de traduction et la fonction Texte. Charge sans condition : un garde
+# « la fonction existe-t-elle deja ? » se fait tromper par une commande du
+# systeme qui porte le meme nom, et c'est exactement ce qui est arrive avec le
+# tr d'Unix. Recharger ne coute rien, et lib-langue.ps1 garde la langue deja
+# choisie.
+. (Join-Path $PSScriptRoot 'lib-langue.ps1')
+
 function Get-LigneCommande {
     param([string[]]$Arguments)
     return @($Arguments | ForEach-Object { Format-Argument $_ })
@@ -80,7 +87,7 @@ function Get-RoleSuggere {
     # Rend toujours un objet, jamais $null : le menu affiche la raison, parce
     # qu'une deduction qu'on ne peut pas verifier ne vaut pas mieux qu'une
     # question posee franchement.
-    $rien = [pscustomobject]@{ role = ''; raison = "Aucun instantané sur la clé : ce PC est probablement la SOURCE." }
+    $rien = [pscustomobject]@{ role = ''; raison = (Texte "Aucun instantané sur la clé : ce PC est probablement la SOURCE.") }
     if ($null -eq $Instantane) { return $rien }
 
     $machine   = if ($Instantane.PSObject.Properties['machine']) { $Instantane.machine } else { $null }
@@ -99,12 +106,12 @@ function Get-RoleSuggere {
         if ($serieSrc -ne $serieLoc) {
             return [pscustomobject]@{
                 role   = 'cible'
-                raison = "La clé porte l'instantané de « $quoi », qui n'est pas cette machine : ce PC est la CIBLE."
+                raison = (Texte "La clé porte l'instantané de « {0} », qui n'est pas cette machine : ce PC est la CIBLE." $quoi)
             }
         }
         return [pscustomobject]@{
             role   = ''
-            raison = "L'instantané de la clé décrit CETTE machine. Si vous venez de la réinstaller, c'est la CIBLE ; si vous refaites le relevé avant de formater, c'est la SOURCE."
+            raison = (Texte "L'instantané de la clé décrit CETTE machine. Si vous venez de la réinstaller, c'est la CIBLE ; si vous refaites le relevé avant de formater, c'est la SOURCE.")
         }
     }
 
@@ -112,18 +119,18 @@ function Get-RoleSuggere {
         if ($nomSrc -ne $nomLoc) {
             return [pscustomobject]@{
                 role   = 'cible'
-                raison = "La clé porte l'instantané de « $quoi » et ce PC s'appelle « $nomLoc » : ce PC est la CIBLE. (Numéro de série indisponible, la déduction vaut ce que valent les noms de machine.)"
+                raison = (Texte "La clé porte l'instantané de « {0} » et ce PC s'appelle « {1} » : ce PC est la CIBLE. (Numéro de série indisponible, la déduction vaut ce que valent les noms de machine.)" $quoi $nomLoc)
             }
         }
         return [pscustomobject]@{
             role   = ''
-            raison = "L'instantané de la clé porte le même nom de machine que celui-ci, sans numéro de série pour trancher."
+            raison = (Texte "L'instantané de la clé porte le même nom de machine que celui-ci, sans numéro de série pour trancher.")
         }
     }
 
     return [pscustomobject]@{
         role   = ''
-        raison = "La clé porte un instantané, mais rien ne permet de dire de quelle machine : ni numéro de série, ni nom."
+        raison = (Texte "La clé porte un instantané, mais rien ne permet de dire de quelle machine : ni numéro de série, ni nom.")
     }
 }
 
@@ -133,57 +140,57 @@ function Get-ActionsMigration {
     $toutes = @(
         [ordered]@{
             id      = 'source'
-            titre   = "Ce PC est la SOURCE (celui que je quitte)"
-            detail  = "Fige l'etat de cette machine : les logiciels installes et les pilotes en place. C'est l'instantane qu'on rejouera ailleurs."
+            titre   = (Texte "Ce PC est la SOURCE (celui que je quitte)")
+            detail  = (Texte "Fige l'etat de cette machine : les logiciels installes et les pilotes en place. C'est l'instantane qu'on rejouera ailleurs.")
             script  = 'scan-pc.ps1'
             arguments = @('-Role', 'source')
             requis  = @('scan-pc.ps1', 'lib-detection.ps1')
-            duree   = "1 a 3 minutes"
+            duree   = (Texte "1 a 3 minutes")
             suite   = @(
-                "La checklist s'ouvre déjà remplie de vos logiciels.",
-                "Onglet « Logiciels » : décochez ce que vous ne voulez pas reprendre.",
-                "Posez l'instantané et cette page sur la clé, et emportez-la."
+                (Texte "La checklist s'ouvre déjà remplie de vos logiciels."),
+                (Texte "Onglet « Logiciels » : décochez ce que vous ne voulez pas reprendre."),
+                (Texte "Posez l'instantané et cette page sur la clé, et emportez-la.")
             )
         },
         [ordered]@{
             id      = 'cible'
-            titre   = "Ce PC est la CIBLE (le neuf, ou celui que je viens de reinstaller)"
-            detail  = "Refait le meme releve ici, pour le comparer a l'instantane de la source. La page dira ce qui est arrive et ce qui manque encore."
+            titre   = (Texte "Ce PC est la CIBLE (le neuf, ou celui que je viens de reinstaller)")
+            detail  = (Texte "Refait le meme releve ici, pour le comparer a l'instantane de la source. La page dira ce qui est arrive et ce qui manque encore.")
             script  = 'scan-pc.ps1'
             arguments = @('-Role', 'cible')
             requis  = @('scan-pc.ps1', 'lib-detection.ps1')
-            duree   = "1 a 3 minutes"
+            duree   = (Texte "1 a 3 minutes")
             suite   = @(
-                "Onglet « Logiciels » : le compte de ce qui est arrivé, et ce qui manque.",
-                "Chaque manquant porte sa commande d'installation.",
-                "Onglet « Pilotes » : les périphériques sans pilote, et où chercher.",
-                "Importez l'instantané de la source si la page ne l'a pas encore."
+                (Texte "Onglet « Logiciels » : le compte de ce qui est arrivé, et ce qui manque."),
+                (Texte "Chaque manquant porte sa commande d'installation."),
+                (Texte "Onglet « Pilotes » : les périphériques sans pilote, et où chercher."),
+                (Texte "Importez l'instantané de la source si la page ne l'a pas encore.")
             )
         },
         [ordered]@{
             id      = 'installer'
-            titre   = "Installer ce qui manque"
-            detail  = "Joue « winget import » sur la liste calculee par le scan de la cible. La liste est montree, et rien ne part sans confirmation."
+            titre   = (Texte "Installer ce qui manque")
+            detail  = (Texte "Joue « winget import » sur la liste calculee par le scan de la cible. La liste est montree, et rien ne part sans confirmation.")
             requis  = @('..\winget-restant.json')
-            duree   = "variable : ca telecharge"
+            duree   = (Texte "variable : ca telecharge")
             winget  = $true
             suite   = @(
-                "Onglet « Logiciels » : relancez le scan CIBLE pour voir le resultat.",
-                "Ce que winget n'a pas pu installer reste marque « manque »."
+                (Texte "Onglet « Logiciels » : relancez le scan CIBLE pour voir le resultat."),
+                (Texte "Ce que winget n'a pas pu installer reste marque « manque ».")
             )
         },
         [ordered]@{
             id      = 'checklist'
-            titre   = "Ouvrir la checklist"
-            detail  = "La page seule, sans rien scanner."
+            titre   = (Texte "Ouvrir la checklist")
+            detail  = (Texte "La page seule, sans rien scanner.")
             # La page est a la racine du dossier, les scripts dans scripts\ :
             # on la designe depuis la ou ils vivent.
             fichier = '..\index.html'
             requis  = @('..\index.html')
-            duree   = "immediat"
+            duree   = (Texte "immediat")
             suite   = @(
-                "Sans scan, la page s'ouvre sur un profil d'exemple.",
-                "« Importer » accepte un instantané déjà produit, ou un export winget."
+                (Texte "Sans scan, la page s'ouvre sur un profil d'exemple."),
+                (Texte "« Importer » accepte un instantané déjà produit, ou un export winget.")
             )
         }
     ) | ForEach-Object {
@@ -212,28 +219,28 @@ function Get-ActionsMigration {
 
 # Le parcours complet, pour qui ouvre le lanceur sans savoir par ou commencer.
 function Get-Parcours {
-    @(
-        "  D'un PC vers un autre — la clé USB fait le voyage",
-        "    1. Clé branchée sur la SOURCE : scanner. La page s'ouvre remplie",
-        "       de vos logiciels, et l'instantané reste sur la clé.",
-        "       Le scan LISTE, il ne copie rien. Vos fichiers personnels,",
-        "       c'est à vous de les sauvegarder — ce programme ne s'en occupe pas.",
-        "    2. Débranchez la clé et branchez-la sur la CIBLE.",
-        "    3. Scanner de nouveau, en CIBLE. La page compare les deux toute",
-        "       seule et dit ce qui manque encore : rien à importer à la main.",
-        "    4. Installez ce qui manque, et réglez les pilotes signalés.",
-        "",
-        "  Vous réinstallez Windows sur CETTE machine",
-        "    Le meme parcours : cette machine est la source avant le formatage,",
-        "    et la cible apres. C'est le meme script des deux cotes.",
-        "    1. Scanner en SOURCE d'abord : apres le formatage, il n'y a plus rien.",
-        "       Gardez la clé hors de la machine pendant le formatage.",
-        "    2. Sauvegardez vos fichiers AVANT de formater. Après, il est trop tard.",
-        "    3. Après réinstallation : rebranchez la clé, scanner en CIBLE.",
-        "",
-        "  Vous gardez les deux PC",
-        "    Même chose, mais ne déliez rien sur l'ancien : il reste en service."
-    )
+    # LES PHRASES SONT ENTIERES ET L'HABILLAGE EST CALCULE. Elles etaient
+    # coupees a la main en fragments de ligne — « La page s'ouvre remplie »,
+    # puis « de vos logiciels, et l'instantane reste sur la cle ». Une coupe
+    # faite pour le francais ne survit pas a la traduction : chaque fragment
+    # aurait ete traduit separement, et l'anglais aurait ete du charabia. La
+    # coupe se refait donc a l'affichage, dans la langue affichee.
+    $l = @()
+    $l += Format-Paragraphe (Texte "D'un PC vers un autre — la clé USB fait le voyage") 2
+    $l += Format-Paragraphe (Texte "1. Clé branchée sur la SOURCE : scanner. La page s'ouvre remplie de vos logiciels, et l'instantané reste sur la clé. Le scan LISTE, il ne copie rien. Vos fichiers personnels, c'est à vous de les sauvegarder — ce programme ne s'en occupe pas.") 4 7
+    $l += Format-Paragraphe (Texte "2. Débranchez la clé et branchez-la sur la CIBLE.") 4 7
+    $l += Format-Paragraphe (Texte "3. Scanner de nouveau, en CIBLE. La page compare les deux toute seule et dit ce qui manque encore : rien à importer à la main.") 4 7
+    $l += Format-Paragraphe (Texte "4. Installez ce qui manque, et réglez les pilotes signalés.") 4 7
+    $l += ""
+    $l += Format-Paragraphe (Texte "Vous réinstallez Windows sur CETTE machine") 2
+    $l += Format-Paragraphe (Texte "Le même parcours : cette machine est la source avant le formatage, et la cible après. C'est le même script des deux côtés.") 4
+    $l += Format-Paragraphe (Texte "1. Scanner en SOURCE d'abord : après le formatage, il n'y a plus rien. Gardez la clé hors de la machine pendant le formatage.") 4 7
+    $l += Format-Paragraphe (Texte "2. Sauvegardez vos fichiers AVANT de formater. Après, il est trop tard.") 4 7
+    $l += Format-Paragraphe (Texte "3. Après réinstallation : rebranchez la clé, scanner en CIBLE.") 4 7
+    $l += ""
+    $l += Format-Paragraphe (Texte "Vous gardez les deux PC") 2
+    $l += Format-Paragraphe (Texte "Même chose, mais ne déliez rien sur l'ancien : il reste en service.") 4
+    return $l
 }
 
 # ------------------------------------------------ installer ce qui manque
@@ -267,30 +274,43 @@ function Read-WingetImport {
     return @($ids)
 }
 
-# Le mot a taper. En francais et sans ambiguite : « o », « y » ou Entree se
-# tapent par reflexe, et ce qui suit installe des logiciels.
+# Le mot a taper, sans ambiguite : « o », « y » ou Entree se tapent par
+# reflexe, et ce qui suit installe des logiciels.
+#
+# Il s'affiche dans la langue de l'interface, et les DEUX mots sont acceptes.
+# N'accepter que le mot traduit enfermerait dehors quelqu'un qui a lu la
+# procedure en francais et tape « INSTALLER » sur une console anglaise. Pour
+# une action qui installe des logiciels, une saisie refusee sans raison
+# visible est le pire des resultats — et accepter les deux ne retire rien a la
+# protection, qui est qu'un mot se tape et ne se tape pas par reflexe.
 $MotDeConfirmation = 'INSTALLER'
+$MotsDeConfirmation = @('INSTALLER', 'INSTALL')
+
+function Get-MotDeConfirmation {
+    return (Texte 'INSTALLER')
+}
 
 function Test-Confirmation {
     param([string]$Saisi)
-    return (([string]$Saisi).Trim().ToUpperInvariant() -eq $MotDeConfirmation)
+    return ($MotsDeConfirmation -contains ([string]$Saisi).Trim().ToUpperInvariant())
 }
 
 function Get-InviteInstallation {
     param([string[]]$Identifiants)
     $n = @($Identifiants).Count
     if ($n -eq 0) {
-        return @("Rien a installer : la liste est vide.")
+        return @((Texte "Rien a installer : la liste est vide."))
     }
     $l = @()
-    $l += "$n logiciel(s) vont etre installes par winget sur CETTE machine :"
+    $l += if ($n -eq 1) { Texte "1 logiciel va etre installe par winget sur CETTE machine :" }
+          else { Texte "{0} logiciels vont etre installes par winget sur CETTE machine :" $n }
     $l += ""
     foreach ($id in $Identifiants) { $l += "  - $id" }
     $l += ""
-    $l += "winget telecharge depuis le depot Microsoft et lance chaque installeur."
-    $l += "L'operation saute ce qui est deja present et peut etre longue."
+    $l += (Texte "winget telecharge depuis le depot Microsoft et lance chaque installeur.")
+    $l += (Texte "L'operation saute ce qui est deja present et peut etre longue.")
     $l += ""
-    $l += "Tapez $MotDeConfirmation pour lancer, ou n'importe quoi d'autre pour annuler."
+    $l += (Texte "Tapez {0} pour lancer, ou n'importe quoi d'autre pour annuler." (Get-MotDeConfirmation))
     return $l
 }
 
@@ -299,7 +319,7 @@ function Get-MessageManquants {
     if (-not $Manquants -or $Manquants.Count -eq 0) { return '' }
     $liste = ($Manquants -join ', ')
     if ($Manquants -contains 'lib-detection.ps1') {
-        return "Fichier(s) absent(s) : $liste. Copiez le dossier entier, pas un fichier isolé."
+        return (Texte "Fichier(s) absent(s) : {0}. Copiez le dossier entier, pas un fichier isolé." $liste)
     }
-    return "Fichier(s) absent(s) : $liste."
+    return (Texte "Fichier(s) absent(s) : {0}." $liste)
 }

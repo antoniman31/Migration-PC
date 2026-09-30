@@ -23,23 +23,34 @@
 #>
 
 [CmdletBinding()]
-param()
+param(
+    # La langue de ce que le programme ecrit. Vide : celle de l'interface
+    # Windows. C'est la que quelqu'un tranche quand les deux ne concordent
+    # pas — un francophone sur un Windows anglais, par exemple.
+    [ValidateSet('fr', 'en')]
+    [string]$Langue = ''
+)
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
-# La console de Windows n'ecrit pas en UTF-8 par defaut : les accents de ce
-# script y arriveraient en charabia. Les .bat font un « chcp 65001 », mais on
-# peut aussi lancer ce fichier directement, et sous Windows PowerShell 5.1
-# chcp ne suffit pas toujours. On le fixe ici, sans rien casser si l'hote
-# refuse (redirection, console absente).
-try { [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new() } catch { }
-
 $Racine = $PSScriptRoot
 if (-not $Racine) { $Racine = (Get-Location).Path }
 
+# La langue et l'encodage AVANT le premier affichage : un message d'erreur en
+# charabia serait le premier chose que verrait quelqu'un dont le dossier est
+# incomplet.
+$langueFichier = Join-Path $Racine 'lib-langue.ps1'
+if (-not (Test-Path -LiteralPath $langueFichier)) {
+    Write-Error "lib-langue.ps1 est introuvable a cote de ce script. Copiez le dossier entier."
+    exit 1
+}
+. $langueFichier
+Set-SortieUTF8
+$LangueChoisie = Set-Langue $Langue
+
 $actionsFichier = Join-Path $Racine 'lanceur-actions.ps1'
 if (-not (Test-Path -LiteralPath $actionsFichier)) {
-    Write-Error "lanceur-actions.ps1 est introuvable à côté de ce script. Copiez le dossier entier."
+    Write-Error (Texte "lanceur-actions.ps1 est introuvable à côté de ce script. Copiez le dossier entier.")
     exit 1
 }
 . $actionsFichier
@@ -63,33 +74,33 @@ function Invoke-Action {
         Write-Host ""
         Get-InviteInstallation -Identifiants $ids | ForEach-Object { Write-Host ("  " + $_) }
         if (-not $ids.Count) {
-            return @{ ok = $false; message = "Rien a installer. Relancez le scan CIBLE d'abord." }
+            return @{ ok = $false; message = (Texte "Rien a installer. Relancez le scan CIBLE d'abord.") }
         }
-        $saisi = Read-Host "  Votre reponse"
+        $saisi = Read-Host (Texte "  Votre reponse")
         if (-not (Test-Confirmation $saisi)) {
-            return @{ ok = $false; message = "Annulé. Rien n'a été installé." }
+            return @{ ok = $false; message = (Texte "Annulé. Rien n'a été installé.") }
         }
         if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
-            return @{ ok = $false; message = "winget est introuvable sur cette machine. Installez « Programme d'installation d'application » depuis le Microsoft Store." }
+            return @{ ok = $false; message = (Texte "winget est introuvable sur cette machine. Installez « Programme d'installation d'application » depuis le Microsoft Store.") }
         }
         Write-Host ""
-        Write-Host "  winget import en cours. Laissez cette fenêtre ouverte." -ForegroundColor Cyan
+        Write-Host ("  " + (Texte "winget import en cours. Laissez cette fenêtre ouverte.")) -ForegroundColor Cyan
         & winget import -i $fichier --accept-package-agreements --accept-source-agreements
         # winget rend un code non nul des qu'un seul paquet a echoue, meme si
         # tous les autres sont passes : ce n'est pas un echec de l'operation,
         # c'est une liste partielle. Le prochain scan CIBLE dira laquelle.
         if ($LASTEXITCODE -ne 0) {
             return @{ ok = $true
-                      message = "winget a fini avec des avertissements (code $LASTEXITCODE) : au moins un paquet n'est pas passé."
+                      message = (Texte "winget a fini avec des avertissements (code {0}) : au moins un paquet n'est pas passé." $LASTEXITCODE)
                       suite = $Action.suite }
         }
-        return @{ ok = $true; message = "Terminé."; suite = $Action.suite }
+        return @{ ok = $true; message = (Texte "Terminé."); suite = $Action.suite }
     }
 
     if ($Action.PSObject.Properties['fichier']) {
         $cible = Join-Path $Racine $Action.fichier
         Start-Process $cible
-        return @{ ok = $true; message = "Checklist ouverte."; suite = $Action.suite }
+        return @{ ok = $true; message = (Texte "Checklist ouverte."); suite = $Action.suite }
     }
 
     $script = Join-Path $Racine $Action.script
@@ -103,9 +114,14 @@ function Invoke-Action {
         $parametres += @($Action.arguments)
     }
 
+    # Le scan s'ouvre dans SA fenetre : sans cet argument il retomberait sur la
+    # langue de Windows et repondrait en anglais a quelqu'un qui vient de
+    # choisir le francais dans ce menu.
+    $parametres += @('-Langue', (Get-LangueActive))
+
     if ($Action.PSObject.Properties['dossier'] -and $Action.dossier) {
         $dossier = Read-DossierSauvegarde -Invite $Action.titre
-        if (-not $dossier) { return @{ ok = $false; message = "Annulé." } }
+        if (-not $dossier) { return @{ ok = $false; message = (Texte "Annulé.") } }
         # Le nom du parametre varie : on copie VERS un dossier, on restaure
         # DEPUIS un dossier. Se tromper de sens serait le pire defaut possible.
         $nomParam = if ($Action.PSObject.Properties['argument'] -and $Action.argument) {
@@ -117,7 +133,7 @@ function Invoke-Action {
     # Une nouvelle fenetre : le script ecrit beaucoup, et on veut pouvoir lire
     # sa sortie apres coup meme si le lanceur est referme.
     Start-Process -FilePath 'powershell.exe' -ArgumentList (Get-LigneCommande $parametres) -Wait
-    return @{ ok = $true; message = "Terminé."; suite = $Action.suite }
+    return @{ ok = $true; message = (Texte "Terminé."); suite = $Action.suite }
 }
 
 # Il y a eu un selecteur de dossier graphique ici. Il est parti avec la
@@ -125,12 +141,13 @@ function Invoke-Action {
 # d'enlever, pour un seul champ. Dans une console on colle un chemin par un
 # clic droit, et l'explorateur Windows sait copier celui d'un dossier.
 function Read-DossierSauvegarde {
-    param([string]$Invite = "Quel dossier ?")
+    param([string]$Invite = '')
+    if (-not $Invite) { $Invite = Texte "Quel dossier ?" }
     Write-Host ""
     Write-Host "  $Invite" -ForegroundColor Cyan
-    Write-Host "  Collez le chemin du dossier (clic droit dans cette fenêtre), ou laissez"
-    Write-Host "  vide pour annuler."
-    $saisi = Read-Host "  Dossier"
+    Write-Host ("  " + (Texte "Collez le chemin du dossier (clic droit dans cette fenêtre), ou laissez"))
+    Write-Host ("  " + (Texte "vide pour annuler."))
+    $saisi = Read-Host (Texte "  Dossier")
     if ([string]::IsNullOrWhiteSpace($saisi)) { return $null }
     # Un chemin colle depuis l'explorateur arrive parfois entoure de
     # guillemets : les laisser ferait chercher un dossier qui n'existe pas.
@@ -143,21 +160,23 @@ function Show-MenuTexte {
     param($Actions, [string]$Deduction = '')
     while ($true) {
         Write-Host ""
-        Write-Host "  Migration PC" -ForegroundColor Cyan
-        Write-Host "  ------------"
+        Write-Host ("  " + (Texte "Migration PC")) -ForegroundColor Cyan
+        # Le trait fait la largeur du titre : « PC migration » est plus long que
+        # « Migration PC », et un trait fixe depasserait ou serait trop court.
+        Write-Host ("  " + ('-' * (Texte "Migration PC").Length))
         # Ce que la cle sait deja. Affiche avant le menu, pas a la place :
         # la deduction propose, et l'entree proposee est mise en premier.
         if ($Deduction) {
             Write-Host ("  " + $Deduction) -ForegroundColor Cyan
             Write-Host ""
         }
-        Write-Host "  Que voulez-vous faire ?"
+        Write-Host ("  " + (Texte "Que voulez-vous faire ?"))
         Write-Host ""
         $i = 0
         foreach ($a in $Actions) {
             $i++
-            $etat = if (-not $a.possible) { '  [indisponible]' }
-                    elseif ($a.suggere)    { '   <-- proposé' }
+            $etat = if (-not $a.possible) { '  [' + (Texte 'indisponible') + ']' }
+                    elseif ($a.suggere)    { '   <-- ' + (Texte 'proposé') }
                     else                   { '' }
             Write-Host ("  {0}. {1}{2}" -f $i, $a.titre, $etat) -ForegroundColor $(if ($a.possible) { 'White' } else { 'DarkGray' })
             Write-Host ("     {0}" -f $a.detail) -ForegroundColor DarkGray
@@ -166,16 +185,16 @@ function Show-MenuTexte {
             }
         }
         Write-Host ""
-        Write-Host ("  {0}. Par où commencer ?" -f (@($Actions).Count + 1))
-        Write-Host "     Le parcours complet, selon ce que vous voulez faire." -ForegroundColor DarkGray
+        Write-Host ("  {0}. {1}" -f (@($Actions).Count + 1), (Texte "Par où commencer ?"))
+        Write-Host ("     " + (Texte "Le parcours complet, selon ce que vous voulez faire.")) -ForegroundColor DarkGray
         Write-Host ""
-        Write-Host "  0. Quitter"
+        Write-Host ("  0. " + (Texte "Quitter"))
         Write-Host ""
-        $choix = Read-Host "  Votre choix"
+        $choix = Read-Host (Texte "  Votre choix")
         if ($choix -eq '0' -or [string]::IsNullOrWhiteSpace($choix)) { return }
         $n = 0
         if (-not [int]::TryParse($choix, [ref]$n) -or $n -lt 1 -or $n -gt (@($Actions).Count + 1)) {
-            Write-Host "  Choix inconnu." -ForegroundColor Yellow
+            Write-Host ("  " + (Texte "Choix inconnu.")) -ForegroundColor Yellow
             continue
         }
         if ($n -eq (@($Actions).Count + 1)) {
@@ -189,7 +208,7 @@ function Show-MenuTexte {
         # Le plus utile arrive apres : ce qu'il faut faire sur le site.
         if ($res.ok -and $res.ContainsKey('suite') -and $res.suite) {
             Write-Host ""
-            Write-Host "  Ensuite, sur le site :" -ForegroundColor Cyan
+            Write-Host ("  " + (Texte "Ensuite, sur le site :")) -ForegroundColor Cyan
             $res.suite | ForEach-Object { Write-Host ("    - " + $_) }
         }
     }

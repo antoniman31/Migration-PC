@@ -37,8 +37,8 @@ function Write-ResultatPourSite {
     $page = Join-Path $DossierScript 'index.html'
     if (-not (Test-Path -LiteralPath $page)) {
         Write-Host ""
-        Write-Host "index.html n'est pas a cote de ce script : le fichier JSON est ecrit," -ForegroundColor Yellow
-        Write-Host "a importer a la main depuis le site." -ForegroundColor Yellow
+        Format-Paragraphe (Texte "index.html n'est pas a cote de ce script : le fichier JSON est ecrit, a importer a la main depuis le site.") |
+            ForEach-Object { Write-Host $_ -ForegroundColor Yellow }
         return
     }
 
@@ -57,19 +57,19 @@ function Write-ResultatPourSite {
         [System.IO.File]::WriteAllText(([System.IO.Path]::GetFullPath($cible)), $texte, (New-Object System.Text.UTF8Encoding $false))
     } catch {
         Write-Host ""
-        Write-Host "Impossible de poser le resultat a cote de la page :" -ForegroundColor Yellow
+        Write-Host (Texte "Impossible de poser le resultat a cote de la page :") -ForegroundColor Yellow
         Write-Host ("  " + $_.Exception.Message) -ForegroundColor Yellow
-        Write-Host "Le fichier JSON est ecrit : importez-le a la main depuis le site."
+        Write-Host (Texte "Le fichier JSON est ecrit : importez-le a la main depuis le site.")
         return
     }
 
     Write-Host ""
-    Write-Host "Resultat pose a cote de la page." -ForegroundColor Green
+    Write-Host (Texte "Resultat pose a cote de la page.") -ForegroundColor Green
     if ($NePasOuvrir) {
-        Write-Host "Ouvrez index.html : elle s'affichera deja remplie."
+        Write-Host (Texte "Ouvrez index.html : elle s'affichera deja remplie.")
         return
     }
-    Write-Host "Ouverture de la checklist..."
+    Write-Host (Texte "Ouverture de la checklist...")
     try { Start-Process $page }
-    catch { Write-Host "Ouvrez index.html a la main : $($_.Exception.Message)" -ForegroundColor Yellow }
+    catch { Write-Host (Texte "Ouvrez index.html a la main : {0}" $_.Exception.Message) -ForegroundColor Yellow }
 }

@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 chcp 65001 >nul
 REM Le seul fichier a lancer. Il demande ce que vous voulez faire et
 REM s occupe du reste. Les scripts qu il appelle sont dans scripts\.
@@ -11,5 +11,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\migration-pc.p
 if errorlevel 1 (
   echo.
   echo  Le lanceur s est arrete sur une erreur.
+  echo  The launcher stopped on an error.
   pause
 )

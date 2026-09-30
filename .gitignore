@@ -19,6 +19,7 @@ node_modules/
 # Le relais entre les deux PC : le scan de la source le pose a cote de la page
 # pour que celui de la cible le retrouve. Il decrit une machine reelle.
 /instantane-source.json
+/instantane-source-*.json
 /instantane-cible-*.json
 /verification-pc.json
 migration-pc.zip
