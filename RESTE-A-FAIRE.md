@@ -8,6 +8,80 @@ Ce document existe parce qu'une décision prise en conversation ne survit pas à
 conversation. Il ne contient que ce qui est **réellement en attente** — pas une liste de
 souhaits.
 
+Mis à jour le 6 octobre 2026 : un ordre de travail, en tête. Le détail de chaque élément
+reste dans les sections numérotées, et le plan y renvoie plutôt que de le répéter — deux
+textes qui décrivent le même travail finissent par ne plus dire la même chose.
+
+---
+
+## L'ordre de travail
+
+**L'ordre n'est pas arbitraire.** Deux éléments de ce document se dissolvent dans un autre
+si on les prend dans le bon sens, et écrire le contrat de qualité avant d'avoir tranché la
+question mobile obligerait à le réécrire aussitôt.
+
+### Lot A — Le garde-fou d'enregistrement des tests
+
+**En premier** parce qu'il ne dépend de rien et ne demande aucune décision. Détail et
+conception arrêtée : section 4.
+
+*Fini quand* : le sabotage échoue dans les deux sens — un fichier de test orphelin, et une
+liste nommant un fichier disparu — et la CI reste verte. Une trentaine de lignes, risque
+nul.
+
+### Lot B — Le mobile
+
+**En deuxième parce qu'il commande le reste.** Détail : section 3.
+
+**Et c'est ici que la « copie du plancher dans `test-guide.js` » de la section 5
+disparaît.** Ce fichier porte son propre seuil de 12 px et sa propre règle des 44 × 24 px ;
+une fois la question mobile tranchée, soit les deux seuils sautent ensemble, soit ils
+deviennent une seule règle partagée. Le traiter à part serait le traiter deux fois.
+
+*Proposition, refusable* : **séparer plutôt que jeter.** Garder du test mobile ce qui relève
+de la lisibilité — pas de débordement horizontal, contraste — et retirer ce qui relève de
+l'usage tactile : les cibles de 44 px et le plancher calibré pour une main. Conséquence
+directe, les vingt-quatre exceptions du plancher deviennent largement inutiles et
+`test-plancher-texte.js` se recalibre sur l'écran PC. Le README perd sa promesse mobile et
+sa capture.
+
+*Fini quand* : la CI est verte, le document explique pourquoi le seuil a changé, et aucune
+exception ne subsiste sans raison.
+
+*Ce qu'il faut pour démarrer* : un seul mot — séparer, ou jeter en bloc.
+
+### Lot C — `CONSTRAINTS.md`
+
+**Après le lot B, obligatoirement** : le plancher de texte est l'une des contraintes que ce
+document recensera, et l'écrire avant reviendrait à le réécrire. Détail et point d'entrée :
+section 4.
+
+*Fini quand* : le document existe, chaque seuil porte un chiffre et une raison **venus de
+l'auteur du projet**, et un contrôle refuse l'affaiblissement silencieux — assertion
+retirée, test sauté, seuil édité à la baisse, exception ajoutée sans justification.
+
+*Ce qu'il faut pour démarrer* : l'entretien. Rien ne s'écrit avant.
+
+### Lot D — Les attentes en dur
+
+**En dernier, et proposé sans être recommandé.** Détail : section 5.
+
+Jusqu'à vingt-trois `waitForTimeout` par fichier sur onze suites. C'est la plus grosse
+pièce, la moins urgente, et celle dont le bénéfice est le plus difficile à démontrer : **on
+n'a pas observé un seul faux échec dû à ça.** À ne faire qu'après en avoir vu un — autrement
+c'est du travail guidé par une inquiétude et non par une preuve, ce que ce projet s'est
+justement appris à refuser.
+
+### Hors lots : ce qui n'est pas du code
+
+Les deux réglages de la section 2, et l'essai Windows de la section 1.
+
+**Un seul a un effet sur l'ordre** : l'autorisation réseau. Sans elle, le plancher du lot B
+se change et se vérifie **par déclaration**, mais on ne peut pas confirmer que la mise en
+page rendue se comporte pareil en local et en intégration. L'autoriser avant le lot B est
+préférable ; sinon, la limite doit être écrite dans la pull request au lieu d'être passée
+sous silence.
+
 ---
 
 ## 1. La réserve qui domine tout le reste
