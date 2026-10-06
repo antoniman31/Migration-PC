@@ -111,7 +111,63 @@ lisibilité de ce qui relève de l'usage tactile.
 
 ---
 
-## 4. Écartés, et pourquoi c'est écrit quand même
+## 4. Deux chantiers proposés, décidés d'avance, pas encore faits
+
+Issus d'une analyse du 6 octobre 2026. Ni l'un ni l'autre n'est commencé : la décision a
+été de les remettre à plus tard. Les choix de conception, en revanche, sont tranchés — ils
+sont écrits ici pour qu'on n'ait pas à les reprendre.
+
+### Rien ne vérifie qu'un fichier de test est lancé
+
+**Et ce projet s'est déjà fait prendre.** `tests/test-outils.js` a pourri **non enregistré
+pendant des semaines**, cherchant une entrée de menu et un onglet supprimés depuis
+longtemps. Il n'a été retrouvé que par hasard, le 30 septembre, et réparé à la main. Rien
+n'empêche le suivant.
+
+Les trois listes — `package.json`, `.github/workflows/ci.yml`, `verifier-comme-ci.sh` —
+concordent aujourd'hui, mais par vérification manuelle.
+
+**Ce que le contrôle doit refuser, décidé :** un fichier `tests/test-*.{js,ps1}` doit
+figurer dans les **trois** listes, sauf s'il est déclaré avec sa raison — comme
+`test-windows-reel.ps1`, qui ne tourne légitimement que dans le job Windows. Et **l'inverse
+aussi** : une liste qui nomme un fichier disparu échoue. C'est le motif déjà employé deux
+fois dans ce projet (`NOMS_PROPRES` dans `test-anglais.js`, `TOLEREES` dans
+`test-plancher-texte.js`) et la leçon du 30 septembre : refuser dans les deux sens, parce
+qu'une liste qui décrit un code disparu est exactement ce qui est arrivé aux captures
+d'écran.
+
+Coût estimé : une trentaine de lignes. Risque : nul.
+
+### `CONSTRAINTS.md` : la barre de qualité n'est écrite nulle part
+
+Elle existe — plancher de texte, cibles tactiles, contraste, encodage, zéro français sur la
+page anglaise, aucune injection depuis un profil reçu — mais elle est éparpillée dans
+vingt-six fichiers de test, et le 30 septembre a prouvé qu'elle est **partiellement
+fictive** : vingt-quatre règles CSS passaient sous un plancher que personne n'avait vu.
+
+**Ce qui rend le sujet sérieux, c'est que le travail de cette journée-là l'aurait
+déclenché.** Cinq assertions en pixels exacts ont été remplacées par des relations plus
+souples, et vingt-quatre exceptions ont été ajoutées à un seuil. Chaque décision est
+défendable et reste défendue. Mais c'est précisément la situation où un contrat écrit sert :
+non pas empêcher de desserrer, mais obliger à le dire, au lieu de le décider seul dans un
+message de commit que personne ne relira.
+
+**Le point d'entrée, décidé : un entretien, pas un brouillon.** Les dimensions qui comptent
+— accessibilité, lisibilité, encodage, vie privée, et lesquelles ont un seuil chiffré —
+doivent venir de l'auteur du projet, dimension par dimension, avant que la moindre ligne
+du contrat soit écrite. Un document rédigé d'après ce que les tests existants laissent
+croire porterait des suppositions, pas des priorités.
+
+### La méthode, pour les deux
+
+Une spec courte — ce qu'on construit, pourquoi, comment on saura que c'est fini — validée,
+puis l'implémentation. Pas le cycle complet en quatre phases barrées : pour trente lignes
+de test, la cérémonie coûterait plus que le travail, et la compétence qui décrit ce cycle
+exclut elle-même les petits changements.
+
+---
+
+## 5. Écartés, et pourquoi c'est écrit quand même
 
 Deux constats réels, laissés de côté volontairement le 30 septembre. Ils ne sont pas
 urgents ; ils sont notés pour ne pas être redécouverts.
@@ -139,3 +195,15 @@ références sont du matériel inventé : le sujet est clos.
 
 **Le comportement de la page.** Vingt-six suites de tests le couvrent, dont dix dans un
 vrai navigateur. [CONTRIBUER.md](CONTRIBUER.md) dit où regarder.
+
+**La performance de la page.** Soupçonnée le 6 octobre, mesurée, écartée. La plus grosse
+fixture du projet fait six logiciels et l'exemple dix-huit, alors qu'un vrai registre
+Windows en rend deux à quatre cents — le soupçon était légitime. Mesure à six cents
+logiciels : 54 ms de rendu, 41 ms par clic, 620 Ko de HTML, aucune erreur. Même sur une
+machine cinq fois plus lente, c'est confortable. Inutile de rouvrir sans un chiffre qui
+contredise celui-là.
+
+**La perte silencieuse en cas de quota localStorage dépassé.** Soupçonnée le 6 octobre,
+vérifiée, écartée. Les huit écritures sont non seulement protégées par un `try` mais
+**signalées à l'utilisateur**, avec un drapeau `stockageEnPanne` et un message quand la
+sauvegarde se rétablit.
