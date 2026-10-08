@@ -12,22 +12,175 @@ Mis à jour le 6 octobre 2026 : un ordre de travail, en tête. Le détail de cha
 reste dans les sections numérotées, et le plan y renvoie plutôt que de le répéter — deux
 textes qui décrivent le même travail finissent par ne plus dire la même chose.
 
+Mis à jour le 8 octobre 2026 : un audit complet du dépôt a trouvé onze défauts. Ils entrent
+dans l'ordre de travail comme **lots 1 à 7**, devant les lots lettrés, et leur preuve est en
+section 6. Ils sont écrits ici et non dans un document séparé pour la raison que l'audit
+vient de démontrer six fois : deux textes qui décrivent le même travail finissent par ne
+plus dire la même chose.
+
 ---
 
 ## L'ordre de travail
 
 **L'ordre n'est pas arbitraire.** Deux éléments de ce document se dissolvent dans un autre
-si on les prend dans le bon sens, et écrire le contrat de qualité avant d'avoir tranché la
-question mobile obligerait à le réécrire aussitôt.
+si on les prend dans le bon sens — le lot A dans le lot 4, et la copie du plancher de
+`test-guide.js` dans le lot B — et écrire le contrat de qualité avant d'avoir tranché la
+question mobile obligerait à le réécrire aussitôt. Le lot 3 chevauche le lot B sans s'y
+dissoudre, et la raison est écrite dans le lot 3.
 
-### Lot A — Le garde-fou d'enregistrement des tests
+**Deux séries, et les numérotées passent avant les lettrées.** Les lots **1 à 7** viennent
+de l'audit du 8 octobre 2026 : ce sont des défauts constatés, détaillés en section 6. Les
+lots **A à D** sont le plan d'amélioration d'avant l'audit, et aucun d'eux n'est urgent au
+sens où un défaut l'est. Corriger ce qui est cassé passe avant améliorer ce qui marche.
 
-**En premier** parce qu'il ne dépend de rien et ne demande aucune décision. Détail et
-conception arrêtée : section 4.
+### Lot 1 — Le BOM du fichier qu'on double-clique
 
-*Fini quand* : le sabotage échoue dans les deux sens — un fichier de test orphelin, et une
-liste nommant un fichier disparu — et la CI reste verte. Une trentaine de lignes, risque
-nul.
+**En tout premier** : trois octets à retirer, aucune dépendance, et c'est le défaut le plus
+visible du projet — la première chose qu'un utilisateur voit. Détail : section 6, défaut 1.
+
+Le contrôle qui l'accompagne compte autant que la correction. `test-lanceur.ps1` vérifie
+déjà les fins de ligne de ce fichier, mais il le lit avec `ReadAllText`, qui décode et
+supprime le BOM : le test écrit pour cette famille de problème est aveugle à ce cas. Le
+nouveau contrôle lit **les octets**, pas le texte.
+
+*Fini quand* : les trois premiers octets de `Migration PC.bat` ne sont plus `EF BB BF`, un
+contrôle au niveau octet refuse leur retour, et il échoue si on les remet.
+
+*Ce qu'il faut pour démarrer* : rien.
+
+### Lot 2 — Le canal de notification, jamais traduit
+
+**En deuxième** parce que c'est le plus étendu, et parce qu'une seule cause racine explique
+tout le lot : du texte destiné à l'utilisateur qui ne passe pas par `tr()`. Détail :
+section 6, défauts 2 et 3.
+
+Trois choses y entrent ensemble, et les séparer serait traiter trois fois la même cause :
+les 17 messages de `informer()`, les deux libellés de bascule qui se réécrivent en français
+brut par-dessus leur propre `data-t`, et l'échec silencieux de `copyCatWinget` qui appartient
+au même code.
+
+Le test est la moitié du lot, et il doit faire ce qu'aucun test actuel ne fait :
+**déclencher réellement une notification sur la page en anglais**, puis lire le bandeau.
+`test-anglais.js` passe aujourd'hui parce qu'il n'inspecte que le DOM statique.
+
+*Fini quand* : les 17 chaînes sont dans la table et passent par `tr()`, basculer le thème
+puis la langue ne produit plus un libellé qui mente sur l'état, et un test déclenche une
+notification en anglais et refuse d'y lire du français.
+
+*Ce qu'il faut pour démarrer* : rien. Les deux appels déjà corrects montrent la forme
+attendue.
+
+### Lot 3 — Le code et le CSS morts, et les exceptions périmées
+
+**En troisième** parce que c'est du retrait, donc sans risque de régression de
+comportement, et parce que le lot 4 sera plus facile à écrire sur un dépôt propre.
+Détail : section 6, défauts 8 et 9.
+
+Deux fonctions mortes (`fmtMo`, `setCat` — la troisième part au lot 5), 28 classes CSS sur
+227 qui n'apparaissent plus dans le balisage, et **quatre exceptions périmées dans
+`test-plancher-texte.js`** : `gp-label`, `sec-prog-txt`, `save-path`, `save-note` ont une
+règle et une justification nommée, mais leur classe ne sert plus. Le test vérifie que la
+règle CSS existe, pas que la classe serve — il surveille la mauvaise moitié de la paire, et
+son propre commentaire décrit le piège où il est tombé.
+
+**Chevauchement assumé avec le lot B.** Si le mobile est abandonné, la plus grande partie de
+ces vingt-quatre exceptions disparaît de toute façon. Les quatre périmées se corrigent
+quand même maintenant : c'est quatre lignes, le lot B est bloqué sur une décision, et une
+liste fausse qui attend une décision reste une liste fausse.
+
+*Fini quand* : plus une classe CSS déclarée sans emploi, plus une fonction définie sans
+appel, les quatre exceptions parties, et le contrôle du plancher regarde désormais l'emploi
+de la classe et non la seule existence de la règle.
+
+*Ce qu'il faut pour démarrer* : rien.
+
+### Lot 4 — Les listes et les chiffres qui ne décrivent plus le dépôt
+
+**En quatrième, et ce lot absorbe le lot A.** Les deux demandent exactement la même
+mécanique : comparer une liste écrite à la main à la réalité du dépôt, et refuser l'écart.
+Le lot A ne couvrait que l'enregistrement des fichiers de test ; l'audit a montré que le
+même trou laisse passer six chiffres faux. Les traiter séparément serait écrire deux fois
+le même test. Détail : section 6, défaut 6, et section 4 pour la conception déjà arrêtée du
+garde-fou d'enregistrement.
+
+**Ce fichier-ci porte deux des six chiffres faux** (« dix dans un vrai navigateur »,
+« vingt-quatre exceptions »). Ils ne sont pas corrigés en même temps que ce plan, parce
+qu'ils appartiennent à ce lot : les corriger seuls ferait décrire par ce document un état
+que le reste du dépôt n'a pas. C'est écrit ici pour que personne ne les lise en les croyant.
+
+*Fini quand* : un seul contrôle refuse à la fois un fichier de test non enregistré, une
+liste nommant un fichier disparu, et un chiffre annoncé dans la documentation qui ne
+correspond plus au dépôt ; le sabotage le fait échouer dans les trois sens ; et les six
+chiffres sont justes.
+
+*Ce qu'il faut pour démarrer* : rien.
+
+### Lot 5 — Les commandes qui mentent, et le bouton branché sur rien
+
+**En cinquième** parce qu'une partie du lot demande un mot, et que l'autre non. Détail :
+section 6, défauts 4, 7 et 10.
+
+Ce qui ne demande rien : `npm test` ne lance que 10 des 26 suites, `npm run test:mobile`
+**ne peut pas échouer** faute de `STRICT=1`, et `verifier-comme-ci.sh` affirme rejouer la CI
+« dans le même ordre » alors que l'ordre diffère. C'est exactement le défaut qui a fait
+écrire `verifier-comme-ci.sh` — une vérification locale plus faible que la CI — et il a
+survécu dans les commandes `npm`.
+
+Ce qui demande un mot : `importerScanCible()` est morte, elle est le seul endroit qui met
+`attendCible` à vrai, donc un inventaire sans champ `role` utilisable ne peut être classé
+que « source ». Deux issues, et c'est un choix de conception, pas une correction :
+rebrancher le bouton « importer le scan de la cible », ou retirer le code mort et assumer
+que le rôle vient toujours du fichier. La seconde est plus simple et suffit pour les
+fichiers que le projet produit lui-même ; la première couvre un export winget ou un fichier
+retouché à la main.
+
+*Fini quand* : les trois commandes font ce qu'elles annoncent, et `attendCible` a disparu ou
+sert.
+
+*Ce qu'il faut pour démarrer* : un mot sur `importerScanCible` — rebrancher, ou retirer. Le
+reste du lot avance sans.
+
+### Lot 6 — Le service worker met en cache ce qu'il promet de ne pas garder
+
+**En sixième** parce que c'est le seul défaut de l'audit dont l'usage prévu est épargné.
+Détail : section 6, défaut 5.
+
+Le commentaire de `sw.js` promet « Jamais de données ». Son gestionnaire `fetch` met en
+cache tout GET de même origine qui répond `ok`, et la page charge l'inventaire du PC par un
+`<script src="resultat-scan.js">`, qui en est un. Depuis une clé USB en `file://` aucun
+service worker ne s'enregistre, donc le trajet normal du projet ne rencontre pas ce défaut ;
+servir le dossier en HTTPS ou sur localhost, si.
+
+*Fini quand* : le cache ne retient que le squelette qu'il déclare, un contrôle le vérifie,
+et le commentaire décrit ce que le code fait.
+
+*Ce qu'il faut pour démarrer* : rien.
+
+### Lot 7 — Les six points mineurs
+
+**En dernier des lots numérotés**, et tenables en une seule passe. Détail : section 6,
+défaut 11.
+
+`VERIFIER-SUR-WINDOWS.md` absent du zip — celui qui fera le premier essai réel aura
+`diagnostic.ps1` sans le document qui dit ce qui n'est pas un défaut. `viewMode` jamais
+persisté alors que thème, langue, configuration, ignorés et profil le sont tous.
+`ecrire-resultat.ps1` sans `Set-StrictMode` ni `$ErrorActionPreference`. L'empreinte du
+cache du service worker qui ne couvre qu'`index.html`. Et `manifest.json` avec son
+`"lang": "fr"`, qu'un manifeste statique ne peut guère éviter — écrit pour que la question
+ne se repose pas.
+
+*Fini quand* : chacun est corrigé, ou écarté avec sa raison nommée dans ce document.
+
+*Ce qu'il faut pour démarrer* : rien.
+
+### Lot A — Le garde-fou d'enregistrement des tests → **absorbé par le lot 4**
+
+**Ce lot n'existe plus à part.** Il demandait un contrôle refusant un fichier de test non
+enregistré ; l'audit du 8 octobre a montré que le même trou laisse passer six chiffres faux
+dans la documentation. C'est la même mécanique — comparer une liste écrite à la main à la
+réalité du dépôt — et l'écrire deux fois serait exactement le travail en double que ce
+document cherche à éviter. Sa conception arrêtée reste valable et reste en section 4 ; son
+exécution est le lot 4.
 
 ### Lot B — Le mobile
 
@@ -256,6 +409,130 @@ sur onze suites navigateur. C'est une source d'échecs intermittents : un test q
 250 ms passe ou casse selon la charge de la machine. Les remplacer par des attentes sur
 condition (`waitForFunction`, `waitForSelector`) est un chantier à part, et qui mérite un
 plan avant d'être commencé.
+
+## 6. L'audit du 8 octobre 2026 : les onze défauts, et la preuve de chacun
+
+Audit complet du dépôt à `34cb604`, les vingt-cinq étapes de la CI rejouées vertes avant de
+commencer. Les lots 1 à 7 corrigent ce qui suit. Chaque constat porte **comment il a été
+établi**, pour qu'on puisse le contredire sans refaire le travail.
+
+### Les cinq défauts sérieux
+
+**1. `Migration PC.bat` porte un BOM UTF-8.** Ses trois premiers octets sont `EF BB BF`,
+lus à l'octet. cmd.exe ne les comprend pas : il lit `<BOM>@echo off` comme un nom de
+commande, s'en plaint, et comme `@echo off` n'a jamais pris effet, le reste du script
+défile. C'est le seul fichier qu'on double-clique. **Réserve honnête** : le mécanisme est
+certain, la formulation exacte de l'erreur non — il n'y a pas de cmd.exe ici pour le
+constater, et le job Windows de la CI n'exécute jamais ce fichier. Les douze `.ps1`, eux,
+ont tous leur BOM à juste titre : c'est là que PowerShell 5.1 en a besoin.
+
+**2. Le canal de notification n'a jamais été traduit.** `informer()` écrit son argument tel
+quel (`afficherBandeau` fait `textContent=libelle`). Sur 23 appels, **2** passent par
+`tr()`. Les 17 autres ne sont pas seulement non traduits : **aucune des 17 chaînes n'existe
+dans la table**, vérifié en extrayant les 184 clés de `TRADUCTIONS` et en les croisant avec
+les littéraux des appels. Ce n'est donc pas une traduction presque finie avec quelques
+trous, c'est la voie par laquelle la page rapporte chaque erreur et chaque confirmation qui
+est restée en français. `test-anglais.js` passe parce qu'il n'inspecte que le DOM statique
+et ne déclenche jamais de notification. Les 2 appels corrects prouvent que la règle était
+connue.
+
+**3. Deux libellés de bascule mentent sur l'état.** `#theme-lbl` et `#mode-lbl` portent
+`data-t`, et leur bascule les réécrit en français brut (`'Clair'`/`'Sombre'`,
+`'Affichage normal'`/`'Affichage compact'`). `setLangue` ne rappelle pas `applyTheme`. Deux
+conséquences : le libellé repasse en français dès qu'on bascule le thème sur la page
+anglaise, et le `data-t` mémorisé devient faux — après un changement de langue, le bouton
+affiche « Dark » alors que le thème est clair. Il ne se contente pas d'être dans la mauvaise
+langue, il dit le contraire de l'état.
+
+**4. `importerScanCible()` est morte, et c'est le seul endroit qui met `attendCible` à
+vrai.** `roleDe()` retombe sur `attendCible?'cible':'source'` : la branche « cible » est
+donc inatteignable, et un inventaire dont le champ `role` manque ou n'est pas reconnu ne
+peut être classé que « source ». **Latent pour les fichiers du projet** — `scan-pc.ps1`
+écrit toujours `role` (ligne 167) — **réel pour tout le reste** : un export winget, un
+fichier retouché à la main, un fichier dont le rôle s'est perdu. Le bouton qui aurait permis
+de dire « celui-là, c'est la cible » n'est branché sur rien.
+
+**5. Le service worker met en cache l'inventaire du PC.** Le commentaire en tête de `sw.js`
+promet « Jamais de données : la progression et le profil vivent dans localStorage ». Son
+gestionnaire `fetch` fait `c.put` sur **tout** GET de même origine qui répond `ok`, et
+`index.html` charge l'inventaire par `document.write('<script src="resultat-scan.js">')`
+(ligne 861), qui en est un. Il n'y a aucun `fetch()` dans la page, donc c'est bien ce
+chemin-là. Servie en HTTPS ou sur localhost, la page recopie l'inventaire dans le cache.
+`file://` n'enregistre aucun service worker, donc l'usage prévu — la clé USB — est épargné ;
+`python -m http.server` ne l'est pas. Le commentaire et le comportement se contredisent.
+
+### La dérive documentation/code : la maladie nommée du projet, et elle court toujours
+
+**6. Six chiffres annoncés ne décrivent plus le dépôt.** `CONTRIBUER.md` annonce « les 18
+étapes du job Linux » deux fois (lignes 13 et 286) : il y en a 25. « les sept suites » de
+`npm test` : 10. « les quatre suites PowerShell » de `test:scan` : 5. « dont dix dans un
+vrai navigateur », repris dans ce fichier et dans `VERIFIER-SUR-WINDOWS.md` : 11. Et
+`test-plancher-texte.js` se trompe sur lui-même ligne 129 — « vingt-cinq veut dire que le
+plancher décrit une intention » — alors que sa liste en compte 24. Les comptes justes
+(« vingt-six suites », « vingt-cinq dans le job Linux ») le sont par chance : rien ne les
+garde.
+
+**7. Deux commandes documentées ne valent pas ce qu'elles promettent.** `npm test` ne lance
+que 10 des 26 suites : qui tape la commande universelle obtient un vert sur 38 % de la
+couverture. Et `npm run test:mobile` **ne peut pas échouer** — `test-mobile.js` sort 0 sans
+`STRICT=1`, que `package.json` n'y met pas, et son écran le dit (« Rapport seulement ») mais
+son code de sortie non. La CI a raison, la commande locale non. C'est le défaut même qui a
+fait écrire `verifier-comme-ci.sh`, survivant dans `npm`. Accessoirement ce script affirme
+rejouer la CI « dans le même ordre » : l'ensemble est exact, l'ordre non — `langue-ps` y
+passe en 13e position au lieu de la 25e.
+
+**8. Le test qui existe contre les exceptions périmées en porte quatre.**
+`test-plancher-texte.js` refuse « une exception devenue inutile » en vérifiant que sa règle
+CSS existe encore. Il ne vérifie pas que la classe serve encore. `gp-label`,
+`sec-prog-txt`, `save-path` et `save-note` ont leur règle et leur justification nommée,
+mais leur classe n'apparaît nulle part dans le balisage. Son propre commentaire décrit le
+piège : « sinon la liste finit par décrire un CSS qui n'existe plus — c'est exactement ce
+qui est arrivé aux captures d'écran de ce projet ». Il surveille la mauvaise moitié de la
+paire.
+
+**9. Vingt-huit classes CSS mortes sur 227**, et deux fonctions définies sans aucun appel
+(`fmtMo`, `setCat`). Mesuré en retirant le bloc `<style>` et en cherchant chaque nom dans
+tout le reste du fichier ; les concaténations de classes ont été relues une par une pour
+écarter les faux positifs — elles ajoutent toutes un suffixe à une base présente.
+
+**10. `VERIFIER-SUR-WINDOWS.md` n'est pas dans le zip.** `diagnostic.ps1` y est, attrapé
+par le glob `scripts/*.ps1`. Le document qui dit « voilà ce qui n'est PAS un défaut » ne
+voyage pas avec lui : celui qui fera le premier essai réel aura l'outil sans le mode
+d'emploi, alors que ce tableau a été écrit exactement pour ce moment-là.
+
+### Les points mineurs
+
+**11.** `viewMode` n'est jamais persisté alors que thème, langue, configuration, ignorés et
+profil le sont tous, et rien ne documente ce choix. `copyCatWinget` avale son échec
+(`.catch(function(){})`) là où ses deux jumelles informent l'utilisateur.
+`ecrire-resultat.ps1` tourne sans `Set-StrictMode` ni `$ErrorActionPreference` alors que les
+autres scripts autonomes les posent — les deux bibliothèques héritent de leur appelant, ce
+qui est normal. L'empreinte du cache du service worker ne couvre qu'`index.html` : changer
+`manifest.json` ou une icône ne renouvelle pas le cache. `manifest.json` fixe
+`"lang": "fr"` en dur.
+
+### Ce que l'audit a vérifié et trouvé sain
+
+À écrire aussi, sinon la liste ci-dessus donne du projet une image qu'il ne mérite pas.
+**Aucun des pièges PowerShell que ce projet s'est documentés n'est présent** : pas un `if`
+nu dans une parenthèse, pas de `-Include`, pas de test de collection falsy sur un compte,
+le BOM correct sur les douze `.ps1`. **La politique des secrets est honnête** :
+`COUVERTURE.md` dit explicitement que le code est parti dans l'historique et que les trois
+arrêts volontaires — clé BitLocker, clés Wi-Fi, mots de passe Windows — restent écrits faute
+de code à montrer. C'est la bonne façon de documenter une absence, et c'est le seul endroit
+du projet où doc et code divergent **exprès**. **Aucune assertion creuse trouvée**, et les
+21 suites JS peuvent toutes échouer : un premier contrôle disait le contraire, il était
+faux, il a été refait. L'échappement est en place et le profil hostile est testé. Les neuf
+`+=` en boucle de `lib-detection.ps1` sont du O(n²) théorique sans portée à cette échelle :
+**à ne pas toucher**, c'est écrit ici pour que personne n'en fasse un chantier.
+
+### Les deux limites de cet audit
+
+Rien n'a jamais tourné sur un Windows réel, donc tout ce qui précède sur le comportement
+des scripts reste de la lecture — le BOM du `.bat` compris. Et sur les 1434 lignes de
+`lib-detection.ps1`, les pièges connus ont été cherchés et les structures relues, pas la
+logique de détection ligne à ligne. C'est le seul endroit du dépôt où personne ne peut dire
+« j'ai tout vu ».
 
 ---
 
