@@ -133,6 +133,16 @@ foreach ($f in @('Migration PC.bat')) {
     $brut = [System.IO.File]::ReadAllText((Join-Path $depot $f))
     ok "« $f » en fins de ligne Windows" ($brut -match "`r`n") $true
     ok "« $f » contourne le blocage d execution" ($brut -match 'ExecutionPolicy Bypass') $true
+    # LES OCTETS, PAS LE TEXTE. ReadAllText decode et SUPPRIME le marqueur
+    # d'encodage : le controle ci-dessus ne pouvait donc pas le voir. Or cmd.exe
+    # ne comprend pas un BOM UTF-8 : il lit « <BOM>@echo off » comme un nom de
+    # commande, s'en plaint, et le @echo off n'a jamais pris effet. C'est le seul
+    # fichier qu'on double-clique. Les .ps1, eux, en ont besoin (voir
+    # test-powershell-compatibility.ps1) : la regle n'est pas la meme pour tous.
+    $octets = [System.IO.File]::ReadAllBytes((Join-Path $depot $f))
+    $debut = (@($octets | Select-Object -First 3) -join ',')
+    ok "« $f » sans marqueur d'encodage (BOM)" ($debut -ne '239,187,191') $true
+
 }
 
 # Le lanceur doit pouvoir basculer en mode texte : sans Windows Desktop, il n'y

@@ -33,7 +33,12 @@ de l'audit du 8 octobre 2026 : ce sont des défauts constatés, détaillés en s
 lots **A à D** sont le plan d'amélioration d'avant l'audit, et aucun d'eux n'est urgent au
 sens où un défaut l'est. Corriger ce qui est cassé passe avant améliorer ce qui marche.
 
-### Lot 1 — Le BOM du fichier qu'on double-clique
+### Lot 1 — Le BOM du fichier qu'on double-clique → **fait**
+
+**Fait le 27 octobre 2026.** Les trois octets sont partis (le fichier était de l'ASCII pur
+après eux, rien d'autre n'a changé), et `test-lanceur.ps1` lit désormais les octets. Le
+contrôle a été vu échouer sur l'ancien fichier avant la correction. Ce qui reste vrai : aucun
+cmd.exe n'a jamais lu ce fichier ici, et le job Windows de la CI ne l'exécute pas.
 
 **En tout premier** : trois octets à retirer, aucune dépendance, et c'est le défaut le plus
 visible du projet — la première chose qu'un utilisateur voit. Détail : section 6, défaut 1.

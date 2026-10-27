@@ -1,4 +1,4 @@
-﻿@echo off
+@echo off
 chcp 65001 >nul
 REM Le seul fichier a lancer. Il demande ce que vous voulez faire et
 REM s occupe du reste. Les scripts qu il appelle sont dans scripts\.
