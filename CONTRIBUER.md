@@ -133,6 +133,24 @@ page française avec la page anglaise. Les trois premières dépendent de quelqu
 à la main, et la deuxième a laissé passer « Passer » : pas d'accent, pas dans la liste. La
 quatrième ne dépend de rien et l'a trouvé.
 
+Ces quatre détections regardent l'écran : ce qui y est quand le test passe. Un message
+n'y est qu'au moment où il est dit — « Fichier illisible », « Configuration effacée » —, et
+des dizaines d'entre eux sont restés en français dans une page déclarée entièrement
+traduite. Deux contrôles les couvrent maintenant, et aucun ne remplace l'autre.
+`test-langue.js` lit le **code** à chaque endroit où la page prend la parole (`informer`,
+`memoriserAnnulation`, `dire`, `signalerPanne`, les affectations de `.textContent`) et
+refuse tout texte qui n'entre pas par `tr()`. Il ne voit pas un message construit dans une
+variable : c'est la section « ce que la page dit » de `test-anglais.js`, qui déclenche
+chaque cas pour de vrai dans les deux langues, vérifie que la page a bien parlé — un
+scénario qui ne déclenche rien passerait sans rien prouver —, et fige le français exact des
+phrases dont la composition a changé.
+
+La règle d'écriture qui en découle : un message se traduit **à l'appel, par phrases
+entières**, une par cas — `tr('{0} cases cochées…', n)` et son singulier, jamais
+`n+' case'+(n>1?'s':'')` —, parce que les accords ne se transposent pas d'une langue à
+l'autre. Les étiquettes d'une panne (« Logiciels », « Import ») font exception : un mot
+fixe répété à vingt endroits, traduit une seule fois dans `signalerPanne`.
+
 Le retrait du texte de profil, qui protège ces contrôles des noms propres, ne se fait plus
 en bloc : il ne retire que ce qui n'a **aucune** entrée dans la table de traduction. Un
 texte qui en a une est attendu traduit, donc il reste sous les yeux des contrôles — sans

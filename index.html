@@ -973,8 +973,8 @@ if(location.protocol==='file:'){
         <button type="button" role="menuitem" onclick="depuisMenu(exportProfil)"><span class="hdr-menu-ico" aria-hidden="true">🧩</span><span data-t>Exporter le profil</span></button>
         <button type="button" role="menuitem" id="scan-rejouer" style="display:none" onclick="depuisMenu(rejouerScanLocal)"><span class="hdr-menu-ico" aria-hidden="true">🔄</span><span data-t>Recharger le scan de la clé</span></button>
         <div class="hdr-menu-sep" role="separator"></div>
-        <button type="button" role="menuitem" id="btn-compact" aria-pressed="false" onclick="depuisMenu(basculerAffichage)"><span class="hdr-menu-ico" aria-hidden="true" id="mode-ico">≡</span><span id="mode-lbl" data-t>Affichage compact</span></button>
-        <button type="button" role="menuitem" id="theme-btn" onclick="depuisMenu(toggleTheme)"><span class="hdr-menu-ico" aria-hidden="true" id="theme-ico">🌙</span><span id="theme-lbl" data-t>Sombre</span></button>
+        <button type="button" role="menuitem" id="btn-compact" aria-pressed="false" onclick="depuisMenu(basculerAffichage)"><span class="hdr-menu-ico" aria-hidden="true" id="mode-ico">≡</span><span id="mode-lbl">Affichage compact</span></button>
+        <button type="button" role="menuitem" id="theme-btn" onclick="depuisMenu(toggleTheme)"><span class="hdr-menu-ico" aria-hidden="true" id="theme-ico">🌙</span><span id="theme-lbl">Sombre</span></button>
         <button type="button" role="menuitem" id="config-btn" onclick="depuisMenu(basculerConfig)" aria-expanded="false"><span class="hdr-menu-ico" aria-hidden="true">🔧</span><span data-t>Ma configuration…</span></button>
         <div class="hdr-menu-sep" role="separator"></div>
         <button type="button" role="menuitem" onclick="depuisMenu(function(){printTab(curTab);})"><span class="hdr-menu-ico" aria-hidden="true">🖨️</span><span data-t>Imprimer</span></button>
@@ -1606,7 +1606,80 @@ const TRADUCTIONS={
     '⬇️ winget .json':'⬇️ winget .json',
 
     'Exemple indisponible.':'Example unavailable.',
-    "Exemple chargé : ces logiciels sont ceux d'une autre machine, pas les tiens. Réglages → Remettre le site à zéro pour revenir à la checklist vide.":'Example loaded: this software belongs to another machine, not yours. Settings → Reset the site to go back to the empty checklist.'
+    "Exemple chargé : ces logiciels sont ceux d'une autre machine, pas les tiens. Réglages → Remettre le site à zéro pour revenir à la checklist vide.":'Example loaded: this software belongs to another machine, not yours. Settings → Reset the site to go back to the empty checklist.',
+    // Ce que la page DIT, par opposition a ce qu'elle affiche : le bandeau,
+    // les annonces, l'indicateur de sauvegarde, les etiquettes d'une panne.
+    // Des phrases entieres, une par cas, jamais des morceaux recolles.
+    'Profil et progression exportés dans un seul fichier.':'Profile and progress exported in a single file.',
+    '« {0} » revient dans la liste.':'« {0} » is back in the list.',
+    '« {0} » ignoré : il sort des comptes et du script winget.':'« {0} » ignored: it leaves the counts and the winget script.',
+    "L'instantané est trop gros pour être gardé en mémoire du navigateur. Il reste utilisable maintenant, mais il faudra le réimporter après un rechargement.":"The snapshot is too large to be kept in the browser's memory. It stays usable now, but you will need to import it again after a reload.",
+    'Export winget importé : 1 paquet. Les noms sont déduits des identifiants.':'Winget export imported: 1 package. Names are inferred from the identifiers.',
+    'Export winget importé : {0} paquets. Les noms sont déduits des identifiants.':'Winget export imported: {0} packages. Names are inferred from the identifiers.',
+    "Scan du PC cible reçu, mais aucun instantané du PC source à comparer. Importe d'abord celui que tu as pris avant d'effacer.":'Target PC scan received, but there is no source PC snapshot to compare it with. Import the one you took before wiping first.',
+    'Scan du PC cible reçu : {0} sur {1} éléments sont déjà là, il en reste {2}.':'Target PC scan received: {0} of {1} items are already there, {2} left.',
+    'Scan du PC cible reçu : {0} sur {1} éléments sont déjà là, tout y est.':'Target PC scan received: {0} of {1} items are already there, nothing is missing.',
+    "Scan reçu, mais aucune application détectée. Sur une machine neuve c'est normal ; sinon, relancez avec -ToutInclure.":'Scan received, but no application detected. On a brand-new machine that is normal; otherwise, run it again with -ToutInclure.',
+    "Scan reçu, mais aucune application détectée. Le matériel a été repris (1 composant). Sur une machine neuve c'est normal ; sinon, relancez avec -ToutInclure.":'Scan received, but no application detected. The hardware was picked up (1 component). On a brand-new machine that is normal; otherwise, run it again with -ToutInclure.',
+    "Scan reçu, mais aucune application détectée. Le matériel a été repris ({0} composants). Sur une machine neuve c'est normal ; sinon, relancez avec -ToutInclure.":'Scan received, but no application detected. The hardware was picked up ({0} components). On a brand-new machine that is normal; otherwise, run it again with -ToutInclure.',
+    '1 application':'1 application',
+    '{0} applications':'{0} applications',
+    '1 application web':'1 web application',
+    '{0} applications web':'{0} web applications',
+    'Inventaire importé : {0}.':'Inventory imported: {0}.',
+    'Profil importé.':'Profile imported.',
+    'Profil importé : {0} éléments.':'Profile imported: {0} items.',
+    'Profil importé : {0} éléments, dont {1} cochés.':'Profile imported: {0} items, {1} of them checked.',
+    'Progression importée.':'Progress imported.',
+    'Progression importée : 1 tâche cochée.':'Progress imported: 1 task checked.',
+    'Progression importée : {0} tâches cochées.':'Progress imported: {0} tasks checked.',
+    'Format non reconnu. Attendu : un export winget, un inventaire de scan-pc.ps1, un profil, ou une progression exportée depuis cette page.':'Unrecognised format. Expected: a winget export, an inventory from scan-pc.ps1, a profile, or a progress file exported from this page.',
+    "Fichier illisible : ce n'est pas du JSON valide.":'Unreadable file: this is not valid JSON.',
+    'Sauvegarde rétablie : la progression est de nouveau enregistrée.':'Saving restored: progress is being recorded again.',
+    "le navigateur refuse d'enregistrer (stockage plein ou bloqué). Votre travail reste à l'écran mais sera perdu au rechargement : exportez-le avec « {0} ».":'the browser refuses to save (storage full or blocked). Your work stays on screen but will be lost on reload: export it with « {0} ».',
+    '« {0} » se fait normalement après : {1}.':'« {0} » is normally done after: {1}.',
+    'Copie impossible dans ce navigateur. Commande : {0}':'Copying is not possible in this browser. Command: {0}',
+    '✓ Copié !':'✓ Copied!',
+    '✓ Copié':'✓ Copied',
+    'Rien de nouveau à cocher :':'Nothing new to check:',
+    '{0} élément(s) détecté(s) sont déjà cochés.':'{0} detected item(s) are already checked.',
+    '{0} élément(s) détecté(s) ne figurent pas dans le profil chargé.':'{0} detected item(s) are not in the loaded profile.',
+    "Aucun des éléments du profil n'a été détecté sur cette machine.":'None of the profile items was detected on this machine.',
+    "Aucun élément sélectionné : rien n'a été coché.":'No item selected: nothing was checked.',
+    '1 case cochée depuis la vérification du PC.':'1 box checked from the PC check.',
+    '{0} cases cochées depuis la vérification du PC.':'{0} boxes checked from the PC check.',
+    'Copie automatique impossible ici : la commande est sélectionnée, faites Ctrl+C.':'Automatic copy is not possible here: the command is selected, press Ctrl+C.',
+    "Rien à décocher : aucune case n'est cochée.":'Nothing to uncheck: no box is checked.',
+    '1 case décochée sur toute la checklist. Le profil, la configuration et les lignes écartées sont conservés.':'1 box unchecked across the whole checklist. The profile, the configuration and the rows set aside are kept.',
+    '{0} cases décochées sur toute la checklist. Le profil, la configuration et les lignes écartées sont conservés.':'{0} boxes unchecked across the whole checklist. The profile, the configuration and the rows set aside are kept.',
+    'Site remis à zéro : progression, configuration, lignes écartées et profil importé effacés.':'Site reset: progress, configuration, rows set aside and imported profile erased.',
+    'Site remis à zéro : progression, notes et clés effacées.':'Site reset: progress, notes and keys erased.',
+    'apporté par la clé depuis le PC source':'brought by the key from the source PC',
+    'fichier déposé par le scanner':'file dropped by the scanner',
+    'sur {0}':'on {0}',
+    'Aucun fichier de scan à côté de cette page.':'No scan file next to this page.',
+    'La configuration est déjà vide.':'The configuration is already empty.',
+    'Configuration effacée.':'Configuration cleared.',
+    'Toutes les apps installables par winget sont déjà cochées.':'All apps installable with winget are already checked.',
+    "Aucune app de ce profil n'a d'identifiant winget.":'No app in this profile has a winget identifier.',
+    'Les logiciels manquants sont soit déjà cochés, soit sans identifiant winget.':'The missing programs are either already checked or have no winget identifier.',
+    'Rien ne manque sur cette machine : la comparaison ne trouve aucun absent.':'Nothing is missing on this machine: the comparison finds nothing absent.',
+    'Toutes les apps avec winget sont déjà cochées.':'All apps with winget are already checked.',
+    '⚠ non enregistré':'⚠ not saved',
+    "Le navigateur refuse d'enregistrer. Exportez votre progression.":'The browser refuses to save. Export your progress.',
+    '✓ enregistré {0}':'✓ saved {0}',
+    "Dans ce navigateur, pour ce fichier. L'export JSON est le seul transfert fiable.":'In this browser, for this file. The JSON export is the only reliable transfer.',
+    'Configuration':'Configuration',
+    'Menu':'Menu',
+    'Import':'Import',
+    'Annulation':'Undo',
+    'Sauvegarde':'Saving',
+    'Positions':'Positions',
+    'Boutons suivant':'Next buttons',
+    'Mode guidé':'Guided mode',
+    'Scan local':'Local scan',
+    'Instantané de la source':'Source snapshot',
+    'Remise à zéro':'Reset'
   }
 };
 //
@@ -1669,6 +1742,11 @@ function setLangue(l){
   try{document.documentElement.setAttribute('lang',l);}catch(e){}
   majSelecteurLangue();
   appliquerTextesFixes();
+  // Ces deux libelles disent l'ETAT, pas un texte fixe : ils ne portent pas
+  // data-t, et c'est a nous de les redire dans la nouvelle langue. Avec data-t
+  // ils etaient reecrits d'apres le texte vu au premier passage, donc
+  // « Sombre » revenait meme quand le theme etait deja sombre.
+  applyTheme();setMode(viewMode);
   renderAll();updateGlobal();
 }
 
@@ -1913,7 +1991,7 @@ function exportProfil(){
   }});
   dl(new Blob([JSON.stringify(sortie,null,2)],{type:'application/json'}),'profil-migration-pc.json');
   S.lastSave=Date.now();saveState();
-  informer('Profil et progression exportés dans un seul fichier.');
+  informer(tr('Profil et progression exportés dans un seul fichier.'));
 }
 
 // ═══ INVENTAIRE → PROFIL ═══
@@ -2220,8 +2298,8 @@ function idPilote(p){
 function basculerIgnore(id,libelle){
   const avant=!!IGNORES[id];
   memoriserAnnulation(avant
-    ? '« '+libelle+' » revient dans la liste.'
-    : '« '+libelle+' » ignoré : il sort des comptes et du script winget.',false);
+    ? tr('« {0} » revient dans la liste.',libelle)
+    : tr('« {0} » ignoré : il sort des comptes et du script winget.',libelle),false);
   if(avant){ delete IGNORES[id]; }
   else{
     IGNORES[id]=true;
@@ -2528,8 +2606,7 @@ function memoriserInstantane(cle,inv){
     // navigateur. On le dit plutôt que de laisser croire qu'il est gardé :
     // la comparaison marchera pour cette session et pas après un rechargement.
     console.error(e);
-    informer('L\'instantané est trop gros pour être gardé en mémoire du navigateur. '
-      +'Il reste utilisable maintenant, mais il faudra le réimporter après un rechargement.');
+    informer(tr("L'instantané est trop gros pour être gardé en mémoire du navigateur. Il reste utilisable maintenant, mais il faudra le réimporter après un rechargement."));
   }
 }
 function lireInstantane(cle){
@@ -2581,7 +2658,9 @@ function traiterDonnees(d,provenance){
     }
     if(estExportWinget(d)){
       const p=wingetVersProfil(d);
-      memoriserAnnulation('Export winget importé : '+p.apps.length+' paquets. Les noms sont déduits des identifiants.'+suffixe,true);
+      memoriserAnnulation((p.apps.length===1
+        ? tr('Export winget importé : 1 paquet. Les noms sont déduits des identifiants.')
+        : tr('Export winget importé : {0} paquets. Les noms sont déduits des identifiants.',p.apps.length))+suffixe,true);
       appliquerProfil(p,true);
       return true;
     }
@@ -2598,13 +2677,12 @@ function traiterDonnees(d,provenance){
         const r=comparerInstantanes(INV_SOURCE,INV_CIBLE);
         renderApps();renderPilotes();
         if(!INV_SOURCE){
-          informer('Scan du PC cible reçu, mais aucun instantané du PC source '
-            +'à comparer. Importe d\'abord celui que tu as pris avant d\'effacer.');
+          informer(tr("Scan du PC cible reçu, mais aucun instantané du PC source à comparer. Importe d'abord celui que tu as pris avant d'effacer."));
         }else{
           const manque=r.total.attendu-r.total.arrive;
-          memoriserAnnulation('Scan du PC cible reçu : '+r.total.arrive+' sur '
-            +r.total.attendu+' éléments sont déjà là'
-            +(manque>0?', il en reste '+manque:', tout y est')+'.',true);
+          memoriserAnnulation(manque>0
+            ? tr('Scan du PC cible reçu : {0} sur {1} éléments sont déjà là, il en reste {2}.',r.total.arrive,r.total.attendu,manque)
+            : tr('Scan du PC cible reçu : {0} sur {1} éléments sont déjà là, tout y est.',r.total.arrive,r.total.attendu),true);
           switchTab('apps');
         }
         return true;
@@ -2617,48 +2695,56 @@ function traiterDonnees(d,provenance){
         INV_SOURCE=d;
         memoriserInstantane(CLE_SOURCE,d);
         const repris=appliquerMateriel(d.materiel,false);
-        informer('Scan reçu, mais aucune application détectée.'
-          +(repris?' Le matériel a été repris ('+repris+' composant'+(repris>1?'s':'')+').':'')
-          +' Sur une machine neuve c\'est normal ; sinon, relancez avec -ToutInclure.');
+        informer(!repris
+          ? tr("Scan reçu, mais aucune application détectée. Sur une machine neuve c'est normal ; sinon, relancez avec -ToutInclure.")
+          : (repris>1
+            ? tr("Scan reçu, mais aucune application détectée. Le matériel a été repris ({0} composants). Sur une machine neuve c'est normal ; sinon, relancez avec -ToutInclure.",repris)
+            : tr("Scan reçu, mais aucune application détectée. Le matériel a été repris (1 composant). Sur une machine neuve c'est normal ; sinon, relancez avec -ToutInclure.")));
         return true;
       }
       INV_SOURCE=d;
       memoriserInstantane(CLE_SOURCE,d);
       const p=inventaireVersProfil(d);
       // Le message dit ce qui a vraiment changé, en le comptant.
-      const dits=[p.apps.length+' applications'];
+      const dits=[p.apps.length===1?tr('1 application'):tr('{0} applications',p.apps.length)];
       const ajoutsPwa=p.pwa.filter(function(e){return /^web/.test(String(e.id));}).length;
-      if(ajoutsPwa)dits.push(ajoutsPwa+' application'+(ajoutsPwa>1?'s':'')+' web');
-      memoriserAnnulation('Inventaire importé : '+dits.join(', ')+'.'+suffixe,true);
+      if(ajoutsPwa)dits.push(ajoutsPwa===1?tr('1 application web'):tr('{0} applications web',ajoutsPwa));
+      memoriserAnnulation(tr('Inventaire importé : {0}.',dits.join(', '))+suffixe,true);
       appliquerProfil(p,true);
       return true;
     }
     if(profilValide(d)){
-      memoriserAnnulation('Profil importé.'+suffixe,true);
+      memoriserAnnulation(tr('Profil importé.')+suffixe,true);
       appliquerProfil(d,true);
       appliquerMateriel(d.materiel,false);
       // Le meme fichier peut porter les cases cochees. Un profil exporte avant
       // cette fusion n'en porte pas : on ne touche alors pas a la progression
       // en cours, ce qui est l'ancien comportement.
-      let reprise='';
+      let reprise=-1;
       if(d.state&&typeof d.state==='object'){
         S={checked:d.state.checked||{},dates:d.state.dates||{},lastSave:null};
         saveState();updateGlobal();
-        reprise=', dont '+Object.keys(S.checked).length+' cochés';
+        reprise=Object.keys(S.checked).length;
       }
-      dire('Profil importé : '+(APPS_DATA.length+PWA_DATA.length)+' éléments'+reprise+'.');
+      const nbElements=APPS_DATA.length+PWA_DATA.length;
+      dire(reprise<0
+        ? tr('Profil importé : {0} éléments.',nbElements)
+        : tr('Profil importé : {0} éléments, dont {1} cochés.',nbElements,reprise));
       return true;
     }
     if(d && d.state){
-      memoriserAnnulation('Progression importée.'+suffixe,false);
+      memoriserAnnulation(tr('Progression importée.')+suffixe,false);
       // Un fichier de progression ecrit avant la suppression des notes en
       // porte encore : on ne les relit pas, et rien ne s'y casse.
       S={checked:d.state.checked||{},dates:d.state.dates||{},lastSave:null};
       saveState();renderAll();updateGlobal();
-      dire('Progression importée : '+Object.keys(S.checked).length+' tâches cochées.');
+      const nbCoches=Object.keys(S.checked).length;
+      dire(nbCoches===1
+        ? tr('Progression importée : 1 tâche cochée.')
+        : tr('Progression importée : {0} tâches cochées.',nbCoches));
       return true;
     }
-    informer('Format non reconnu. Attendu : un export winget, un inventaire de scan-pc.ps1, un profil, ou une progression exportée depuis cette page.');
+    informer(tr('Format non reconnu. Attendu : un export winget, un inventaire de scan-pc.ps1, un profil, ou une progression exportée depuis cette page.'));
     return false;
   }catch(err){signalerPanne('Import',err);return false;}
 }
@@ -2669,7 +2755,7 @@ function handleImport(evt){
   reader.onload=function(e){
     let d;
     try{d=JSON.parse(e.target.result);}
-    catch(err){informer('Fichier illisible : ce n\'est pas du JSON valide.');return;}
+    catch(err){informer(tr("Fichier illisible : ce n'est pas du JSON valide."));return;}
     traiterDonnees(d,'');
   };
   reader.readAsText(file);evt.target.value='';
@@ -2767,7 +2853,7 @@ function saveState(){
     localStorage.setItem(CLE_ETAT,JSON.stringify(S));
     if(stockageEnPanne){
       stockageEnPanne=false;
-      informer('Sauvegarde rétablie : la progression est de nouveau enregistrée.');
+      informer(tr('Sauvegarde rétablie : la progression est de nouveau enregistrée.'));
     }
   }catch(e){
     console.error(e);
@@ -2775,10 +2861,9 @@ function saveState(){
     if(!stockageEnPanne){
       stockageEnPanne=true;
       // Une seule fois, sinon chaque case cochee reaffiche le meme message.
-      signalerPanne('Sauvegarde',new Error(
-        "le navigateur refuse d'enregistrer (stockage plein ou bloqué). "
-        +"Votre travail reste à l'écran mais sera perdu au rechargement : "
-        +"exportez-le avec « Sauvegarder »."));
+      signalerPanne('Sauvegarde',new Error(tr(
+        "le navigateur refuse d'enregistrer (stockage plein ou bloqué). Votre travail reste à l'écran mais sera perdu au rechargement : exportez-le avec « {0} ».",
+        tr('Exporter le profil'))));
     }
   }
   updateSaveLabel();
@@ -2789,17 +2874,17 @@ function updateSaveLabel(){
   const el=document.getElementById('save-state');
   if(!el)return;
   if(stockageEnPanne){
-    el.textContent='⚠ non enregistré';
+    el.textContent=tr('⚠ non enregistré');
     el.className='save-state save-ko';
-    el.title="Le navigateur refuse d'enregistrer. Exportez votre progression.";
+    el.title=tr("Le navigateur refuse d'enregistrer. Exportez votre progression.");
     return;
   }
   if(!S.lastSave){
     el.textContent='';el.className='save-state';el.title='';return;
   }
-  el.textContent='✓ enregistré '+fmtHeure(S.lastSave);
+  el.textContent=tr('✓ enregistré {0}',fmtHeure(S.lastSave));
   el.className='save-state';
-  el.title='Dans ce navigateur, pour ce fichier. L\'export JSON est le seul transfert fiable.';
+  el.title=tr("Dans ce navigateur, pour ce fichier. L'export JSON est le seul transfert fiable.");
 }
 function fmtHeure(ts){
   const d=new Date(ts);
@@ -2807,7 +2892,7 @@ function fmtHeure(ts){
 }
 
 // ═══ THEME ═══
-function applyTheme(){document.documentElement.setAttribute('data-theme',isDark?'dark':'light');document.getElementById('theme-ico').textContent=isDark?'☀️':'🌙';document.getElementById('theme-lbl').textContent=isDark?'Clair':'Sombre';}
+function applyTheme(){document.documentElement.setAttribute('data-theme',isDark?'dark':'light');document.getElementById('theme-ico').textContent=isDark?'☀️':'🌙';document.getElementById('theme-lbl').textContent=isDark?tr('Clair'):tr('Sombre');}
 function toggleTheme(){isDark=!isDark;try{localStorage.setItem(CLE_THEME,isDark?'dark':'light');}catch(e){}applyTheme();}
 
 // ═══ MODE ═══
@@ -2823,7 +2908,7 @@ function setMode(m){
     b.setAttribute('aria-pressed',m==='compact'?'true':'false');
   }
   const lbl=document.getElementById('mode-lbl');
-  if(lbl)lbl.textContent=m==='compact'?'Affichage normal':'Affichage compact';
+  if(lbl)lbl.textContent=m==='compact'?tr('Affichage normal'):tr('Affichage compact');
   const ico=document.getElementById('mode-ico');
   if(ico)ico.textContent=m==='compact'?'📋':'≡';
 }
@@ -2880,7 +2965,7 @@ function toggle(id,name){
     const item=indexParId()[id];
     const manquantes=item?depsManquantes(item):[];
     if(manquantes.length){
-      informer('« '+name+' » se fait normalement après : '+manquantes.map(nomDe).join(', ')+'.');
+      informer(tr('« {0} » se fait normalement après : {1}.',name,manquantes.map(nomDe).join(', ')));
     }
     S.checked[id]=true;S.dates[id]=Date.now();
   }
@@ -2895,16 +2980,16 @@ function copyWinget(w,evt){
   const cmd='winget install --id '+w+' -e --accept-source-agreements --accept-package-agreements';
   navigator.clipboard.writeText(cmd).then(function(){
     const el=evt.target.closest('.b-winget');if(!el)return;
-    const o=el.innerHTML;el.innerHTML='✓ Copié !';setTimeout(function(){el.innerHTML=o;},1500);
-  }).catch(function(){informer('Copie impossible dans ce navigateur. Commande : '+cmd);});
+    const o=el.innerHTML;el.innerHTML=tr('✓ Copié !');setTimeout(function(){el.innerHTML=o;},1500);
+  }).catch(function(){informer(tr('Copie impossible dans ce navigateur. Commande : {0}',cmd));});
 }
 // Une commande fournie telle quelle, sans rien deviner autour.
 function copierCommande(cmd,evt){
   evt.stopPropagation();
   navigator.clipboard.writeText(cmd).then(function(){
     const el=evt.target.closest('.b-winget');if(!el)return;
-    const o=el.innerHTML;el.innerHTML='✓ Copié !';setTimeout(function(){el.innerHTML=o;},1500);
-  }).catch(function(){informer('Copie impossible dans ce navigateur. Commande : '+cmd);});
+    const o=el.innerHTML;el.innerHTML=tr('✓ Copié !');setTimeout(function(){el.innerHTML=o;},1500);
+  }).catch(function(){informer(tr('Copie impossible dans ce navigateur. Commande : {0}',cmd));});
 }
 
 function copyCatWinget(cat,evt){
@@ -2914,7 +2999,7 @@ function copyCatWinget(cat,evt){
   const lines=['# '+(CATS[cat]||cat)].concat(apps.map(function(a){return 'winget install --id '+a.w+' -e --accept-source-agreements --accept-package-agreements';}));
   navigator.clipboard.writeText(lines.join('\n')).then(function(){
     const el=evt.target.closest('.cat-winget');if(!el)return;
-    const o=el.innerHTML;el.innerHTML='✓ Copié !';setTimeout(function(){el.innerHTML=o;},1500);
+    const o=el.innerHTML;el.innerHTML=tr('✓ Copié !');setTimeout(function(){el.innerHTML=o;},1500);
   }).catch(function(){});
 }
 
@@ -3393,11 +3478,17 @@ function afficherVerification(d){
   const inconnus=d.trouves.filter(function(t){return !index[t.id];}).length;
 
   if(!proposables.length){
-    let msg='Rien de nouveau à cocher : ';
-    if(dejaCochees)msg+=dejaCochees+' élément(s) détecté(s) sont déjà cochés. ';
-    if(inconnus)msg+=inconnus+' élément(s) détecté(s) ne figurent pas dans le profil chargé. ';
-    if(!dejaCochees&&!inconnus)msg='Aucun des éléments du profil n\'a été détecté sur cette machine.';
-    informer(msg.trim());
+    // Des phrases entieres, assemblees avec une espace : chacune se traduit
+    // seule, et le francais produit est celui d'avant.
+    let msg;
+    if(!dejaCochees&&!inconnus)msg=tr("Aucun des éléments du profil n'a été détecté sur cette machine.");
+    else{
+      const dits=[tr('Rien de nouveau à cocher :')];
+      if(dejaCochees)dits.push(tr('{0} élément(s) détecté(s) sont déjà cochés.',dejaCochees));
+      if(inconnus)dits.push(tr('{0} élément(s) détecté(s) ne figurent pas dans le profil chargé.',inconnus));
+      msg=dits.join(' ');
+    }
+    informer(msg);
     // Une machine neuve n'a rien d'installé — c'est justement là que les
     // périphériques sans pilote comptent le plus.
     if(pilotes){
@@ -3455,9 +3546,10 @@ function appliquerVerification(){
   const cases=[].slice.call(document.querySelectorAll('#verif input[type=checkbox]'));
   const ids=cases.filter(function(c){return c.checked;}).map(function(c){return c.dataset.vid;});
   fermerVerification();
-  if(!ids.length){informer('Aucun élément sélectionné : rien n\'a été coché.');return;}
-  memoriserAnnulation(ids.length+' case'+(ids.length>1?'s':'')+' cochée'+(ids.length>1?'s':'')
-    +' depuis la vérification du PC.',false);
+  if(!ids.length){informer(tr("Aucun élément sélectionné : rien n'a été coché."));return;}
+  memoriserAnnulation(ids.length===1
+    ? tr('1 case cochée depuis la vérification du PC.')
+    : tr('{0} cases cochées depuis la vérification du PC.',ids.length),false);
   const maintenant=Date.now();
   ids.forEach(function(id){S.checked[id]=true;S.dates[id]=maintenant;});
   saveState();renderAll();updateGlobal();updateTitle();
@@ -3605,7 +3697,7 @@ function copierCmdGuide(){
   const txt=code.textContent;
   const fini=function(){
     if(!btn)return;
-    const o=btn.textContent;btn.textContent='✓ Copié';
+    const o=btn.textContent;btn.textContent=tr('✓ Copié');
     setTimeout(function(){btn.textContent=o;},1500);
   };
   // Le presse-papier n'existe pas partout — il demande HTTPS, et une clé USB
@@ -3619,7 +3711,7 @@ function copierCmdGuide(){
       plage.selectNodeContents(code);
       sel.removeAllRanges();sel.addRange(plage);
     }catch(e){}
-    informer('Copie automatique impossible ici : la commande est sélectionnée, faites Ctrl+C.');
+    informer(tr('Copie automatique impossible ici : la commande est sélectionnée, faites Ctrl+C.'));
   };
   if(navigator.clipboard&&navigator.clipboard.writeText){
     navigator.clipboard.writeText(txt).then(fini).catch(repli);
@@ -3809,7 +3901,7 @@ function signalerPanne(ou,err){
   console.error('['+ou+']',err);
   const bloc=document.getElementById('panne');
   const det=document.getElementById('panne-detail');
-  if(det)det.textContent=ou+' : '+(err&&err.message?err.message:String(err));
+  if(det)det.textContent=tr(ou)+' : '+(err&&err.message?err.message:String(err));
   if(bloc)bloc.classList.add('visible');
 }
 function masquerPanne(){
@@ -3840,10 +3932,10 @@ function toutDecocher(){
   const n=Object.keys(S.checked).length;
   // Même quand il n'y a rien à faire on referme : sinon le panneau resterait
   // ouvert par-dessus le bandeau qui explique pourquoi rien n'a bougé.
-  if(!n){fermerReglages();informer('Rien à décocher : aucune case n\'est cochée.');return;}
-  memoriserAnnulation(n+' case'+(n>1?'s':'')+' décochée'+(n>1?'s':'')
-    +' sur toute la checklist. Le profil, la configuration et les lignes '
-    +'écartées sont conservés.',false);
+  if(!n){fermerReglages();informer(tr("Rien à décocher : aucune case n'est cochée."));return;}
+  memoriserAnnulation(n===1
+    ? tr('1 case décochée sur toute la checklist. Le profil, la configuration et les lignes écartées sont conservés.')
+    : tr('{0} cases décochées sur toute la checklist. Le profil, la configuration et les lignes écartées sont conservés.',n),false);
   S.checked={};S.dates={};
   saveState();renderAll();updateGlobal();
   fermerReglages();
@@ -3852,8 +3944,7 @@ function toutDecocher(){
 function remiseAZero(){
   const avaitProfil=!!chargerProfilMemorise();
   // On mémorise AVANT d'effacer : l'annulation restaure l'état et le profil.
-  memoriserAnnulation('Site remis à zéro : progression, configuration, lignes écartées '
-    +'et profil importé effacés.',true);
+  memoriserAnnulation(tr('Site remis à zéro : progression, configuration, lignes écartées et profil importé effacés.'),true);
   try{
     localStorage.removeItem(CLE_ETAT);
     localStorage.removeItem(CLE_PROFIL);
@@ -3871,7 +3962,7 @@ function remiseAZero(){
   catch(e){signalerPanne('Remise à zéro',e);}
   fermerReglages();
   if(!avaitProfil)document.getElementById('annul-txt').textContent=
-    'Site remis à zéro : progression, notes et clés effacées.';
+    tr('Site remis à zéro : progression, notes et clés effacées.');
 }
 
 // ── Les scripts ────────────────────────────────────────────────────────
@@ -3955,7 +4046,7 @@ function appliquerScanLocal(){
   const src=window.MIGRATION_PC_SOURCE;
   if(src&&typeof src==='object'&&!INV_SOURCE){
     proteger('Instantané de la source',function(){
-      traiterDonnees(src,'apporté par la clé depuis le PC source');
+      traiterDonnees(src,tr('apporté par la clé depuis le PC source'));
     });
   }
   const empreinte=empreinteScan(d);
@@ -3968,16 +4059,16 @@ function appliquerScanLocal(){
     majBoutonScan();
     return;
   }
-  const quand=d.genere?(' du '+String(d.genere).slice(0,10)):'';
+  const quand=d.genere?(' '+tr('du {0}',String(d.genere).slice(0,10))):'';
   // d.machine est un objet { os, nom } : le passer a String() affichait
   // « sur [object Object] » dans le bandeau. C'est le nom de la machine qui
   // dit quelque chose a quelqu'un.
   const nomMachine=d.machine&&typeof d.machine==='object'
     ?String(d.machine.nom||d.machine.os||'')
     :String(d.machine||'');
-  const machine=nomMachine.trim()?(' sur '+nomMachine.trim().slice(0,40)):'';
+  const machine=nomMachine.trim()?(' '+tr('sur {0}',nomMachine.trim().slice(0,40))):'';
   proteger('Scan local',function(){
-    if(traiterDonnees(d,'fichier déposé par le scanner'+quand+machine)){
+    if(traiterDonnees(d,tr('fichier déposé par le scanner')+quand+machine)){
       try{localStorage.setItem(CLE_SCAN,empreinte);}catch(e){}
       scanEnAttente=d;
       majBoutonScan();
@@ -3993,11 +4084,11 @@ function majBoutonScan(){
   if(b)b.style.display=scanEnAttente?'':'none';
 }
 function rejouerScanLocal(){
-  if(!scanEnAttente){informer('Aucun fichier de scan à côté de cette page.');return;}
+  if(!scanEnAttente){informer(tr('Aucun fichier de scan à côté de cette page.'));return;}
   const d=scanEnAttente;
-  const quand=d.genere?(' du '+String(d.genere).slice(0,10)):'';
+  const quand=d.genere?(' '+tr('du {0}',String(d.genere).slice(0,10))):'';
   proteger('Scan local',function(){
-    traiterDonnees(d,'fichier déposé par le scanner'+quand);
+    traiterDonnees(d,tr('fichier déposé par le scanner')+quand);
   });
 }
 
@@ -4123,9 +4214,9 @@ function majResumeConfig(){
     : tr('{0} · tout ce qui sert aux pilotes est là',compte);
 }
 function viderConfig(){
-  if(!Object.keys(CONFIG).length){informer('La configuration est déjà vide.');return;}
+  if(!Object.keys(CONFIG).length){informer(tr('La configuration est déjà vide.'));return;}
   CONFIG={};saveConfig();construireConfig();renderAll();updateGlobal();
-  informer('Configuration effacée.');
+  informer(tr('Configuration effacée.'));
 }
 
 // ── Panneau des remises à zéro ─────────────────────────────────────────
@@ -4245,8 +4336,8 @@ function exportWingetJSON(restantesSeulement){
   });
   if(!apps.length){
     informer(restantesSeulement
-      ? 'Toutes les apps installables par winget sont déjà cochées.'
-      : 'Aucune app de ce profil n\'a d\'identifiant winget.');
+      ? tr('Toutes les apps installables par winget sont déjà cochées.')
+      : tr("Aucune app de ce profil n'a d'identifiant winget."));
     return;
   }
   var nom=restantesSeulement?'winget-restant.json':'winget-complet.json';
@@ -4353,6 +4444,7 @@ window.addEventListener('DOMContentLoaded',function(){
   try{document.documentElement.setAttribute('lang',LANG);}catch(e){}
   majSelecteurLangue();
   appliquerTextesFixes();
+  applyTheme();setMode(viewMode);
   document.addEventListener('input',function(e){
   });
   document.addEventListener('keydown',clavierGlobal);
@@ -4431,8 +4523,8 @@ function exportWingetRemaining(){
       '# Exécuter dans PowerShell en tant qu\'administrateur',''];
     if(!remaining.length){
       informer(etats.manquants
-        ?'Les logiciels manquants sont soit déjà cochés, soit sans identifiant winget.'
-        :'Rien ne manque sur cette machine : la comparaison ne trouve aucun absent.');
+        ?tr('Les logiciels manquants sont soit déjà cochés, soit sans identifiant winget.')
+        :tr('Rien ne manque sur cette machine : la comparaison ne trouve aucun absent.'));
       return;
     }
   }else{
@@ -4440,7 +4532,7 @@ function exportWingetRemaining(){
     entete=['# Script winget — apps restantes',
       '# Sans scan du PC cible : la liste vient des cases non cochées.',
       '# Exécuter dans PowerShell en tant qu\'administrateur',''];
-    if(!remaining.length){informer('Toutes les apps avec winget sont déjà cochées.');return;}
+    if(!remaining.length){informer(tr('Toutes les apps avec winget sont déjà cochées.'));return;}
   }
   // Un script généré dans le désordre installe un greffon avant son hôte.
   remaining=ordreInstallation(remaining);

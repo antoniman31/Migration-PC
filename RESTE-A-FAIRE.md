@@ -53,7 +53,40 @@ contrôle au niveau octet refuse leur retour, et il échoue si on les remet.
 
 *Ce qu'il faut pour démarrer* : rien.
 
-### Lot 2 — Le canal de notification, jamais traduit
+### Lot 2 — Le canal de notification, jamais traduit → **fait**
+
+**Fait le 27 octobre 2026.** Le périmètre était plus large que l'audit : « 17 messages » était
+le nombre d'appels à `informer()` seul. Le contrôle écrit pour ce lot a trouvé, en lisant le
+code, **72 morceaux de texte brut** à sept points d'entrée (`informer`, `memoriserAnnulation`,
+`dire`, `signalerPanne`, `proteger`, la provenance d'un import) et **onze affectations de
+`.textContent`** que personne n'avait comptées, dont l'indicateur de sauvegarde. Tout passe
+maintenant par `tr()`, par phrases entières, une par cas.
+
+Ce que le travail a révélé en plus :
+- Le message de panne de stockage renvoyait vers un bouton « Sauvegarder » **qui n'existe
+  plus** (fusionné avec « Exporter le profil »). C'est le message qui prévient d'une perte
+  de données ; il est corrigé dans les deux langues.
+- Trois singuliers fautifs en français : « 1 paquets », « 1 applications », « 1 tâches
+  cochées ». Corrigés, parce qu'écrire une phrase par cas oblige à décider du cas « un ».
+- Les libellés du thème et de l'affichage mentaient sur l'état après un changement de
+  langue, **et** restaient en français au démarrage d'une page anglaise. Les deux sont
+  gardés par un test.
+
+Le français est inchangé partout ailleurs : le même test, lancé contre l'ancien
+`index.html`, donne 62 échecs, et le français de 34 scénarios sur 41 est identique mot pour
+mot — les sept autres sont les corrections ci-dessus.
+
+**Resté ouvert, et c'est à toi de trancher :**
+- `remiseAZero()` dit **deux phrases différentes** pour le même événement selon qu'un profil
+  était mémorisé, et la seconde parle de « notes et clés » — les notes ont été supprimées du
+  projet. Traduite fidèlement, pas réécrite : la réécrire est une décision de contenu.
+- Les commentaires d'en-tête des scripts winget générés (« # Exécuter dans PowerShell en
+  tant qu'administrateur ») restent en français dans la page anglaise. Ce n'est pas un
+  message de l'interface mais le contenu d'un fichier téléchargé ; le traduire changerait un
+  export, ce que ce projet traite à part.
+- Le contrôle statique ne voit pas un texte glissé dans du balisage (`innerHTML` avec des
+  balises) ni un message construit dans une variable ; le second cas est couvert par les
+  scénarios du test anglais, le premier est un trou connu.
 
 **En deuxième** parce que c'est le plus étendu, et parce qu'une seule cause racine explique
 tout le lot : du texte destiné à l'utilisateur qui ne passe pas par `tr()`. Détail :
