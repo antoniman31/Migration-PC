@@ -291,6 +291,8 @@ Migration-PC/
 ├── scripts/lib-detection.ps1     # détection partagée par tous les scripts
 ├── scripts/ecrire-resultat.ps1   # pose le résultat à côté de la page et l'ouvre
 ├── scripts/scan-pc.ps1           # fige la source, puis constate sur la cible
+├── scripts/lib-langue.ps1        # la langue des scripts : Texte(), messages, encodage de la console
+├── scripts/diagnostic.ps1        # ramasse de quoi comprendre un incident sur un vrai Windows
 │
 ├── manifest.json, sw.js, icons/  # installation et fonctionnement hors ligne
 ├── presets/exemple.json          # la checklist livrée, aussi embarquée dans index.html
@@ -307,6 +309,10 @@ Migration-PC/
 ├── COUVERTURE.md                 # ce que le scan détecte, refuse et ne peut pas
 ├── FORMATS.md                    # les fichiers que la page lit et écrit
 ├── CONTRIBUER.md                 # ce fichier : tests, CI, publication
+├── README.md, README.en.md       # la présentation, en français puis en anglais
+├── VERIFIER-SUR-WINDOWS.md       # le premier essai sur un vrai PC, et ce qui n'est pas un défaut
+├── RESTE-A-FAIRE.md              # ce qui reste, dans quel ordre, et pourquoi
+├── CLAUDE.md                     # les règles qui ont déjà coûté cher
 ├── construire-zip.sh             # fabrique l'archive proposée au téléchargement
 ├── LICENSE                       # GNU AGPL v3
 └── .github/workflows/ci.yml      # tests, puis publication si tout est vert
