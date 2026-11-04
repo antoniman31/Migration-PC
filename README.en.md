@@ -6,21 +6,16 @@
 > suites and the project history, read the French documents — they are the real ones.
 
 An HTML checklist for reinstalling a Windows PC without forgetting anything. PowerShell
-scripts survey the software installed on the old machine and the drivers on the new one;
-the page compares the two and says what is missing.
+scripts survey the software installed on the old machine and the drivers on the new one; the
+page compares the two and says what is missing.
 
-**What it does, and nothing else**: list the software on the source PC, list the software
-on the target PC, state the difference — and flag devices with no driver on the target,
-with the maker's support link. It backs up **nothing**. Your personal files remain
-entirely your own responsibility.
+**What it does, and nothing else**: list the software on the source PC and on the target PC,
+state the difference — and flag devices with no driver on the target, with the maker's
+support link. It backs up **nothing**: your personal files remain your own responsibility.
 
-`index.html` stands on its own: no dependency, no server, no build step. It opens from a
+**Requirements**: Windows with PowerShell 5.1 or later, already built into Windows 10 and 11.
+`index.html` stands on its own — no dependency, no server, no build step — and opens from a
 USB stick on a freshly installed PC, with no network. The scripts are optional.
-
-The page exists in French and English. It opens in the browser's language, and the **FR** /
-**EN** buttons at the top switch it. The scripts take the language of the Windows
-interface, and `-Langue fr` or `-Langue en` settles it — useful for a French speaker on an
-English Windows, or the reverse.
 
 ## How you use it
 
@@ -29,105 +24,87 @@ everything else lives in `scripts/`, which is there to be read.
 
 1. Stick plugged into the **PC you are leaving**: double-click `Migration PC.bat`, choose
    **SOURCE**. The page opens already filled with your software.
-2. Unplug the stick, plug it into the **target PC** — the new one, or the same one once
-   reinstalled.
+2. Plug the stick into the **target PC** — the new one, or the same one once reinstalled.
 3. Double-click `Migration PC.bat`, choose **TARGET**. The page opens on what is left to
-   install: **Software** says what is missing, **Drivers** shows the devices with no
-   driver and the maker's link.
+   install: **Software** says what is missing, **Drivers** shows the devices with no driver
+   and the maker's link.
 4. Run `Migration PC.bat` again: it offers **Install what is missing**. It shows the list,
-   waits for you to type `INSTALL` (or `INSTALLER` — both are accepted), then runs
-   `winget import`. This is the only action in the program that changes the machine, and
-   nothing chains on automatically after a scan.
+   waits for you to type `INSTALL` (or `INSTALLER`), then runs `winget import`. This is the
+   only action in the program that changes the machine; nothing chains on automatically.
 
-Nothing to import by hand between the two, and no file to hunt for in a folder.
+**Between the two, back up your personal files**: the scan lists, it copies nothing, and this
+project does not cover that step.
 
-**The same script on both sides.** On the source it freezes the machine's state; on the
-target it runs the same survey; and it is the page that compares. One consequence
-simplifies everything: "new PC" and "same PC after reinstalling" become the same case.
-Source and target can be the same computer at two different moments.
+The same script runs on both sides: it freezes the machine's state, and the page does the
+comparing. "New PC" and "same PC after reinstalling" are therefore the same case. Each snapshot
+carries its date and never overwrites the previous one. The menu guesses which side you are on
+when the stick carries another machine's snapshot; otherwise it asks, and **Where to start?**
+describes the three situations. The scan is optional: `index.html` opens on its own with an
+example profile.
 
-Each snapshot carries its date and never overwrites the previous one; a shortcut,
-`inventaire-pc.json`, always points at the latest.
+Windows shows a SmartScreen warning on a `.bat` downloaded from the internet: "More info",
+then "Run anyway". No trick avoids it without a paid signing certificate. The `.bat` exists
+only because Windows refuses to run a `.ps1` by double-click, and unlike an `.exe` it stays
+readable in Notepad.
 
-The scan is not compulsory: `index.html` opens on its own with an example profile.
+**Language.** The page opens in the browser's language, and the **FR** / **EN** buttons at the
+top switch it. The scripts take the language of Windows; `-Langue fr` or `-Langue en` settles
+it, including on the launcher: `Migration PC.bat -Langue en`. A profile you load is not
+translated, and an exported profile goes out with its original text.
+
+## What the scan looks at
+
+`winget list`, the registry `Uninstall` keys, Microsoft Store packages, game libraries (Steam,
+Epic, GOG, Xbox, Ubisoft, EA), the machine itself (maker, model, serial number) and
+non-Microsoft drivers. An entry seen by several sources is merged, and the source/target
+comparison runs on the normalised name, so "Mozilla Firefox (x64 fr)" and "Mozilla Firefox"
+count as one. Nothing is ticked without your say-so. The French README has the command-line
+options in full.
 
 ## What it does not do
 
-**The detection has never run on a real Windows machine.** The classification, the merge
-across sources, the parsing of winget output and the source/target reconciliation are
-covered by tests on hand-written data. Reading the registry, Store packages and game
-libraries needs Windows: that code is reviewed, not proven. If a result looks wrong to
-you, that is probably where it comes from.
+**The detection has never run on a real Windows machine.** The logic is covered by tests on
+hand-written data; reading the registry, Store packages and game libraries needs Windows,
+and that code is reviewed, not proven. If a result looks wrong to you, that is probably where it
+comes from.
 
-**The project backs up nothing.** This is the most important limit, and it is deliberate.
+**The project backs up nothing, and will not move your applications across**: Store apps do not
+copy, hardware-bound licences deactivate, and you would carry over five years of leftovers. A
+clean reinstall through winget covers what matters.
 
-**It will not move your applications across.** Commercial tools rewrite thousands of
-registry references that differ from one machine to the next. Store apps do not copy,
-hardware-bound licences deactivate, and you would carry over five years of accumulated
-leftovers. A clean reinstall through winget covers what matters without grafting on
-anything you do not understand.
-
-**Not every program has a winget identifier.** Those found through the registry alone come
-out with a search link instead of a command. They do not appear in the `winget .json`
-export, which can only hold packages winget knows.
-
-**An imported winget export loses the original names**: the format stores identifiers
-only, so `7zip.7zip` gives "7zip" rather than "7-Zip". Going through `scan-pc.ps1` gives
-correct names, because it reads the registry.
+**Not every program has a winget identifier.** Those found through the registry alone come out
+with a search link instead of a command, and are absent from the `winget .json` export. An
+imported winget export loses the original names (`7zip.7zip` gives "7zip").
 
 ## Privacy
 
-Everything stays on your machine. The page is a static file with no server and no network
-call: progress and the imported profile live in the browser's local storage, and exports
-are ordinary downloads.
+Everything stays on your machine. The page is a static file with no network call: progress and
+the imported profile live in the browser's local storage, which is tied to the browser **and**
+to the file's path. If the stick's drive letter changes from one PC to the other, your progress
+does not follow: the JSON export is the only reliable transfer.
 
-**The inventory the scan produces describes your machine precisely** — its model, its
-serial number, everything installed on it. Do not publish it.
+**The inventory the scan produces describes your machine precisely** — model, serial number,
+everything installed. Do not publish it. The scan follows one rule: **the name goes in the
+inventory, the secret stays out.** It records a licence file's path but not its contents, and
+the last five characters of a product key but never the full key. It does not collect Wi-Fi
+keys, the BitLocker recovery key or Windows passwords: the command that would hand them over
+exists, and this file travels on a USB stick that gets lost.
 
-The scan follows one constant rule: **the name goes in the inventory, the secret stays
-out.** It records the path of a licence file but not its contents, and the last five
-characters of a product key — what Windows shows you itself — but never the full key.
-Where it used to survey Wi-Fi networks, BitLocker volumes and the credential manager, it
-gave the names and never the keys, the passwords or the recovery key. In each of those
-cases the command that would hand over the secret exists: not using it is the choice, and
-it rests on one reason — this file travels on a USB stick, and USB sticks get lost.
-[COUVERTURE.md](COUVERTURE.md) keeps the record of those three deliberate stops even
-though the code is gone.
-
-Local storage is tied to the browser **and** to the file's path. If the USB stick's drive
-letter changes from one PC to the other, your progress does not follow: the JSON export is
-the only reliable transfer.
-
-**A profile you received is untrusted input.** The project is built for people to exchange
-profiles, so a profile often comes from a file you did not write. The page treats it as it
-would any other input: everything it contains is escaped before reaching the page, and a
-shortcut's address is only opened when it is `http`, `https` or `mailto` — a `javascript:`
-one becomes a visibly inert button rather than a link that runs code. What is at stake is
-not theoretical: local storage holds the inventory of your machine.
+**A profile you received is untrusted input.** Everything it contains is escaped before reaching
+the page, and a shortcut's address is only opened when it is `http`, `https` or `mailto`.
 
 ## Licence
 
-**GNU AGPL v3 or later.** The code is open: you may read it, use it, modify it and
-redistribute it. The one constraint is reciprocity — if you distribute a modified version,
-**or run it as an online service**, you must publish your source under the same licence.
-That second clause is what sets the AGPL apart from other free licences, and it is exactly
-why it was chosen here: someone can take this work further, nobody can close it again.
-
-This project was first published under the MIT licence, from 24 to 26 September 2026. The
-versions distributed during that window remain under MIT: a licence change only applies
-from then on, never to what has already gone out.
-
-`LICENSE` is included in `migration-pc.zip` — the AGPL requires the licence to travel with
-any redistribution. The reasoning behind the choice is in
-[README.md](README.md#licence), in French.
+**GNU AGPL v3 or later.** The code is open: you may read it, use it, modify it and redistribute
+it. The one constraint is reciprocity: if you distribute a modified version, **or run it as an
+online service**, you publish your source under the same licence. The project was first published
+under the MIT licence, from 24 to 26 September 2026; versions distributed in that window remain
+under MIT. `LICENSE` is included in `migration-pc.zip`.
 
 ## Going further
 
 The French documents carry the rest, and they are the ones kept up to date:
-
-- [README.md](README.md) — the full version: the command line, what the scan looks for,
-  every tab of the page, the hardware configuration block, the known limits in full.
-- [FORMATS.md](FORMATS.md) — the file formats, field by field.
-- [CONTRIBUER.md](CONTRIBUER.md) — the test suites, the CI, publishing.
-- [COUVERTURE.md](COUVERTURE.md) — what the scanner really covers, and the project's
-  history.
+[README.md](README.md) (the full version), [FORMATS.md](FORMATS.md) (the file formats),
+[COUVERTURE.md](COUVERTURE.md) (what the scanner really covers, and the project's history),
+[VERIFIER-SUR-WINDOWS.md](VERIFIER-SUR-WINDOWS.md) (the first run on a real machine) and
+[CONTRIBUER.md](CONTRIBUER.md) (tests, CI, publishing).

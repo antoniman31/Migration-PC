@@ -318,6 +318,11 @@ Migration-PC/
 └── .github/workflows/ci.yml      # tests, puis publication si tout est vert
 ```
 
+Les captures du README se refabriquent par `node refaire-captures.js`. Une capture ne casse
+aucun test, donc rien ne signale qu'elle a vieilli : celles-ci ont montré une page à six
+onglets plusieurs semaines après qu'il n'y en ait plus que trois. À refaire après tout
+changement visible de la page.
+
 Les scripts PowerShell ont besoin de `lib-detection.ps1` à côté d'eux : copiez le
 dossier, pas un fichier isolé.
 

@@ -131,6 +131,26 @@ et que ce programme ne savait pas vérifier. La perte est réelle sur un point :
 seul endroit qui rappelait d'activer le profil XMP, un réglage qu'on ne voit pas et qui
 coûte 10 à 15 % de performances en silence.
 
+La liste des logiciels a eu **quatre façons d'être triée**. Deux lisaient les durées et les
+priorités que le scan inventait, et un troisième, « ordre conseillé », n'était qu'un autre
+affichage des mêmes lignes. Il n'en reste qu'une, par catégorie : l'ordre d'installation
+compte là où il change quelque chose, dans les scripts winget et le mode guidé, pas comme
+façon de lire. Tout ce qui sort en fichier est ce qui est affiché.
+
+Le scan a produit pendant des mois **une durée et une priorité par logiciel** : trente
+minutes si le nom contenait « Adobe » ou « Unity », quinze pour un jeu, cinq sinon ; priorité
+haute parce que la catégorie était « bureautique ». La page les additionnait pour afficher
+« ⏱ 2h15 restant » : un chiffre fabriqué présenté comme une mesure, et le seul de la page
+que personne ne pouvait vérifier. Une catégorie approximative reste, elle : une erreur de
+catégorie se voit d'un coup d'œil, une durée fausse ne se voit jamais.
+
+Le menu a compté **seize entrées** : deux entrées d'import pour un bouton qui reconnaît déjà
+le format, deux lignes pour un réglage à deux états, deux impressions, un export texte que
+l'impression couvre, une réinitialisation par onglet que le panneau fait déjà en plus large,
+et deux entrées qui vivent désormais dans le bandeau de la page vide, là où elles ont un
+sens. L'annulation d'une réinitialisation rend aussi la configuration matérielle : ce point
+manquait, et l'oubli était silencieux.
+
 Rien de ce qui est décrit ici n'a été exécuté sur un vrai PC : c'est validé par
 les tests et par le job Windows de la CI, qui vérifient que le code fait ce
 qu'il dit, pas que Windows réponde ce qu'on croit.
