@@ -233,8 +233,9 @@ deviennent une seule règle partagée. Le traiter à part serait le traiter deux
 de la lisibilité — pas de débordement horizontal, contraste — et retirer ce qui relève de
 l'usage tactile : les cibles de 44 px et le plancher calibré pour une main. Conséquence
 directe, les vingt-quatre exceptions du plancher deviennent largement inutiles et
-`test-plancher-texte.js` se recalibre sur l'écran PC. Le README perd sa promesse mobile et
-sa capture.
+`test-plancher-texte.js` se recalibre sur l'écran PC. Le README a déjà perdu sa promesse
+mobile et sa capture (4 novembre 2026) ; restent les fichiers `captures/mobile-*.png` et
+leur génération dans `refaire-captures.js`, à retirer avec ce lot.
 
 *Fini quand* : la CI est verte, le document explique pourquoi le seuil a changé, et aucune
 exception ne subsiste sans raison.
@@ -360,7 +361,7 @@ pas marché.
 |---|---|
 | `tests/test-mobile.js` | Mesure à 360 et 414 px de large et fait échouer la CI sur ces largeurs. Ce sont deux tailles de téléphone qui ne servent à rien ici. |
 | `tests/test-plancher-texte.js` | Son plancher de 12 px vient de ce test-là. Vingt-quatre règles CSS passent en dessous et sont déclarées comme exceptions ; sur un écran PC, la plupart n'en sont pas. |
-| `README.md` | Promet l'usage au téléphone, et une capture `captures/mobile-*.png` l'illustre. |
+| `README.md` | **Fait le 4 novembre 2026** : la promesse et la capture sont retirées. Restent `captures/mobile-*.png` et `refaire-captures.js`, qui les fabrique encore. |
 | `tests/test-guide.js` | Porte sa propre copie du plancher de 12 px et de la règle des 44 × 24 px. |
 
 ### La nuance à garder
