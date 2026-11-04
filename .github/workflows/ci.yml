@@ -44,9 +44,16 @@ jobs:
       # Le test navigateur a besoin de Chromium. --with-deps installe aussi
       # les bibliotheques systeme que le runner n'a pas par defaut, sans quoi
       # le navigateur se lance puis meurt sans message exploitable.
+      #
+      # `npm ci` et non `npm install` : il installe exactement ce que dit
+      # package-lock.json et ECHOUE si le lockfile et package.json divergent.
+      # `npm install` aurait recalcule le graphe en silence. Pas de cache npm ni
+      # de cache du navigateur : mesure le 27 octobre 2026, l'etape entiere dure
+      # 22 s sur 149 s pour le job, dont un telechargement qu'un cache economiserait
+      # a peine (les dependances systeme repassent par apt de toute facon).
       - name: Installer Playwright et Chromium
         run: |
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           npx playwright install --with-deps chromium
 
       # Suites rapides d'abord : elles echouent en quelques secondes et

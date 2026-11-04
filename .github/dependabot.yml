@@ -1,0 +1,25 @@
+# Mises a jour : une dependance par pull request, et chaque pull request passe
+# par la CI complete avant d'etre fusionnee. Rien ne se fusionne tout seul.
+#
+# MENSUEL, pas hebdomadaire. Ce depot n'a qu'une dependance (playwright, epinglee
+# a la version exacte) et des actions GitHub : un rythme plus serre ne ferait que
+# produire du bruit. Une mise a jour de playwright change le Chromium qui mesure
+# la mise en page, donc c'est une decision a prendre en lisant la pull request,
+# pas un detail a laisser passer — d'ou aussi aucun regroupement.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: deps
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: deps

@@ -448,6 +448,15 @@ sur onze suites navigateur. C'est une source d'échecs intermittents : un test q
 condition (`waitForFunction`, `waitForSelector`) est un chantier à part, et qui mérite un
 plan avant d'être commencé.
 
+**Un cache npm et un cache du navigateur dans la CI.** Proposés le 24 octobre, écartés le
+27 après mesure : l'étape « Installer Playwright et Chromium » dure 22 s sur les 149 s du
+job, et `npm install` n'y pèse qu'environ une seconde pour deux paquets. Un cache du
+navigateur n'économiserait que le téléchargement, puisque les dépendances système repassent
+par `apt` de toute façon : une dizaine de secondes gagnées contre une étape de plus, une clé
+à entretenir et un risque de cache périmé. À reconsidérer seulement si le temps de CI
+devient un vrai problème, pas avant. Ce qui a été retenu à la place : `npm ci`, qui échoue
+si le lockfile et `package.json` divergent, et un `dependabot.yml` mensuel.
+
 ## 6. L'audit du 8 octobre 2026 : les onze défauts, et la preuve de chacun
 
 Audit complet du dépôt à `34cb604`, les vingt-cinq étapes de la CI rejouées vertes avant de
