@@ -122,3 +122,12 @@ Bloc commun : règle « CI, trois niveaux » (rapide à chaque PR, lourd seuleme
 dépendent d'un job `changements` et se sautent sur une PR qui ne touche que des `.md` ; `test-archive.js`, qui vérifie la
 présence d'un guide `.md` dans l'archive, reste dans les rapides. La publication attend les trois. Aucune suite retirée ni
 déplacée hors de la CI ; leur liste dans `package.json` et `verifier-comme-ci.sh` ne change pas.
+
+### Actions figées par SHA ; CSP écartée — 16/11/2026
+
+- Les 10 appels d'actions de `ci.yml` sont figés sur un commit précis, la version en commentaire : une étiquette comme
+  `@v5` peut être déplacée par son auteur, ou par qui lui vole son compte. Dependabot (déjà en place, mensuel) met à jour
+  le commit et le commentaire.
+- CSP envisagée puis écartée : la page compte 61 gestionnaires d'événements écrits dans le HTML (`onclick=`…) et charge
+  `resultat-scan.js` par `document.write`, qu'une CSP stricte bloquerait. Il faudrait réécrire une bonne partie de la page
+  pour un gain faible ; `test-profil-hostile.js` garde déjà l'injection par un profil reçu.
