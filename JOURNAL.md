@@ -114,3 +114,11 @@ et le commentaire décrit ce que le code fait.
 Bloc commun des 8 dépôts en tête de `CLAUDE.md` (décisions d'Antoni : fusion sur « go » seulement, noms de modèle
 autorisés, zones tactiles de 48 px dans les applis utilisées au doigt, ce que ce projet n'est pas). Ce journal est créé :
 le détail des lots fermés 1, 2 et 6 y passe tel quel, `RESTE-A-FAIRE.md` garde leur titre et un renvoi.
+
+### CI, trois niveaux — 16/11/2026
+
+Bloc commun : règle « CI, trois niveaux » (rapide à chaque PR, lourd seulement si autre chose que des `.md` change, appareil réel). Le job Linux est coupé en deux : « Tests rapides » (les suites Node et PowerShell sans navigateur, sans `npm ci`,
+à chaque PR) et « Tests navigateur » (Chromium et les onze suites qui le pilotent). Celui-ci et « Tests sur Windows »
+dépendent d'un job `changements` et se sautent sur une PR qui ne touche que des `.md` ; `test-archive.js`, qui vérifie la
+présence d'un guide `.md` dans l'archive, reste dans les rapides. La publication attend les trois. Aucune suite retirée ni
+déplacée hors de la CI ; leur liste dans `package.json` et `verifier-comme-ci.sh` ne change pas.
