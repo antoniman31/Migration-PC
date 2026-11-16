@@ -158,9 +158,10 @@ chiffres sont justes.
 **En partie fait le 16 novembre 2026.** `npm run test:mobile` passe `--strict` (accepté par
 `test-mobile.js` en plus de `STRICT=1`, que cmd.exe ne sait pas écrire) : il échoue sur un
 défaut, vu sur une page sabotée (champ à 11 px, code de sortie 1), et passe sur la vraie.
-`verifier-comme-ci.sh` lance `langue-ps` en dernier, comme la CI. **Restent** : `npm test`
-(10 suites sur 26 ; c'est la liste unique du lot 4 qui doit la nourrir, pas une seconde
-liste écrite ici) et le mot d'Antoni sur `importerScanCible`.
+`verifier-comme-ci.sh` lance `langue-ps` en dernier, comme la CI. `importerScanCible` et
+`attendCible` sont retirés (choix d'Antoni : le rôle vient toujours du fichier, un
+inventaire sans rôle reconnu va à la source). **Reste** : `npm test` (10 suites sur 26 ;
+c'est la liste unique du lot 4 qui doit la nourrir, pas une seconde liste écrite ici).
 
 **En cinquième** parce qu'une partie du lot demande un mot, et que l'autre non. Détail :
 section 6, défauts 4, 7 et 10.

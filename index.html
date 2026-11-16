@@ -2625,17 +2625,13 @@ function chargerInstantanes(){
 }
 
 // Quel instantané reçoit le fichier qu'on vient d'ouvrir. Le champ « role »
-// écrit par le script fait foi ; sinon c'est le bouton utilisé qui décide, et
-// à défaut c'est la source — le cas de loin le plus fréquent.
-let attendCible=false;
-function importerScanCible(){
-  attendCible=true;
-  document.getElementById('json-file').click();
-}
+// écrit par le script fait foi ; à défaut c'est la source, le cas de loin le
+// plus fréquent. Le bouton « importer le scan de la cible » n'était branché sur
+// rien depuis des mois : retiré (choix d'Antoni, 16/11/2026) plutôt que
+// rebranché, scan-pc.ps1 écrivant toujours le rôle.
 function roleDe(inv){
   const r=String((inv&&inv.role)||'').toLowerCase();
-  if(r==='cible'||r==='source')return r;
-  return attendCible?'cible':'source';
+  return r==='cible'?'cible':'source';
 }
 
 // ═══ IMPORT UNIFIÉ ═══
@@ -2668,7 +2664,6 @@ function traiterDonnees(d,provenance){
     }
     if(d && d.type==='inventaire-migration-pc'){
       const role=roleDe(d);
-      attendCible=false;
       // Le scan du PC cible ne remplace pas la checklist : il sert à la
       // comparer. Remplacer le profil par lui ferait disparaître la liste de
       // ce qu'on voulait justement retrouver.
