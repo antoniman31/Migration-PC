@@ -9,7 +9,7 @@
     "test:navigateur": "node tests/test-navigateur.js",
     "test:scan": "pwsh -File tests/test-scan.ps1 && pwsh -File tests/test-lanceur.ps1 && pwsh -File tests/test-langue-ps.ps1 && pwsh -File tests/test-powershell-compatibility.ps1 && pwsh -File tests/test-windows-reel.ps1",
     "test:pwa": "node tests/test-pwa.js",
-    "test:mobile": "node tests/test-mobile.js",
+    "test:mobile": "node tests/test-mobile.js --strict",
     "test:a11y": "node tests/test-accessibilite.js",
     "sync": "node scripts-sync.js",
     "test:guide": "node tests/test-guide.js",

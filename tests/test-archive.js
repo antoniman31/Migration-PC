@@ -38,6 +38,11 @@ ok('aucun script ne manque',scripts.filter(f=>dedans.indexOf(f)<0).join(', '),''
 // superflu : c'est la condition pour avoir le droit de distribuer le reste.
 ok('la licence est jointe',dedans.indexOf('LICENSE')>=0,true);
 
+// Le premier essai sur un vrai Windows se fera depuis cette archive : le mode
+// d'emploi de diagnostic.ps1, qui dit ce qui n'est PAS un defaut, voyage avec
+// lui (audit du 8 octobre, defaut 10).
+ok('le guide du premier essai est joint',dedans.indexOf('VERIFIER-SUR-WINDOWS.md')>=0,true);
+
 console.log('\n--- ce qui ne doit PAS y etre ---');
 // « Uniquement ce qui est necessaire pour executer le programme. » Les tests
 // ne se lancent pas, les captures illustrent le README, et manifest/sw/icons

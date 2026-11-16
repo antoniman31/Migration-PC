@@ -17,6 +17,9 @@ const ok=(l,a,b)=>{const p=(b===undefined?!!a:a===b);console.log((p?'  ok  ':' F
 const serveur=http.createServer((req,res)=>{
   let rel=decodeURIComponent(req.url.split('?')[0]);
   if(rel==='/')rel='/index.html';
+  // Un inventaire factice : c'est la donnee personnelle que le service worker
+  // ne doit jamais garder (audit du 8 octobre, defaut 5).
+  if(rel==='/resultat-scan.js'){res.writeHead(200,{'Content-Type':TYPES['.js']});res.end('/* inventaire factice */');return;}
   const abs=path.join(racine,path.normalize(rel));
   if(!abs.startsWith(racine)){res.writeHead(403);res.end();return;}
   fs.readFile(abs,(e,buf)=>{
@@ -69,6 +72,23 @@ const enCache=await pg.evaluate(async()=>{
   return (await c.keys()).length;
 });
 ok('squelette mis en cache',enCache>0,true);
+
+// Une fois la page controlee par le service worker, toute lecture de meme
+// origine passe par lui. La page ne charge l'inventaire qu'en file:// (ou aucun
+// service worker n'existe) : on le demande donc explicitement, comme le ferait
+// un dossier servi en local avec d'autres fichiers. Le cache ne doit contenir
+// que le squelette declare.
+await pg.reload({waitUntil:'load'});
+await pg.evaluate(()=>fetch('resultat-scan.js').then(r=>r.text()));
+await pg.waitForTimeout(700);
+const horsSquelette=await pg.evaluate(async()=>{
+  const permis=new Set(['/','/index.html','/manifest.json','/icons/icon-192.png','/icons/icon-512.png']);
+  const noms=await caches.keys();
+  const trouves=[];
+  for(const n of noms){for(const r of await (await caches.open(n)).keys()){const p=new URL(r.url).pathname;if(!permis.has(p))trouves.push(p);}}
+  return trouves.join(', ')||'aucun';
+});
+ok('rien hors du squelette en cache (inventaire compris)',horsSquelette,'aucun');
 
 console.log('\n--- hors ligne ---');
 await ctx.setOffline(true);
