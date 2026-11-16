@@ -31,7 +31,9 @@ concurrency:
 
 jobs:
   verifier:
-    name: Tests
+    name: Tests rapides
+    # Sans navigateur ni dépendance npm (aucune de ces suites n'en charge) : elles répondent en quelques secondes,
+    # à chaque PR, même de documentation (test-archive.js vérifie par exemple que le guide .md est dans l'archive).
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -41,23 +43,6 @@ jobs:
         with:
           node-version: 22
 
-      # Le test navigateur a besoin de Chromium. --with-deps installe aussi
-      # les bibliotheques systeme que le runner n'a pas par defaut, sans quoi
-      # le navigateur se lance puis meurt sans message exploitable.
-      #
-      # `npm ci` et non `npm install` : il installe exactement ce que dit
-      # package-lock.json et ECHOUE si le lockfile et package.json divergent.
-      # `npm install` aurait recalcule le graphe en silence. Pas de cache npm ni
-      # de cache du navigateur : mesure le 27 octobre 2026, l'etape entiere dure
-      # 22 s sur 149 s pour le job, dont un telechargement qu'un cache economiserait
-      # a peine (les dependances systeme repassent par apt de toute facon).
-      - name: Installer Playwright et Chromium
-        run: |
-          npm ci --no-audit --no-fund
-          npx playwright install --with-deps chromium
-
-      # Suites rapides d'abord : elles echouent en quelques secondes et
-      # evitent d'attendre le navigateur pour une erreur de donnees.
       - name: Profil d'exemple — synchronisation et cohérence
         run: node tests/test-profil-sync.js
 
@@ -101,6 +86,63 @@ jobs:
       - name: Compatibilité Windows PowerShell 5.1
         run: pwsh -File tests/test-powershell-compatibility.ps1
 
+      # Le pendant du precedent, pour les scripts. Meme facon de raisonner :
+      # il cherche ce qui ne doit pas etre la.
+      - name: Aucun francais dans les scripts en anglais
+        run: pwsh -File tests/test-langue-ps.ps1
+
+  # Règle commune « CI, trois niveaux » (16/11/2026) : une PR qui ne touche que des .md n'a rien à donner aux contrôles
+  # lourds, qui sont alors marqués « sautés » (un job sauté compte comme réussi pour les contrôles obligatoires).
+  # Sur main et au lancement manuel, tout tourne toujours.
+  changements:
+    name: Fichiers touchés
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.tri.outputs.code }}
+    steps:
+      - uses: actions/checkout@v5
+        if: github.event_name == 'pull_request'
+        with:
+          fetch-depth: 2
+      - id: tri
+        env:
+          EVENEMENT: ${{ github.event_name }}
+        run: |
+          if [ "$EVENEMENT" != pull_request ]; then echo code=true >> "$GITHUB_OUTPUT"; exit 0; fi
+          # Le commit de fusion d'une PR a pour premier parent la pointe de main : leur écart est exactement la PR.
+          fichiers=$(git diff --name-only HEAD^1 HEAD)
+          printf '%s\n' "$fichiers"
+          if printf '%s\n' "$fichiers" | grep -qvE '\.md$'; then echo code=true; else echo code=false; fi >> "$GITHUB_OUTPUT"
+
+  navigateur:
+    name: Tests navigateur
+    needs: changements
+    if: needs.changements.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      # Le test navigateur a besoin de Chromium. --with-deps installe aussi
+      # les bibliotheques systeme que le runner n'a pas par defaut, sans quoi
+      # le navigateur se lance puis meurt sans message exploitable.
+      #
+      # `npm ci` et non `npm install` : il installe exactement ce que dit
+      # package-lock.json et ECHOUE si le lockfile et package.json divergent.
+      # `npm install` aurait recalcule le graphe en silence. Pas de cache npm ni
+      # de cache du navigateur : mesure le 27 octobre 2026, l'etape entiere dure
+      # 22 s sur 149 s pour le job, dont un telechargement qu'un cache economiserait
+      # a peine (les dependances systeme repassent par apt de toute facon).
+      - name: Installer Playwright et Chromium
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
       - name: Checklist — rendu navigateur
         run: node tests/test-navigateur.js
 
@@ -142,12 +184,7 @@ jobs:
       - name: Aucun francais sur la page anglaise
         run: node tests/test-anglais.js
 
-      # Le pendant du precedent, pour les scripts. Meme facon de raisonner :
-      # il cherche ce qui ne doit pas etre la.
-      - name: Aucun francais dans les scripts en anglais
-        run: pwsh -File tests/test-langue-ps.ps1
-
-  # Tout le job ci-dessus tourne sur Linux, contre des donnees fabriquees a la
+  # Les deux jobs ci-dessus tournent sur Linux, contre des donnees fabriquees a la
   # main : cela verifie le raisonnement, jamais Windows. Le registre,
   # Get-AppxPackage, WMI et l'encodage d'une console reelle n'y sont jamais
   # exerces — et c'est pourtant la que ces scripts vont tourner.
@@ -162,6 +199,8 @@ jobs:
   # disque entier a la recherche de cles — invisible partout ailleurs.
   verifier-windows:
     name: Tests sur Windows
+    needs: changements
+    if: needs.changements.outputs.code == 'true'
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
@@ -222,7 +261,7 @@ jobs:
     name: Publier sur Pages
     # Les deux, et dans les deux versions de PowerShell : ce qui part en ligne
     # a ete verifie sur le systeme ou il va tourner, pas seulement sur Linux.
-    needs: [verifier, verifier-windows]
+    needs: [verifier, navigateur, verifier-windows]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
