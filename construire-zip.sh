@@ -26,6 +26,7 @@ fichiers=(
   "index.html"
   "Migration PC.bat"
   "LICENSE"
+  "VERIFIER-SUR-WINDOWS.md"
   scripts/*.ps1
 )
 

@@ -1639,6 +1639,8 @@ const TRADUCTIONS={
     "le navigateur refuse d'enregistrer (stockage plein ou bloqué). Votre travail reste à l'écran mais sera perdu au rechargement : exportez-le avec « {0} ».":'the browser refuses to save (storage full or blocked). Your work stays on screen but will be lost on reload: export it with « {0} ».',
     '« {0} » se fait normalement après : {1}.':'« {0} » is normally done after: {1}.',
     'Copie impossible dans ce navigateur. Commande : {0}':'Copying is not possible in this browser. Command: {0}',
+    'Copie impossible dans ce navigateur : {0} commandes winget non copiées.':'Copying is not possible in this browser: {0} winget commands not copied.',
+    'Copie impossible dans ce navigateur : la commande winget n\'a pas été copiée.':'Copying is not possible in this browser: the winget command was not copied.',
     '✓ Copié !':'✓ Copied!',
     '✓ Copié':'✓ Copied',
     'Rien de nouveau à cocher :':'Nothing new to check:',
@@ -3000,7 +3002,10 @@ function copyCatWinget(cat,evt){
   navigator.clipboard.writeText(lines.join('\n')).then(function(){
     const el=evt.target.closest('.cat-winget');if(!el)return;
     const o=el.innerHTML;el.innerHTML=tr('✓ Copié !');setTimeout(function(){el.innerHTML=o;},1500);
-  }).catch(function(){});
+  // Ses deux jumelles disent leur echec : celle-ci l'avalait (audit, point 11).
+  }).catch(function(){informer(apps.length>1
+    ?tr('Copie impossible dans ce navigateur : {0} commandes winget non copiées.',apps.length)
+    :tr('Copie impossible dans ce navigateur : la commande winget n\'a pas été copiée.'));});
 }
 
 // ═══ RENDER ITEM HELPERS ═══

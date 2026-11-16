@@ -153,7 +153,14 @@ chiffres sont justes.
 
 *Ce qu'il faut pour démarrer* : rien.
 
-### Lot 5 — Les commandes qui mentent, et le bouton branché sur rien
+### Lot 5 — Les commandes qui mentent, et le bouton branché sur rien → **en partie fait**
+
+**En partie fait le 16 novembre 2026.** `npm run test:mobile` passe `--strict` (accepté par
+`test-mobile.js` en plus de `STRICT=1`, que cmd.exe ne sait pas écrire) : il échoue sur un
+défaut, vu sur une page sabotée (champ à 11 px, code de sortie 1), et passe sur la vraie.
+`verifier-comme-ci.sh` lance `langue-ps` en dernier, comme la CI. **Restent** : `npm test`
+(10 suites sur 26 ; c'est la liste unique du lot 4 qui doit la nourrir, pas une seconde
+liste écrite ici) et le mot d'Antoni sur `importerScanCible`.
 
 **En cinquième** parce qu'une partie du lot demande un mot, et que l'autre non. Détail :
 section 6, défauts 4, 7 et 10.
@@ -178,7 +185,17 @@ sert.
 *Ce qu'il faut pour démarrer* : un mot sur `importerScanCible` — rebrancher, ou retirer. Le
 reste du lot avance sans.
 
-### Lot 6 — Le service worker met en cache ce qu'il promet de ne pas garder
+### Lot 6 — Le service worker met en cache ce qu'il promet de ne pas garder → **fait**
+
+**Fait le 16 novembre 2026.** Le gestionnaire `fetch` ne traite plus que les adresses du
+squelette ; tout le reste va au réseau sans entrer dans le cache. `test-pwa.js` charge un
+inventaire factice une fois la page contrôlée et refuse toute entrée hors du squelette : vu
+échouer sur l'ancien `sw.js` (`/resultat-scan.js` en cache), vert après, hors ligne intact.
+**Ce que le travail a révélé de plus** : depuis l'audit, `index.html` ne charge plus
+l'inventaire qu'en `file://`, où aucun service worker n'existe ; le chemin décrit par l'audit
+était donc déjà fermé, mais le défaut de fond (tout GET de même origine gardé) restait. Le
+premier contrôle écrit passait pour cette raison, sans rien regarder : il demande maintenant
+le fichier lui-même.
 
 **En sixième** parce que c'est le seul défaut de l'audit dont l'usage prévu est épargné.
 Détail : section 6, défaut 5.
@@ -194,7 +211,12 @@ et le commentaire décrit ce que le code fait.
 
 *Ce qu'il faut pour démarrer* : rien.
 
-### Lot 7 — Les six points mineurs
+### Lot 7 — Les six points mineurs → **en partie fait**
+
+**En partie fait le 16 novembre 2026.** `VERIFIER-SUR-WINDOWS.md` est dans le zip
+(`test-archive.js` l'exige, vu échouer avant). `copyCatWinget` dit son échec comme ses deux
+jumelles, au singulier comme au pluriel. **Restent** : `viewMode`, `ecrire-resultat.ps1`
+(à faire avec un `pwsh` sous la main), l'empreinte du cache, `"lang"` du manifeste.
 
 **En dernier des lots numérotés**, et tenables en une seule passe. Détail : section 6,
 défaut 11.

@@ -11,12 +11,14 @@
 //   - un debordement horizontal de la page ;
 //   - une erreur JavaScript.
 //
-// Les seuils sont des reperes, pas des lois : STRICT=1 fait echouer le script,
-// sinon il rapporte et rend la main. La checklist se consulte souvent telephone
+// Les seuils sont des reperes, pas des lois : STRICT=1 (ou --strict, qui marche
+// aussi sous cmd.exe, ou « VAR=1 commande » n'existe pas) fait echouer le
+// script, sinon il rapporte et rend la main. `npm run test:mobile` passe
+// --strict : une commande documentee qui ne peut pas echouer ne verifie rien. La checklist se consulte souvent telephone
 // en main pendant qu'on monte la machine, d'ou l'interet de mesurer.
 //
 //   node tests/test-mobile.js
-//   STRICT=1 node tests/test-mobile.js
+//   STRICT=1 node tests/test-mobile.js   (ou : node tests/test-mobile.js --strict)
 const {chromium}=require('playwright');
 const path=require('path');
 const {annoncerNavigateur}=require('./lib-tests');
@@ -146,6 +148,6 @@ if(!types.length){
 }
 console.log('\n'+types.length+' constat(s) :\n');
 types.forEach(t=>console.log('  • '+t+'\n      sur '+parType[t].length+' combinaison(s), ex. '+parType[t][0]));
-if(process.env.STRICT){console.log('\nSTRICT : échec');process.exit(1);}
+if(process.env.STRICT||process.argv.includes('--strict')){console.log('\nSTRICT : échec');process.exit(1);}
 console.log('\nRapport seulement (STRICT=1 pour faire échouer).');
 })();
