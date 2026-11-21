@@ -131,3 +131,9 @@ déplacée hors de la CI ; leur liste dans `package.json` et `verifier-comme-ci.
 - CSP envisagée puis écartée : la page compte 61 gestionnaires d'événements écrits dans le HTML (`onclick=`…) et charge
   `resultat-scan.js` par `document.write`, qu'une CSP stricte bloquerait. Il faudrait réécrire une bonne partie de la page
   pour un gain faible ; `test-profil-hostile.js` garde déjà l'injection par un profil reçu.
+
+### Règles communes : trois changements — 21/11/2026
+
+Bloc commun de `CLAUDE.md` mis à jour (décision d'Antoni) : deux règles en plus et une règle précisée, « Versions et API » (vérifier les
+versions dans la doc officielle, signaler tout code déprécié) et « Contradiction » (signaler une demande qui contredit une
+règle avant de l'appliquer) ; « Proposer d'abord » demande désormais un plan détaillé et des suggestions avant tout code, et un visuel (maquette HTML ou schéma ASCII) pour une fonctionnalité ou un design ; « les 8 dépôts » devient « tous les dépôts d'Antoni, existants et futurs », avec l'arrivée de game_timer.
