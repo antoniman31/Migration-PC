@@ -198,6 +198,14 @@ n'a pas observé un seul faux échec dû à ça.** À ne faire qu'après en avoi
 c'est du travail guidé par une inquiétude et non par une preuve, ce que ce projet s'est
 justement appris à refuser.
 
+### Lot E — Couleurs en jetons → **fait (24/11/2026)**
+
+Plus aucune couleur écrite hors d'un jeton dans le `<style>` (impression et `theme-color` exceptées, raison écrite dans
+`tests/test-couleurs.js`). Reste, repéré en route et **non corrigé** : deux survols posent du blanc sur un fond trop clair,
+`.next-btn:hover` et `.sm-btn.warn-btn:hover` (blanc sur `--acc` #5493FF, 3,00:1) et `.reglages-danger button:hover` en
+thème sombre (blanc sur `--bh-tx` #f09595, environ 2:1). axe-core ne voit pas un état de survol : à corriger dans un lot à
+part, sur décision d'Antoni.
+
 ### Hors lots : ce qui n'est pas du code
 
 Les deux réglages de la section 2, et l'essai Windows de la section 1.

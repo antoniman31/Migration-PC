@@ -38,6 +38,12 @@
   --tint-apps:rgba(99,153,34,0.03);
   --tint-data:rgba(239,159,39,0.04);
   --tint-pwa:rgba(153,53,86,0.03);
+  /* Texte pose sur un aplat bleu (--acc-fond) ou rouge (--bh-tx) : blanc dans les deux themes. */
+  --sur-acc:#ffffff;
+  --survol:rgba(0,0,0,.025);
+  --tab-badge-bg:rgba(84,147,255,0.18);
+  --ombre-menu:rgba(0,0,0,.18);
+  --panne-bg:rgba(220,60,60,0.10);--panne-bd:rgba(220,60,60,0.45);
 }
 [data-theme=dark]{
   --bg:#181818;--bg2:#212121;--bg3:#2a2a2a;
@@ -55,6 +61,7 @@
   --tint-apps:rgba(99,153,34,0.05);
   --tint-data:rgba(239,159,39,0.05);
   --tint-pwa:rgba(153,53,86,0.05);
+  --survol:rgba(255,255,255,.04);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{min-height:100vh;background:var(--bg);color:var(--tx);font-family:"Segoe UI",system-ui,sans-serif;font-size:14px;line-height:1.5;transition:background .2s,color .2s}
@@ -141,7 +148,7 @@ code{font-family:"Cascadia Code","Consolas",monospace;font-size:max(12px,.9em)}
 .hdr{padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-bottom:.5px solid var(--brd);background:var(--bg)}
 .hdr-left{flex:1;min-width:200px}
 .logo-row{display:flex;align-items:center;gap:10px;margin-bottom:4px}
-.logo{width:30px;height:30px;background:var(--acc-fond);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-weight:700;font-size:14px}
+.logo{width:30px;height:30px;background:var(--acc-fond);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--sur-acc);font-weight:700;font-size:14px}
 h1{font-size:18px;font-weight:600;color:var(--tx);letter-spacing:-.3px}
 .sub{font-size:12px;color:var(--tx2);margin-bottom:14px}
 .hdr-right{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
@@ -357,11 +364,10 @@ body.compact .item{padding:5px 0}
 .b-manque{background:var(--warn-bg);color:var(--warn-tx);border-color:var(--warn-bd)}
 .b-vieux{background:var(--accl);color:var(--acc-fort);border-color:var(--accb)}
 .item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:.5px solid var(--brd);cursor:pointer;border-radius:4px}
-.item:hover{background:rgba(0,0,0,.025)}
-[data-theme=dark] .item:hover{background:rgba(255,255,255,.04)}
+.item:hover{background:var(--survol)}
 .item.done .item-name{text-decoration:line-through;color:var(--tx2)}
 .item.done .item-badges,.item.done .item-desc,.item.done .save-path,.item.done .save-note{opacity:.4}
-.chkbox{width:17px;height:17px;border:1.5px solid var(--brd2);border-radius:4px;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;background:var(--bg);color:#fff;font-size:11px;font-weight:700;line-height:1}
+.chkbox{width:17px;height:17px;border:1.5px solid var(--brd2);border-radius:4px;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--sur-acc);font-size:11px;font-weight:700;line-height:1}
 .item.done .chkbox{background:var(--acc);border-color:var(--acc-fort)}
 .chkbox-mark{display:none}
 .item.done .chkbox-mark{display:inline}
@@ -392,7 +398,7 @@ body.compact .item{padding:5px 0}
 
 /* HDR ACTIONS */
 .hdr-sep{width:.5px;height:20px;background:var(--brd2);margin:0 2px}
-.primary-btn{background:var(--acc-fond)!important;color:#fff!important;border-color:var(--acc-fond)!important}
+.primary-btn{background:var(--acc-fond)!important;color:var(--sur-acc)!important;border-color:var(--acc-fond)!important}
 .primary-btn:hover{opacity:.9!important}
 
 /* CONFETTI */
@@ -420,8 +426,8 @@ body.compact .item{padding:5px 0}
 .icon-btn.icon-only{padding:5px 8px;min-width:32px;justify-content:center}
 
 /* ── AMÉLIO 2 : tab badge contraste ── */
-.tab-badge{background:rgba(84,147,255,0.18);color:var(--acc-fort);font-size:10px;padding:1px 7px;border-radius:10px;font-weight:700;border:.5px solid var(--accb)}
-.tab.active .tab-badge{background:var(--acc-fond);color:#fff;border-color:var(--acc-fond)}
+.tab-badge{background:var(--tab-badge-bg);color:var(--acc-fort);font-size:10px;padding:1px 7px;border-radius:10px;font-weight:700;border:.5px solid var(--accb)}
+.tab.active .tab-badge{background:var(--acc-fond);color:var(--sur-acc);border-color:var(--acc-fond)}
 
 /* ── AMÉLIO 3 : hiérarchie barres du haut ── */
 .gp{padding:14px 20px;border-bottom:.5px solid var(--brd);display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--bg2)}
@@ -461,13 +467,13 @@ body.compact .item{padding:5px 0}
 /* ── V6 : bouton suivant ── */
 .next-tab-btn{display:flex;align-items:center;justify-content:flex-end;padding:10px 20px;border-top:.5px solid var(--brd);background:transparent}
 .next-btn{padding:7px 16px;font-size:12px;border:.5px solid var(--accb);border-radius:8px;background:var(--accl);color:var(--acc-fort);font-weight:500;display:flex;align-items:center;gap:6px;cursor:pointer}
-.next-btn:hover{background:var(--acc);color:#fff}
+.next-btn:hover{background:var(--acc);color:var(--sur-acc)}
 .next-btn.incomplete{border-color:var(--brd2);background:var(--bg2);color:var(--tx2)}
 .next-btn.incomplete:hover{background:var(--bg3)}
 
 /* ── V6 : script winget restant ── */
 .sm-btn.warn-btn{border-color:var(--accb);color:var(--acc-fort);background:var(--accl)}
-.sm-btn.warn-btn:hover{background:var(--acc);color:#fff}
+.sm-btn.warn-btn:hover{background:var(--acc);color:var(--sur-acc)}
 
 /* ── V6 : compact masque dep ── */
 body.compact .b-dep{display:none}
@@ -497,7 +503,7 @@ body.compact .b-dep{display:none}
 .outils-dl{margin:12px 0 4px;padding:14px;border-radius:10px;background:var(--accl);
   border:.5px solid var(--accb)}
 .outils-dl-btn{display:inline-block;padding:11px 20px;border-radius:9px;font-size:14px;
-  font-weight:600;background:var(--acc-fond);color:#fff;text-decoration:none;min-height:44px;
+  font-weight:600;background:var(--acc-fond);color:var(--sur-acc);text-decoration:none;min-height:44px;
   line-height:22px}
 .outils-dl-btn:hover{filter:brightness(1.08)}
 .outils-dl-d{font-size:12px;color:var(--tx2);margin-top:9px;line-height:1.55}
@@ -577,7 +583,7 @@ body.compact .b-dep{display:none}
 .hdr-menu{position:relative}
 .hdr-menu-liste{display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:60;
   min-width:232px;padding:6px;border-radius:10px;background:var(--bg2);
-  border:.5px solid var(--brd2);box-shadow:0 8px 24px rgba(0,0,0,.18)}
+  border:.5px solid var(--brd2);box-shadow:0 8px 24px var(--ombre-menu)}
 .hdr-menu-liste.visible{display:block}
 .hdr-menu-liste button{display:flex;align-items:center;gap:10px;width:100%;
   padding:9px 10px;min-height:40px;font-size:13px;text-align:left;cursor:pointer;
@@ -609,7 +615,7 @@ body.compact .b-dep{display:none}
   background:var(--bg2);color:var(--tx)}
 .reglages-item button:hover{background:var(--bg3)}
 .reglages-danger button{border-color:var(--bh-bd);color:var(--bh-tx);background:var(--bh-bg)}
-.reglages-danger button:hover{background:var(--bh-tx);color:#fff;border-color:var(--bh-tx)}
+.reglages-danger button:hover{background:var(--bh-tx);color:var(--sur-acc);border-color:var(--bh-tx)}
 .reglages-fermer{margin-top:12px;font-size:12px;color:var(--tx2);background:transparent;
   border:none;cursor:pointer;padding:6px 2px;min-height:34px}
 .reglages-fermer:hover{color:var(--tx)}
@@ -653,7 +659,7 @@ body.compact .b-dep{display:none}
 .verif-actions{display:flex;gap:10px;padding:12px 16px;border-top:.5px solid var(--brd);flex-wrap:wrap}
 .verif-actions button{padding:9px 16px;font-size:12px;font-weight:600;border-radius:8px;
   cursor:pointer;min-height:40px;border:.5px solid var(--brd2);background:var(--bg);color:var(--tx)}
-.verif-ok{background:var(--acc-fond)!important;color:#fff!important;border-color:var(--acc-fond)!important}
+.verif-ok{background:var(--acc-fond)!important;color:var(--sur-acc)!important;border-color:var(--acc-fond)!important}
 .verif-actions button:not(.verif-ok):hover{background:var(--bg3)}
 @media (max-width:560px){
   .verif-raison{display:none}
@@ -690,7 +696,7 @@ body.guide-actif #gsearch-results{display:none}
 .guide-cmd button{flex-shrink:0;padding:0 16px;border:none;border-left:.5px solid var(--brd2);
   background:var(--accl);color:var(--acc-fort);font-size:12px;font-weight:600;cursor:pointer;
   min-width:96px;min-height:44px}
-.guide-cmd button:hover{background:var(--acc-fond);color:#fff}
+.guide-cmd button:hover{background:var(--acc-fond);color:var(--sur-acc)}
 .guide-warn{display:flex;gap:9px;padding:11px 14px;margin-bottom:16px;border-radius:10px;
   background:var(--warn-bg);border:.5px solid var(--warn-bd);color:var(--warn-tx);
   font-size:13px;line-height:1.5;font-weight:500}
@@ -699,7 +705,7 @@ body.guide-actif #gsearch-results{display:none}
 .guide-actions{display:flex;gap:10px;flex-wrap:wrap}
 .guide-actions button{padding:11px 20px;font-size:13px;font-weight:600;border-radius:10px;
   cursor:pointer;min-height:44px;border:.5px solid var(--brd2);background:var(--bg2);color:var(--tx)}
-.guide-fait{background:var(--acc-fond)!important;color:#fff!important;border-color:var(--acc-fond)!important}
+.guide-fait{background:var(--acc-fond)!important;color:var(--sur-acc)!important;border-color:var(--acc-fond)!important}
 .guide-fait:hover{filter:brightness(1.08)}
 .guide-actions button:not(.guide-fait):hover{background:var(--bg3)}
 .guide-fin{padding:36px 20px;text-align:center}
@@ -734,7 +740,7 @@ body.guide-actif #gsearch-results{display:none}
 .annul-btn{flex-shrink:0;padding:5px 12px;font-size:12px;font-weight:500;
   border:.5px solid var(--accb);border-radius:8px;background:var(--accl);
   color:var(--acc-fort);cursor:pointer;min-height:32px}
-.annul-btn:hover{background:var(--acc-fond);color:#fff;border-color:var(--acc-fond)}
+.annul-btn:hover{background:var(--acc-fond);color:var(--sur-acc);border-color:var(--acc-fond)}
 .annul-fermer{flex-shrink:0;background:transparent;border:none;color:var(--tx2);
   font-size:13px;cursor:pointer;padding:0 2px;min-width:44px;min-height:44px}
 .annul-fermer:hover{color:var(--tx)}
@@ -757,7 +763,7 @@ body.guide-actif #gsearch-results{display:none}
 
 /* Bandeau de panne : un échec de rendu doit se voir, pas disparaître dans la console. */
 .panne{display:none;margin:0 0 12px;padding:10px 14px;gap:10px;align-items:flex-start;
-  background:rgba(220,60,60,0.10);border:.5px solid rgba(220,60,60,0.45);border-radius:10px}
+  background:var(--panne-bg);border:.5px solid var(--panne-bd);border-radius:10px}
 .panne.visible{display:flex}
 .panne-ico{font-size:15px;line-height:1.4;flex-shrink:0}
 .panne-txt{flex:1;display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--tx);min-width:0}

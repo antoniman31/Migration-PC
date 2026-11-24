@@ -153,3 +153,16 @@ Bloc commun de `CLAUDE.md` aligné sur `regles-communes` (BLOC.md, commit 400626
 ### Règles communes mises à jour — 21/11/2026
 
 Bloc commun de `CLAUDE.md` aligné sur `regles-communes` (BLOC.md, commit 2005adb), par la propagation automatique.
+
+### Couleurs en jetons — 24/11/2026
+
+Audit de la règle commune « Design ». Le `<style>` écrivait 18 couleurs dans les règles elles-mêmes : le blanc posé sur
+l'accent (12 fois), deux survols (clair et sombre, dont une règle `[data-theme=dark]` à part), le fond du badge d'onglet,
+l'ombre du menu et le bandeau de panne. Ils deviennent `--sur-acc`, `--survol`, `--tab-badge-bg`, `--ombre-menu`,
+`--panne-bg` et `--panne-bd`, mêmes valeurs : rien ne change à l'écran. `tests/test-couleurs.js` refuse toute couleur
+hors d'une définition de jeton, blocs `@media print` exceptés (une page imprimée est noire sur blanc quel que soit le
+thème) ; enregistré dans `package.json`, `ci.yml` et `verifier-comme-ci.sh`. Vu rouge sur l'ancien code (18 relevés),
+vert après. Plus que les « deux survols » annoncés par l'audit : il ne comptait que les `rgba`.
+Vérifié : toutes les suites Node de `verifier-comme-ci.sh` (accessibilité et mobile compris) ; les suites PowerShell ne
+tournent pas dans ce conteneur (pas de `pwsh`), la CI les joue. Deux survols à contraste faible, repérés en route, sont
+notés dans `RESTE-A-FAIRE.md` (lot E), pas corrigés ici.
