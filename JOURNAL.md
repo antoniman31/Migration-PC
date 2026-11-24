@@ -166,3 +166,12 @@ vert après. Plus que les « deux survols » annoncés par l'audit : il ne compt
 Vérifié : toutes les suites Node de `verifier-comme-ci.sh` (accessibilité et mobile compris) ; les suites PowerShell ne
 tournent pas dans ce conteneur (pas de `pwsh`), la CI les joue. Deux survols à contraste faible, repérés en route, sont
 notés dans `RESTE-A-FAIRE.md` (lot E), pas corrigés ici.
+
+### Survols lisibles : le blanc sur un fond fait pour lui — 24/11/2026
+
+Repéré pendant le lot E. Trois survols posaient du blanc sur un fond trop clair : `.next-btn` et `.sm-btn.warn-btn` sur
+`--acc` (#5493FF, 3,00:1), `.reglages-danger button` en sombre sur `--bh-tx` (#f09595, 2,23:1). Ils passent sur `--acc-fond`
+(4,59:1) et sur un nouveau `--danger-fond` (#a32d2d, 7,07:1, le même dans les deux thèmes). `tests/test-couleurs.js` refuse
+désormais le blanc sur un autre fond que ces deux-là (vu échouer sur l'ancien code : les trois survols). axe-core ne mesure
+pas un état de survol, d'où ce contrôle par déclaration. Repéré et non corrigé : la coche blanche sur `--bok-tx` en sombre
+(2,03:1). Vérifié : toutes les suites Node de `verifier-comme-ci.sh` ; PowerShell par la CI.

@@ -40,6 +40,9 @@
   --tint-pwa:rgba(153,53,86,0.03);
   /* Texte pose sur un aplat bleu (--acc-fond) ou rouge (--bh-tx) : blanc dans les deux themes. */
   --sur-acc:#ffffff;
+  /* Fond rouge qui porte du blanc, le même dans les deux thèmes : 7,07:1. --bh-tx, lui, est un
+     texte ; en sombre (#f09595) le blanc dessus tombait à 2,23:1. */
+  --danger-fond:#a32d2d;
   --survol:rgba(0,0,0,.025);
   --tab-badge-bg:rgba(84,147,255,0.18);
   --ombre-menu:rgba(0,0,0,.18);
@@ -467,13 +470,13 @@ body.compact .item{padding:5px 0}
 /* ── V6 : bouton suivant ── */
 .next-tab-btn{display:flex;align-items:center;justify-content:flex-end;padding:10px 20px;border-top:.5px solid var(--brd);background:transparent}
 .next-btn{padding:7px 16px;font-size:12px;border:.5px solid var(--accb);border-radius:8px;background:var(--accl);color:var(--acc-fort);font-weight:500;display:flex;align-items:center;gap:6px;cursor:pointer}
-.next-btn:hover{background:var(--acc);color:var(--sur-acc)}
+.next-btn:hover{background:var(--acc-fond);color:var(--sur-acc)}
 .next-btn.incomplete{border-color:var(--brd2);background:var(--bg2);color:var(--tx2)}
 .next-btn.incomplete:hover{background:var(--bg3)}
 
 /* ── V6 : script winget restant ── */
 .sm-btn.warn-btn{border-color:var(--accb);color:var(--acc-fort);background:var(--accl)}
-.sm-btn.warn-btn:hover{background:var(--acc);color:var(--sur-acc)}
+.sm-btn.warn-btn:hover{background:var(--acc-fond);color:var(--sur-acc)}
 
 /* ── V6 : compact masque dep ── */
 body.compact .b-dep{display:none}
@@ -615,7 +618,7 @@ body.compact .b-dep{display:none}
   background:var(--bg2);color:var(--tx)}
 .reglages-item button:hover{background:var(--bg3)}
 .reglages-danger button{border-color:var(--bh-bd);color:var(--bh-tx);background:var(--bh-bg)}
-.reglages-danger button:hover{background:var(--bh-tx);color:var(--sur-acc);border-color:var(--bh-tx)}
+.reglages-danger button:hover{background:var(--danger-fond);color:var(--sur-acc);border-color:var(--danger-fond)}
 .reglages-fermer{margin-top:12px;font-size:12px;color:var(--tx2);background:transparent;
   border:none;cursor:pointer;padding:6px 2px;min-height:34px}
 .reglages-fermer:hover{color:var(--tx)}
