@@ -75,6 +75,10 @@ jobs:
       - name: Plancher de taille de texte, par déclaration
         run: node tests/test-plancher-texte.js
 
+      # Il lit le CSS : aucune couleur ecrite hors d'un jeton (regle commune « Design »).
+      - name: Couleurs en jetons, par déclaration
+        run: node tests/test-couleurs.js
+
       # pwsh est preinstalle sur les runners ubuntu-latest.
       - name: Scanner — classement, fusion, parsing
         run: pwsh -File tests/test-scan.ps1
