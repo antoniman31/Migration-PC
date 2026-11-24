@@ -201,10 +201,11 @@ justement appris à refuser.
 ### Lot E — Couleurs en jetons → **fait (24/11/2026)**
 
 Plus aucune couleur écrite hors d'un jeton dans le `<style>` (impression et `theme-color` exceptées, raison écrite dans
-`tests/test-couleurs.js`). Reste, repéré en route et **non corrigé** : deux survols posent du blanc sur un fond trop clair,
-`.next-btn:hover` et `.sm-btn.warn-btn:hover` (blanc sur `--acc` #5493FF, 3,00:1) et `.reglages-danger button:hover` en
-thème sombre (blanc sur `--bh-tx` #f09595, environ 2:1). axe-core ne voit pas un état de survol : à corriger dans un lot à
-part, sur décision d'Antoni.
+`tests/test-couleurs.js`). Les trois survols qui posaient du blanc sur un fond trop clair (2,23 à 3,00:1) sont corrigés
+le même jour (`--acc-fond`, `--danger-fond`) et le test refuse le blanc sur un autre fond.
+
+Reste, repéré en route et **non corrigé** : la coche blanche d'une case « après réinstallation » cochée, en thème sombre,
+est posée sur `--bok-tx` #97c459 (2,03:1, sous les 3:1 d'un signe graphique). À décider avec Antoni.
 
 ### Hors lots : ce qui n'est pas du code
 

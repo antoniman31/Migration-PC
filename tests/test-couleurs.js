@@ -54,5 +54,27 @@ if(d<0||f<0)throw new Error('bloc <style> introuvable');
 const avant=html.slice(0,d).split('\n').length;
 ok('aucune couleur en dur dans le <style> d\'index.html',couleursEnDur(html.slice(d,f),avant),[]);
 
+// Le blanc (--sur-acc) ne se pose que sur un fond fait pour lui. A l'audit du
+// 24/11/2026, trois survols le posaient sur --acc (#5493FF, 3,00:1) et sur
+// --bh-tx (#f09595 en sombre, 2,23:1). Fonds permis, ratio mesure dans les
+// deux themes : --acc-fond (4,59:1) et --danger-fond (7,07:1).
+// Exception : .chkbox, vide tant que la case n'est pas cochee (la coche est
+// un signe graphique, regle a part).
+const FONDS_SOUS_BLANC=['--acc-fond','--danger-fond'];
+function blancSurMauvaisFond(css){
+  const sans=css.replace(/\/\*[\s\S]*?\*\//g,'').replace(/@media print\s*\{(?:[^{}]|\{[^{}]*\})*\}/g,'');
+  const mauvais=[];
+  for(const m of sans.matchAll(/([^{}]+)\{([^{}]*)\}/g)){
+    const sel=m[1].trim(), corps=m[2];
+    if(!/(^|;)\s*color:var\(--sur-acc\)/.test(corps)||sel==='.chkbox')continue;
+    const fond=/background:var\((--[\w-]+)\)/.exec(corps);
+    if(fond&&!FONDS_SOUS_BLANC.includes(fond[1]))mauvais.push(sel+' → '+fond[1]);
+  }
+  return mauvais;
+}
+ok('le detecteur voit du blanc sur --acc',blancSurMauvaisFond('.a:hover{background:var(--acc);color:var(--sur-acc)}'),['.a:hover → --acc']);
+ok('il accepte --acc-fond',blancSurMauvaisFond('.a{background:var(--acc-fond);color:var(--sur-acc)}'),[]);
+ok('le blanc ne se pose que sur --acc-fond ou --danger-fond',blancSurMauvaisFond(html.slice(d,f)),[]);
+
 if(ko){console.log('\n'+ko+' echec(s)');process.exit(1);}
 console.log('\nTout est vert.');
