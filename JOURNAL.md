@@ -217,3 +217,16 @@ une traduction identique. `test-anglais.js` refusait, à raison, ce texte franç
 ligne exacte, raison écrite à côté. Contrôles vus échouer sur le code d'avant : `test-reinit.js` (mention absente) et
 `test-archive.js` (déploiement sans marqueurs). Vérifié : `npm test` et les suites Node de `verifier-comme-ci.sh` (les
 suites PowerShell n'ont pas tourné ici, faute de `pwsh` : la CI les joue) ; le remplacement des marqueurs rejoué sur une copie.
+
+### Signature : logo AM.31 aux couleurs de la page — 25/11/2026
+
+Suite de la mention du même jour (choix d'Antoni : variante C d'une maquette, texte centré). Le bas du panneau « Réinitialiser… » porte le
+logo AM.31 (34 px de haut), « Fait par AntoniMan31/Claude Code » (le nom en `--acc-fort`) et « version a1b2c3d · jj/mm/aaaa ». Le logo est
+en trois calques (contour, remplissage, reflets) que le CSS colore avec `--acc-fond` mêlé de noir ou de blanc. Les masques sont intégrés à la
+page en données (25 Ko environ) : la page reste un seul fichier, utilisable depuis une clé USB en `file://`. Un double clic (vrai bouton de 48 px,
+`appuiLogoAm31`) alterne l'accent et le bleu d'origine (`--logo-contour`, `--logo-remplissage`) ; rien n'est mémorisé, pas de lien GitHub
+(choix d'Antoni). Le double appui se compte à la main (deux appuis de moins de 350 ms) : `dblclick` n'existe pas au clavier. `ligneVersion`
+devient `versionTexte`. Le plancher de 12 px du texte (`test-plancher-texte.js`) a refusé la ligne de version à 11 px : elle passe à 12 px.
+`test-anglais.js` retire de son contrôle les deux lignes exactes de la signature, texte identique en français et en anglais par choix.
+Contrôles vus échouer sur le code d'avant : `test-reinit.js` (signature absente). Vérifié : `npm test` et les suites navigateur (réinit, anglais,
+accessibilité, mobile, profil hostile, archive, PWA, langue) ; les suites PowerShell n'ont pas tourné ici (pas de `pwsh`), la CI les joue.

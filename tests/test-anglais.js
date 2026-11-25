@@ -249,10 +249,10 @@ async function parcourir(page){
 }
 const zones=await parcourir(pg);
 
-// La mention « Fait par AntoniMan31/Claude Code · version … du … » (regle commune « Interface », 25/11/2026) reste en
+// La signature « Fait par AntoniMan31/Claude Code » et sa ligne « version … · jj/mm/aaaa » (regle commune « Interface », 25/11/2026) reste en
 // francais dans les deux langues : c'est une signature, et Antoni a choisi un texte identique partout. Seule cette
-// ligne exacte est retiree ; un autre texte francais du panneau reste compte.
-const MENTION=/^Fait par AntoniMan31\/Claude Code · version \S+( du \d{2}\/\d{2}\/\d{4})?$/;
+// ligne exacte (l'une ou l'autre des deux lignes) est retiree ; un autre texte francais du panneau reste compte.
+const MENTION=/^(Fait par AntoniMan31\/Claude Code|version \S+( · \d{2}\/\d{2}\/\d{4})?)$/;
 function sansMention(texte){return texte.split('\n').filter(l=>!MENTION.test(l.trim())).join('\n');}
 
 console.log('\n--- aucun francais a l\'ecran ---');
