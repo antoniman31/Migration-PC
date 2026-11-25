@@ -136,7 +136,8 @@ ok('et on le dit',hp.indexOf('ignoré')>=0,true);
 // Ecarter le dernier : le compte tombe a zero et le titre change.
 G('basculerIgnore')(G('idPilote')({nom:'Contrôleur audio'}),'Contrôleur audio');
 G('renderPilotes()');
-ok('plus rien a regler',G('document').getElementById('badge-pilotes').textContent,'✓');
+// Depuis le 25/11/2026 la coche est l'icône Material du sprite, plus le caractère ✓.
+ok('plus rien a regler',G('document').getElementById('badge-pilotes').innerHTML.indexOf('#i-check')>=0,true);
 
 console.log('\n--- ce qui survit aux remises a zero ---');
 // « Tout decocher » remet la progression a zero : une decision d'ecarter n'en

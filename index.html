@@ -103,6 +103,11 @@ code{font-family:"Cascadia Code","Consolas",monospace;font-size:max(12px,.9em)}
 .snav.active{background:var(--accl);color:var(--acc-fort);font-weight:600}
 .snav-t{display:flex;align-items:center;gap:8px;min-width:0}
 .snav-i{flex-shrink:0}
+/* Icônes Material (sprite en tête du body) : couleur du texte, taille du texte. */
+.sprite{position:absolute;width:0;height:0;overflow:hidden}
+.ico{width:1.2em;height:1.2em;fill:currentColor;vertical-align:-.25em;flex-shrink:0}
+.ico-champ{position:absolute;left:9px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--tx3)}
+.hdr-rech{position:relative}
 .snav-bar{grid-column:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
 .snav.active .snav-bar{background:var(--bg)}
 .snav-fill{display:block;height:100%;background:var(--acc);border-radius:2px;transition:width .4s}
@@ -178,7 +183,7 @@ h1{font-size:18px;font-weight:600;color:var(--tx);letter-spacing:-.3px}
 /* GLOBAL SEARCH */
 .gsearch{padding:8px 20px;border-bottom:.5px solid var(--brd);background:var(--bg);display:flex;gap:8px;align-items:center}
 .gsearch-wrap{position:relative;flex:1}
-#gsearch-input{width:100%;padding:6px 10px;border:.5px solid var(--brd2);border-radius:8px;background:var(--bg2);color:var(--tx);outline:none}
+#gsearch-input{width:100%;padding:6px 10px 6px 32px;border:.5px solid var(--brd2);border-radius:8px;background:var(--bg2);color:var(--tx);outline:none}
 #gsearch-input::placeholder{color:var(--tx3)}
 .gsearch-count{font-size:11px;color:var(--tx2)}
 .gsearch-count b{color:var(--acc-fort);font-weight:600}
@@ -220,7 +225,7 @@ body.compact .item{padding:5px 0}
 /* TOOLBAR */
 .tbar{padding:10px 20px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:.5px solid var(--brd);background:transparent}
 .search-wrap{position:relative;flex:1;min-width:160px}
-.search-wrap input{width:100%;padding:6px 10px;border:.5px solid var(--brd2);border-radius:8px;background:var(--bg2);color:var(--tx);outline:none}
+.search-wrap input{width:100%;padding:6px 10px 6px 32px;border:.5px solid var(--brd2);border-radius:8px;background:var(--bg2);color:var(--tx);outline:none}
 .search-wrap input::placeholder{color:var(--tx3)}
 .fbs{display:flex;gap:4px;flex-wrap:wrap}
 .fb{padding:4px 9px;font-size:12px;border:.5px solid var(--brd);border-radius:8px;background:var(--bg);color:var(--tx2);white-space:nowrap}
@@ -861,6 +866,9 @@ body.guide-actif #gsearch-results{display:none}
 </style>
 </head>
 <body>
+<!-- Icônes : Material Symbols de Google (arrondis, graisse 400, Apache-2.0), tracés copiés ici :
+     aucune police ni requête, la page marche en file:// depuis une clé USB. -->
+<svg class="sprite" aria-hidden="true" focusable="false"><symbol id="i-download" viewBox="0 -960 960 960"><path d="M469-327q-5-2-10-7L308-485q-9-9.27-8.5-21.64.5-12.36 9.11-21.36 9.39-9 21.89-9t21.5 9l98 99v-341q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v341l99-99q8.8-9 20.9-8.5 12.1.5 21.49 9.5 8.61 9 8.61 21.5t-9 21.5L501-334q-5 5-10.13 7-5.14 2-11 2-5.87 0-10.87-2ZM220-160q-24 0-42-18t-18-42v-113q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v113h520v-113q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v113q0 24-18 42t-42 18H220Z"/></symbol><symbol id="i-close" viewBox="0 -960 960 960"><path d="M480-438 270-228q-9 9-21 9t-21-9q-9-9-9-21t9-21l210-210-210-210q-9-9-9-21t9-21q9-9 21-9t21 9l210 210 210-210q9-9 21-9t21 9q9 9 9 21t-9 21L522-480l210 210q9 9 9 21t-9 21q-9 9-21 9t-21-9L480-438Z"/></symbol><symbol id="i-warning" viewBox="0 -960 960 960"><path d="M92-120q-9 0-15.5-4T66-135q-4-7-4.5-14.5T66-165l388-670q5-8 11.5-11.5T480-850q8 0 14.5 3.5T506-835l388 670q5 8 4.5 15.5T894-135q-4 7-10.5 11t-15.5 4H92Zm52-60h672L480-760 144-180Zm361.5-65.5Q514-254 514-267t-8.5-21.5Q497-297 484-297t-21.5 8.5Q454-280 454-267t8.5 21.5Q471-237 484-237t21.5-8.5Zm0-111Q514-365 514-378v-164q0-13-8.5-21.5T484-572q-13 0-21.5 8.5T454-542v164q0 13 8.5 21.5T484-348q13 0 21.5-8.5ZM480-470Z"/></symbol><symbol id="i-package_2" viewBox="0 -960 960 960"><path d="M450-154v-309L180-619v309l270 156Zm60 0 270-156v-310L510-463v309Zm-60 69L150-258q-14-8-22-22t-8-30v-340q0-16 8-30t22-22l300-173q14-8 30-8t30 8l300 173q14 8 22 22t8 30v340q0 16-8 30t-22 22L510-85q-14 8-30 8t-30-8Zm194-525 102-59-266-154-102 59 266 154Zm-164 96 104-61-267-154-104 60 267 155Z"/></symbol><symbol id="i-tune" viewBox="0 -960 960 960"><path d="M435.5-128.63Q427-137.25 427-150v-165q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v53h323q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H487v52q0 12.75-8.68 21.37-8.67 8.63-21.5 8.63-12.82 0-21.32-8.63ZM150-202q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32 8.62-8.5 21.37-8.5h187q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H150Zm165.5-174.63Q307-385.25 307-398v-52H150q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32 8.62-8.5 21.37-8.5h157v-54q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v166q0 12.75-8.68 21.37-8.67 8.63-21.5 8.63-12.82 0-21.32-8.63ZM457-450q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32 8.62-8.5 21.37-8.5h353q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H457Zm144.5-173.63Q593-632.25 593-645v-165q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v52h157q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H653v53q0 12.75-8.68 21.37-8.67 8.63-21.5 8.63-12.82 0-21.32-8.63ZM150-698q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32 8.62-8.5 21.37-8.5h353q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H150Z"/></symbol><symbol id="i-public" viewBox="0 -960 960 960"><path d="M324-111.5Q251-143 197-197t-85.5-127Q80-397 80-480t31.5-156Q143-709 197-763t127-85.5Q397-880 480-880t156 31.5Q709-817 763-763t85.5 127Q880-563 880-480t-31.5 156Q817-251 763-197t-127 85.5Q563-80 480-80t-156-31.5ZM437-141v-82q-35 0-59-26t-24-61v-44L149-559q-5 20-7 39.5t-2 39.5q0 130 84.5 227T437-141Zm294-108q44-48 66.5-107.5T820-480q0-106-58-192.5T607-799v18q0 35-24 61t-59 26h-87v87q0 17-13.5 28T393-568h-83v88h258q17 0 28 13t11 30v127h43q29 0 51 17t30 44Z"/></symbol><symbol id="i-explore" viewBox="0 -960 960 960"><path d="m330-311 213-66q14-5 24-15t15-24l66-213q3-8.64-3.5-15.32T629-648l-213 66q-14 5-24 15t-15 24l-66 213q-3 8.64 3.5 15.32T330-311Zm149.76-129q-16.76 0-28.26-11.74-11.5-11.73-11.5-28.5 0-16.76 11.74-28.26 11.73-11.5 28.5-11.5 16.76 0 28.26 11.74 11.5 11.73 11.5 28.5 0 16.76-11.74 28.26-11.73 11.5-28.5 11.5Zm.51 360q-82.74 0-155.5-31.5Q252-143 197.5-197.5t-86-127.34Q80-397.68 80-480.5t31.5-155.66Q143-709 197.5-763t127.34-85.5Q397.68-880 480.5-880t155.66 31.5Q709-817 763-763t85.5 127Q880-563 880-480.27q0 82.74-31.5 155.5Q817-252 763-197.68q-54 54.31-127 86Q563-80 480.27-80Zm.22-60Q622-140 721-239.49q99-99.48 99-241Q820-622 721-721t-240.51-99q-141.52 0-241 99Q140-622 140-480.49q0 141.52 99.49 241 99.48 99.49 241 99.49ZM480-480Z"/></symbol><symbol id="i-settings" viewBox="0 -960 960 960"><path d="M421-80q-14 0-25-9t-13-23l-15-94q-19-7-40-19t-37-25l-86 40q-14 6-28 1.5T155-226L97-330q-8-13-4.5-27t15.5-23l80-59q-2-9-2.5-20.5T185-480q0-9 .5-20.5T188-521l-80-59q-12-9-15.5-23t4.5-27l58-104q8-13 22-17.5t28 1.5l86 40q16-13 37-25t40-18l15-95q2-14 13-23t25-9h118q14 0 25 9t13 23l15 94q19 7 40.5 18.5T669-710l86-40q14-6 27.5-1.5T804-734l59 104q8 13 4.5 27.5T852-580l-80 57q2 10 2.5 21.5t.5 21.5q0 10-.5 21t-2.5 21l80 58q12 8 15.5 22.5T863-330l-58 104q-8 13-22 17.5t-28-1.5l-86-40q-16 13-36.5 25.5T592-206l-15 94q-2 14-13 23t-25 9H421Zm15-60h88l14-112q33-8 62.5-25t53.5-41l106 46 40-72-94-69q4-17 6.5-33.5T715-480q0-17-2-33.5t-7-33.5l94-69-40-72-106 46q-23-26-52-43.5T538-708l-14-112h-88l-14 112q-34 7-63.5 24T306-642l-106-46-40 72 94 69q-4 17-6.5 33.5T245-480q0 17 2.5 33.5T254-413l-94 69 40 72 106-46q24 24 53.5 41t62.5 25l14 112Zm44-210q54 0 92-38t38-92q0-54-38-92t-92-38q-54 0-92 38t-38 92q0 54 38 92t92 38Zm0-130Z"/></symbol><symbol id="i-upload_file" viewBox="0 -960 960 960"><path d="M452-403v171q0 12.75 8.68 21.37 8.67 8.63 21.5 8.63 12.82 0 21.32-8.63 8.5-8.62 8.5-21.37v-171l61 61q3 3 15-2t22.5-9q10.5-4 14.5-3.5T615-342q9-9 8.5-21t-9.5-21L501-494q-5-5-10.13-7-5.14-2-11-2-5.87 0-10.87 2-5 2-10 7L347-382q-9 9-9 21t9 21.39q9 8.61 21 8.61t21-9l63-63ZM220-80q-24 0-42-18t-18-42v-680q0-24 18-42t42-18h336q12.44 0 23.72 5T599-862l183 183q8 8 13 19.28 5 11.28 5 23.72v496q0 24-18 42t-42 18H220Zm331-584v-156H220v680h520v-494H581q-12.75 0-21.37-8.63Q551-651.25 551-664ZM220-820v186-186 680-680Z"/></symbol><symbol id="i-extension" viewBox="0 -960 960 960"><path d="M180-180h560v-173q0-9 4.5-16t12.5-11l24-11q19-8 30.5-27t11.5-40q0-21.43-11.5-39.72Q800-516 781-525l-24-11q-8.13-3.75-12.57-10.88Q740-554 740-563v-177H564q-10.66 0-18.83-7-8.17-7-10.17-18.33L530-791q-5-27-24.67-45.5-19.68-18.5-45.91-18.5Q432-855 412-836.5T387-791l-5 25.67Q380-754 371.83-747q-8.17 7-18.83 7H181v110q55 20 89 66.78t34 105.5q0 59.72-34 107.22T180-287v107Zm11 60q-29 0-50-21t-21-51v-121q0-8 5-13t13-7q45-9 75.5-43.08T244-458q0-48.03-30-82.52Q184-575 139-583q-8-2-13-7t-5-13v-126q0-30 20.5-50.5T192-800h136q6.63-48.88 43.58-81.94Q408.53-915 458.74-915q49.26 0 86.45 33.06Q582.37-848.88 590-800h139q30 0 50.5 20.5T800-729v147q38 18 60.5 49.5T883-458q0 43-22.5 75T800-334v142q0 30-20.5 51T729-120H191Zm311-338Z"/></symbol><symbol id="i-refresh" viewBox="0 -960 960 960"><path d="M480-160q-133 0-226.5-93.5T160-480q0-133 93.5-226.5T480-800q85 0 149 34.5T740-671v-99q0-13 8.5-21.5T770-800q13 0 21.5 8.5T800-770v194q0 13-8.5 21.5T770-546H576q-13 0-21.5-8.5T546-576q0-13 8.5-21.5T576-606h138q-38-60-97-97t-137-37q-109 0-184.5 75.5T220-480q0 109 75.5 184.5T480-220q75 0 140-39.5T717-366q5-11 16.5-16.5t22.5-.5q12 5 16 16.5t-1 23.5q-39 84-117.5 133.5T480-160Z"/></symbol><symbol id="i-dark_mode" viewBox="0 -960 960 960"><path d="M480-120q-150 0-255-105T120-480q0-135 79.5-229T408-830q20-5 34-1t22 15q8 10 7.5 25t-8.5 35q-9 23-14 47t-5 49q0 90 63 153t153 63q25 0 48.5-4.5T754-461q22-8 38-7t26 9q10 8 13 23t-2 36q-27 121-121 200.5T480-120Zm0-60q109 0 190-67.5T771-406q-25 11-53.5 16.5T660-384q-115 0-195.5-80.5T384-660q0-24 5-51.5t18-62.5q-98 27-162.5 109.5T180-480q0 125 87.5 212.5T480-180Zm-4-297Z"/></symbol><symbol id="i-light_mode" viewBox="0 -960 960 960"><path d="M579-380.76q41-40.77 41-99Q620-538 579.24-579q-40.77-41-99-41Q422-620 381-579.24q-41 40.77-41 99Q340-422 380.76-381q40.77 41 99 41Q538-340 579-380.76ZM338.5-338.5Q280-397 280-480t58.5-141.5Q397-680 480-680t141.5 58.5Q680-563 680-480t-58.5 141.5Q563-280 480-280t-141.5-58.5ZM70-450q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32Q57.25-510 70-510h100q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H70Zm720 0q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32 8.62-8.5 21.37-8.5h100q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H790ZM458.5-768.63Q450-777.25 450-790v-100q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v100q0 12.75-8.68 21.37-8.67 8.63-21.5 8.63-12.82 0-21.32-8.63Zm0 720Q450-57.25 450-70v-100q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v100q0 12.75-8.68 21.37-8.67 8.63-21.5 8.63-12.82 0-21.32-8.63ZM240-678l-57-56q-9-9-8.63-21.6.37-12.61 8.53-21.5 8.89-8.9 21.5-8.9 12.6 0 21.6 9l56 57q8 9 8 21t-8 20.5q-8 8.5-20.5 8.5t-21.5-8Zm494 495-56-57q-8-9-8-21.38 0-12.37 8.5-20.62 8.5-9 20.5-9t21 9l57 56q9 9 8.63 21.6-.37 12.61-8.53 21.5-8.89 8.9-21.5 8.9-12.6 0-21.6-9Zm-56-495q-9-9-9-21t9-21l56-57q9-9 21.6-8.63 12.61.37 21.5 8.53 8.9 8.89 8.9 21.5 0 12.6-9 21.6l-57 56q-8 8-20.36 8-12.37 0-21.64-8ZM182.9-182.9q-8.9-8.89-8.9-21.5 0-12.6 9-21.6l57-56q8.8-9 20.9-9 12.1 0 20.71 9 9.39 9 9.39 21t-9 21l-56 57q-9 9-21.6 8.63-12.61-.37-21.5-8.53ZM480-480Z"/></symbol><symbol id="i-build" viewBox="0 -960 960 960"><path d="M354-370q-97.08 0-165.04-67.67Q121-505.33 121-602q0-20 3-37.5t11-36.5q3-8 9-12t12.81-6q6.81-2 14 0t13.19 8l113 113 92-86-118-118q-6.15-5.93-8.08-12.96Q261-797 263-804q2-7 6-12.25t12-8.75q19-8 36-11.5t36.85-3.5q99.23 0 168.69 69.42Q592-701.17 592-602q0 24-5 47t-13 46l221 221q27 26 26.5 63.5T793-161q-26 24-61.5 23.5T670-164L447-388q-23 8-46 13t-47 5Zm0-60q25 0 53-8t49-24l257 257q8 8 20 8t20-8q8-8 8-20t-8-20L500-498q16-21 24-49.5t8-54.5q0-75-55.5-127T350-782l102 104q9 9 8.5 21.5T451-635L318-510q-9.27 8-21.64 8-12.36 0-20.36-8l-98-97q3 77 54.67 127T354-430Zm117-58Z"/></symbol><symbol id="i-print" viewBox="0 -960 960 960"><path d="M302-120q-24.75 0-42.37-17.63Q242-155.25 242-180v-116H140q-24.75 0-42.37-17.63Q80-331.25 80-356v-186q0-45.05 30.5-75.53Q141-648 186-648h588q45.05 0 75.53 30.47Q880-587.05 880-542v186q0 24.75-17.62 42.37Q844.75-296 820-296H718v116q0 24.75-17.62 42.37Q682.75-120 658-120H302ZM140-356h102v-16q0-24.75 17.63-42.38Q277.25-432 302-432h356q24.75 0 42.38 17.62Q718-396.75 718-372v16h102v-186.21Q820-562 806.78-575q-13.23-13-32.78-13H186q-19.55 0-32.77 13.22Q140-561.55 140-542v186Zm518-292v-132H302v132h-60v-132q0-24.75 17.63-42.38Q277.25-840 302-840h356q24.75 0 42.38 17.62Q718-804.75 718-780v132h-60Zm81 155q12 0 21-9t9-21q0-12-9-21t-21-9q-12 0-21 9t-9 21q0 12 9 21t21 9Zm-81 313v-192H302v192h356ZM140-588h680-680Z"/></symbol><symbol id="i-restart_alt" viewBox="0 -960 960 960"><path d="M418-126q-111-21-184.5-109T160-439q0-71 30-134t85-107q8-6 19-5.5t19 8.5q10 10 9 23t-13 23q-42 35-65.5 85.5T220-439q0 94 58 163.5T425-186q11 2 18.5 11t7.5 20q0 14-10 22.5t-23 6.5Zm126 0q-13 2-23-6.5T511-155q0-11 7.5-20t18.5-11q90-20 147-89.5T741-439q0-109-75.5-184.5T481-699h-20l39 39q8 8 8 21t-8 21q-9 9-22 9t-21-9l-91-90q-5-5-7-10t-2-11q0-6 2-11t7-10l91-91q8-8 21-8t22 8q8 9 8 22t-8 21l-39 39h20q134 0 227 93.5T801-439q0 116-73 204T544-126Z"/></symbol><symbol id="i-search" viewBox="0 -960 960 960"><path d="M378-329q-108.16 0-183.08-75Q120-479 120-585t75-181q75-75 181.5-75t181 75Q632-691 632-584.85 632-542 618-502q-14 40-42 75l242 240q9 8.56 9 21.78T818-143q-9 9-22.22 9-13.22 0-21.78-9L533-384q-30 26-69.96 40.5Q423.08-329 378-329Zm-1-60q81.25 0 138.13-57.5Q572-504 572-585t-56.87-138.5Q458.25-781 377-781q-82.08 0-139.54 57.5Q180-666 180-585t57.46 138.5Q294.92-389 377-389Z"/></symbol><symbol id="i-visibility" viewBox="0 -960 960 960"><path d="M600.5-379.62q49.5-49.62 49.5-120.5T600.38-620.5Q550.76-670 479.88-670T359.5-620.38Q310-570.76 310-499.88t49.62 120.38q49.62 49.5 120.5 49.5t120.38-49.62Zm-200-41.12q-32.5-32.73-32.5-79.5 0-46.76 32.74-79.26 32.73-32.5 79.5-32.5 46.76 0 79.26 32.74 32.5 32.73 32.5 79.5 0 46.76-32.74 79.26-32.73 32.5-79.5 32.5-46.76 0-79.26-32.74ZM234.5-276Q124-352 57-470q-4-7.13-6-14.65-2-7.52-2-15.43 0-7.92 2-15.38 2-7.47 6-14.54 67-118 177.5-194T480-800q135 0 245.5 76T903-530q4 7.12 6 14.65 2 7.52 2 15.43 0 7.92-2 15.38-2 7.47-6 14.54-67 118-177.5 194T480-200q-135 0-245.5-76ZM480-500Zm222.5 174.5Q804-391 857-500q-53-109-154.33-174.5Q601.34-740 480.17-740T257.5-674.5Q156-609 102-500q54 109 155.33 174.5Q358.66-260 479.83-260t222.67-65.5Z"/></symbol><symbol id="i-check" viewBox="0 -960 960 960"><path d="m378-332 363-363q9-9 21.5-9t21.5 9q9 9 9 21.5t-9 21.5L399-267q-9 9-21 9t-21-9L175-449q-9-9-8.5-21.5T176-492q9-9 21.5-9t21.5 9l159 160Z"/></symbol><symbol id="i-link" viewBox="0 -960 960 960"><path d="M280-280q-83 0-141.5-58.5T80-480q0-83 58.5-141.5T280-680h140q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H280q-58.33 0-99.17 40.76-40.83 40.77-40.83 99Q140-422 180.83-381q40.84 41 99.17 41h140q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H280Zm75-170q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32 8.62-8.5 21.37-8.5h250q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32-8.63 8.5-21.38 8.5H355Zm185 170q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32 8.62-8.5 21.37-8.5h140q58.33 0 99.17-40.76 40.83-40.77 40.83-99Q820-538 779.17-579q-40.84-41-99.17-41H540q-12.75 0-21.37-8.68-8.63-8.67-8.63-21.5 0-12.82 8.63-21.32 8.62-8.5 21.37-8.5h140q83 0 141.5 58.5T880-480q0 83-58.5 141.5T680-280H540Z"/></symbol><symbol id="i-content_copy" viewBox="0 -960 960 960"><path d="M300-200q-24 0-42-18t-18-42v-560q0-24 18-42t42-18h440q24 0 42 18t18 42v560q0 24-18 42t-42 18H300Zm0-60h440v-560H300v560ZM180-80q-24 0-42-18t-18-42v-590q0-12.75 8.68-21.38 8.67-8.62 21.5-8.62 12.82 0 21.32 8.62 8.5 8.63 8.5 21.38v590h470q12.75 0 21.38 8.68 8.62 8.67 8.62 21.5 0 12.82-8.62 21.32Q662.75-80 650-80H180Zm120-180v-560 560Z"/></symbol><symbol id="i-celebration" viewBox="0 -960 960 960"><path d="m181-181 314-112-203-204-111 316Zm744-505q-7 7-17 7t-17-7l-2-2q-19-19-44-19.5T800-688L574-462q-7 7-17 7t-17-7q-7-7-7-17t7-17l223-223q32-32 81-32.5t81 31.5q7 7 7 17t-7 17ZM383-811q7-7 17-7t17 7l9 9q35 35 34.5 87.5T425-627l-10 10q-7 7-17 7t-17-7q-7-7-7-17t7-17l13-13q23-23 21.5-52.5T394-766l-11-11q-7-7-7-17t7-17Zm169-73q7-7 17-7t17 7l46 46q31 32 32 80.5T633-677L496-540q-7 7-17 7t-17-7q-7-7-7-17t7-17l135-135q19-19 18.5-48.5T596-806l-44-44q-7-7-7-17t7-17Zm300 505q-7 7-17 7t-17-7l-35-35q-23-23-48-23t-48 23l-33 33q-7 7-17 7t-17-7q-7-7-7-17t7-17l30-30q35-35 84-36t84 34l34 34q7 7 7 17t-7 17ZM181-181Zm-80 41 149-416q4-10 11.5-15t16.5-5q5 0 10.5 2t10.5 7l270 266q5 5 7 10.5t2 11.5q0 9-5 16.5T558-251L140-101q-9 3-17.5 1t-14.5-8q-6-6-8-14.5t1-17.5Z"/></symbol><symbol id="i-list_alt" viewBox="0 -960 960 960"><path d="M321-295q9-9 9-21t-9-21q-9-9-21-9t-21 9q-9 9-9 21t9 21q9 9 21 9t21-9Zm0-164q9-9 9-21t-9-21q-9-9-21-9t-21 9q-9 9-9 21t9 21q9 9 21 9t21-9Zm0-164q9-9 9-21t-9-21q-9-9-21-9t-21 9q-9 9-9 21t9 21q9 9 21 9t21-9Zm141 337h184q12.75 0 21.38-8.68 8.62-8.67 8.62-21.5 0-12.82-8.62-21.32-8.63-8.5-21.38-8.5H462q-12.75 0-21.37 8.68-8.63 8.67-8.63 21.5 0 12.82 8.63 21.32 8.62 8.5 21.37 8.5Zm0-164h184q12.75 0 21.38-8.68 8.62-8.67 8.62-21.5 0-12.82-8.62-21.32-8.63-8.5-21.38-8.5H462q-12.75 0-21.37 8.68-8.63 8.67-8.63 21.5 0 12.82 8.63 21.32 8.62 8.5 21.37 8.5Zm0-164h184q12.75 0 21.38-8.68 8.62-8.67 8.62-21.5 0-12.82-8.62-21.32-8.63-8.5-21.38-8.5H462q-12.75 0-21.37 8.68-8.63 8.67-8.63 21.5 0 12.82 8.63 21.32 8.62 8.5 21.37 8.5ZM180-120q-24 0-42-18t-18-42v-600q0-24 18-42t42-18h600q24 0 42 18t18 42v600q0 24-18 42t-42 18H180Zm0-60h600v-600H180v600Zm0-600v600-600Z"/></symbol><symbol id="i-view_agenda" viewBox="0 -960 960 960"><path d="M180-510q-24 0-42-18t-18-42v-210q0-24 18-42t42-18h600q24 0 42 18t18 42v210q0 24-18 42t-42 18H180Zm0-60h600v-210H180v210Zm0 450q-24 0-42-18t-18-42v-210q0-24 18-42t42-18h600q24 0 42 18t18 42v210q0 24-18 42t-42 18H180Zm0-60h600v-210H180v210Zm0-600v210-210Zm0 390v210-210Z"/></symbol><symbol id="i-undo" viewBox="0 -960 960 960"><path d="M289-200q-13 0-21.5-8.5T259-230q0-13 8.5-21.5T289-260h280q70 0 120.5-46.5T740-422q0-69-50.5-115.5T569-584H274l93 93q9 9 9 21t-9 21q-9 9-21 9t-21-9L181-593q-5-5-7-10t-2-11q0-6 2-11t7-10l144-144q9-9 21-9t21 9q9 9 9 21t-9 21l-93 93h294q95 0 163.5 64T800-422q0 94-68.5 158T568-200H289Z"/></symbol><symbol id="i-block" viewBox="0 -960 960 960"><path d="M324-111.5Q251-143 197-197t-85.5-127Q80-397 80-480t31.5-156Q143-709 197-763t127-85.5Q397-880 480-880t156 31.5Q709-817 763-763t85.5 127Q880-563 880-480t-31.5 156Q817-251 763-197t-127 85.5Q563-80 480-80t-156-31.5ZM480-140q61.01 0 117.51-20.5Q654-181 699-220L220-699q-38 46-59 102.17T140-480q0 142.37 98.81 241.19Q337.63-140 480-140Zm259-121q37-45 59-101.49 22-56.5 22-117.51 0-142.38-98.81-241.19T480-820q-60.66 0-116.83 21T261-739l478 478ZM480-480Z"/></symbol><symbol id="i-play_arrow" viewBox="0 -960 960 960"><path d="M320-258v-450q0-14 9-22t21-8q4 0 8 1t8 3l354 226q7 5 10.5 11t3.5 14q0 8-3.5 14T720-458L366-232q-4 2-8 3t-8 1q-12 0-21-8t-9-22Zm60-225Zm0 171 269-171-269-171v342Z"/></symbol><symbol id="i-handyman" viewBox="0 -960 960 960"><path d="M753-82q-5-2-10-7L501-331q-5-5-7-10t-2-11q0-6 2-11t7-10l85-85q5-5 10-7t11-2q6 0 11 2t10 7l242 242q5 5 7 10t2 11q0 6-2 11t-7 10l-85 85q-5 5-10 7t-11 2q-6 0-11-2Zm11-70 43-43-200-200-43 43 200 200ZM183.5-82q-5.5-2-10.5-7l-84-84q-5-5-7-10.5T80-195q0-6 2-11t7-10l225-225h85l38-38-175-175h-57L80-779l99-99 125 125v57l175 175 130-130-67-67 56-56H485l-18-18 128-128 18 18v113l56-56 169 169q15 15 23.5 34.5T870-600q0 20-6.5 38.5T845-528l-85-85-56 56-52-52-211 211v84L216-89q-5 5-10 7t-11 2q-6 0-11.5-2Zm11.5-70 200-200v-43h-43L152-195l43 43Zm0 0-43-43 22 21 21 22Zm569 0 43-43-43 43Z"/></symbol><symbol id="i-stadia_controller" viewBox="0 -960 960 960"><path d="M189-160q-60 0-102.5-43T42-307q0-9 1-18t3-18l84-336q14-54 57-87.5t98-33.5h390q55 0 98 33.5t57 87.5l84 336q2 9 3.5 18.5T919-306q0 61-43.5 103.5T771-160q-42 0-78-22t-54-60l-28-58q-5-10-15-15t-21-5H385q-11 0-21 5t-15 15l-28 58q-18 38-54 60t-78 22Zm2.66-60q24.34 0 45.01-12.97Q257.33-245.95 268-268l28-57q13-26 36.5-40.5T385-380h190q29 0 52.5 15t37.5 40l28 57q10.67 22.05 31.33 35.03Q745-220 769.26-220 805-220 831-244.5t27-60.5q0-4-3-24l-84-335q-8-33-34.4-54.5T675-740H285q-34.7 0-61.35 21T189-664l-84 335q-1 4-3 23 0 36.48 26.26 61.24Q154.52-220 191.66-220ZM561.5-538.68q8.5-8.67 8.5-21.5 0-12.82-8.68-21.32-8.67-8.5-21.5-8.5-12.82 0-21.32 8.68-8.5 8.67-8.5 21.5 0 12.82 8.68 21.32 8.67 8.5 21.5 8.5 12.82 0 21.32-8.68Zm80-80q8.5-8.67 8.5-21.5 0-12.82-8.68-21.32-8.67-8.5-21.5-8.5-12.82 0-21.32 8.68-8.5 8.67-8.5 21.5 0 12.82 8.68 21.32 8.67 8.5 21.5 8.5 12.82 0 21.32-8.68Zm0 160q8.5-8.67 8.5-21.5 0-12.82-8.68-21.32-8.67-8.5-21.5-8.5-12.82 0-21.32 8.68-8.5 8.67-8.5 21.5 0 12.82 8.68 21.32 8.67 8.5 21.5 8.5 12.82 0 21.32-8.68Zm80-80q8.5-8.67 8.5-21.5 0-12.82-8.68-21.32-8.67-8.5-21.5-8.5-12.82 0-21.32 8.68-8.5 8.67-8.5 21.5 0 12.82 8.68 21.32 8.67 8.5 21.5 8.5 12.82 0 21.32-8.68ZM358-472.08q7-7.09 7-17.92v-45h45q10.83 0 17.92-7.12 7.08-7.11 7.08-18 0-10.88-7.08-17.88-7.09-7-17.92-7h-45v-45q0-10.83-7.12-17.92-7.11-7.08-18-7.08-10.88 0-17.88 7.08-7 7.09-7 17.92v45h-45q-10.83 0-17.92 7.12-7.08 7.11-7.08 18 0 10.88 7.08 17.88 7.09 7 17.92 7h45v45q0 10.83 7.12 17.92 7.11 7.08 18 7.08 10.88 0 17.88-7.08ZM480-480Z"/></symbol><symbol id="i-lan" viewBox="0 -960 960 960"><path d="M120-140v-150q0-24.75 17.63-42.38Q155.25-350 180-350h60v-100q0-24.75 17.63-42.38Q275.25-510 300-510h150v-100h-60q-24.75 0-42.37-17.63Q330-645.25 330-670v-150q0-24.75 17.63-42.38Q365.25-880 390-880h180q24.75 0 42.38 17.62Q630-844.75 630-820v150q0 24.75-17.62 42.37Q594.75-610 570-610h-60v100h150q24.75 0 42.38 17.62Q720-474.75 720-450v100h60q24.75 0 42.38 17.62Q840-314.75 840-290v150q0 24.75-17.62 42.37Q804.75-80 780-80H600q-24.75 0-42.37-17.63Q540-115.25 540-140v-150q0-24.75 17.63-42.38Q575.25-350 600-350h60v-100H300v100h60q24.75 0 42.38 17.62Q420-314.75 420-290v150q0 24.75-17.62 42.37Q384.75-80 360-80H180q-24.75 0-42.37-17.63Q120-115.25 120-140Zm270-530h180v-150H390v150ZM180-140h180v-150H180v150Zm420 0h180v-150H600v150ZM480-670ZM360-290Zm240 0Z"/></symbol><symbol id="i-description" viewBox="0 -960 960 960"><path d="M349-250h262q12.75 0 21.38-8.68 8.62-8.67 8.62-21.5 0-12.82-8.62-21.32-8.63-8.5-21.38-8.5H349q-12.75 0-21.37 8.68-8.63 8.67-8.63 21.5 0 12.82 8.63 21.32 8.62 8.5 21.37 8.5Zm0-170h262q12.75 0 21.38-8.68 8.62-8.67 8.62-21.5 0-12.82-8.62-21.32-8.63-8.5-21.38-8.5H349q-12.75 0-21.37 8.68-8.63 8.67-8.63 21.5 0 12.82 8.63 21.32 8.62 8.5 21.37 8.5ZM220-80q-24 0-42-18t-18-42v-680q0-24 18-42t42-18h336q12.44 0 23.72 5T599-862l183 183q8 8 13 19.28 5 11.28 5 23.72v496q0 24-18 42t-42 18H220Zm331-584v-156H220v680h520v-494H581q-12.75 0-21.37-8.63Q551-651.25 551-664ZM220-820v186-186 680-680Z"/></symbol><symbol id="i-music_note" viewBox="0 -960 960 960"><path d="M286.5-163.5Q243-207 243-270t43.5-106.5Q330-420 393-420q28 0 50.5 8t39.5 22v-420q0-13 8.5-21.5T513-840h174q13 0 21.5 8.5T717-810v75q0 13-8.5 21.5T687-705H543v435q0 63-43.5 106.5T393-120q-63 0-106.5-43.5Z"/></symbol><symbol id="i-chat" viewBox="0 -960 960 960"><path d="M240-240 131-131q-14 14-32.5 6.34Q80-132.31 80-152v-668q0-24 18-42t42-18h680q24 0 42 18t18 42v520q0 24-18 42t-42 18H240Zm-26-60h606v-520H140v600l74-80Zm-74 0v-520 520Zm130-99h253q12.75 0 21.38-8.68 8.62-8.67 8.62-21.5 0-12.82-8.62-21.32-8.63-8.5-21.38-8.5H270q-12.75 0-21.37 8.68-8.63 8.67-8.63 21.5 0 12.82 8.63 21.32 8.62 8.5 21.37 8.5Zm0-130h420q12.75 0 21.38-8.68 8.62-8.67 8.62-21.5 0-12.82-8.62-21.32-8.63-8.5-21.38-8.5H270q-12.75 0-21.37 8.68-8.63 8.67-8.63 21.5 0 12.82 8.63 21.32 8.62 8.5 21.37 8.5Zm0-130h420q12.75 0 21.38-8.68 8.62-8.67 8.62-21.5 0-12.82-8.62-21.32-8.63-8.5-21.38-8.5H270q-12.75 0-21.37 8.68-8.63 8.67-8.63 21.5 0 12.82 8.63 21.32 8.62 8.5 21.37 8.5Z"/></symbol><symbol id="i-shield" viewBox="0 -960 960 960"><path d="M470.12-85q-4.56-1-9.12-3-139-47-220-168.5t-81-266.61V-719q0-19.26 10.88-34.66Q181.75-769.07 199-776l260-97q11-4 21-4t21 4l260 97q17.25 6.93 28.13 22.34Q800-738.26 800-719v195.89Q800-378 719-256.5T499-88q-4.56 2-9.12 3T480-84q-5.32 0-9.88-1Zm9.88-58q115-38 187.5-143.5T740-523v-196l-260-98-260 98v196q0 131 72.5 236.5T480-143Zm0-337Z"/></symbol><symbol id="i-category" viewBox="0 -960 960 960"><path d="m289-572 167-267q5-7 11-10.5t14-3.5q8 0 14 3.5t11 10.5l167 267q5 8 4.5 16t-4.5 15q-4 7-10.6 11t-15.4 4H315q-8.8 0-15.4-4T289-541q-4-7-4.5-15t4.5-16ZM706-80q-74 0-124-50t-50-124q0-74 50-124t124-50q74 0 124 50t50 124q0 74-50 124T706-80Zm-586-55v-244q0-12.75 8.63-21.38Q137.25-409 150-409h244q12.75 0 21.38 8.62Q424-391.75 424-379v244q0 12.75-8.62 21.37Q406.75-105 394-105H150q-12.75 0-21.37-8.63Q120-122.25 120-135Zm586.08-5Q754-140 787-173.08q33-33.09 33-81Q820-302 786.92-335q-33.09-33-81-33Q658-368 625-334.92q-33 33.09-33 81Q592-206 625.08-173q33.09 33 81 33ZM180-165h184v-184H180v184Zm189-421h224L481-767 369-586Zm112 0ZM364-349Zm342 95Z"/></symbol></svg>
 <!-- Ecrit par les scripts de scan a cote de index.html, sur la cle USB. Une
      page ouverte en file:// ne peut pas aller LIRE un fichier (fetch y est
      refuse), mais elle peut en charger un pose a cote d'elle.
@@ -879,7 +887,7 @@ if(location.protocol==='file:'){
   <div class="outils-titre" data-t>Les scripts pour Windows</div>
   <div class="outils-sous" data-t>Trois scripts font le travail que cette page ne peut pas faire : un navigateur n'a pas le droit de lire votre registre ni la liste de vos logiciels. Ils sont écrits en PowerShell, donc lisibles dans le Bloc-notes avant d'être lancés.</div>
   <div class="outils-dl">
-    <a class="outils-dl-btn" href="migration-pc.zip" download="migration-pc.zip" data-t>⬇️ Télécharger le programme</a>
+    <a class="outils-dl-btn" href="migration-pc.zip" download="migration-pc.zip" ><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-download"/></svg><span data-t>Télécharger le programme</span></a>
     <div class="outils-dl-d" data-t-html>Une seule archive, tout ce qu'il faut dedans. Décompressez-la sur une clé USB, et double-cliquez <code>Migration PC.bat</code> sur le PC source.</div>
   </div>
   <div class="outils-liste" id="outils-liste"></div>
@@ -927,18 +935,18 @@ if(location.protocol==='file:'){
 
 <div class="annul" id="annul" role="status">
   <span class="annul-txt" id="annul-txt"></span>
-  <button class="annul-btn" type="button" onclick="annuler()" data-t>↩ Annuler</button>
-  <button class="annul-fermer" type="button" onclick="masquerAnnulation()" data-t-titre data-t-aria title="Masquer" aria-label="Masquer">✕</button>
+  <button class="annul-btn" type="button" onclick="annuler()" ><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-undo"/></svg><span data-t>Annuler</span></button>
+  <button class="annul-fermer" type="button" onclick="masquerAnnulation()" data-t-titre data-t-aria title="Masquer" aria-label="Masquer"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-close"/></svg></button>
 </div>
 
 <div class="panne" id="panne" role="alert">
-  <span class="panne-ico">⚠️</span>
+  <span class="panne-ico"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-warning"/></svg></span>
   <div class="panne-txt">
     <b data-t>Un problème est survenu pendant l'affichage.</b>
     <span id="panne-detail"></span>
     <span class="panne-aide" data-t>Le reste de la page continue de fonctionner. Si cela se répète, réinitialiser le profil ou recharger la page.</span>
   </div>
-  <button class="panne-fermer" onclick="masquerPanne()" data-t-titre title="Masquer">✕</button>
+  <button class="panne-fermer" onclick="masquerPanne()" data-t-titre title="Masquer" aria-label="Masquer"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-close"/></svg></button>
 </div>
 
 
@@ -946,7 +954,7 @@ if(location.protocol==='file:'){
 
 <nav class="side" id="side" data-t-aria aria-label="Sections">
   <div class="side-tete">
-    <div class="logo" aria-hidden="true">📦</div>
+    <div class="logo" aria-hidden="true"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-package_2"/></svg></div>
     <div class="side-tete-txt">
       <h1 id="profil-titre">Migration PC</h1>
       <p class="sub" id="profil-sous"></p>
@@ -955,17 +963,17 @@ if(location.protocol==='file:'){
 
   <div class="side-nav" role="tablist" data-t-aria aria-label="Sections de la checklist">
       <button class="snav active" type="button" role="tab" aria-selected="true" aria-controls="panel-apps" onclick="switchTab('apps')" id="tab-apps">
-        <span class="snav-t"><span class="snav-i" aria-hidden="true">📦</span><span data-t>Logiciels</span></span>
+        <span class="snav-t"><span class="snav-i" aria-hidden="true"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-package_2"/></svg></span><span data-t>Logiciels</span></span>
         <span class="snav-bar"><span class="snav-fill" id="bar-apps" style="width:0%"></span></span>
         <span class="tab-badge" id="badge-apps">0/0</span>
       </button>
       <button class="snav" type="button" role="tab" aria-selected="false" aria-controls="panel-pilotes" onclick="switchTab('pilotes')" id="tab-pilotes">
-        <span class="snav-t"><span class="snav-i" aria-hidden="true">🎛️</span><span data-t>Pilotes</span></span>
+        <span class="snav-t"><span class="snav-i" aria-hidden="true"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-tune"/></svg></span><span data-t>Pilotes</span></span>
         <span class="snav-bar"><span class="snav-fill" id="bar-pilotes" style="width:0%"></span></span>
         <span class="tab-badge" id="badge-pilotes">—</span>
       </button>
       <button class="snav" type="button" role="tab" aria-selected="false" aria-controls="panel-pwa" onclick="switchTab('pwa')" id="tab-pwa">
-        <span class="snav-t"><span class="snav-i" aria-hidden="true">🌍</span><span data-t>PWA</span></span>
+        <span class="snav-t"><span class="snav-i" aria-hidden="true"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-public"/></svg></span><span data-t>PWA</span></span>
         <span class="snav-bar"><span class="snav-fill" id="bar-pwa" style="width:0%"></span></span>
         <span class="tab-badge" id="badge-pwa">0/0</span>
       </button>
@@ -976,20 +984,20 @@ if(location.protocol==='file:'){
       <div class="side-gp-l"><span class="gp-pct" id="gp-pct">0%</span> · <span id="gp-done">0</span>/<span id="gp-total">0</span> <span data-t>tâches</span></div>
       <div class="gp-bar-bg" role="progressbar" id="gp-bar-wrap" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" data-t-aria aria-label="Progression globale"><div class="gp-bar-fill" id="gp-bar" style="width:0%"></div></div>
     </div>
-    <button class="side-act" type="button" id="guide-btn" onclick="basculerGuide()" aria-pressed="false" data-t-titre title="Afficher une seule tâche à la fois"><span aria-hidden="true">🎯</span><span data-t> Mode guidé</span></button>
+    <button class="side-act" type="button" id="guide-btn" onclick="basculerGuide()" aria-pressed="false" data-t-titre title="Afficher une seule tâche à la fois"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-explore"/></svg><span data-t> Mode guidé</span></button>
     <div class="hdr-menu">
-      <button class="side-act" type="button" id="menu-btn" onclick="basculerMenu()" aria-expanded="false" aria-haspopup="true" aria-controls="hdr-menu-liste"><span aria-hidden="true">⚙️</span><span data-t> Réglages</span></button>
+      <button class="side-act" type="button" id="menu-btn" onclick="basculerMenu()" aria-expanded="false" aria-haspopup="true" aria-controls="hdr-menu-liste"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-settings"/></svg><span data-t> Réglages</span></button>
       <div class="hdr-menu-liste" id="hdr-menu-liste" role="menu" data-t-aria aria-label="Réglages">
-        <button type="button" role="menuitem" onclick="depuisMenu(importerFichier)"><span class="hdr-menu-ico" aria-hidden="true">📥</span><span data-t>Importer un fichier…</span></button>
-        <button type="button" role="menuitem" onclick="depuisMenu(exportProfil)"><span class="hdr-menu-ico" aria-hidden="true">🧩</span><span data-t>Exporter le profil</span></button>
-        <button type="button" role="menuitem" id="scan-rejouer" style="display:none" onclick="depuisMenu(rejouerScanLocal)"><span class="hdr-menu-ico" aria-hidden="true">🔄</span><span data-t>Recharger le scan de la clé</span></button>
+        <button type="button" role="menuitem" onclick="depuisMenu(importerFichier)"><span class="hdr-menu-ico" aria-hidden="true"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-upload_file"/></svg></span><span data-t>Importer un fichier…</span></button>
+        <button type="button" role="menuitem" onclick="depuisMenu(exportProfil)"><span class="hdr-menu-ico" aria-hidden="true"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-extension"/></svg></span><span data-t>Exporter le profil</span></button>
+        <button type="button" role="menuitem" id="scan-rejouer" style="display:none" onclick="depuisMenu(rejouerScanLocal)"><span class="hdr-menu-ico" aria-hidden="true"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-refresh"/></svg></span><span data-t>Recharger le scan de la clé</span></button>
         <div class="hdr-menu-sep" role="separator"></div>
-        <button type="button" role="menuitem" id="btn-compact" aria-pressed="false" onclick="depuisMenu(basculerAffichage)"><span class="hdr-menu-ico" aria-hidden="true" id="mode-ico">≡</span><span id="mode-lbl">Affichage compact</span></button>
-        <button type="button" role="menuitem" id="theme-btn" onclick="depuisMenu(toggleTheme)"><span class="hdr-menu-ico" aria-hidden="true" id="theme-ico">🌙</span><span id="theme-lbl">Sombre</span></button>
-        <button type="button" role="menuitem" id="config-btn" onclick="depuisMenu(basculerConfig)" aria-expanded="false"><span class="hdr-menu-ico" aria-hidden="true">🔧</span><span data-t>Ma configuration…</span></button>
+        <button type="button" role="menuitem" id="btn-compact" aria-pressed="false" onclick="depuisMenu(basculerAffichage)"><span class="hdr-menu-ico" aria-hidden="true" id="mode-ico"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-view_agenda"/></svg></span><span id="mode-lbl">Affichage compact</span></button>
+        <button type="button" role="menuitem" id="theme-btn" onclick="depuisMenu(toggleTheme)"><span class="hdr-menu-ico" aria-hidden="true" id="theme-ico"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-dark_mode"/></svg></span><span id="theme-lbl">Sombre</span></button>
+        <button type="button" role="menuitem" id="config-btn" onclick="depuisMenu(basculerConfig)" aria-expanded="false"><span class="hdr-menu-ico" aria-hidden="true"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-build"/></svg></span><span data-t>Ma configuration…</span></button>
         <div class="hdr-menu-sep" role="separator"></div>
-        <button type="button" role="menuitem" onclick="depuisMenu(function(){printTab(curTab);})"><span class="hdr-menu-ico" aria-hidden="true">🖨️</span><span data-t>Imprimer</span></button>
-        <button type="button" role="menuitem" id="reglages-btn" onclick="depuisMenu(basculerReglages)"><span class="hdr-menu-ico" aria-hidden="true">♻️</span><span data-t>Réinitialiser…</span></button>
+        <button type="button" role="menuitem" onclick="depuisMenu(function(){printTab(curTab);})"><span class="hdr-menu-ico" aria-hidden="true"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-print"/></svg></span><span data-t>Imprimer</span></button>
+        <button type="button" role="menuitem" id="reglages-btn" onclick="depuisMenu(basculerReglages)"><span class="hdr-menu-ico" aria-hidden="true"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-restart_alt"/></svg></span><span data-t>Réinitialiser…</span></button>
       </div>
     </div>
   </div>
@@ -998,10 +1006,11 @@ if(location.protocol==='file:'){
 <div class="col">
 
 <header class="hdr">
-  <h2 class="hdr-titre" id="page-titre">📦 <span data-t>Logiciels</span></h2>
+  <h2 class="hdr-titre" id="page-titre"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-package_2"/></svg> <span data-t>Logiciels</span></h2>
   <div class="hdr-rech">
     <input type="search" id="gsearch-input" data-t-aria data-t-ph
-      aria-label="Rechercher dans toute la checklist" placeholder="🔍 Rechercher…" oninput="globalSearch()">
+      aria-label="Rechercher dans toute la checklist" placeholder="Rechercher…" oninput="globalSearch()">
+    <svg class="ico ico-champ" aria-hidden="true" focusable="false"><use href="#i-search"/></svg>
     <span class="gsearch-count" id="gsearch-count" style="display:none"><b id="gsearch-n">0</b> <span data-t>résultats</span></span>
   </div>
   <div class="hdr-lang" role="group" data-t-aria aria-label="Langue">
@@ -1035,10 +1044,10 @@ if(location.protocol==='file:'){
     <div class="apps-col">
       <div class="apps-act">
         <div class="search-wrap">
-          <input type="search" id="apps-search" data-t-aria data-t-ph aria-label="Rechercher une application" placeholder="🔍 Filtrer cette liste…" oninput="renderApps()">
+          <input type="search" id="apps-search" data-t-aria data-t-ph aria-label="Rechercher une application" placeholder="Filtrer cette liste…" oninput="renderApps()"><svg class="ico ico-champ" aria-hidden="true" focusable="false"><use href="#i-search"/></svg>
         </div>
-        <button class="sm-btn warn-btn" onclick="exportWingetRemaining()" data-t-titre title="Un script qui installe tout ce qui n'est pas encore coché"><span data-t>⬇️ Script des restants</span></button>
-        <button class="sm-btn warn-btn" onclick="exportWingetJSON(true)" data-t-titre title="Format officiel winget import — idempotent et rejouable"><span data-t>⬇️ winget .json</span></button>
+        <button class="sm-btn warn-btn" onclick="exportWingetRemaining()" data-t-titre title="Un script qui installe tout ce qui n'est pas encore coché"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-download"/></svg><span data-t>Script des restants</span></button>
+        <button class="sm-btn warn-btn" onclick="exportWingetJSON(true)" data-t-titre title="Format officiel winget import — idempotent et rejouable"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-download"/></svg><span data-t>winget .json</span></button>
       </div>
       <div class="sec-content" id="list-apps"></div>
       <div class="next-tab-btn" id="next-apps">
@@ -1056,7 +1065,7 @@ if(location.protocol==='file:'){
 
 <div class="panel" id="panel-pwa" role="tabpanel" aria-labelledby="tab-pwa" tabindex="0">
   <div class="tbar">
-    <span class="tbar-info">🌍 <span data-t>Raccourcis Chrome — se restaurent automatiquement avec la sync Google après install Chrome</span></span>
+    <span class="tbar-info"><svg class="ico" aria-hidden="true" focusable="false"><use href="#i-public"/></svg> <span data-t>Raccourcis Chrome — se restaurent automatiquement avec la sync Google après install Chrome</span></span>
   </div>
   <div class="sec-content" id="list-pwa"></div>
 </div>
@@ -1390,7 +1399,7 @@ const TRADUCTIONS={
   en:{
     'Langue':'Language',
     'Rechercher dans toute la checklist':'Search the whole checklist',
-    '🔍 Rechercher…':'🔍 Search…',
+    'Rechercher…':'Search…',
     'résultats':'results',
     'Logiciels':'Software',
     'Pilotes':'Drivers',
@@ -1398,7 +1407,7 @@ const TRADUCTIONS={
 
     'Les scripts pour Windows':'The Windows scripts',
     "Trois scripts font le travail que cette page ne peut pas faire : un navigateur n'a pas le droit de lire votre registre ni la liste de vos logiciels. Ils sont écrits en PowerShell, donc lisibles dans le Bloc-notes avant d'être lancés.":'Three scripts do the work this page cannot: a browser is not allowed to read your registry or the list of your software. They are written in PowerShell, so you can read them in Notepad before running them.',
-    '⬇️ Télécharger le programme':'⬇️ Download the program',
+    'Télécharger le programme':'Download the program',
     "Une seule archive, tout ce qu'il faut dedans. Décompressez-la sur une clé USB, et double-cliquez <code>Migration PC.bat</code> sur le PC source.":'One archive, everything needed inside. Unzip it onto a USB stick, then double-click <code>Migration PC.bat</code> on the source PC.',
     "<b>Ne prenez pas les fichiers un par un.</b> Les scripts ont tous besoin de <code>lib-detection.ps1</code> à côté d'eux, et le <code>.bat</code> a besoin du dossier <code>scripts</code> : un fichier isolé s'arrête au démarrage. C'est pour ça qu'il n'y a qu'un seul bouton.":"<b>Don't take the files one by one.</b> Every script needs <code>lib-detection.ps1</code> next to it, and the <code>.bat</code> needs the <code>scripts</code> folder: a file on its own stops at startup. That is why there is only one button.",
     'Fermer':'Close',
@@ -1431,15 +1440,15 @@ const TRADUCTIONS={
     'Remettre le site à zéro':'Reset the site',
     "Efface tout ce que ce navigateur a mémorisé — progression, configuration matérielle, lignes écartées, profil importé — et revient au profil d'exemple. Vos fichiers exportés ne sont pas touchés.":'Erases everything this browser remembered — progress, hardware settings, rows set aside, imported profile — and goes back to the example profile. Your exported files are untouched.',
     'Éléments détectés sur cette machine':'Items found on this machine',
-    '↩ Annuler':'↩ Undo',
+    'Annuler':'Undo',
     'Masquer':'Hide',
     "Un problème est survenu pendant l'affichage.":'Something went wrong while displaying the page.',
     'Le reste de la page continue de fonctionner. Si cela se répète, réinitialiser le profil ou recharger la page.':'The rest of the page keeps working. If this happens again, reset the profile or reload the page.',
     'Sections':'Sections',
     'Sections de la checklist':'Checklist sections',
 
-    '⬇️ Les scripts pour Windows…':'⬇️ The Windows scripts…',
-    '👁️ Voir un exemple garni':'👁️ See a filled example',
+    'Les scripts pour Windows…':'The Windows scripts…',
+    'Voir un exemple garni':'See a filled example',
     'Les pilotes du PC receveur apparaissent ici après son scan.':'The target PC drivers show up here after its scan.',
     "Lance <code>Migration PC.bat</code> sur la machine d'arrivée et choisis CIBLE : elle relève les périphériques que Windows signale sans pilote, et donne le lien du constructeur.":'Run <code>Migration PC.bat</code> on the machine you are moving to and pick TARGET: it lists the devices Windows reports without a driver, and gives the maker\'s link.',
     'Cette liste se remplit avec le scan de ton ancien PC.':'This list fills in from the scan of your old PC.',
@@ -1463,7 +1472,7 @@ const TRADUCTIONS={
 
     '{0} à installer':'{0} to install',
     'Format officiel winget import — idempotent et rejouable':'Official winget import format — idempotent and replayable',
-    '⬇️ winget .json ({0})':'⬇️ winget .json ({0})',
+    'winget .json ({0})':'winget .json ({0})',
     "Aucun de ces logiciels n'a d'identifiant winget : chaque ligne porte un lien de recherche vers le site officiel.":'None of these programs has a winget id: each row carries a search link to the official site.',
     'Rien à installer':'Nothing to install',
     'Tout ce qui était sur le PC source est là.':'Everything that was on the source PC is here.',
@@ -1510,7 +1519,7 @@ const TRADUCTIONS={
     'Si tu en utilises un : réinstaller et se reconnecter avant de remettre le pare-feu en place.':'If you use one: reinstall and sign in again before putting the firewall back.',
     'Raccourci navigateur — revient avec la synchronisation du compte.':'Browser shortcut — comes back with the account sync.',
     'Site officiel':'Official site',
-    '▶ Par où commencer':'▶ Where to start',
+    'Par où commencer':'Where to start',
     "Le seul fichier à double-cliquer. Il demande sur quelle machine vous êtes et lance ce qu'il faut. Les autres sont là pour être lus, pas pour être lancés à la main.":'The only file to double-click. It asks which machine you are on and runs what is needed. The others are there to be read, not to be run by hand.',
     'Réglages':'Settings',
     'Trouvé sur le PC cible par le scan : réglé, rien à cocher.':'Found on the target PC by the scan: settled, nothing to check.',
@@ -1519,7 +1528,6 @@ const TRADUCTIONS={
     'Trois scripts font le travail que cette page ne peut pas faire : un navigateur n\'a pas le droit de lire votre registre ni la liste de vos logiciels. Ils sont écrits en PowerShell, donc lisibles dans le Bloc-notes avant d\'être lancés.':'Three scripts do the work this page cannot: a browser is not allowed to read your registry or the list of your software. They are written in PowerShell, so you can read them in Notepad before running them.',
     "Une seule archive, tout ce qu'il faut dedans. Décompressez-la sur une clé USB, et double-cliquez <code>Migration PC.bat</code> sur le PC source.":'One archive, everything needed inside. Unzip it onto a USB stick, and double-click <code>Migration PC.bat</code> on the old PC.',
     "<b>Ne prenez pas les fichiers un par un.</b> Les scripts ont tous besoin de <code>lib-detection.ps1</code> à côté d'eux, et le <code>.bat</code> a besoin du dossier <code>scripts</code> : un fichier isolé s'arrête au démarrage. C'est pour ça qu'il n'y a qu'un seul bouton.":'<b>Do not take the files one by one.</b> Every script needs <code>lib-detection.ps1</code> beside it, and the <code>.bat</code> needs the <code>scripts</code> folder: a file on its own stops at startup. That is why there is a single button.',
-    'Fermer':'Close',
     "Dans l'archive :":'Inside the archive:',
     "Le releve, des deux cotes : « -Role source » fige le PC qu'on quitte, « -Role cible » constate celui qu'on equipe.":'The survey, on both sides: « -Role source » freezes the PC you are leaving, « -Role cible » records the one you are setting up.',
     "La détection partagée. Sans ce fichier à côté, le scan s'arrête.":'The shared detection code. Without this file beside them, the scan stops.',
@@ -1543,8 +1551,7 @@ const TRADUCTIONS={
     '(1 restante)':'(1 left)',
     '({0} restantes)':'({0} left)',
     'Aucune app trouvée':'No program found',
-    '🔍 Rechercher':'🔍 Search',
-    '🔍 Ouvrir':'🔍 Open',
+    'Rechercher':'Search',
     'Raccourcis Chrome existants — sync Google automatique':'Existing Chrome shortcuts — Google sync is automatic',
     'Raccourci OK':'Shortcut fine',
     'PWA Chrome':'Chrome web app',
@@ -1560,15 +1567,15 @@ const TRADUCTIONS={
     'Remettre « {0} » dans la liste':'Put « {0} » back in the list',
     'Ignorer « {0} » : sort des comptes et du script winget':'Ignore « {0} »: leaves the counts and the winget script',
 
-    '🛠️ Développement':'🛠️ Development',
-    '🎮 Jeux & Launchers':'🎮 Games & launchers',
-    '🌐 Réseau & Sécurité':'🌐 Network & security',
-    '📄 Bureautique & Web':'📄 Office & web',
-    '🎵 Médias':'🎵 Media',
-    '🔧 Utilitaires Système':'🔧 System utilities',
-    '💬 Communication':'💬 Communication',
-    '🛡️ Sécurité':'🛡️ Security',
-    '🎛️ Pilotes & Périphériques':'🎛️ Drivers & devices',
+    'Développement':'Development',
+    'Jeux & Launchers':'Games & launchers',
+    'Réseau & Sécurité':'Network & security',
+    'Bureautique & Web':'Office & web',
+    'Médias':'Media',
+    'Utilitaires Système':'System utilities',
+    'Communication':'Communication',
+    'Sécurité':'Security',
+    'Pilotes & Périphériques':'Drivers & devices',
 
     'Fournisseur inconnu':'Unknown vendor',
     'En attente du PC receveur':'Waiting for the target PC',
@@ -1583,10 +1590,10 @@ const TRADUCTIONS={
 
     'Périphérique inconnu':'Unknown device',
     'pilote':'driver',
-    '🔍 Chercher':'🔍 Search',
-    '✓ Plus aucun périphérique à régler':'✓ No device left to sort out',
-    '⚠️ 1 périphérique sans pilote utilisable':'⚠️ 1 device without a usable driver',
-    '⚠️ {0} périphériques sans pilote utilisable':'⚠️ {0} devices without a usable driver',
+    'Chercher':'Search',
+    'Plus aucun périphérique à régler':'No device left to sort out',
+    '1 périphérique sans pilote utilisable':'1 device without a usable driver',
+    '{0} périphériques sans pilote utilisable':'{0} devices without a usable driver',
     'Ceux que Windows signale, vous les avez écartés.':'The ones Windows reports, you have set aside.',
     'Windows les signale comme mal installés. Le support de {0} est le bon endroit pour la plupart.':'Windows reports them as badly installed. The {0} support page is the right place for most of them.',
     'Windows les signale comme mal installés. Le site du fabricant de la carte mère est le bon endroit pour la plupart.':'Windows reports them as badly installed. The motherboard maker’s site is the right place for most of them.',
@@ -1611,10 +1618,10 @@ const TRADUCTIONS={
     'Filtres':'Filters',
     'Sans winget seulement':'Without winget only',
     'Rechercher une application':'Search for a program',
-    '🔍 Filtrer cette liste…':'🔍 Filter this list…',
+    'Filtrer cette liste…':'Filter this list…',
     "Un script qui installe tout ce qui n'est pas encore coché":'A script that installs everything not yet checked',
-    '⬇️ Script des restants':'⬇️ Script for what is left',
-    '⬇️ winget .json':'⬇️ winget .json',
+    'Script des restants':'Script for what is left',
+    'winget .json':'winget .json',
 
     'Exemple indisponible.':'Example unavailable.',
     "Exemple chargé : ces logiciels sont ceux d'une autre machine, pas les tiens. Réglages → Remettre le site à zéro pour revenir à la checklist vide.":'Example loaded: this software belongs to another machine, not yours. Settings → Reset the site to go back to the empty checklist.',
@@ -1652,8 +1659,8 @@ const TRADUCTIONS={
     'Copie impossible dans ce navigateur. Commande : {0}':'Copying is not possible in this browser. Command: {0}',
     'Copie impossible dans ce navigateur : {0} commandes winget non copiées.':'Copying is not possible in this browser: {0} winget commands not copied.',
     'Copie impossible dans ce navigateur : la commande winget n\'a pas été copiée.':'Copying is not possible in this browser: the winget command was not copied.',
-    '✓ Copié !':'✓ Copied!',
-    '✓ Copié':'✓ Copied',
+    'Copié !':'Copied!',
+    'Copié':'Copied',
     'Rien de nouveau à cocher :':'Nothing new to check:',
     '{0} élément(s) détecté(s) sont déjà cochés.':'{0} detected item(s) are already checked.',
     '{0} élément(s) détecté(s) ne figurent pas dans le profil chargé.':'{0} detected item(s) are not in the loaded profile.',
@@ -1678,9 +1685,9 @@ const TRADUCTIONS={
     'Les logiciels manquants sont soit déjà cochés, soit sans identifiant winget.':'The missing programs are either already checked or have no winget identifier.',
     'Rien ne manque sur cette machine : la comparaison ne trouve aucun absent.':'Nothing is missing on this machine: the comparison finds nothing absent.',
     'Toutes les apps avec winget sont déjà cochées.':'All apps with winget are already checked.',
-    '⚠ non enregistré':'⚠ not saved',
+    'non enregistré':'not saved',
     "Le navigateur refuse d'enregistrer. Exportez votre progression.":'The browser refuses to save. Export your progress.',
-    '✓ enregistré {0}':'✓ saved {0}',
+    'enregistré {0}':'saved {0}',
     "Dans ce navigateur, pour ce fichier. L'export JSON est le seul transfert fiable.":'In this browser, for this file. The JSON export is the only reliable transfer.',
     'Configuration':'Configuration',
     'Menu':'Menu',
@@ -1734,6 +1741,18 @@ function chargerLangue(){
 // variable ou un parametre nomme t — switchTab(t), tacheCourante, l'export
 // texte. Y appeler t('...') aurait leve une erreur, et seulement dans ces
 // fonctions-la : le genre de defaut qui ne se voit qu'en production.
+// Icône Material du sprite (règle commune « Design ») : décorative, le texte voisin porte le sens.
+function icone(n){return '<svg class="ico" aria-hidden="true" focusable="false"><use href="#i-'+n+'"/></svg>';}
+// Les profils gardent l'emoji de tête de leurs catégories (« 🛠️ Développement ») : c'est du contenu, exporté tel quel.
+// L'affichage le remplace par l'icône Material correspondante ; un emoji inconnu prend l'icône générique.
+const ICONES_CATS={'🛠':'handyman','🎮':'stadia_controller','🌐':'lan','📄':'description','🎵':'music_note',
+  '🔧':'build','💬':'chat','🛡':'shield','🎛':'tune','📦':'package_2','🌍':'public'};
+function catAff(l){
+  const s=String(l||''), m=/^(\p{Extended_Pictographic})\uFE0F?\s*/u.exec(s);
+  // Un seul élément : dans un en-tête en flex, l'icône seule partait à l'autre bout de la ligne.
+  if(!m)return '<span class="cat-nom">'+esc(tr(s))+'</span>';
+  return '<span class="cat-nom">'+icone(ICONES_CATS[m[1]]||'category')+' '+esc(tr(s.slice(m[0].length)))+'</span>';
+}
 function tr(fr){
   let s=fr;
   if(LANG!=='fr'){
@@ -1846,7 +1865,7 @@ let CATS={}, APPS_DATA=[], PWA_DATA=[], INSTALL_ORDER=[], SEARCH_QUERIES={};
 // liste, ni explication. On dit ce qui se passe et comment en sortir.
 function messageOngletVide(cle){
   const btnScripts='<button type="button" class="sm-btn" onclick="basculerOutils()">'
-    +esc(tr('⬇️ Les scripts pour Windows…'))+'</button>';
+    +icone('download')+esc(tr('Les scripts pour Windows…'))+'</button>';
   if(cle==='pilotes'){
     return '<div class="onglet-vide">'
       +'<b>'+esc(tr('Les pilotes du PC receveur apparaissent ici après son scan.'))+'</b><br>'
@@ -1862,7 +1881,7 @@ function messageOngletVide(cle){
     +tr('Lance <code>Migration PC.bat</code> sur la machine que tu quittes : il relève tes logiciels et remplit cet onglet.')
     +'<div class="onglet-vide-act">'+btnScripts
     +'<button type="button" class="sm-btn" onclick="chargerDemo()">'
-      +esc(tr('👁️ Voir un exemple garni'))+'</button>'
+      +icone('visibility')+esc(tr('Voir un exemple garni'))+'</button>'
     +'</div></div>';
 }
 
@@ -1954,7 +1973,7 @@ function construireFiltresCats(){
   Object.keys(CATS).forEach(function(k){
     const coche=curCats.indexOf(k)>=0?' checked':'';
     html+='<label class="af-c"><input type="checkbox" data-cat="'+esc(k)+'"'+coche
-      +' onchange="basculerCat(\''+escJS(k)+'\')"> '+esc(tr(CATS[k]))+'</label>';
+      +' onchange="basculerCat(\''+escJS(k)+'\')"> '+catAff(CATS[k])+'</label>';
   });
   c.innerHTML=html;
 }
@@ -2424,7 +2443,7 @@ function vuePilotesCible(){
       +' : '
       +'<button type="button" class="sm-btn" onclick="ouvrirAdresse(\''
       +escJS('https://www.google.com/search?q='+encodeURIComponent(req))+'\')">'
-      +esc(tr('🔍 Ouvrir'))+'</button>'
+      +icone('search')+esc(tr('Ouvrir'))+'</button>'
       +'</div>';
   }
   h+='</div>';
@@ -2451,7 +2470,7 @@ function majBadgePilotes(){
   if(!surLaCible()){b.textContent='—';if(barre)barre.style.width='0%';return;}
   const liste=Array.isArray(INV_CIBLE.pilotes)?INV_CIBLE.pilotes:[];
   const n=liste.filter(function(p){return !estIgnore(idPilote(p));}).length;
-  b.textContent=n?String(n):'✓';
+  if(n)b.textContent=String(n);else b.innerHTML=icone('check');
   if(barre)barre.style.width=n?'0%':'100%';
 }
 
@@ -2882,7 +2901,7 @@ function updateSaveLabel(){
   const el=document.getElementById('save-state');
   if(!el)return;
   if(stockageEnPanne){
-    el.textContent=tr('⚠ non enregistré');
+    el.innerHTML=icone('warning')+' '+esc(tr('non enregistré'));
     el.className='save-state save-ko';
     el.title=tr("Le navigateur refuse d'enregistrer. Exportez votre progression.");
     return;
@@ -2890,7 +2909,7 @@ function updateSaveLabel(){
   if(!S.lastSave){
     el.textContent='';el.className='save-state';el.title='';return;
   }
-  el.textContent=tr('✓ enregistré {0}',fmtHeure(S.lastSave));
+  el.innerHTML=icone('check')+' '+esc(tr('enregistré {0}',fmtHeure(S.lastSave)));
   el.className='save-state';
   el.title=tr("Dans ce navigateur, pour ce fichier. L'export JSON est le seul transfert fiable.");
 }
@@ -2900,7 +2919,7 @@ function fmtHeure(ts){
 }
 
 // ═══ THEME ═══
-function applyTheme(){document.documentElement.setAttribute('data-theme',isDark?'dark':'light');document.getElementById('theme-ico').textContent=isDark?'☀️':'🌙';document.getElementById('theme-lbl').textContent=isDark?tr('Clair'):tr('Sombre');}
+function applyTheme(){document.documentElement.setAttribute('data-theme',isDark?'dark':'light');document.getElementById('theme-ico').innerHTML=icone(isDark?'light_mode':'dark_mode');document.getElementById('theme-lbl').textContent=isDark?tr('Clair'):tr('Sombre');}
 function toggleTheme(){isDark=!isDark;try{localStorage.setItem(CLE_THEME,isDark?'dark':'light');}catch(e){}applyTheme();}
 
 // ═══ MODE ═══
@@ -2918,23 +2937,23 @@ function setMode(m){
   const lbl=document.getElementById('mode-lbl');
   if(lbl)lbl.textContent=m==='compact'?tr('Affichage normal'):tr('Affichage compact');
   const ico=document.getElementById('mode-ico');
-  if(ico)ico.textContent=m==='compact'?'📋':'≡';
+  if(ico)ico.innerHTML=icone(m==='compact'?'list_alt':'view_agenda');
 }
 function basculerAffichage(){ setMode(viewMode==='compact'?'normal':'compact'); }
 
 // ═══ TABS ═══
 // L'icone et le mot sont separes : le mot passe par tr(), l'icone non. Ecrire
 // « 📦 Logiciels » en un bloc obligerait a redire l'icone dans chaque langue.
-const LIBELLES_ONGLETS={apps:['📦','Logiciels'],pilotes:['🎛️','Pilotes'],pwa:['🌍','PWA']};
+const LIBELLES_ONGLETS={apps:['package_2','Logiciels'],pilotes:['tune','Pilotes'],pwa:['public','PWA']};
 function libelleOnglet(t){
   const l=LIBELLES_ONGLETS[t];
-  return l?l[0]+' '+tr(l[1]):t;
+  return l?icone(l[0])+' '+esc(tr(l[1])):esc(t);
 }
 
 function switchTab(t){
   curTab=t;
   const titre=document.getElementById('page-titre');
-  if(titre)titre.textContent=libelleOnglet(t);
+  if(titre)titre.innerHTML=libelleOnglet(t);
   ONGLETS_VUE.forEach(x=>{
     const onglet=document.getElementById('tab-'+x);
     if(!onglet)return;
@@ -2988,7 +3007,7 @@ function copyWinget(w,evt){
   const cmd='winget install --id '+w+' -e --accept-source-agreements --accept-package-agreements';
   navigator.clipboard.writeText(cmd).then(function(){
     const el=evt.target.closest('.b-winget');if(!el)return;
-    const o=el.innerHTML;el.innerHTML=tr('✓ Copié !');setTimeout(function(){el.innerHTML=o;},1500);
+    const o=el.innerHTML;el.innerHTML=icone('check')+' '+esc(tr('Copié !'));setTimeout(function(){el.innerHTML=o;},1500);
   }).catch(function(){informer(tr('Copie impossible dans ce navigateur. Commande : {0}',cmd));});
 }
 // Une commande fournie telle quelle, sans rien deviner autour.
@@ -2996,7 +3015,7 @@ function copierCommande(cmd,evt){
   evt.stopPropagation();
   navigator.clipboard.writeText(cmd).then(function(){
     const el=evt.target.closest('.b-winget');if(!el)return;
-    const o=el.innerHTML;el.innerHTML=tr('✓ Copié !');setTimeout(function(){el.innerHTML=o;},1500);
+    const o=el.innerHTML;el.innerHTML=icone('check')+' '+esc(tr('Copié !'));setTimeout(function(){el.innerHTML=o;},1500);
   }).catch(function(){informer(tr('Copie impossible dans ce navigateur. Commande : {0}',cmd));});
 }
 
@@ -3007,7 +3026,7 @@ function copyCatWinget(cat,evt){
   const lines=['# '+(CATS[cat]||cat)].concat(apps.map(function(a){return 'winget install --id '+a.w+' -e --accept-source-agreements --accept-package-agreements';}));
   navigator.clipboard.writeText(lines.join('\n')).then(function(){
     const el=evt.target.closest('.cat-winget');if(!el)return;
-    const o=el.innerHTML;el.innerHTML=tr('✓ Copié !');setTimeout(function(){el.innerHTML=o;},1500);
+    const o=el.innerHTML;el.innerHTML=icone('check')+' '+esc(tr('Copié !'));setTimeout(function(){el.innerHTML=o;},1500);
   // Ses deux jumelles disent leur echec : celle-ci l'avalait (audit, point 11).
   }).catch(function(){informer(apps.length>1
     ?tr('Copie impossible dans ce navigateur : {0} commandes winget non copiées.',apps.length)
@@ -3016,7 +3035,7 @@ function copyCatWinget(cat,evt){
 
 // ═══ RENDER ITEM HELPERS ═══
 // Purement visuelle : l'état accessible est porté par l'item, qui est la case.
-function mkChkbox(){return '<div class="chkbox" aria-hidden="true"><span class="chkbox-mark">✓</span></div>';}
+function mkChkbox(){return '<div class="chkbox" aria-hidden="true"><span class="chkbox-mark">'+icone('check')+'</span></div>';}
 // Une adresse relevée sur l'ancien PC vaut mieux qu'une recherche : elle mène
 // au site de l'éditeur, pas à une liste de résultats où le premier lien est
 // parfois un faux installateur. Sans adresse utilisable, on retombe sur la
@@ -3030,20 +3049,20 @@ function mkBoutonIgnore(id,libelle,ignore){
   return '<button type="button" class="ign-btn'+(ignore?' actif':'')+'"'
     +' title="'+esc(titre)+'" aria-label="'+esc(titre)+'" aria-pressed="'+(ignore?'true':'false')+'"'
     +' onclick="basculerIgnore(\''+escJS(id)+'\',\''+escJS(libelle)+'\');event.stopPropagation()">'
-    +(ignore?'↩':'⊘')+'</button>';
+    +icone(ignore?'undo':'block')+'</button>';
 }
 
 function mkLink(name,e){
   const u=urlSure(e&&e.u);
-  if(u)return '<div class="item-link"><a class="lnk-btn" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 '+esc(tr('Site officiel'))+'</a></div>';
-  return '<div class="item-link"><a class="lnk-btn" href="'+esc(searchUrl(name,e))+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">'+esc(tr('🔍 Rechercher'))+'</a></div>';
+  if(u)return '<div class="item-link"><a class="lnk-btn" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">'+icone('link')+' '+esc(tr('Site officiel'))+'</a></div>';
+  return '<div class="item-link"><a class="lnk-btn" href="'+esc(searchUrl(name,e))+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">'+icone('search')+' '+esc(tr('Rechercher'))+'</a></div>';
 }
 function mkDirectLink(url){
   const u=urlSure(url);
   // Pas d'adresse utilisable : plutot que d'offrir un bouton qui ne mene nulle
   // part ou pire, on dit ce qui se passe.
-  if(!u)return '<div class="item-link"><span class="lnk-btn lnk-mort" title="Adresse absente ou non prise en charge">🔗 Pas de lien</span></div>';
-  return '<div class="item-link"><a class="lnk-btn" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🔗 '+esc(tr('Ouvrir'))+'</a></div>';
+  if(!u)return '<div class="item-link"><span class="lnk-btn lnk-mort" title="Adresse absente ou non prise en charge">'+icone('link')+' Pas de lien</span></div>';
+  return '<div class="item-link"><a class="lnk-btn" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">'+icone('link')+' '+esc(tr('Ouvrir'))+'</a></div>';
 }
 // ═══ RENDER APPS ═══
 // curCats vit avec les autres etats d'affichage, plus haut : declare ici, il
@@ -3107,7 +3126,7 @@ function renderApps(){
         +'<div class="sec-hdr-r">'
         +(avecW?'<button class="cat-winget" onclick="exportWingetJSON(true)" '
           +'title="'+esc(tr('Format officiel winget import — idempotent et rejouable'))+'">'
-          +esc(tr('⬇️ winget .json ({0})',avecW))+'</button>':'')
+          +icone('download')+esc(tr('winget .json ({0})',avecW))+'</button>':'')
         +'</div></div>';
       manquants.forEach(function(a){html+=mkAppItem(a,etats);});
       if(!avecW){
@@ -3152,7 +3171,7 @@ function renderApps(){
       // ne fait rien est pire que pas de bouton.
       const decidables=grp.filter(function(a){return !constates()[a.id];});
       const allDone=decidables.length>0&&decidables.every(function(a){return !!S.checked[a.id];});
-      html+='<div class="sec-hdr'+(first?' first':'')+'">'+esc(tr(CATS[cat]||cat))+'<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+grp.length+'</span>'+(hasW?'<button class="cat-winget" onclick="copyCatWinget(\''+escJS(cat)+'\',event)">📋 winget</button>':'')+(decidables.length?'<button class="chk-all" onclick="checkAllCat(\''+escJS(cat)+'\',event)">'+esc(allDone?tr('Décocher tout'):tr('Tout cocher'))+'</button>':'')+'</div></div>';
+      html+='<div class="sec-hdr'+(first?' first':'')+'">'+catAff(CATS[cat]||cat)+'<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+grp.length+'</span>'+(hasW?'<button class="cat-winget" onclick="copyCatWinget(\''+escJS(cat)+'\',event)">'+icone('content_copy')+' winget</button>':'')+(decidables.length?'<button class="chk-all" onclick="checkAllCat(\''+escJS(cat)+'\',event)">'+esc(allDone?tr('Décocher tout'):tr('Tout cocher'))+'</button>':'')+'</div></div>';
       grp.forEach(function(a){html+=mkAppItem(a,etats);});
       first=false;
     });
@@ -3182,7 +3201,7 @@ function mkAppItem(a,etats){
   const constate=!ignore&&!!constates()[a.id];
   const ck=constate||!!S.checked[a.id];
   const ouvert=!!lignesOuvertes[a.id];
-  const dt=(!constate&&ck&&S.dates[a.id])?'<span class="item-date">✓ '+fmtDate(S.dates[a.id])+'</span>':'';
+  const dt=(!constate&&ck&&S.dates[a.id])?'<span class="item-date">'+icone('check')+' '+fmtDate(S.dates[a.id])+'</span>':'';
   const meta=[];
   if(a.ver)meta.push(esc(String(a.ver)));
   if(a.go)meta.push(esc(fmtTaille(a.go)));
@@ -3194,11 +3213,11 @@ function mkAppItem(a,etats){
     const d=texte(descAff(a));
     detail='<div class="lg-det" onclick="event.stopPropagation()">'
       +(d?'<p class="lg-det-d">'+esc(d)+'</p>':'')
-      +(a.warn?'<div class="warn-badge">⚠️ '+esc(a.warn)+'</div>':'')
+      +(a.warn?'<div class="warn-badge">'+icone('warning')+' '+esc(a.warn)+'</div>':'')
       +(a.dep?mkDepBadge(a.dep):'')
       +(cmd?'<button type="button" class="badge b-winget" onclick="'
         +(a.w?'copyWinget(\''+escJS(a.w)+'\',event)':'copierCommande(\''+escJS(a.cmd)+'\',event)')
-        +'" title="Copier la commande d\'installation">📋 '+esc(cmd)+'</button>':'')
+        +'" title="Copier la commande d\'installation">'+icone('content_copy')+' '+esc(cmd)+'</button>':'')
       +'</div>';
   }
 
@@ -3283,15 +3302,15 @@ function renderPWA(){
   const pwaVues=visiblesDe('pwa');
   const dn=pwaVues.filter(function(p){return S.checked[p.id];}).length;
   const allDone=dn===pwaVues.length;
-  let html='<div class="sec-hdr first">🌍 '+esc(tr('Raccourcis Chrome existants — sync Google automatique'))+'<div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+pwaVues.length+'</span><button class="chk-all" onclick="checkAllPWA(event)">'+esc(allDone?tr('Décocher tout'):tr('Tout cocher'))+'</button></div></div>';
+  let html='<div class="sec-hdr first"><span class="cat-nom">'+icone('public')+' '+esc(tr('Raccourcis Chrome existants — sync Google automatique'))+'</span><div class="sec-hdr-r"><span class="sec-hdr-cnt">'+dn+'/'+pwaVues.length+'</span><button class="chk-all" onclick="checkAllPWA(event)">'+esc(allDone?tr('Décocher tout'):tr('Tout cocher'))+'</button></div></div>';
   pwaVues.forEach(function(p){
     const ck=!!S.checked[p.id];
-    const dt=ck&&S.dates[p.id]?'<span class="item-date">✓ '+fmtDate(S.dates[p.id])+'</span>':'';
+    const dt=ck&&S.dates[p.id]?'<span class="item-date">'+icone('check')+' '+fmtDate(S.dates[p.id])+'</span>':'';
     html+='<div class="item'+(ck?' done':'')+'" role="checkbox" tabindex="0" aria-checked="'+ck+'" onclick="'+attrToggle(p)+'">'
       +mkChkbox()
       +'<div class="item-body">'
         +'<div class="item-name-row"><span class="item-name">'+esc(libelleAff(p))+'</span>'+dt+'</div>'
-        +'<div class="item-badges"><span class="badge b-sync">✓ '+esc(tr('Raccourci OK'))+'</span><span class="badge b-pwa">'+esc(tr('PWA Chrome'))+'</span></div>'
+        +'<div class="item-badges"><span class="badge b-sync">'+icone('check')+' '+esc(tr('Raccourci OK'))+'</span><span class="badge b-pwa">'+esc(tr('PWA Chrome'))+'</span></div>'
         +'<div class="item-desc">'+esc(texte(descAff(p)))+'</div>'
       +'</div>'
       +mkDirectLink(p.u)
@@ -3317,10 +3336,10 @@ function globalSearch(){
   if(!q){cnt.style.display='none';res.classList.remove('active');res.innerHTML='';return;}
   function contient(s){ return String(s||'').toLowerCase().indexOf(q)>=0; }
   const sections=[
-    {label:'📦 '+tr('Logiciels'),items:visiblesDe('apps').filter(function(x){
+    {label:icone('package_2')+' '+esc(tr('Logiciels')),items:visiblesDe('apps').filter(function(x){
       return contient(libelleDe(x))||contient(libelleAff(x))||contient(x.w)
         ||contient(descDe(x))||contient(descAff(x));})},
-    {label:'🌍 '+tr('PWA'),items:visiblesDe('pwa').filter(function(x){
+    {label:icone('public')+' '+esc(tr('PWA')),items:visiblesDe('pwa').filter(function(x){
       return contient(libelleDe(x))||contient(libelleAff(x));})}
   ];
   const total=sections.reduce(function(s,x){return s+x.items.length;},0);
@@ -3449,22 +3468,22 @@ function mkPilotesManquants(d){
       +(ignore?' · '+esc(tr('ignoré')):'')+'</div></div>'
       +(ignore?'':'<button type="button" class="sm-btn" onclick="ouvrirAdresse(\''
       +escJS('https://www.google.com/search?q='+encodeURIComponent(req))+'\')">'
-      +esc(tr('🔍 Chercher'))+'</button>')
+      +icone('search')+esc(tr('Chercher'))+'</button>')
       +(id?mkBoutonIgnore(id,nom,ignore):'')
       +'</div>';
   }).join('');
   const n=aRegler.length;
   const ecartes=liste.length-n;
-  const titre=n===0?tr('✓ Plus aucun périphérique à régler')
-    :(n===1?tr('⚠️ 1 périphérique sans pilote utilisable')
-           :tr('⚠️ {0} périphériques sans pilote utilisable',n));
+  const titre=n===0?icone('check')+' '+esc(tr('Plus aucun périphérique à régler'))
+    :icone('warning')+' '+esc(n===1?tr('1 périphérique sans pilote utilisable')
+           :tr('{0} périphériques sans pilote utilisable',n));
   const sous=n===0?tr('Ceux que Windows signale, vous les avez écartés.')
     :(mat.cm?tr('Windows les signale comme mal installés. Le support de {0} est le bon endroit pour la plupart.',esc(String(mat.cm)))
             :tr('Windows les signale comme mal installés. Le site du fabricant de la carte mère est le bon endroit pour la plupart.'));
   const note=ecartes===0?''
     :(ecartes===1?' '+tr("1 écarté, gardé à l'écran pour ne pas l'oublier.")
                  :' '+tr("{0} écartés, gardés à l'écran pour ne pas l'oublier.",ecartes));
-  return '<div class="pilotes"><div class="pil-titre">'+esc(titre)+'</div>'
+  return '<div class="pilotes"><div class="pil-titre">'+titre+'</div>'
     +'<div class="pil-sous">'+sous+esc(note)
     +'</div>'+lignes+'</div>';
 }
@@ -3533,7 +3552,7 @@ function afficherVerification(d){
   });
 
   html+='</div><div class="verif-actions">'
-    +'<button type="button" class="verif-ok" onclick="appliquerVerification()">✓ Cocher la sélection</button>'
+    +'<button type="button" class="verif-ok" onclick="appliquerVerification()">'+icone('check')+' Cocher la sélection</button>'
     +'<button type="button" onclick="toutSelectionnerVerif(true)">Tout sélectionner</button>'
     +'<button type="button" onclick="toutSelectionnerVerif(false)">Tout désélectionner</button>'
     +'<button type="button" onclick="fermerVerification()">Annuler</button>'
@@ -3638,7 +3657,7 @@ function renderGuide(){
     // rien : féliciter dans le second cas serait un mensonge.
     bloc.innerHTML=total
       ? '<div class="guide-fin">'
-        +'<div class="guide-fin-titre">🎉 '+esc(tr('Tout est coché'))+'</div>'
+        +'<div class="guide-fin-titre">'+icone('celebration')+' '+esc(tr('Tout est coché'))+'</div>'
         +'<div class="guide-fin-txt">'+esc(total===1
             ?tr('1 tâche terminée. Repasse en vue liste pour revoir le détail.')
             :tr('{0} tâches terminées. Repasse en vue liste pour revoir le détail.',total))+'</div>'
@@ -3676,20 +3695,20 @@ function renderGuide(){
   if(cmd){
     html+='<div class="guide-cmd">'
       +'<code id="guide-cmd-txt">'+esc(cmd)+'</code>'
-      +'<button type="button" onclick="copierCmdGuide()" id="guide-copier">📋 '+esc(tr('Copier'))+'</button>'
+      +'<button type="button" onclick="copierCmdGuide()" id="guide-copier">'+icone('content_copy')+' '+esc(tr('Copier'))+'</button>'
       +'</div>';
   }
 
   if(t.warn){
-    html+='<div class="guide-warn"><span aria-hidden="true">⚠️</span><span>'+esc(t.warn)+'</span></div>';
+    html+='<div class="guide-warn">'+icone('warning')+'<span>'+esc(t.warn)+'</span></div>';
   }
 
   html+='<div class="guide-actions">'
-    +'<button type="button" class="guide-fait" onclick="guideFait(\''+escJS(t.id)+'\')">✓ '+esc(tr('C\'est fait'))+'</button>'
+    +'<button type="button" class="guide-fait" onclick="guideFait(\''+escJS(t.id)+'\')">'+icone('check')+' '+esc(tr('C\'est fait'))+'</button>'
     +'<button type="button" onclick="sauterTache(\''+escJS(t.id)+'\')">'+esc(tr('Passer'))+'</button>'
     +(urlSure(t.u)
-        ?'<button type="button" onclick="ouvrirAdresse(\''+escJS(urlSure(t.u))+'\')">🔗 '+esc(tr('Ouvrir'))+'</button>'
-        :'<button type="button" onclick="ouvrirAdresse(\''+escJS(searchUrl(libelleDe(t),t))+'\')">'+esc(tr('🔍 Rechercher'))+'</button>')
+        ?'<button type="button" onclick="ouvrirAdresse(\''+escJS(urlSure(t.u))+'\')">'+icone('link')+' '+esc(tr('Ouvrir'))+'</button>'
+        :'<button type="button" onclick="ouvrirAdresse(\''+escJS(searchUrl(libelleDe(t),t))+'\')">'+icone('search')+' '+esc(tr('Rechercher'))+'</button>')
     +'</div>'
   +'</div>';
   bloc.innerHTML=html;
@@ -3708,8 +3727,8 @@ function copierCmdGuide(){
   const txt=code.textContent;
   const fini=function(){
     if(!btn)return;
-    const o=btn.textContent;btn.textContent=tr('✓ Copié');
-    setTimeout(function(){btn.textContent=o;},1500);
+    const o=btn.innerHTML;btn.innerHTML=icone('check')+' '+esc(tr('Copié'));
+    setTimeout(function(){btn.innerHTML=o;},1500);
   };
   // Le presse-papier n'existe pas partout — il demande HTTPS, et une clé USB
   // ouvre la page en file://. La commande est déjà affichée juste au-dessus :
@@ -3981,7 +4000,7 @@ function remiseAZero(){
 // en ligne — mais rien ne pointait vers eux. Les messages d'erreur parlaient
 // d'« un inventaire de scan-pc.ps1 » sans jamais dire où le trouver.
 const OUTILS=[
-  {f:'Migration PC.bat',n:'▶ Par où commencer',
+  {f:'Migration PC.bat',n:'Par où commencer',i:'play_arrow',
    d:'Le seul fichier à double-cliquer. Il demande sur quelle machine vous êtes et lance ce qu\'il faut. Les autres sont là pour être lus, pas pour être lancés à la main.'},
   {f:'scripts/scan-pc.ps1',n:'scan-pc.ps1',
    d:'Le releve, des deux cotes : « -Role source » fige le PC qu\'on quitte, « -Role cible » constate celui qu\'on equipe.'},
@@ -4006,7 +4025,7 @@ function construireOutils(){
   z.innerHTML='<div class="outils-dedans">'+esc(tr("Dans l'archive :"))+'</div>'
     +OUTILS.map(function(o){
       return '<div class="outils-item"><div class="outils-txt">'
-        +'<div class="outils-nom">'+esc(tr(o.n))+'</div>'
+        +'<div class="outils-nom">'+(o.i?icone(o.i)+' ':'')+esc(tr(o.n))+'</div>'
         +'<div class="outils-desc">'+esc(tr(o.d))+'</div></div>'
         +'<code class="outils-f">'+esc(o.f)+'</code></div>';
     }).join('');
@@ -4496,7 +4515,7 @@ function updateNextBtns(){
     var rem=aCompter(t.data).filter(function(x){return !estFait(x.id);}).length;
     if(rem===0){
       btn.classList.remove('incomplete');
-      cnt.textContent='✓';
+      cnt.innerHTML=icone('check');
     }else{
       btn.classList.add('incomplete');
       cnt.textContent=rem===1?tr('(1 restante)'):tr('({0} restantes)',rem);
