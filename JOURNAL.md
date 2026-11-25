@@ -230,3 +230,7 @@ devient `versionTexte`. Le plancher de 12 px du texte (`test-plancher-texte.js`)
 `test-anglais.js` retire de son contrôle les deux lignes exactes de la signature, texte identique en français et en anglais par choix.
 Contrôles vus échouer sur le code d'avant : `test-reinit.js` (signature absente). Vérifié : `npm test` et les suites navigateur (réinit, anglais,
 accessibilité, mobile, profil hostile, archive, PWA, langue) ; les suites PowerShell n'ont pas tourné ici (pas de `pwsh`), la CI les joue.
+
+### Règles communes mises à jour — 25/11/2026
+
+Bloc commun de `CLAUDE.md` aligné sur `regles-communes` (BLOC.md, commit 8e4cde6), par la propagation automatique.
