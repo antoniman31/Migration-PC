@@ -465,7 +465,9 @@ body.compact .item{padding:5px 0}
 /* ── V6 : section post-install NPC ── */
 .sec-hdr.post-hdr{color:var(--bok-tx);border-color:var(--bok-bd)}
 .item.post-item .chkbox{border-color:var(--bok-bd)}
-.item.post-item.done .chkbox{background:var(--bok-tx);border-color:var(--bok-bd)}
+/* La coche prend la couleur du fond de page : blanche sur le vert fonce du theme clair (6,21:1), presque noire sur le
+   vert clair du theme sombre (8,76:1). En blanc partout, elle tombait a 2,03:1 en sombre (audit du 24/11/2026). */
+.item.post-item.done .chkbox{background:var(--bok-tx);border-color:var(--bok-bd);color:var(--bg)}
 
 /* ── V6 : bouton suivant ── */
 .next-tab-btn{display:flex;align-items:center;justify-content:flex-end;padding:10px 20px;border-top:.5px solid var(--brd);background:transparent}

@@ -204,8 +204,9 @@ Plus aucune couleur écrite hors d'un jeton dans le `<style>` (impression et `th
 `tests/test-couleurs.js`). Les trois survols qui posaient du blanc sur un fond trop clair (2,23 à 3,00:1) sont corrigés
 le même jour (`--acc-fond`, `--danger-fond`) et le test refuse le blanc sur un autre fond.
 
-Reste, repéré en route et **non corrigé** : la coche blanche d'une case « après réinstallation » cochée, en thème sombre,
-est posée sur `--bok-tx` #97c459 (2,03:1, sous les 3:1 d'un signe graphique). À décider avec Antoni.
+La coche d'une case « après réinstallation » cochée, qui tombait à 2,03:1 en sombre, est corrigée le 25/11/2026 (8,76:1) ;
+`test-couleurs.js` mesure chaque coche cochée dans les deux thèmes. À regarder sur le PC : cocher une case « après
+réinstallation » en thème sombre.
 
 ### Hors lots : ce qui n'est pas du code
 

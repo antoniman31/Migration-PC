@@ -76,5 +76,36 @@ ok('le detecteur voit du blanc sur --acc',blancSurMauvaisFond('.a:hover{backgrou
 ok('il accepte --acc-fond',blancSurMauvaisFond('.a{background:var(--acc-fond);color:var(--sur-acc)}'),[]);
 ok('le blanc ne se pose que sur --acc-fond ou --danger-fond',blancSurMauvaisFond(html.slice(d,f)),[]);
 
+// La coche d'une case cochee est un signe graphique : 3:1 contre son fond,
+// dans les deux themes (WCAG 1.4.11). A l'audit du 24/11/2026, la coche
+// blanche d'une case « apres reinstallation » cochee tombait a 2,03:1 sur le
+// vert clair du theme sombre. On lit chaque regle « .done .chkbox », son fond
+// et sa couleur (a defaut, celle de .chkbox), puis on mesure avec les jetons.
+function jetonsDe(css,sel){
+  const i=css.indexOf(sel+'{'); if(i<0)return {};
+  const corps=css.slice(i,css.indexOf('}',i)).replace(/\/\*[\s\S]*?\*\//g,'');
+  return Object.fromEntries([...corps.matchAll(/--([\w-]+):(#[0-9a-fA-F]{6})\b/g)].map(m=>[m[1],m[2]]));
+}
+function lum(h){return [1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255)
+  .map(v=>v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4).reduce((t,v,i)=>t+v*[0.2126,0.7152,0.0722][i],0);}
+const rapport=(a,b)=>{const[x,y]=[lum(a),lum(b)].sort((p,q)=>q-p);return (x+0.05)/(y+0.05);};
+ok('le calcul du rapport est le bon (noir sur blanc 21:1, #767676 sur blanc 4,54:1)',
+  [rapport('#000000','#ffffff').toFixed(2),rapport('#767676','#ffffff').toFixed(2)],['21.00','4.54']);
+const style=html.slice(d,f).replace(/@media print\s*\{(?:[^{}]|\{[^{}]*\})*\}/g,'');
+const clair=jetonsDe(style,':root'), sombre={...clair,...jetonsDe(style,'[data-theme=dark]')};
+const couleurCase=(/\n\.chkbox\{[^}]*;color:var\(--([\w-]+)\)/.exec(style)||[])[1];
+const coches=[...style.matchAll(/\n([^{}\n]*\.done \.chkbox)\{([^}]*)\}/g)].map(m=>{
+  const fond=(/background:var\(--([\w-]+)\)/.exec(m[2])||[])[1];
+  const coul=(/(?:^|;)color:var\(--([\w-]+)\)/.exec(m[2])||[])[1]||couleurCase;
+  return {sel:m[1].trim(),fond,coul};
+});
+ok('les cases cochees sont trouvees (au moins deux etats)',coches.length>=2&&coches.every(c=>c.fond&&c.coul),true);
+const faibles=[];
+for(const c of coches)for(const [nom,T] of [['clair',clair],['sombre',sombre]]){
+  const r=T[c.fond]&&T[c.coul]?rapport(T[c.coul],T[c.fond]):0;
+  if(r<3)faibles.push(c.sel+' en '+nom+' : '+r.toFixed(2)+':1');
+}
+ok('la coche d\'une case cochee tient 3:1 dans les deux themes',faibles,[]);
+
 if(ko){console.log('\n'+ko+' echec(s)');process.exit(1);}
 console.log('\nTout est vert.');
