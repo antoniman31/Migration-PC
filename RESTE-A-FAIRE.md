@@ -215,12 +215,12 @@ police, aucune requête : la page reste utilisable en `file://`). Gardé par `te
 en français et en anglais, clair et sombre : la barre latérale, le menu ⋯, les en-têtes de catégorie, les boutons Copier et
 Télécharger, le guide pas à pas, l'onglet Pilotes ; rien n'a tourné sur un Windows réel.
 
-### Lot G — Mention et version → **fait (25/11/2026)**
+### Lot G — Signature AM.31 → **fait (25/11/2026)**
 
-Règle commune « Interface » : le panneau « Réinitialiser… » se termine par « À propos » et « Fait par AntoniMan31/Claude Code
-· version a1b2c3d du 25/11/2026 », même texte en anglais. Le déploiement écrit le commit et l'heure du build dans la page avant
-de fabriquer l'archive ; ouverte depuis un clone, « version locale ». **À regarder sur le PC** après la mise en ligne : la ligne
-dans le panneau, sur le site et depuis l'archive dézippée.
+Règle commune « Interface » : le panneau « Réinitialiser… » se termine par « À propos », le logo AM.31 (à l'accent de la page), « Fait par
+AntoniMan31/Claude Code » et « version a1b2c3d · jj/mm/aaaa », même texte en anglais. Un double clic sur le logo alterne l'accent et le bleu
+d'origine. Le déploiement écrit le commit et l'heure du build dans la page avant de fabriquer l'archive ; ouverte depuis un clone, « version
+locale ». **À regarder sur le PC** après la mise en ligne : le bas du panneau, sur le site et depuis l'archive dézippée, en clair et en sombre.
 
 ### Hors lots : ce qui n'est pas du code
 

@@ -73,18 +73,33 @@ await ouvrirPanneau();
 await pg.click('#reglages .reglages-fermer');await pg.waitForTimeout(150);
 ok('« Fermer » referme aussi',await pg.isVisible('#reglages'),false);
 
-console.log('\n--- a propos : mention et version ---');
-// Regle commune « Interface » (25/11/2026) : le panneau se termine par « Fait par AntoniMan31/Claude Code », suivi de
-// la version deployee (commit et date du build, ecrits par le deploiement). Hors deploiement, « version locale ».
+console.log('\n--- a propos : signature, mention et version ---');
+// Regle commune « Interface » (25/11/2026) : le panneau se termine par le logo AM.31, « Fait par AntoniMan31/Claude Code », puis la
+// version deployee (commit et date du build, ecrits par le deploiement). Hors deploiement, « version locale ». Le logo est un vrai
+// bouton : un double clic alterne la couleur de la page et le bleu d'origine, un seul appui ne change rien, rien n'est memorise.
 await ouvrirPanneau();
-ok('la mention est visible dans le panneau',await pg.isVisible('#reglages #mention-version'),true);
-ok('texte local (page non deployee)',(await pg.textContent('#reglages #mention-version')).trim(),
-  'Fait par AntoniMan31/Claude Code · version locale');
+ok('la mention est visible dans le panneau',await pg.isVisible('#reglages .signature__texte'),true);
+ok('la mention exacte',(await pg.textContent('#reglages .signature__texte')).trim(),'Fait par AntoniMan31/Claude Code');
+ok('version locale (page non deployee)',(await pg.textContent('#reglages #mention-version')).trim(),'version locale');
 ok('commit et date de Paris (hiver : deja le lendemain)',
-  await pg.evaluate(()=>ligneVersion('a1b2c3d','2026-12-31T23:30:00Z')),'Fait par AntoniMan31/Claude Code · version a1b2c3d du 01/01/2027');
-ok('ete : UTC+2',await pg.evaluate(()=>ligneVersion('a1b2c3d','2026-10-24T22:30:00Z')),'Fait par AntoniMan31/Claude Code · version a1b2c3d du 25/10/2026');
-ok('nuit du passage a l\'heure d\'ete',await pg.evaluate(()=>ligneVersion('a1b2c3d','2026-03-29T00:30:00Z')),'Fait par AntoniMan31/Claude Code · version a1b2c3d du 29/03/2026');
-ok('date illisible : sans date',await pg.evaluate(()=>ligneVersion('a1b2c3d','__BUILD_DATE__')),'Fait par AntoniMan31/Claude Code · version a1b2c3d');
+  await pg.evaluate(()=>versionTexte('a1b2c3d','2026-12-31T23:30:00Z')),'version a1b2c3d · 01/01/2027');
+ok('ete : UTC+2',await pg.evaluate(()=>versionTexte('a1b2c3d','2026-10-24T22:30:00Z')),'version a1b2c3d · 25/10/2026');
+ok('nuit du passage a l\'heure d\'ete',await pg.evaluate(()=>versionTexte('a1b2c3d','2026-03-29T00:30:00Z')),'version a1b2c3d · 29/03/2026');
+ok('date illisible : sans date',await pg.evaluate(()=>versionTexte('a1b2c3d','__BUILD_DATE__')),'version a1b2c3d');
+ok('deux appuis a moins de 350 ms : double clic',await pg.evaluate(()=>[estDoubleClic(0,100),estDoubleClic(1000,1200),estDoubleClic(1000,1350),estDoubleClic(1000,900)]).then(r=>r.join()),'false,true,false,false');
+const logo=pg.locator('#reglages button.am31');
+ok('le logo est un bouton',await logo.count(),1);
+const boite=await logo.boundingBox();
+ok('il se touche au doigt (48 px)',!!boite&&boite.height>=47.5&&boite.width>=47.5);
+ok('il part a la couleur de la page',await logo.getAttribute('data-couleur'),'app');
+await logo.click();
+ok('un seul appui ne change rien',await logo.getAttribute('data-couleur'),'app');
+await pg.waitForTimeout(450);
+await logo.dblclick();
+ok('un double clic passe au bleu d\'origine',await logo.getAttribute('data-couleur'),'origine');
+await pg.waitForTimeout(450);
+await logo.dblclick();
+ok('un second double clic revient a la couleur de la page',await logo.getAttribute('data-couleur'),'app');
 await pg.click('#reglages .reglages-fermer');await pg.waitForTimeout(150);
 
 console.log('\n--- tout decocher ---');
