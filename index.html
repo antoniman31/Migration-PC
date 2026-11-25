@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- Version deployee : le deploiement (ci.yml) remplace ces deux marqueurs par le commit court et l'heure du build.
+     Une balise et non un script : le contenu change a chaque deploiement sans toucher aux scripts de la page. -->
+<meta name="version-deployee" content="__COMMIT__ __BUILD_DATE__">
 <meta name="description" content="Checklist de réinstallation Windows pilotée par un profil, avec inventaire des logiciels installés.">
 <meta name="theme-color" content="#5493FF">
 <!-- Le manifeste n'a d'effet qu'en HTTPS. Ouverte en file:// depuis une clé
@@ -620,6 +623,7 @@ body.compact .b-dep{display:none}
 .reglages-txt{flex:1;min-width:0}
 .reglages-nom{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:3px}
 .reglages-desc{font-size:12px;color:var(--tx2);line-height:1.5}
+.reglages-apropos{margin-top:12px}
 .reglages-item button{flex-shrink:0;padding:8px 14px;font-size:12px;font-weight:600;
   border-radius:8px;cursor:pointer;min-height:40px;border:.5px solid var(--brd2);
   background:var(--bg2);color:var(--tx)}
@@ -927,6 +931,10 @@ if(location.protocol==='file:'){
       </div>
       <button type="button" onclick="remiseAZero()" data-t>Tout effacer</button>
     </div>
+  </div>
+  <div class="reglages-apropos">
+    <div class="reglages-nom" data-t>À propos</div>
+    <p class="reglages-desc" id="mention-version"></p>
   </div>
   <button class="reglages-fermer" type="button" onclick="fermerReglages()" data-t>Fermer</button>
 </div>
@@ -1522,6 +1530,11 @@ const TRADUCTIONS={
     'Par où commencer':'Where to start',
     "Le seul fichier à double-cliquer. Il demande sur quelle machine vous êtes et lance ce qu'il faut. Les autres sont là pour être lus, pas pour être lancés à la main.":'The only file to double-click. It asks which machine you are on and runs what is needed. The others are there to be read, not to be run by hand.',
     'Réglages':'Settings',
+    // Mention et version : meme texte dans toutes les langues (choix d'Antoni, 25/11/2026).
+    'Fait par AntoniMan31/Claude Code · version {0}':'Fait par AntoniMan31/Claude Code · version {0}',
+    'Fait par AntoniMan31/Claude Code · version {0} du {1}':'Fait par AntoniMan31/Claude Code · version {0} du {1}',
+    'locale':'locale',
+    'À propos':'About',
     'Trouvé sur le PC cible par le scan : réglé, rien à cocher.':'Found on the target PC by the scan: settled, nothing to check.',
     'Masquer le détail de {0}':'Hide the detail of {0}',
     'Afficher le détail de {0}':'Show the detail of {0}',
@@ -4252,11 +4265,29 @@ function viderConfig(){
 // ── Panneau des remises à zéro ─────────────────────────────────────────
 // Deux actions destructrices méritent d'être expliquées avant d'être
 // offertes, plutôt que posées côte à côte dans une barre déjà chargée.
+// Mention et version (regle commune « Interface », 25/11/2026) : qui a fait la page, et quelle version est publiee.
+// Meme texte dans toutes les langues (choix d'Antoni) ; la date se lit en heure de Paris.
+const JOUR_PARIS=new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',day:'2-digit',month:'2-digit',year:'numeric'});
+function ligneVersion(commit,dateIso){
+  const v=(typeof commit==='string'&&commit.trim()&&!commit.startsWith('__'))?commit.trim():tr('locale');
+  const d=new Date(typeof dateIso==='string'&&!dateIso.startsWith('__')?dateIso:NaN);
+  return isNaN(d.getTime())
+    ?tr('Fait par AntoniMan31/Claude Code · version {0}',v)
+    :tr('Fait par AntoniMan31/Claude Code · version {0} du {1}',v,JOUR_PARIS.format(d));
+}
+function afficherMention(){
+  const el=document.getElementById('mention-version');
+  if(!el)return;
+  const m=document.querySelector('meta[name="version-deployee"]');
+  const [commit,date]=((m&&m.getAttribute('content'))||'').split(' ');
+  el.textContent=ligneVersion(commit,date);
+}
 function basculerReglages(){
   const b=document.getElementById('reglages');
   if(!b)return;
   const ouvert=b.classList.toggle('visible');
   if(ouvert){
+    afficherMention();
     b.scrollIntoView({block:'nearest',behavior:mouvementReduit()?'auto':'smooth'});
     const p=b.querySelector('button');
     if(p)p.focus();

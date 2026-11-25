@@ -66,6 +66,15 @@ ok('la page pointe vers l\'archive',html.indexOf('href="migration-pc.zip"')>=0,t
 // Le lien vers l'archive automatique de GitHub emportait tout le depot.
 ok('et plus vers l\'archive du dépôt',/archive\/refs\/heads/.test(html),false);
 
+// Mention et version (regle commune « Interface », 25/11/2026) : le deploiement ecrit le commit et l'heure du build
+// dans la page AVANT de fabriquer l'archive (la copie de la cle USB porte la meme version), et refuse de publier s'il
+// reste un marqueur.
+const ci=fs.readFileSync(path.join(racine,'.github','workflows','ci.yml'),'utf8');
+ok('la page porte les deux marqueurs de version',html.indexOf('<meta name="version-deployee" content="__COMMIT__ __BUILD_DATE__">')>=0,true);
+const iVersion=ci.indexOf('s/__COMMIT__/'), iZip=ci.indexOf('run: ./construire-zip.sh');
+ok('le deploiement remplace les marqueurs avant l\'archive',iVersion>0&&iVersion<iZip&&ci.indexOf('s/__BUILD_DATE__/')>0,true);
+ok('et refuse un marqueur restant',/grep -q '__COMMIT__\\\|__BUILD_DATE__' index\.html/.test(ci),true);
+
 fs.rmSync(bac,{recursive:true,force:true});
 console.log(ko?'\n'+ko+' EN ECHEC':'\nARCHIVE CONFORME');
 process.exit(ko?1:0);

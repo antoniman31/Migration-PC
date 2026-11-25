@@ -215,6 +215,13 @@ police, aucune requête : la page reste utilisable en `file://`). Gardé par `te
 en français et en anglais, clair et sombre : la barre latérale, le menu ⋯, les en-têtes de catégorie, les boutons Copier et
 Télécharger, le guide pas à pas, l'onglet Pilotes ; rien n'a tourné sur un Windows réel.
 
+### Lot G — Mention et version → **fait (25/11/2026)**
+
+Règle commune « Interface » : le panneau « Réinitialiser… » se termine par « À propos » et « Fait par AntoniMan31/Claude Code
+· version a1b2c3d du 25/11/2026 », même texte en anglais. Le déploiement écrit le commit et l'heure du build dans la page avant
+de fabriquer l'archive ; ouverte depuis un clone, « version locale ». **À regarder sur le PC** après la mise en ligne : la ligne
+dans le panneau, sur le site et depuis l'archive dézippée.
+
 ### Hors lots : ce qui n'est pas du code
 
 Les deux réglages de la section 2, et l'essai Windows de la section 1.

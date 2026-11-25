@@ -204,3 +204,16 @@ chaque icône appelée existe dans le sprite (vu échouer : 95 relevés) ; enreg
 anciens textes (`test-ignorer`, `test-langue`, `test-guide`, `test-profil-hostile`, `test-anglais`) : ils vérifient maintenant
 le mot et la présence de l'icône ; `test-profil-hostile` n'admet comme `<svg>` que les icônes du sprite, qui ne contiennent
 qu'un `<use href="#i-…">`. Vérifié : les 23 suites Node de `verifier-comme-ci.sh` ; PowerShell par la CI.
+
+### Mention « Fait par AntoniMan31/Claude Code » et version — 25/11/2026
+
+Règle commune « Interface » écrite le même jour (choix d'Antoni : Réglages › À propos, même texte dans toutes les langues).
+Le panneau « Réinitialiser… » se termine par un bloc « À propos » (« About » en anglais) : « Fait par AntoniMan31/Claude Code ·
+version a1b2c3d du 25/11/2026 ». La version vient d'une balise `<meta name="version-deployee">` dont le job de déploiement
+(`ci.yml`) remplace les marqueurs `__COMMIT__` et `__BUILD_DATE__`, avant `construire-zip.sh` pour que l'archive porte la
+même version, et refuse de publier s'il en reste un. Une balise plutôt qu'un script : le contenu change au déploiement sans
+toucher aux scripts. Hors déploiement : « version locale ». La date se lit en heure de Paris. Le texte passe par `tr()` avec
+une traduction identique. `test-anglais.js` refusait, à raison, ce texte français sur la page anglaise : il retire cette seule
+ligne exacte, raison écrite à côté. Contrôles vus échouer sur le code d'avant : `test-reinit.js` (mention absente) et
+`test-archive.js` (déploiement sans marqueurs). Vérifié : `npm test` et les suites Node de `verifier-comme-ci.sh` (les
+suites PowerShell n'ont pas tourné ici, faute de `pwsh` : la CI les joue) ; le remplacement des marqueurs rejoué sur une copie.

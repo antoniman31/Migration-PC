@@ -283,6 +283,12 @@ jobs:
       # L'archive que la page propose. Elle ne contient que ce qui se lance :
       # l'archive automatique de GitHub emporterait les tests, les captures et
       # la CI, soit quarante fichiers dont aucun ne sert a migrer un PC.
+      # Mention et version (regle commune « Interface ») : commit court et heure du build, ecrits avant l'archive pour
+      # que la copie de la cle USB porte la meme version. Le cache du service worker suit l'empreinte de la page testee.
+      - name: Ecrire la version deployee
+        run: |
+          sed -i "s/__COMMIT__/${GITHUB_SHA::7}/; s/__BUILD_DATE__/$(date -u +%Y-%m-%dT%H:%M:%SZ)/" index.html
+          if grep -q '__COMMIT__\|__BUILD_DATE__' index.html; then echo 'Marqueur de version restant'; exit 1; fi
       - name: Construire migration-pc.zip
         run: ./construire-zip.sh
       # Le site est le depot lui-meme : pas d'etape de construction, le
