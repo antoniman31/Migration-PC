@@ -175,3 +175,12 @@ Repéré pendant le lot E. Trois survols posaient du blanc sur un fond trop clai
 désormais le blanc sur un autre fond que ces deux-là (vu échouer sur l'ancien code : les trois survols). axe-core ne mesure
 pas un état de survol, d'où ce contrôle par déclaration. Repéré et non corrigé : la coche blanche sur `--bok-tx` en sombre
 (2,03:1). Vérifié : toutes les suites Node de `verifier-comme-ci.sh` ; PowerShell par la CI.
+
+### Coche lisible en thème sombre — 25/11/2026
+
+Choix d'Antoni : la coche d'une case « après réinstallation » cochée prend la couleur du fond de page (`var(--bg)`) au lieu du
+blanc. Blanche sur le vert foncé du thème clair (6,21:1, inchangé), presque noire sur le vert clair du thème sombre (8,76:1, au
+lieu de 2,03:1). Le vert ne change pas. `tests/test-couleurs.js` lit chaque règle « .done .chkbox », son fond et sa couleur, et
+mesure le rapport avec les jetons des deux thèmes (seuil 3:1 d'un signe graphique) ; vu échouer sur l'ancien code (2,03:1).
+La coche ordinaire (blanc sur `--acc`) tient 3,00:1, juste au seuil. Vérifié : toutes les suites Node de `verifier-comme-ci.sh` ;
+PowerShell par la CI.
