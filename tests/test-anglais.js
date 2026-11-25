@@ -249,10 +249,16 @@ async function parcourir(page){
 }
 const zones=await parcourir(pg);
 
+// La mention « Fait par AntoniMan31/Claude Code · version … du … » (regle commune « Interface », 25/11/2026) reste en
+// francais dans les deux langues : c'est une signature, et Antoni a choisi un texte identique partout. Seule cette
+// ligne exacte est retiree ; un autre texte francais du panneau reste compte.
+const MENTION=/^Fait par AntoniMan31\/Claude Code · version \S+( du \d{2}\/\d{2}\/\d{4})?$/;
+function sansMention(texte){return texte.split('\n').filter(l=>!MENTION.test(l.trim())).join('\n');}
+
 console.log('\n--- aucun francais a l\'ecran ---');
 let total=0;
 for(const [nom,texte] of zones){
-  const coupables=francaisDans(retirerProfil(texte));
+  const coupables=francaisDans(retirerProfil(sansMention(texte)));
   total+=coupables.length;
   if(coupables.length){
     console.log('   '+nom+' : '+coupables.length+' trouvaille(s)');
@@ -354,6 +360,7 @@ const IDENTIQUES_VOULUES=[
 function ligneNeutre(l){
   if(!l)return true;
   if(IDENTIQUES_VOULUES.indexOf(l)>=0)return true;
+  if(MENTION.test(l))return true;                    // la signature, identique par choix (voir sansMention)
   if(l.indexOf('winget .json')===0)return true;   // « (1) » derriere
   if(/^[^A-Za-z]*$/.test(l))return true;             // emoji, fleches, « 16/18 »
   if(/\.(ps1|bat|json|js|html|zip)$/.test(l))return true;
