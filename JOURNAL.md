@@ -184,3 +184,7 @@ lieu de 2,03:1). Le vert ne change pas. `tests/test-couleurs.js` lit chaque règ
 mesure le rapport avec les jetons des deux thèmes (seuil 3:1 d'un signe graphique) ; vu échouer sur l'ancien code (2,03:1).
 La coche ordinaire (blanc sur `--acc`) tient 3,00:1, juste au seuil. Vérifié : toutes les suites Node de `verifier-comme-ci.sh` ;
 PowerShell par la CI.
+
+### Règles communes mises à jour — 25/11/2026
+
+Bloc commun de `CLAUDE.md` aligné sur `regles-communes` (BLOC.md, commit 864f26d), par la propagation automatique.
