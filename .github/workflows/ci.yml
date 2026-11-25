@@ -79,6 +79,10 @@ jobs:
       - name: Couleurs en jetons, par déclaration
         run: node tests/test-couleurs.js
 
+      # Il lit la page : aucun emoji comme icône, chaque icône appelée existe dans le sprite.
+      - name: Icônes Material, par déclaration
+        run: node tests/test-icones.js
+
       # pwsh est preinstalle sur les runners ubuntu-latest.
       - name: Scanner — classement, fusion, parsing
         run: pwsh -File tests/test-scan.ps1

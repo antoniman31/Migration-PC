@@ -82,6 +82,9 @@ const orphelines=clesEn.filter(function(k){
   if(source.indexOf("'"+k.replace(/'/g,"\\'")+"'")>=0)return false;
   if(source.indexOf('>'+k+'<')>=0)return false;
   if(source.indexOf('"'+k+'"')>=0)return false;
+  // Un nom de catégorie écrit dans un profil garde son emoji de tête (« '🛠️ Développement' ») ; catAff() le retire et
+  // traduit le reste (25/11/2026). La clé est donc présente si le code l'écrit précédée d'un emoji.
+  if(new RegExp("'\\p{Extended_Pictographic}\\uFE0F?\\s"+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+"'",'u').test(source))return false;
   return true;
 });
 ok('aucune traduction orpheline',orphelines.slice(0,5).join(' | '),'');

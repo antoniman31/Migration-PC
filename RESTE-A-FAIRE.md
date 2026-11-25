@@ -208,6 +208,13 @@ La coche d'une case « après réinstallation » cochée, qui tombait à 2,03:1 
 `test-couleurs.js` mesure chaque coche cochée dans les deux thèmes. À regarder sur le PC : cocher une case « après
 réinstallation » en thème sombre.
 
+### Lot F — Icônes Material → **fait (25/11/2026)**
+
+Règle commune « Design » : plus aucun emoji comme icône, des Material Symbols arrondis dans un sprite en tête du body (aucune
+police, aucune requête : la page reste utilisable en `file://`). Gardé par `tests/test-icones.js`. **À regarder sur le PC**,
+en français et en anglais, clair et sombre : la barre latérale, le menu ⋯, les en-têtes de catégorie, les boutons Copier et
+Télécharger, le guide pas à pas, l'onglet Pilotes ; rien n'a tourné sur un Windows réel.
+
 ### Hors lots : ce qui n'est pas du code
 
 Les deux réglages de la section 2, et l'essai Windows de la section 1.

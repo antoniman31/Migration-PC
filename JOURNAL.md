@@ -188,3 +188,19 @@ PowerShell par la CI.
 ### Règles communes mises à jour — 25/11/2026
 
 Bloc commun de `CLAUDE.md` aligné sur `regles-communes` (BLOC.md, commit 864f26d), par la propagation automatique.
+
+### Icônes Material au lieu des emojis — 25/11/2026
+
+Règle commune « Design » écrite le même jour (choix d'Antoni) : jamais d'emoji comme icône, des Material Symbols de Google en
+variante arrondie, embarqués. La page en affichait une trentaine de différents (95 occurrences relevées par le nouveau test) :
+leur dessin dépendait de la police du système, sans suivre la couleur ni le thème. Ils deviennent des `<symbol>` d'un sprite
+en tête du body (tracés de @material-symbols/svg-400 0.49.0, Apache-2.0, copiés : aucune police ni requête, `file://` intact)
+appelés par `icone(nom)`. Choix d'Antoni : les profils gardent l'emoji de tête de leurs catégories (c'est du contenu, exporté
+tel quel) et `catAff()` le remplace à l'affichage par l'icône correspondante ; les champs de recherche portent une loupe à
+gauche, leur texte d'aide perd l'emoji. Les clés de traduction perdent leur emoji (l'icône est posée à côté, hors `tr()`) ;
+les doublons qui en résultaient (« Ouvrir », « Rechercher ») sont fusionnés. Un « ↩ » et un « ⊘ » ont été trouvés en plus
+de l'audit (Annuler, Ignorer). `tests/test-icones.js` refuse tout pictogramme hors profils et commentaires et vérifie que
+chaque icône appelée existe dans le sprite (vu échouer : 95 relevés) ; enregistré à trois endroits. Cinq tests lisaient les
+anciens textes (`test-ignorer`, `test-langue`, `test-guide`, `test-profil-hostile`, `test-anglais`) : ils vérifient maintenant
+le mot et la présence de l'icône ; `test-profil-hostile` n'admet comme `<svg>` que les icônes du sprite, qui ne contiennent
+qu'un `<use href="#i-…">`. Vérifié : les 23 suites Node de `verifier-comme-ci.sh` ; PowerShell par la CI.

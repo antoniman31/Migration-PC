@@ -296,7 +296,8 @@ const nonDeclares=await pg.evaluate(props=>{
   }
   (PROFIL_DEMO.apps||[]).forEach(function(a){voir(a.n);voir(a.d);voir(a.src);});
   (PROFIL_DEMO.pwa||[]).forEach(function(p){voir(p.n);voir(p.d);});
-  Object.keys(PROFIL_DEMO.cats||{}).forEach(function(k){voir(PROFIL_DEMO.cats[k]);});
+  // Une catégorie garde son emoji de tête dans le profil ; catAff() le remplace par une icône et traduit le reste (25/11/2026).
+  Object.keys(PROFIL_DEMO.cats||{}).forEach(function(k){voir(String(PROFIL_DEMO.cats[k]).replace(/^\p{Extended_Pictographic}\uFE0F?\s*/u,''));});
   voir((PROFIL_DEMO.meta||{}).nom); voir((PROFIL_DEMO.meta||{}).soustitre);
   return manque;
 },NOMS_PROPRES);
@@ -345,15 +346,15 @@ const zonesFr=await parcourir(pgFr);
 // explicites se relit et se discute, contrairement a un dictionnaire de mots.
 const IDENTIQUES_VOULUES=[
   'SSD','Wi-Fi','Sections','FR','EN',          // sigles, et le selecteur de langue
-  '💬 Communication',                          // s'ecrit pareil dans les deux langues
-  '⬇️ winget .json',                           // un nom de format, pas une phrase
+  'Communication',                             // s'ecrit pareil dans les deux langues
+  'winget .json',                           // un nom de format, pas une phrase
   'Migration PC.bat',                          // un nom de fichier
-  '📋 winget'                                  // le nom de la commande, pas une phrase
+  'winget'                                     // le nom de la commande, pas une phrase
 ];
 function ligneNeutre(l){
   if(!l)return true;
   if(IDENTIQUES_VOULUES.indexOf(l)>=0)return true;
-  if(l.indexOf('⬇️ winget .json')===0)return true;   // « (1) » derriere
+  if(l.indexOf('winget .json')===0)return true;   // « (1) » derriere
   if(/^[^A-Za-z]*$/.test(l))return true;             // emoji, fleches, « 16/18 »
   if(/\.(ps1|bat|json|js|html|zip)$/.test(l))return true;
   if(l.indexOf('winget install ')===0)return true;   // une commande, pas un texte
@@ -625,8 +626,11 @@ async function copie(lang){
   });
 }
 const cFr=await copie('fr'), cEn=await copie('en');
-ok('copie reussie : le bouton le dit en francais',cFr.reussi,'✓ Copié !');
-ok('copie reussie : et en anglais',cEn.reussi,'✓ Copied!');
+// Depuis le 25/11/2026 la coche est l'icône du sprite : le mot d'un côté, l'icône de l'autre.
+const sansIcone=h=>h.replace(/<svg class="ico"[^>]*><use href="#i-\w+"\/><\/svg>\s*/,'');
+ok('copie reussie : le bouton le dit en francais',sansIcone(cFr.reussi),'Copié !');
+ok('copie reussie : et en anglais',sansIcone(cEn.reussi),'Copied!');
+ok('copie reussie : avec la coche',[cFr.reussi,cEn.reussi].every(h=>h.indexOf('#i-check')>=0),true);
 ok('copie impossible : le message en francais',cFr.echec,'Copie impossible dans ce navigateur. Commande : winget install X');
 ok('copie impossible : et en anglais',cEn.echec,'Copying is not possible in this browser. Command: winget install X');
 
@@ -662,17 +666,18 @@ for(const l of ['fr','en']){
   sauvegarde[l]=await pm.evaluate(()=>{
     const el=document.getElementById('save-state');
     stockageEnPanne=false;S.lastSave=new Date(2026,9,1,14,5).getTime();updateSaveLabel();
-    const bon={texte:el.textContent,titre:el.title};
+    const bon={texte:el.textContent.trim(),titre:el.title,ico:el.innerHTML.indexOf('#i-check')>=0};
     stockageEnPanne=true;updateSaveLabel();
-    const ko={texte:el.textContent,titre:el.title};
+    const ko={texte:el.textContent.trim(),titre:el.title,ico:el.innerHTML.indexOf('#i-warning')>=0};
     stockageEnPanne=false;S.lastSave=null;updateSaveLabel();
     return {bon:bon,ko:ko};
   });
 }
-ok('enregistre, en francais',sauvegarde.fr.bon.texte,'✓ enregistré 14:05');
-ok('enregistre, en anglais',sauvegarde.en.bon.texte,'✓ saved 14:05');
-ok('non enregistre, en francais',sauvegarde.fr.ko.texte,'⚠ non enregistré');
-ok('non enregistre, en anglais',sauvegarde.en.ko.texte,'⚠ not saved');
+ok('enregistre, en francais',sauvegarde.fr.bon.texte,'enregistré 14:05');
+ok('enregistre, en anglais',sauvegarde.en.bon.texte,'saved 14:05');
+ok('non enregistre, en francais',sauvegarde.fr.ko.texte,'non enregistré');
+ok('non enregistre, en anglais',sauvegarde.en.ko.texte,'not saved');
+ok('les icônes de l\'indicateur : coche et alerte, dans les deux langues',[sauvegarde.fr.bon.ico,sauvegarde.en.bon.ico,sauvegarde.fr.ko.ico,sauvegarde.en.ko.ico].every(Boolean),true);
 ok('l\'info-bulle de l\'indicateur : aucun francais en anglais',
   francaisDans(sauvegarde.en.bon.titre+' '+sauvegarde.en.ko.titre).join(' ; '),'');
 ok('aucune erreur JS pendant ces scenarios',erreursDit.length?erreursDit[0]:'aucune','aucune');

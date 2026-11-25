@@ -81,9 +81,13 @@ await pg.evaluate(c=>{
 await pg.waitForTimeout(400);
 
 console.log('--- au rendu, sans rien cliquer ---');
+// Les icônes de la page sont des <svg class="ico"> qui ne contiennent qu'un <use href="#i-…"> du sprite (25/11/2026) :
+// tout autre <svg>, ou une « icône » au contenu différent, vient du profil et compte comme une balise injectée.
 ok('aucune balise injectée dans les listes',
   await pg.evaluate(()=>document.querySelectorAll(
-    '#list-apps img,#list-apps svg,#list-pilotes img,#list-pwa img,h1 img').length),0);
+    '#list-apps img,#list-apps svg:not(.ico),#list-pilotes img,#list-pwa img,h1 img').length
+    +[...document.querySelectorAll('#list-apps svg.ico,#list-pilotes svg.ico,#list-pwa svg.ico')].filter(s=>
+      s.children.length!==1||s.firstElementChild.tagName!=='use'||!/^#i-\w+$/.test(s.firstElementChild.getAttribute('href')||'')).length),0);
 ok('le nom de catégorie s\'affiche en texte',
   await pg.evaluate(()=>{
     const h=document.querySelector('#list-apps .sec-hdr');

@@ -98,7 +98,9 @@ await pg.click('#guide-copier');
 await pg.waitForTimeout(300);
 const presse=await pg.evaluate(()=>navigator.clipboard.readText());
 ok('le presse-papier contient la commande',presse,c.cmd);
-ok('le bouton confirme',await pg.textContent('#guide-copier'),'✓ Copié');
+// Depuis le 25/11/2026 la coche est l'icône Material du sprite, à côté du mot.
+ok('le bouton confirme',(await pg.textContent('#guide-copier')).trim(),'Copié');
+ok('avec la coche du sprite',await pg.evaluate(()=>!!document.querySelector('#guide-copier use[href="#i-check"]')),true);
 
 console.log('\n--- avertissement ---');
 // Aucun logiciel de la démonstration ne porte d'avertissement — c'était les
